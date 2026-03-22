@@ -1,0 +1,15 @@
+{
+  "name": "goon-os",
+  "version": "0.0.1",
+  "private": true,
+  "packageManager": "npm@11.9.0",
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build"
+  },
+  "devDependencies": {
+    "turbo": "latest",
+    "typescript": "^5.0.0"
+  }
+}

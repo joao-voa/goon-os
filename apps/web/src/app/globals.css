@@ -1,0 +1,552 @@
+@import "tailwindcss";
+
+/* ============================================================
+   GOON OS — Design System
+   ============================================================ */
+
+:root {
+  /* Brand */
+  --goon-primary: #6C3FFF;
+  --goon-primary-hover: #7C4FFF;
+  --goon-primary-muted: rgba(108, 63, 255, 0.15);
+
+  /* Backgrounds */
+  --goon-deep-dark: #050D1A;
+  --goon-dark-card: #080F1E;
+  --goon-sidebar-bg: #080F1E;
+  --goon-header-bg: rgba(8, 15, 30, 0.95);
+  --goon-input-bg: rgba(255, 255, 255, 0.04);
+  --goon-card-hover: rgba(108, 63, 255, 0.06);
+
+  /* Text */
+  --goon-text-primary: #FFFFFF;
+  --goon-text-secondary: #C8D8F0;
+  --goon-text-muted: #8AA3CC;
+
+  /* Borders */
+  --goon-border: rgba(108, 63, 255, 0.18);
+  --goon-border-subtle: rgba(255, 255, 255, 0.06);
+
+  /* Semantic colors */
+  --goon-success: #22c55e;
+  --goon-warning: #f59e0b;
+  --goon-danger: #ef4444;
+  --goon-info: #06b6d4;
+
+  /* Shadows */
+  --goon-shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --goon-shadow-glow: 0 0 20px rgba(108, 63, 255, 0.15);
+  --goon-shadow-modal: 0 25px 50px rgba(0, 0, 0, 0.7);
+}
+
+/* ---- Light theme overrides ---- */
+html.light {
+  --goon-primary: #5B2FE0;
+  --goon-primary-hover: #6C3FFF;
+  --goon-primary-muted: rgba(108, 63, 255, 0.1);
+
+  --goon-deep-dark: #F0F4FF;
+  --goon-dark-card: #FFFFFF;
+  --goon-sidebar-bg: #FFFFFF;
+  --goon-header-bg: rgba(255, 255, 255, 0.95);
+  --goon-input-bg: rgba(0, 0, 0, 0.03);
+  --goon-card-hover: rgba(108, 63, 255, 0.04);
+
+  --goon-text-primary: #0A0E1A;
+  --goon-text-secondary: #374151;
+  --goon-text-muted: #6B7280;
+
+  --goon-border: rgba(108, 63, 255, 0.2);
+  --goon-border-subtle: rgba(0, 0, 0, 0.08);
+
+  --goon-shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --goon-shadow-glow: 0 0 20px rgba(108, 63, 255, 0.1);
+  --goon-shadow-modal: 0 25px 50px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================================
+   Base styles
+   ============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--goon-deep-dark);
+  color: var(--goon-text-primary);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ============================================================
+   Scrollbar styling
+   ============================================================ */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(108, 63, 255, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(108, 63, 255, 0.5);
+}
+
+/* ============================================================
+   Utility classes
+   ============================================================ */
+
+/* Cards */
+.goon-card {
+  background: var(--goon-dark-card);
+  border: 1px solid var(--goon-border);
+  border-radius: 12px;
+  box-shadow: var(--goon-shadow-card);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.goon-card:hover {
+  border-color: rgba(108, 63, 255, 0.35);
+  box-shadow: var(--goon-shadow-card), var(--goon-shadow-glow);
+}
+
+.goon-card-flat {
+  background: var(--goon-dark-card);
+  border: 1px solid var(--goon-border-subtle);
+  border-radius: 12px;
+}
+
+/* Badges */
+.goon-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.goon-badge-primary {
+  background: rgba(108, 63, 255, 0.15);
+  color: #a78bfa;
+  border-color: rgba(108, 63, 255, 0.3);
+}
+
+.goon-badge-success {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.goon-badge-warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.goon-badge-danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.goon-badge-muted {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--goon-text-muted);
+  border-color: var(--goon-border-subtle);
+}
+
+/* Buttons */
+.goon-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 20px;
+  background: var(--goon-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  outline: none;
+  text-decoration: none;
+}
+
+.goon-btn-primary:hover {
+  background: var(--goon-primary-hover);
+  box-shadow: 0 4px 12px rgba(108, 63, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.goon-btn-primary:active {
+  transform: translateY(0);
+}
+
+.goon-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.goon-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--goon-text-secondary);
+  border: 1px solid var(--goon-border-subtle);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  outline: none;
+  text-decoration: none;
+}
+
+.goon-btn-ghost:hover {
+  background: var(--goon-primary-muted);
+  color: var(--goon-text-primary);
+  border-color: var(--goon-border);
+}
+
+.goon-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  outline: none;
+}
+
+.goon-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.22);
+}
+
+/* Inputs */
+.goon-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--goon-input-bg);
+  border: 1px solid var(--goon-border-subtle);
+  border-radius: 8px;
+  color: var(--goon-text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.goon-input::placeholder {
+  color: var(--goon-text-muted);
+}
+
+.goon-input:focus {
+  border-color: var(--goon-primary);
+  box-shadow: 0 0 0 3px rgba(108, 63, 255, 0.15);
+}
+
+.goon-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.goon-select {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--goon-input-bg);
+  border: 1px solid var(--goon-border-subtle);
+  border-radius: 8px;
+  color: var(--goon-text-primary);
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+  appearance: none;
+}
+
+.goon-select:focus {
+  border-color: var(--goon-primary);
+  box-shadow: 0 0 0 3px rgba(108, 63, 255, 0.15);
+}
+
+.goon-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--goon-input-bg);
+  border: 1px solid var(--goon-border-subtle);
+  border-radius: 8px;
+  color: var(--goon-text-primary);
+  font-size: 14px;
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.goon-textarea:focus {
+  border-color: var(--goon-primary);
+  box-shadow: 0 0 0 3px rgba(108, 63, 255, 0.15);
+}
+
+/* Form labels */
+.goon-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--goon-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+/* Divider */
+.goon-divider {
+  border: none;
+  border-top: 1px solid var(--goon-border-subtle);
+  margin: 16px 0;
+}
+
+/* Table */
+.goon-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.goon-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--goon-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--goon-border-subtle);
+}
+
+.goon-table td {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: var(--goon-text-secondary);
+  border-bottom: 1px solid var(--goon-border-subtle);
+}
+
+.goon-table tr:hover td {
+  background: var(--goon-card-hover);
+}
+
+/* ============================================================
+   Animations
+   ============================================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-in { animation: fadeIn 0.2s ease forwards; }
+.animate-slide-up { animation: slideUp 0.25s ease forwards; }
+.animate-slide-down { animation: slideDown 0.2s ease forwards; }
+.animate-scale-in { animation: scaleIn 0.2s ease forwards; }
+.animate-spin { animation: spin 0.8s linear infinite; }
+
+/* ============================================================
+   Responsive utilities
+   ============================================================ */
+
+.hide-mobile {
+  display: block;
+}
+
+.show-mobile-only {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none;
+  }
+  .show-mobile-only {
+    display: block;
+  }
+}
+
+/* Touch target minimum size */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================
+   Modal overlay
+   ============================================================ */
+
+.goon-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.15s ease;
+}
+
+.goon-modal {
+  background: var(--goon-dark-card);
+  border: 1px solid var(--goon-border);
+  border-radius: 16px;
+  box-shadow: var(--goon-shadow-modal);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.2s ease;
+}
+
+/* ============================================================
+   Sidebar
+   ============================================================ */
+
+.goon-sidebar {
+  background: var(--goon-sidebar-bg);
+  border-right: 1px solid var(--goon-border-subtle);
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 40;
+  transition: transform 0.3s ease, width 0.3s ease;
+}
+
+/* ============================================================
+   Loading states
+   ============================================================ */
+
+.goon-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ============================================================
+   Stat cards
+   ============================================================ */
+
+.goon-stat-card {
+  background: var(--goon-dark-card);
+  border: 1px solid var(--goon-border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: var(--goon-shadow-card);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.goon-stat-card:hover {
+  border-color: rgba(108, 63, 255, 0.35);
+  box-shadow: var(--goon-shadow-card), var(--goon-shadow-glow);
+}
+
+.goon-stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--goon-text-primary);
+  line-height: 1;
+}
+
+.goon-stat-label {
+  font-size: 12px;
+  color: var(--goon-text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

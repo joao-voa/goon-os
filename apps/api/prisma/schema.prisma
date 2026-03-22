@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+model Client {
+  id               String   @id @default(cuid())
+  companyName      String
+  tradeName        String?
+  cnpj             String?  @unique
+  responsible      String
+  phone            String?
+  email            String?
+  whatsapp         String?
+  segment          String?
+  address          String?
+  addressNumber    String?
+  neighborhood     String?
+  city             String?
+  state            String?
+  zipCode          String?
+  employeeCount    String?
+  estimatedRevenue String?
+  mainPains        String?
+  strategicGoals   String?
+  maturity         String?
+  goonFitScore     Int?
+  status           String   @default("ACTIVE")
+
+  plans        ClientPlan[]
+  contracts    Contract[]
+  onboarding   Onboarding?
+  activityLogs ActivityLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+
+  plans ClientPlan[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ClientPlan {
+  id               String   @id @default(cuid())
+  clientId         String
+  productId        String
+  value            Decimal  @db.Decimal(10, 2)
+  paymentType      String
+  installments     Int?
+  installmentValue Decimal? @db.Decimal(10, 2)
+  cycleDuration    Int?
+  cycleNumber      Int      @default(1)
+  startDate        DateTime
+  endDate          DateTime?
+  status           String   @default("ACTIVE")
+  notes            String?
+
+  client    Client     @relation(fields: [clientId], references: [id])
+  product   Product    @relation(fields: [productId], references: [id])
+  contracts Contract[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Contract {
+  id              String   @id @default(cuid())
+  clientId        String
+  clientPlanId    String?
+  templateType    String
+  status          String   @default("DRAFT")
+  version         Int      @default(1)
+  dynamicFields   Json
+  generatedPdfUrl String?
+  sentAt          DateTime?
+  signedAt        DateTime?
+
+  client     Client      @relation(fields: [clientId], references: [id])
+  clientPlan ClientPlan? @relation(fields: [clientPlanId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Onboarding {
+  id           String @id @default(cuid())
+  clientId     String @unique
+  currentStage String @default("CLIENT_CLOSED")
+  notes        String?
+
+  client Client @relation(fields: [clientId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  clientId    String?
+  entityType  String
+  entityId    String
+  action      String
+  fromValue   String?
+  toValue     String?
+  description String?
+  userId      String?
+
+  client Client? @relation(fields: [clientId], references: [id])
+
+  createdAt DateTime @default(now())
+}
