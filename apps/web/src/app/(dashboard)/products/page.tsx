@@ -39,10 +39,10 @@ function EditModal({ product, onClose, onSaved }: EditModalProps) {
         body: JSON.stringify({ name, description: description || null }),
       })
       onSaved(updated)
-      toast.success('[OK] Produto atualizado')
+      toast.success('[OK] Programa atualizado')
       onClose()
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao salvar produto')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao salvar programa')
     } finally {
       setSaving(false)
     }
@@ -86,7 +86,7 @@ function EditModal({ product, onClose, onSaved }: EditModalProps) {
           backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)',
           backgroundSize: '16px 16px',
         }}>
-          <span>Editar Produto</span>
+          <span>Editar Programa</span>
           <button
             onClick={onClose}
             style={{
@@ -318,7 +318,7 @@ export default function ProductsPage() {
       const data = await apiFetch<Product[]>('/api/products')
       setProducts(data)
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao carregar produtos')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao carregar programas')
     } finally {
       setLoading(false)
     }
@@ -335,9 +335,9 @@ export default function ProductsPage() {
         body: JSON.stringify({ isActive: !product.isActive }),
       })
       setProducts(prev => prev.map(p => (p.id === updated.id ? { ...updated, _count: p._count } : p)))
-      toast.success(updated.isActive ? '[OK] Produto ativado' : '[OK] Produto desativado')
+      toast.success(updated.isActive ? '[OK] Programa ativado' : '[OK] Programa desativado')
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao atualizar produto')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao atualizar programa')
     }
   }
 
@@ -360,10 +360,10 @@ export default function ProductsPage() {
           textTransform: 'uppercase',
           letterSpacing: 1,
         }}>
-          Produtos
+          Programas
         </h1>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', margin: 0 }}>
-          {'>'} Gerencie os produtos GOON disponíveis para seus clientes
+          {'>'} Gerencie os programas GOON disponíveis para seus clientes
         </p>
       </div>
 
@@ -413,7 +413,7 @@ export default function ProductsPage() {
           }}
         >
           <p style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, color: 'black', textTransform: 'uppercase' }}>
-            Nenhum produto cadastrado.
+            Nenhum programa cadastrado.
           </p>
         </div>
       )}

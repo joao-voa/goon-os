@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 import {
   PRODUCT_COLORS,
   PRODUCT_NAMES,
@@ -719,6 +720,7 @@ export default function ClientDetailPage() {
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
+  const isMobile = useIsMobile()
 
   const [client, setClient] = useState<ClientDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -894,8 +896,8 @@ export default function ClientDetailPage() {
 
   const fieldGrid: React.CSSProperties = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-    gap: 20,
+    gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(200px, 1fr))',
+    gap: isMobile ? 12 : 20,
   }
 
   const TABS = ['DADOS', 'CONTRATO', 'FINANCEIRO', 'PENDÊNCIAS']
@@ -912,7 +914,7 @@ export default function ClientDetailPage() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, fontWeight: 800, color: 'black', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: 1 }}>
+            <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: isMobile ? 12 : 16, fontWeight: 800, color: 'black', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: 1 }}>
               {client.companyName}
             </h1>
             {client.tradeName && (

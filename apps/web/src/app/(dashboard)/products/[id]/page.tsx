@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 import {
   PRODUCT_COLORS,
   PRODUCT_NAMES,
@@ -236,10 +237,10 @@ function EditProductModal({ product, onClose, onSaved }: EditProductModalProps) 
         body: JSON.stringify({ name, description: description || null }),
       })
       onSaved(updated)
-      toast.success('[OK] Produto atualizado')
+      toast.success('[OK] Programa atualizado')
       onClose()
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao salvar produto')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao salvar programa')
     } finally {
       setSaving(false)
     }
@@ -279,6 +280,7 @@ export default function ProductDetailPage() {
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
+  const isMobile = useIsMobile()
 
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
@@ -297,7 +299,7 @@ export default function ProductDetailPage() {
       const data = await apiFetch<Product>(`/api/products/${id}`)
       setProduct(data)
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao carregar produto')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao carregar programa')
     } finally {
       setLoading(false)
     }
@@ -363,7 +365,7 @@ export default function ProductDetailPage() {
   if (!product) {
     return (
       <div style={{ textAlign: 'center', padding: 60 }}>
-        <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 13 }}>Produto não encontrado.</p>
+        <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 13 }}>Programa não encontrado.</p>
         <button className="goon-btn-secondary" onClick={() => router.push('/products')} style={{ marginTop: 16 }}>← Voltar</button>
       </div>
     )
@@ -452,7 +454,7 @@ export default function ProductDetailPage() {
       </div>
 
       {/* KPI Strip */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 32 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(160px, 1fr))', gap: isMobile ? 8 : 12, marginBottom: 32 }}>
         <KpiCard
           label="Total Clientes"
           value={clients.length}

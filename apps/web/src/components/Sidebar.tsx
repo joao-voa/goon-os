@@ -24,7 +24,7 @@ interface SidebarProps {
 export const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard',  label: 'Dashboard',  icon: LayoutDashboard },
   { href: '/clients',    label: 'Clientes',   icon: Building2 },
-  { href: '/products',   label: 'Produtos',   icon: Package },
+  { href: '/products',   label: 'Programas',  icon: Package },
   { href: '/contracts',  label: 'Contratos',  icon: FileText },
   { href: '/onboarding', label: 'Onboarding', icon: GitBranch },
   { href: '/payments',   label: 'Financeiro', icon: DollarSign },
