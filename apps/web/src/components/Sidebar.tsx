@@ -2,6 +2,8 @@
 
 import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, DollarSign, AlertTriangle, LogOut, ChevronLeft, ChevronRight } from 'lucide-react'
 import { usePathname } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { apiFetch } from '@/lib/api'
 
 interface NavItem {
   href: string
@@ -39,6 +41,13 @@ export function Sidebar({
   onLogout,
 }: SidebarProps) {
   const pathname = usePathname()
+  const [openPendenciesCount, setOpenPendenciesCount] = useState(0)
+
+  useEffect(() => {
+    apiFetch<{ total: number }>('/api/pendencies?status=OPEN&limit=1')
+      .then(r => setOpenPendenciesCount(r.total ?? 0))
+      .catch(() => {})
+  }, [])
 
   const sidebarWidth = isMobile ? 240 : collapsed ? 56 : 240
   const isVisible = isMobile ? mobileOpen : true
@@ -151,6 +160,7 @@ export function Sidebar({
                 href={item.href}
                 title={collapsed && !isMobile ? item.label : undefined}
                 style={{
+                  position: 'relative',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 10,
@@ -183,6 +193,31 @@ export function Sidebar({
               >
                 <Icon size={18} style={{ flexShrink: 0 }} />
                 {(!collapsed || isMobile) && <span>{item.label}</span>}
+                {item.href === '/pendencies' && openPendenciesCount > 0 && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: 6,
+                      right: collapsed && !isMobile ? 4 : 10,
+                      background: '#cc0000',
+                      color: 'white',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 9,
+                      fontWeight: 700,
+                      minWidth: 16,
+                      height: 16,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '0 3px',
+                      border: '1px solid white',
+                      lineHeight: 1,
+                    }}
+                  >
+                    {openPendenciesCount > 99 ? '99+' : openPendenciesCount}
+                  </span>
+                )}
               </a>
             )
           })}
