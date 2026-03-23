@@ -366,7 +366,7 @@ export default function PaymentsPage() {
       setPayments(result.data)
       setTotal(result.total)
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao carregar pagamentos')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao carregar pagamentos')
     } finally {
       setLoading(false)
     }
@@ -593,7 +593,7 @@ export default function PaymentsPage() {
                         {(payment.status === 'PENDING' || payment.status === 'OVERDUE') && (
                           <button
                             className="goon-btn-accent"
-                            style={{ fontSize: 8, padding: '5px 8px', whiteSpace: 'nowrap' }}
+                            style={{ fontSize: 8, padding: '5px 8px', whiteSpace: 'nowrap', minHeight: 44 }}
                             onClick={() => handlePay(payment.id)}
                           >
                             Marcar Pago

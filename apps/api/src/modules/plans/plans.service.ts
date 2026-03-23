@@ -15,15 +15,31 @@ export class PlansService {
       where: { clientId },
       include: {
         product: { select: { id: true, code: true, name: true, description: true } },
+        _count: { select: { payments: true } },
       },
       orderBy: { createdAt: 'desc' },
     })
 
-    return plans.map(plan => ({
-      ...plan,
-      value: plan.value.toNumber(),
-      installmentValue: plan.installmentValue ? plan.installmentValue.toNumber() : null,
-    }))
+    // Enrich each plan with payment status breakdown
+    const enriched = await Promise.all(
+      plans.map(async plan => {
+        const payments = await this.prisma.payment.findMany({
+          where: { clientPlanId: plan.id },
+          select: { status: true },
+        })
+        const paid = payments.filter(p => p.status === 'PAID').length
+        const overdue = payments.filter(p => p.status === 'OVERDUE').length
+        const pending = payments.filter(p => p.status === 'PENDING' || p.status === 'SCHEDULED').length
+        return {
+          ...plan,
+          value: plan.value.toNumber(),
+          installmentValue: plan.installmentValue ? plan.installmentValue.toNumber() : null,
+          paymentStats: payments.length > 0 ? { total: payments.length, paid, overdue, pending } : null,
+        }
+      }),
+    )
+
+    return enriched
   }
 
   async create(clientId: string, dto: CreatePlanDto) {

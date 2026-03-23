@@ -579,6 +579,9 @@ export default function DashboardPage() {
   const gap = isMobile ? 8 : 16
 
   useEffect(() => {
+    // Silently check overdue payments before loading KPIs
+    apiFetch('/api/payments/check-overdue', { method: 'POST' }).catch(() => {})
+
     apiFetch<DashboardStats>('/api/dashboard')
       .then(data => { setStats(data); setLoading(false) })
       .catch(err => { setError(err.message ?? 'Erro ao carregar dashboard'); setLoading(false) })

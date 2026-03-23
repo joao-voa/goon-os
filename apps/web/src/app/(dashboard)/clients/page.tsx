@@ -130,7 +130,7 @@ function CreateClientModal({ onClose, onCreated }: CreateModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.companyName.trim() || !form.responsible.trim()) {
-      toast.error('Empresa e responsável são obrigatórios')
+      toast.error('[ERRO] Empresa e responsável são obrigatórios')
       return
     }
     setLoading(true)
@@ -143,11 +143,11 @@ function CreateClientModal({ onClose, onCreated }: CreateModalProps) {
         method: 'POST',
         body: JSON.stringify(payload),
       })
-      toast.success('Cliente criado')
+      toast.success('[OK] Cliente criado')
       onCreated()
       onClose()
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao criar cliente')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao criar cliente')
     } finally {
       setLoading(false)
     }
@@ -435,7 +435,7 @@ export default function ClientsPage() {
       setClients(result.data)
       setTotal(result.total)
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao carregar clientes')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao carregar clientes')
     } finally {
       setLoading(false)
     }

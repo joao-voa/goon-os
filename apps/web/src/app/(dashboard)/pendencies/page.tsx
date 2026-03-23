@@ -187,7 +187,7 @@ function PendencyCard({ pendency, onChangeStatus }: PendencyCardProps) {
             {pendency.status === 'OPEN' && (
               <button
                 className="goon-btn-primary"
-                style={{ fontSize: 8, padding: '4px 8px' }}
+                style={{ fontSize: 8, padding: '4px 8px', minHeight: 44 }}
                 onClick={() => onChangeStatus(pendency.id, 'IN_PROGRESS')}
               >
                 Em Andamento
@@ -195,7 +195,7 @@ function PendencyCard({ pendency, onChangeStatus }: PendencyCardProps) {
             )}
             <button
               className="goon-btn-accent"
-              style={{ fontSize: 8, padding: '4px 8px' }}
+              style={{ fontSize: 8, padding: '4px 8px', minHeight: 44 }}
               onClick={() => onChangeStatus(pendency.id, 'RESOLVED')}
             >
               Resolver
@@ -461,7 +461,7 @@ export default function PendenciesPage() {
       )
       setPendencies(result.data)
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao carregar pendências')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao carregar pendências')
     } finally {
       setLoading(false)
     }

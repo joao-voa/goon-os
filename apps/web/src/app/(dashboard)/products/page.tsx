@@ -37,10 +37,10 @@ function EditModal({ product, onClose, onSaved }: EditModalProps) {
         body: JSON.stringify({ name, description: description || null }),
       })
       onSaved(updated)
-      toast.success('Produto atualizado')
+      toast.success('[OK] Produto atualizado')
       onClose()
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao salvar produto')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao salvar produto')
     } finally {
       setSaving(false)
     }
@@ -290,7 +290,7 @@ export default function ProductsPage() {
       const data = await apiFetch<Product[]>('/api/products')
       setProducts(data)
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao carregar produtos')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao carregar produtos')
     } finally {
       setLoading(false)
     }
@@ -309,7 +309,7 @@ export default function ProductsPage() {
       setProducts(prev => prev.map(p => (p.id === updated.id ? { ...updated, _count: p._count } : p)))
       toast.success(updated.isActive ? '[OK] Produto ativado' : '[OK] Produto desativado')
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar produto')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao atualizar produto')
     }
   }
 

@@ -71,6 +71,12 @@ export function Sidebar({
 
   return (
     <>
+      <style>{`
+        @keyframes badgePulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(1.15); }
+        }
+      `}</style>
       {/* Mobile backdrop */}
       {isMobile && mobileOpen && (
         <div
@@ -213,6 +219,7 @@ export function Sidebar({
                       padding: '0 3px',
                       border: '1px solid white',
                       lineHeight: 1,
+                      animation: 'badgePulse 2s ease-in-out infinite',
                     }}
                   >
                     {openPendenciesCount > 99 ? '99+' : openPendenciesCount}

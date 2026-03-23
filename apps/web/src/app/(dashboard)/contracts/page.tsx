@@ -104,7 +104,7 @@ function openContractInTab(path: string) {
       const url = URL.createObjectURL(blob)
       window.open(url, '_blank')
     })
-    .catch(() => toast.error('Erro ao abrir contrato'))
+    .catch(() => toast.error('[ERRO] Erro ao abrir contrato'))
 }
 
 // ---- Signature Badge ----
@@ -164,7 +164,7 @@ function ContractDetailModal({ contract, onClose, onRefresh }: DetailModalProps)
       toast.success('[OK] Contrato gerado — abrindo para impressão')
       onRefresh()
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao gerar contrato')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao gerar contrato')
     } finally {
       setLoading(false)
     }
@@ -185,7 +185,7 @@ function ContractDetailModal({ contract, onClose, onRefresh }: DetailModalProps)
       onRefresh()
       onClose()
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao alterar status')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao alterar status')
     } finally {
       setLoading(false)
     }
@@ -202,7 +202,7 @@ function ContractDetailModal({ contract, onClose, onRefresh }: DetailModalProps)
       onRefresh()
       onClose()
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao marcar assinatura')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao marcar assinatura')
     } finally {
       setLoading(false)
     }
@@ -557,7 +557,7 @@ export default function ContractsPage() {
       setContracts(result.data)
       setTotal(result.total)
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao carregar contratos')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao carregar contratos')
     } finally {
       setLoading(false)
     }
@@ -596,7 +596,7 @@ export default function ContractsPage() {
       toast.success('[OK] Contrato marcado como assinado')
       handleRefresh()
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao marcar assinatura')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao marcar assinatura')
     }
   }
 
@@ -815,6 +815,7 @@ export default function ContractsPage() {
                               fontSize: 10,
                               fontWeight: 700,
                               whiteSpace: 'nowrap',
+                              minHeight: 44,
                             }}
                             onClick={e => handleMarkSigned(contract, e)}
                           >

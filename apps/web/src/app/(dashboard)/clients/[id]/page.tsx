@@ -24,6 +24,13 @@ interface Product {
   isActive?: boolean
 }
 
+interface PaymentStats {
+  total: number
+  paid: number
+  overdue: number
+  pending: number
+}
+
 interface ClientPlan {
   id: string
   status: string
@@ -36,6 +43,7 @@ interface ClientPlan {
   endDate?: string | null
   notes?: string | null
   product: Product
+  paymentStats?: PaymentStats | null
 }
 
 interface Contract {
@@ -296,7 +304,7 @@ function AddPlanModal({ clientId, onClose, onCreated }: AddPlanModalProps) {
   useEffect(() => {
     apiFetch<Product[]>('/api/products')
       .then(data => setProducts(data.filter(p => p.isActive)))
-      .catch(() => toast.error('Erro ao carregar produtos'))
+      .catch(() => toast.error('[ERRO] Erro ao carregar produtos'))
       .finally(() => setLoadingProducts(false))
   }, [])
 
@@ -317,7 +325,7 @@ function AddPlanModal({ clientId, onClose, onCreated }: AddPlanModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!productId) { toast.error('Selecione um produto'); return }
+    if (!productId) { toast.error('[ERRO] Selecione um produto'); return }
     setSaving(true)
     try {
       const body: Record<string, unknown> = {
@@ -341,7 +349,7 @@ function AddPlanModal({ clientId, onClose, onCreated }: AddPlanModalProps) {
       toast.success('[OK] Plano adicionado')
       onClose()
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao criar plano')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao criar plano')
     } finally {
       setSaving(false)
     }
@@ -565,7 +573,7 @@ function openContractTab(path: string, method: 'GET' | 'POST' = 'GET') {
       const blob = new Blob([html], { type: 'text/html' })
       window.open(URL.createObjectURL(blob), '_blank')
     })
-    .catch(() => toast.error('Erro ao abrir contrato'))
+    .catch(() => toast.error('[ERRO] Erro ao abrir contrato'))
 }
 
 function ContractActions({ contract, onRefresh }: { contract: Contract; onRefresh: () => void }) {
@@ -582,7 +590,7 @@ function ContractActions({ contract, onRefresh }: { contract: Contract; onRefres
       toast.success(`[OK] Status → ${labels[newStatus] ?? newStatus}`)
       onRefresh()
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao alterar status')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao alterar status')
     } finally {
       setBusy(false)
     }
@@ -598,7 +606,7 @@ function ContractActions({ contract, onRefresh }: { contract: Contract; onRefres
       toast.success('[OK] Contrato marcado como assinado')
       onRefresh()
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao marcar assinatura')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao marcar assinatura')
     } finally {
       setBusy(false)
     }
@@ -684,7 +692,7 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!templateType) { toast.error('Template não detectado'); return }
+    if (!templateType) { toast.error('[ERRO] Template não detectado'); return }
     setSaving(true)
     try {
       await apiFetch('/api/contracts', {
@@ -698,7 +706,7 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
       toast.success('[OK] Contrato criado')
       onCreated()
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao criar contrato')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao criar contrato')
     } finally {
       setSaving(false)
     }
@@ -841,7 +849,7 @@ export default function ClientDetailPage() {
       const data = await apiFetch<ClientDetail>(`/api/clients/${id}`)
       setClient(data)
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao carregar cliente')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao carregar cliente')
     } finally {
       setLoading(false)
     }
@@ -892,7 +900,7 @@ export default function ClientDetailPage() {
       setClient(updated)
       toast.success('[OK] Campo atualizado')
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao salvar')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao salvar')
       throw err
     }
   }
@@ -908,7 +916,7 @@ export default function ClientDetailPage() {
       setClient(updated)
       toast.success(`[OK] Status → ${statusLabel(newStatus)}`)
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao alterar status')
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao alterar status')
     } finally {
       setChangingStatus(false)
     }
@@ -1089,53 +1097,82 @@ export default function ClientDetailPage() {
                 <div
                   key={plan.id}
                   style={{
-                    padding: '14px 16px',
                     background: 'var(--retro-gray)',
                     border: '2px solid black',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 0,
+                  }}
+                >
+                  <div style={{
+                    padding: '14px 16px',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     gap: 12,
                     flexWrap: 'wrap',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 40,
-                        height: 40,
-                        background: color,
-                        color: 'white',
-                        border: '2px solid black',
-                        fontFamily: 'var(--font-pixel)',
-                        fontSize: 10,
-                        fontWeight: 800,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {plan.product.code}
-                    </span>
-                    <div>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'black', fontSize: 13, textTransform: 'uppercase' }}>
-                        {plan.product.name}
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 40,
+                          height: 40,
+                          background: color,
+                          color: 'white',
+                          border: '2px solid black',
+                          fontFamily: 'var(--font-pixel)',
+                          fontSize: 10,
+                          fontWeight: 800,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {plan.product.code}
                       </span>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', marginTop: 3, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                        <span>{paymentTypeLabel(plan.paymentType)}</span>
-                        {plan.installments && <span>{plan.installments}x {fmtBRL(plan.installmentValue ?? undefined)}</span>}
-                        <span>Início: {new Date(plan.startDate).toLocaleDateString('pt-BR')}</span>
-                        {plan.endDate && <span>Término: {new Date(plan.endDate).toLocaleDateString('pt-BR')}</span>}
+                      <div>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'black', fontSize: 13, textTransform: 'uppercase' }}>
+                          {plan.product.name}
+                        </span>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', marginTop: 3, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                          <span>{paymentTypeLabel(plan.paymentType)}</span>
+                          {plan.installments && <span>{plan.installments}x {fmtBRL(plan.installmentValue ?? undefined)}</span>}
+                          <span>Início: {new Date(plan.startDate).toLocaleDateString('pt-BR')}</span>
+                          {plan.endDate && <span>Término: {new Date(plan.endDate).toLocaleDateString('pt-BR')}</span>}
+                        </div>
                       </div>
                     </div>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                      <span style={{ fontFamily: 'var(--font-pixel)', fontWeight: 700, color: 'black', fontSize: 12 }}>
+                        {fmtBRL(plan.value)}
+                      </span>
+                      <span className={statusClass(plan.status)}>{statusLabel(plan.status)}</span>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                    <span style={{ fontFamily: 'var(--font-pixel)', fontWeight: 700, color: 'black', fontSize: 12 }}>
-                      {fmtBRL(plan.value)}
-                    </span>
-                    <span className={statusClass(plan.status)}>{statusLabel(plan.status)}</span>
-                  </div>
+                  {plan.paymentStats && (
+                    <div style={{
+                      padding: '6px 14px',
+                      borderTop: '1px solid black',
+                      background: 'white',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 11,
+                      color: '#333',
+                      display: 'flex',
+                      gap: 10,
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                    }}>
+                      <span>Parcelas:</span>
+                      <span style={{ color: '#006600', fontWeight: 700 }}>{plan.paymentStats.paid}/{plan.paymentStats.total} pagas</span>
+                      {plan.paymentStats.overdue > 0 && (
+                        <span style={{ color: '#cc0000', fontWeight: 700 }}>· {plan.paymentStats.overdue} vencida{plan.paymentStats.overdue > 1 ? 's' : ''}</span>
+                      )}
+                      {plan.paymentStats.pending > 0 && (
+                        <span style={{ color: '#555' }}>· {plan.paymentStats.pending} pendente{plan.paymentStats.pending > 1 ? 's' : ''}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             })}
@@ -1253,7 +1290,21 @@ export default function ClientDetailPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <div>
               <label className="goon-label" style={{ marginBottom: 8 }}>Etapa atual</label>
-              <span className="goon-badge goon-badge-pending">
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '3px 10px',
+                  background: STAGE_COLORS[client.onboarding.currentStage] ?? '#888',
+                  color: client.onboarding.currentStage === 'ONBOARDING_DONE' ? 'black' : 'white',
+                  border: '1px solid black',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                }}
+              >
                 {STAGE_LABELS[client.onboarding.currentStage] ?? client.onboarding.currentStage}
               </span>
             </div>
