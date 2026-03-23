@@ -86,7 +86,7 @@ function Skeleton({ width, height }: { width?: string | number; height?: string 
 // ---- KPI Card ----
 interface KpiCardProps {
   label: string
-  value: string | number
+  value: React.ReactNode
   icon: React.ReactNode
   accentColor: string
 }
