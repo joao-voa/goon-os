@@ -8,6 +8,7 @@ import { ClientsModule } from './modules/clients/clients.module'
 import { ProductsModule } from './modules/products/products.module'
 import { PlansModule } from './modules/plans/plans.module'
 import { ContractsModule } from './modules/contracts/contracts.module'
+import { OnboardingModule } from './modules/onboarding/onboarding.module'
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ContractsModule } from './modules/contracts/contracts.module'
     ProductsModule,
     PlansModule,
     ContractsModule,
+    OnboardingModule,
   ],
   controllers: [AppController],
 })

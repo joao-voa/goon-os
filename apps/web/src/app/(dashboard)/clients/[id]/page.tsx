@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
-import { PRODUCT_COLORS } from '@/lib/constants'
+import { PRODUCT_COLORS, STAGE_LABELS, STAGE_COLORS } from '@/lib/constants'
 
 // ---- Helpers ----
 const fmtBRL = (n?: number | null) =>
@@ -1241,13 +1241,51 @@ export default function ClientDetailPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <div>
               <p style={{ fontSize: 13, color: 'var(--goon-text-muted)', margin: '0 0 6px 0' }}>Etapa atual</p>
-              <span className="goon-badge goon-badge-primary">
-                {onboardingStageLabel(client.onboarding.currentStage)}
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: (STAGE_COLORS[client.onboarding.currentStage] ?? '#888') + '22',
+                  color: STAGE_COLORS[client.onboarding.currentStage] ?? '#888',
+                  border: `1px solid ${(STAGE_COLORS[client.onboarding.currentStage] ?? '#888')}44`,
+                  borderRadius: 10,
+                  padding: '3px 10px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                }}
+              >
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: STAGE_COLORS[client.onboarding.currentStage] ?? '#888',
+                    flexShrink: 0,
+                  }}
+                />
+                {STAGE_LABELS[client.onboarding.currentStage] ?? client.onboarding.currentStage}
               </span>
             </div>
-            <button className="goon-btn-ghost" disabled style={{ opacity: 0.4, cursor: 'not-allowed' }}>
-              Ver no Kanban
-            </button>
+            <a
+              href="/onboarding"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '8px 14px',
+                background: 'transparent',
+                border: '1px solid var(--goon-border)',
+                borderRadius: 8,
+                color: 'var(--goon-text-secondary)',
+                fontSize: 13,
+                fontWeight: 600,
+                textDecoration: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              Ver no Kanban →
+            </a>
           </div>
         ) : (
           <p style={{ color: 'var(--goon-text-muted)', fontSize: 14 }}>Sem onboarding registrado.</p>
