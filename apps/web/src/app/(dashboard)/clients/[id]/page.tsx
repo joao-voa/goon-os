@@ -42,7 +42,15 @@ interface Contract {
   id: string
   templateType: string
   status: string
+  version: number
+  dynamicFields: Record<string, string>
+  generatedPdfUrl?: string | null
   createdAt: string
+  clientPlan?: {
+    id: string
+    value: number
+    product: { id: string; code: string; name: string }
+  } | null
 }
 
 interface Onboarding {
@@ -532,6 +540,263 @@ function AddPlanModal({ clientId, onClose, onCreated }: AddPlanModalProps) {
   )
 }
 
+// ---- Contract Status Badge ----
+function ContractStatusBadge({ status }: { status: string }) {
+  const map: Record<string, string> = {
+    DRAFT: 'goon-badge goon-badge-muted',
+    SENT: 'goon-badge goon-badge-warning',
+    SIGNED: 'goon-badge goon-badge-success',
+    CANCELLED: 'goon-badge goon-badge-danger',
+  }
+  const labels: Record<string, string> = {
+    DRAFT: 'Rascunho',
+    SENT: 'Enviado',
+    SIGNED: 'Assinado',
+    CANCELLED: 'Cancelado',
+  }
+  return <span className={map[status] ?? 'goon-badge goon-badge-muted'}>{labels[status] ?? status}</span>
+}
+
+// ---- Contract Actions (inline) ----
+const CONTRACT_API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+
+function openContractTab(path: string, method: 'GET' | 'POST' = 'GET') {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+  fetch(`${CONTRACT_API_URL}${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+    .then(r => r.text())
+    .then(html => {
+      const blob = new Blob([html], { type: 'text/html' })
+      window.open(URL.createObjectURL(blob), '_blank')
+    })
+    .catch(() => toast.error('Erro ao abrir contrato'))
+}
+
+function ContractActions({ contract, onRefresh }: { contract: Contract; onRefresh: () => void }) {
+  const [busy, setBusy] = useState(false)
+
+  const handleStatus = async (newStatus: string) => {
+    setBusy(true)
+    try {
+      await apiFetch(`/api/contracts/${contract.id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus }),
+      })
+      const labels: Record<string, string> = { SENT: 'Enviado', SIGNED: 'Assinado', CANCELLED: 'Cancelado' }
+      toast.success(`Status: ${labels[newStatus] ?? newStatus}`)
+      onRefresh()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao alterar status')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const btnStyle: React.CSSProperties = {
+    padding: '4px 10px',
+    borderRadius: 6,
+    border: '1px solid var(--goon-border)',
+    background: 'transparent',
+    color: 'var(--goon-text-secondary)',
+    cursor: 'pointer',
+    fontSize: 12,
+    fontWeight: 600,
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+      <button
+        style={btnStyle}
+        disabled={busy}
+        onClick={() => openContractTab(`/api/contracts/${contract.id}/generate-pdf`, 'POST')}
+      >
+        Gerar PDF
+      </button>
+      {contract.generatedPdfUrl && (
+        <button
+          style={btnStyle}
+          disabled={busy}
+          onClick={() => openContractTab(`/api/contracts/${contract.id}/download`)}
+        >
+          Baixar
+        </button>
+      )}
+      {contract.status === 'DRAFT' && (
+        <button style={btnStyle} disabled={busy} onClick={() => handleStatus('SENT')}>Enviado</button>
+      )}
+      {contract.status === 'SENT' && (
+        <button style={btnStyle} disabled={busy} onClick={() => handleStatus('SIGNED')}>Assinado</button>
+      )}
+      {(contract.status === 'DRAFT' || contract.status === 'SENT') && (
+        <button style={{ ...btnStyle, color: '#ef4444', borderColor: '#ef444440' }} disabled={busy} onClick={() => handleStatus('CANCELLED')}>
+          Cancelar
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ---- Create Contract Modal ----
+interface CreateContractModalProps {
+  clientId: string
+  plans: ClientPlan[]
+  onClose: () => void
+  onCreated: () => void
+}
+
+function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateContractModalProps) {
+  const [selectedPlanId, setSelectedPlanId] = useState(plans.length > 0 ? plans[0].id : '')
+  const [templateType, setTemplateType] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const selectedPlan = plans.find(p => p.id === selectedPlanId)
+
+  // Auto-derive template from product code
+  useEffect(() => {
+    if (selectedPlan) {
+      setTemplateType(selectedPlan.product.code.toLowerCase())
+    }
+  }, [selectedPlan])
+
+  // Preview fields
+  const previewFields = selectedPlan
+    ? {
+        Produto: selectedPlan.product.name,
+        Valor: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(selectedPlan.value),
+        Início: new Date(selectedPlan.startDate).toLocaleDateString('pt-BR'),
+        Duração: selectedPlan.cycleDuration ? `${selectedPlan.cycleDuration} meses` : '—',
+      }
+    : {}
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!templateType) { toast.error('Template não detectado'); return }
+    setSaving(true)
+    try {
+      await apiFetch('/api/contracts', {
+        method: 'POST',
+        body: JSON.stringify({
+          clientId,
+          clientPlanId: selectedPlanId || undefined,
+          templateType,
+        }),
+      })
+      toast.success('Contrato criado com sucesso')
+      onCreated()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao criar contrato')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1000, padding: 16, overflowY: 'auto',
+      }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="goon-card" style={{ width: '100%', maxWidth: 480, padding: 28, margin: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--goon-text-primary)', margin: 0 }}>
+            Gerar Contrato
+          </h2>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', color: 'var(--goon-text-muted)', cursor: 'pointer', fontSize: 20, lineHeight: 1, padding: 4 }}
+          >
+            ×
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Plan selector */}
+          <div>
+            <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Plano</label>
+            {plans.length === 0 ? (
+              <p style={{ fontSize: 13, color: 'var(--goon-text-muted)' }}>
+                Nenhum plano disponível. Adicione um plano primeiro.
+              </p>
+            ) : (
+              <select
+                className="goon-select"
+                value={selectedPlanId}
+                onChange={e => setSelectedPlanId(e.target.value)}
+                style={{ width: '100%' }}
+              >
+                <option value="">Sem plano vinculado</option>
+                {plans.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.product.code} — {p.product.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Template type */}
+          <div>
+            <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Template</label>
+            <select
+              className="goon-select"
+              value={templateType}
+              onChange={e => setTemplateType(e.target.value)}
+              required
+              style={{ width: '100%' }}
+            >
+              <option value="">Selecionar...</option>
+              <option value="ge">GE — Gestão Estratégica</option>
+              <option value="gi">GI — Gestão Integrada</option>
+              <option value="gs">GS — Gestão Simplificada</option>
+            </select>
+          </div>
+
+          {/* Preview */}
+          {Object.keys(previewFields).length > 0 && (
+            <div
+              style={{
+                background: 'var(--goon-input-bg)',
+                borderRadius: 8,
+                border: '1px solid var(--goon-border-subtle)',
+                padding: 14,
+              }}
+            >
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--goon-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+                Pré-visualização dos campos
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px' }}>
+                {Object.entries(previewFields).map(([label, value]) => (
+                  <div key={label}>
+                    <span style={{ fontSize: 11, color: 'var(--goon-text-muted)', display: 'block' }}>{label}</span>
+                    <span style={{ fontSize: 13, color: 'var(--goon-text-secondary)' }}>{String(value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
+            <button type="button" className="goon-btn-ghost" onClick={onClose} disabled={saving}>
+              Cancelar
+            </button>
+            <button type="submit" className="goon-btn-primary" disabled={saving || !templateType}>
+              {saving ? 'Criando...' : 'Criar Contrato'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ---- Section wrapper ----
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -556,6 +821,9 @@ export default function ClientDetailPage() {
   const [showAddPlan, setShowAddPlan] = useState(false)
   const [plans, setPlans] = useState<ClientPlan[]>([])
   const [loadingPlans, setLoadingPlans] = useState(false)
+  const [contracts, setContracts] = useState<Contract[]>([])
+  const [loadingContracts, setLoadingContracts] = useState(false)
+  const [showCreateContract, setShowCreateContract] = useState(false)
 
   const fetchClient = useCallback(async () => {
     setLoading(true)
@@ -581,10 +849,23 @@ export default function ClientDetailPage() {
     }
   }, [id])
 
+  const fetchContracts = useCallback(async () => {
+    setLoadingContracts(true)
+    try {
+      const result = await apiFetch<{ data: Contract[]; total: number }>(`/api/contracts?clientId=${id}&limit=50`)
+      setContracts(result.data)
+    } catch {
+      // silent
+    } finally {
+      setLoadingContracts(false)
+    }
+  }, [id])
+
   useEffect(() => {
     fetchClient()
     fetchPlans()
-  }, [fetchClient, fetchPlans])
+    fetchContracts()
+  }, [fetchClient, fetchPlans, fetchContracts])
 
   const handleSaveField = async (field: string, value: string) => {
     try {
@@ -879,38 +1160,80 @@ export default function ClientDetailPage() {
 
       {/* Contracts Section */}
       <Section title="Contratos">
-        {client.contracts.length === 0 ? (
+        {loadingContracts ? (
+          <p style={{ color: 'var(--goon-text-muted)', fontSize: 14 }}>Carregando contratos...</p>
+        ) : contracts.length === 0 ? (
           <p style={{ color: 'var(--goon-text-muted)', fontSize: 14 }}>Nenhum contrato gerado ainda.</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {client.contracts.map(contract => (
-              <div
-                key={contract.id}
-                style={{
-                  padding: '12px 16px',
-                  background: 'var(--goon-input-bg)',
-                  borderRadius: 8,
-                  border: '1px solid var(--goon-border-subtle)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <div>
-                  <span style={{ fontWeight: 600, color: 'var(--goon-text-primary)', fontSize: 14 }}>{contract.templateType}</span>
-                  <div style={{ fontSize: 12, color: 'var(--goon-text-muted)', marginTop: 2 }}>
-                    {new Date(contract.createdAt).toLocaleDateString('pt-BR')}
+            {contracts.map(contract => {
+              const productCode = contract.templateType.toUpperCase()
+              const color = PRODUCT_COLORS[productCode] ?? '#6b7280'
+              const productName = contract.clientPlan?.product?.name ?? contract.templateType
+
+              return (
+                <div
+                  key={contract.id}
+                  style={{
+                    padding: '14px 16px',
+                    background: 'var(--goon-input-bg)',
+                    borderRadius: 8,
+                    border: '1px solid var(--goon-border-subtle)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: 12,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+                    <span
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        width: 36, height: 36, borderRadius: 6, background: `${color}22`,
+                        color, fontSize: 12, fontWeight: 800, flexShrink: 0,
+                      }}
+                    >
+                      {productCode}
+                    </span>
+                    <div>
+                      <span style={{ fontWeight: 600, color: 'var(--goon-text-primary)', fontSize: 14 }}>{productName}</span>
+                      <div style={{ fontSize: 12, color: 'var(--goon-text-muted)', marginTop: 2, display: 'flex', gap: 8 }}>
+                        <span>v{contract.version}</span>
+                        <span>{new Date(contract.createdAt).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <ContractStatusBadge status={contract.status} />
+                    <ContractActions contract={contract} onRefresh={fetchContracts} />
                   </div>
                 </div>
-                <span className={statusClass(contract.status)}>{statusLabel(contract.status)}</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
-        <button className="goon-btn-ghost" disabled style={{ marginTop: 16, opacity: 0.4, cursor: 'not-allowed' }}>
+        <button
+          className="goon-btn-ghost"
+          onClick={() => setShowCreateContract(true)}
+          style={{ marginTop: 16 }}
+        >
           + Gerar Contrato
         </button>
       </Section>
+
+      {/* Create Contract Modal */}
+      {showCreateContract && (
+        <CreateContractModal
+          clientId={id}
+          plans={plans}
+          onClose={() => setShowCreateContract(false)}
+          onCreated={() => {
+            fetchContracts()
+            setShowCreateContract(false)
+          }}
+        />
+      )}
 
       {/* Onboarding Section */}
       <Section title="Onboarding">

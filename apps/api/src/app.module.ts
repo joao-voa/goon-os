@@ -7,6 +7,7 @@ import { ActivityLogModule } from './modules/activity-log/activity-log.module'
 import { ClientsModule } from './modules/clients/clients.module'
 import { ProductsModule } from './modules/products/products.module'
 import { PlansModule } from './modules/plans/plans.module'
+import { ContractsModule } from './modules/contracts/contracts.module'
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { PlansModule } from './modules/plans/plans.module'
     ClientsModule,
     ProductsModule,
     PlansModule,
+    ContractsModule,
   ],
   controllers: [AppController],
 })

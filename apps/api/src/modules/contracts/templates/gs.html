@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a1a; padding: 60px 50px; font-size: 13px; line-height: 1.7; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #22c55e; padding-bottom: 20px; margin-bottom: 30px; }
+    .logo { font-size: 28px; font-weight: 900; color: #22c55e; letter-spacing: 2px; }
+    .logo span { font-size: 14px; color: #888; font-weight: 400; }
+    .product-badge { background: #22c55e; color: white; padding: 6px 16px; border-radius: 4px; font-weight: 700; font-size: 12px; letter-spacing: 1px; }
+    h1 { font-size: 20px; margin-bottom: 20px; color: #1a1a1a; }
+    h2 { font-size: 15px; margin: 24px 0 12px; color: #22c55e; border-bottom: 1px solid #e5e5e5; padding-bottom: 6px; }
+    .section { margin-bottom: 16px; }
+    .field { display: flex; margin-bottom: 6px; }
+    .field-label { width: 200px; font-weight: 600; color: #555; }
+    .field-value { flex: 1; }
+    .financial { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 20px 0; }
+    .signature-area { margin-top: 60px; display: flex; justify-content: space-between; }
+    .signature-line { width: 45%; text-align: center; }
+    .signature-line hr { border: none; border-top: 1px solid #1a1a1a; margin-bottom: 6px; }
+    .signature-line p { font-size: 11px; color: #555; }
+    .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #999; border-top: 1px solid #e5e5e5; padding-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">GOON <span>CONSULTORIA</span></div>
+    <div class="product-badge">{{productName}}</div>
+  </div>
+
+  <h1>CONTRATO DE PRESTAÇÃO DE SERVIÇOS</h1>
+
+  <h2>1. PARTES</h2>
+  <div class="section">
+    <div class="field"><span class="field-label">Contratante:</span><span class="field-value">{{companyName}}</span></div>
+    <div class="field"><span class="field-label">CNPJ:</span><span class="field-value">{{cnpj}}</span></div>
+    <div class="field"><span class="field-label">Responsável:</span><span class="field-value">{{responsible}}</span></div>
+    <div class="field"><span class="field-label">Endereço:</span><span class="field-value">{{address}}</span></div>
+  </div>
+
+  <h2>2. OBJETO</h2>
+  <div class="section">
+    <p>Prestação de serviços de consultoria em gestão de negócios de moda e design, no escopo do programa <strong>{{productName}}</strong>, com duração de <strong>{{duration}} meses</strong>, conforme condições estabelecidas neste instrumento.</p>
+  </div>
+
+  <h2>3. VIGÊNCIA</h2>
+  <div class="section">
+    <div class="field"><span class="field-label">Data de Início:</span><span class="field-value">{{startDate}}</span></div>
+    <div class="field"><span class="field-label">Data de Término:</span><span class="field-value">{{endDate}}</span></div>
+  </div>
+
+  <h2>4. CONDIÇÕES FINANCEIRAS</h2>
+  <div class="financial">
+    <div class="field"><span class="field-label">Valor Total:</span><span class="field-value"><strong>{{value}}</strong></span></div>
+    <div class="field"><span class="field-label">Parcelas:</span><span class="field-value">{{installments}}x de {{installmentValue}}</span></div>
+  </div>
+
+  <h2>5. DISPOSIÇÕES GERAIS</h2>
+  <div class="section">
+    <p>As partes elegem o foro da comarca de [cidade] para dirimir quaisquer dúvidas oriundas deste contrato.</p>
+  </div>
+
+  <div class="signature-area">
+    <div class="signature-line">
+      <hr />
+      <p>GOON CONSULTORIA</p>
+    </div>
+    <div class="signature-line">
+      <hr />
+      <p>{{companyName}}</p>
+      <p>{{responsible}}</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>GOON CONSULTORIA — Documento gerado em {{generatedDate}}</p>
+  </div>
+</body>
+</html>
