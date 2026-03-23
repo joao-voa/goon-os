@@ -44,6 +44,8 @@ model Client {
   contracts    Contract[]
   onboarding   Onboarding?
   activityLogs ActivityLog[]
+  payments     Payment[]
+  pendencies   Pendency[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -63,42 +65,54 @@ model Product {
 }
 
 model ClientPlan {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   clientId         String
   productId        String
-  value            Decimal  @db.Decimal(10, 2)
+  value            Decimal   @db.Decimal(10, 2)
   paymentType      String
   installments     Int?
-  installmentValue Decimal? @db.Decimal(10, 2)
+  installmentValue Decimal?  @db.Decimal(10, 2)
   cycleDuration    Int?
-  cycleNumber      Int      @default(1)
+  cycleNumber      Int       @default(1)
   startDate        DateTime
   endDate          DateTime?
-  status           String   @default("ACTIVE")
+  status           String    @default("ACTIVE")
   notes            String?
+
+  // Financial dates (can differ from contract dates)
+  paymentStartDate  DateTime?
+  paymentEndDate    DateTime?
+  paymentDay        Int?      // day of month for installments (1-31)
+
+  // Renewal tracking
+  renewalStatus     String?   // null, PENDING, NOTIFIED, RENEWED, DECLINED
 
   client    Client     @relation(fields: [clientId], references: [id])
   product   Product    @relation(fields: [productId], references: [id])
   contracts Contract[]
+  payments  Payment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Contract {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   clientId        String
   clientPlanId    String?
   templateType    String
-  status          String   @default("DRAFT")
-  version         Int      @default(1)
+  status          String    @default("DRAFT")
+  version         Int       @default(1)
   dynamicFields   Json
   generatedPdfUrl String?
   sentAt          DateTime?
   signedAt        DateTime?
+  isSigned        Boolean   @default(false)
+  signatureDate   DateTime?
 
   client     Client      @relation(fields: [clientId], references: [id])
   clientPlan ClientPlan? @relation(fields: [clientPlanId], references: [id])
+  payments   Payment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -130,4 +144,40 @@ model ActivityLog {
   client Client? @relation(fields: [clientId], references: [id])
 
   createdAt DateTime @default(now())
+}
+
+model Payment {
+  id                String    @id @default(cuid())
+  clientId          String
+  clientPlanId      String?
+  contractId        String?
+  installment       Int       // parcela number (1, 2, 3...)
+  totalInstallments Int       // total (6, 12...)
+  dueDate           DateTime  // vencimento
+  value             Decimal   @db.Decimal(10, 2)
+  status            String    @default("PENDING") // PENDING, PAID, OVERDUE, CANCELLED, SCHEDULED
+  paidAt            DateTime? // data do pagamento
+  observation       String?
+
+  client      Client      @relation(fields: [clientId], references: [id])
+  clientPlan  ClientPlan? @relation(fields: [clientPlanId], references: [id])
+  contract    Contract?   @relation(fields: [contractId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Pendency {
+  id          String    @id @default(cuid())
+  clientId    String
+  type        String    // CONTRACT_UNSIGNED, PAYMENT_OVERDUE, PAYMENT_DUE_SOON, RENEWAL_PENDING, DOCUMENT_MISSING, CONTACT_NEEDED, OTHER
+  status      String    @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED
+  description String?
+  relatedId   String?   // ID of related payment, contract, etc.
+  resolvedAt  DateTime?
+
+  client      Client    @relation(fields: [clientId], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

@@ -35,3 +35,57 @@ export const PRODUCT_COLORS: Record<string, string> = {
   GI: '#3B82F6',
   GS: '#22c55e',
 }
+
+export const PAYMENT_STATUS_COLORS: Record<string, string> = {
+  PAID: '#006600',
+  PENDING: '#000080',
+  OVERDUE: '#cc0000',
+  SCHEDULED: '#c0c0c0',
+  CANCELLED: '#c0c0c0',
+}
+
+export const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  PAID: 'Pago',
+  PENDING: 'Pendente',
+  OVERDUE: 'Vencido',
+  SCHEDULED: 'Agendado',
+  CANCELLED: 'Cancelado',
+}
+
+export const PENDENCY_TYPE_COLORS: Record<string, string> = {
+  CONTRACT_UNSIGNED: '#cc0000',
+  PAYMENT_OVERDUE: '#cc0000',
+  PAYMENT_DUE_SOON: '#ff6600',
+  RENEWAL_PENDING: '#ff6600',
+  DOCUMENT_MISSING: '#000080',
+  CONTACT_NEEDED: '#000080',
+  OTHER: '#c0c0c0',
+}
+
+export const PENDENCY_TYPE_LABELS: Record<string, string> = {
+  CONTRACT_UNSIGNED: 'Contrato não assinado',
+  PAYMENT_OVERDUE: 'Boleto vencido',
+  PAYMENT_DUE_SOON: 'Boleto vence em breve',
+  RENEWAL_PENDING: 'Renovação pendente',
+  DOCUMENT_MISSING: 'Documento pendente',
+  CONTACT_NEEDED: 'Contato necessário',
+  OTHER: 'Outro',
+}
+
+export const PENDENCY_TYPE_ICONS: Record<string, string> = {
+  CONTRACT_UNSIGNED: '✦',
+  PAYMENT_OVERDUE: '◆',
+  PAYMENT_DUE_SOON: '◆',
+  RENEWAL_PENDING: '↺',
+  DOCUMENT_MISSING: '◉',
+  CONTACT_NEEDED: '▲',
+  OTHER: '○',
+}
+
+export const CONTRACT_STATUS_COLORS: Record<string, string> = {
+  DRAFT: '#c0c0c0',
+  SENT: '#000080',
+  SIGNED: '#006600',
+  CANCELLED: '#cc0000',
+  RENEWAL: '#ff6600',
+}

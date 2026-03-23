@@ -10,6 +10,8 @@ import { PlansModule } from './modules/plans/plans.module'
 import { ContractsModule } from './modules/contracts/contracts.module'
 import { OnboardingModule } from './modules/onboarding/onboarding.module'
 import { DashboardModule } from './modules/dashboard/dashboard.module'
+import { PaymentsModule } from './modules/payments/payments.module'
+import { PendenciesModule } from './modules/pendencies/pendencies.module'
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { DashboardModule } from './modules/dashboard/dashboard.module'
     ContractsModule,
     OnboardingModule,
     DashboardModule,
+    PaymentsModule,
+    PendenciesModule,
   ],
   controllers: [AppController],
 })

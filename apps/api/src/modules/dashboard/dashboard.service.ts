@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
+import { daysUntil } from '../clients/renewal.util'
 
 @Injectable()
 export class DashboardService {
@@ -53,11 +54,98 @@ export class DashboardService {
       include: { client: { select: { id: true, companyName: true } } },
     })
 
+    // 8. Pendencies KPIs
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const [
+      totalOpenPendencies,
+      contractUnsigned,
+      paymentOverduePendencies,
+      renewalPending,
+    ] = await this.prisma.$transaction([
+      this.prisma.pendency.count({ where: { status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
+      this.prisma.pendency.count({ where: { type: 'CONTRACT_UNSIGNED', status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
+      this.prisma.pendency.count({ where: { type: 'PAYMENT_OVERDUE', status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
+      this.prisma.pendency.count({ where: { type: 'RENEWAL_PENDING', status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
+    ])
+
+    // 9. Financial KPIs
+    const endOfMonth = new Date(startOfMonth)
+    endOfMonth.setMonth(endOfMonth.getMonth() + 1)
+
+    const [paidPayments, pendingPayments, overduePayments] = await this.prisma.$transaction([
+      this.prisma.payment.findMany({
+        where: { status: 'PAID', paidAt: { gte: startOfMonth, lt: endOfMonth } },
+        select: { value: true },
+      }),
+      this.prisma.payment.findMany({
+        where: { status: 'PENDING' },
+        select: { value: true },
+      }),
+      this.prisma.payment.findMany({
+        where: { status: 'OVERDUE' },
+        select: { value: true },
+      }),
+    ])
+
+    const totalReceived = paidPayments.reduce((sum, p) => sum + Number(p.value), 0)
+    const totalPending = pendingPayments.reduce((sum, p) => sum + Number(p.value), 0)
+    const totalOverdue = overduePayments.reduce((sum, p) => sum + Number(p.value), 0)
+    const overdueCount = overduePayments.length
+
+    // MRR: sum of active plan values (treating each as monthly)
+    const mrr = totalRevenue
+
+    const averageTicket = totalActiveClients > 0 ? totalRevenue / totalActiveClients : 0
+
+    // 10. Renewal clients (plans with endDate within 90 days)
+    const renewalThreshold = new Date(today)
+    renewalThreshold.setDate(renewalThreshold.getDate() + 90)
+
+    const renewalPlans = await this.prisma.clientPlan.findMany({
+      where: {
+        status: 'ACTIVE',
+        endDate: { gte: today, lte: renewalThreshold },
+      },
+      select: {
+        id: true,
+        endDate: true,
+        client: { select: { id: true, companyName: true } },
+      },
+      orderBy: { endDate: 'asc' },
+    })
+
+    const renewalClients = renewalPlans.map(plan => ({
+      id: plan.client.id,
+      companyName: plan.client.companyName,
+      contractEndDate: plan.endDate,
+      daysLeft: plan.endDate ? daysUntil(plan.endDate) : null,
+    }))
+
     return {
       kpis: { totalActiveClients, newClientsThisMonth, totalRevenue, revenueByProduct },
       pipelineSummary,
       contractsStatus,
       recentActivity,
+      pendencies: {
+        total: totalOpenPendencies,
+        contractUnsigned,
+        paymentOverdue: paymentOverduePendencies,
+        renewalPending,
+      },
+      financialKpis: {
+        mrr,
+        totalReceived,
+        totalPending,
+        totalOverdue,
+        overdueCount,
+        averageTicket,
+      },
+      renewals: {
+        count: renewalClients.length,
+        clients: renewalClients,
+      },
     }
   }
 }

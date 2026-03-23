@@ -1,6 +1,6 @@
 'use client'
 
-import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, LogOut, ChevronLeft, ChevronRight } from 'lucide-react'
+import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, DollarSign, AlertTriangle, LogOut, ChevronLeft, ChevronRight } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 
 interface NavItem {
@@ -25,6 +25,8 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/products',   label: 'Produtos',   icon: Package },
   { href: '/contracts',  label: 'Contratos',  icon: FileText },
   { href: '/onboarding', label: 'Onboarding', icon: GitBranch },
+  { href: '/payments',   label: 'Financeiro', icon: DollarSign },
+  { href: '/pendencies', label: 'Pendências', icon: AlertTriangle },
 ]
 
 export function Sidebar({
