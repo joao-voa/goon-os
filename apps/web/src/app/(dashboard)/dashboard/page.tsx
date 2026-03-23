@@ -52,11 +52,11 @@ function timeAgo(date: string): string {
   const diff = now - new Date(date).getTime()
   const mins = Math.floor(diff / 60000)
   if (mins < 1) return 'agora'
-  if (mins < 60) return `há ${mins} min`
+  if (mins < 60) return `${mins}min`
   const hours = Math.floor(mins / 60)
-  if (hours < 24) return `há ${hours}h`
+  if (hours < 24) return `${hours}h`
   const days = Math.floor(hours / 24)
-  return `há ${days}d`
+  return `${days}d`
 }
 
 const fmtBRL = (n?: number | null) =>
@@ -75,9 +75,8 @@ function Skeleton({ width, height }: { width?: string | number; height?: string 
       style={{
         width: width ?? '100%',
         height: height ?? 16,
-        borderRadius: 6,
-        background: 'var(--goon-border)',
-        opacity: 0.5,
+        background: '#c8c8c8',
+        border: '1px solid #aaa',
         animation: 'pulse 1.5s ease-in-out infinite',
       }}
     />
@@ -96,43 +95,58 @@ function KpiCard({ label, value, icon, accentColor }: KpiCardProps) {
   return (
     <div
       style={{
-        background: 'var(--goon-dark-card)',
-        border: '1px solid var(--goon-border)',
-        borderRadius: 12,
+        background: 'white',
+        border: '2px solid black',
+        boxShadow: '4px 4px 0px 0px #000',
         padding: '20px 24px',
         display: 'flex',
         flexDirection: 'column',
         gap: 12,
         position: 'relative',
         overflow: 'hidden',
+        transition: 'transform 0.15s, box-shadow 0.15s',
+      }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLDivElement).style.transform = 'translate(-2px, -2px)'
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '6px 6px 0px 0px #000'
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLDivElement).style.transform = ''
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '4px 4px 0px 0px #000'
       }}
     >
-      {/* Accent top border */}
+      {/* Accent left border */}
       <div
         style={{
           position: 'absolute',
           top: 0,
           left: 0,
-          right: 0,
-          height: 3,
+          bottom: 0,
+          width: 4,
           background: accentColor,
-          borderRadius: '12px 12px 0 0',
         }}
       />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <span style={{ color: 'var(--goon-text-muted)', fontSize: 12, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          color: '#555',
+          fontSize: 10,
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+        }}>
           {label}
         </span>
         <div
           style={{
             width: 36,
             height: 36,
-            borderRadius: 8,
-            background: `${accentColor}1a`,
+            border: '2px solid black',
+            background: 'var(--retro-gray)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: accentColor,
+            color: 'black',
             flexShrink: 0,
           }}
         >
@@ -141,10 +155,10 @@ function KpiCard({ label, value, icon, accentColor }: KpiCardProps) {
       </div>
       <span
         style={{
-          color: 'var(--goon-text-primary)',
-          fontSize: 28,
-          fontWeight: 700,
-          lineHeight: 1,
+          fontFamily: 'var(--font-pixel)',
+          color: 'black',
+          fontSize: 16,
+          lineHeight: 1.3,
         }}
       >
         {value}
@@ -155,18 +169,29 @@ function KpiCard({ label, value, icon, accentColor }: KpiCardProps) {
 
 // ---- Revenue Product Card ----
 function RevenueProductCard({ code, value }: { code: string; value: number }) {
-  const color = PRODUCT_COLORS[code] ?? '#6b7280'
   const productNames: Record<string, string> = { GE: 'Gestão Empresarial', GI: 'Gestão Imobiliária', GS: 'Gestão de Saúde' }
+  const colors: Record<string, string> = { GE: 'var(--retro-blue)', GI: 'var(--success)', GS: 'var(--warning)' }
+  const color = colors[code] ?? 'black'
+
   return (
     <div
       style={{
-        background: 'var(--goon-dark-card)',
-        border: '1px solid var(--goon-border)',
-        borderRadius: 10,
+        background: 'white',
+        border: '2px solid black',
+        boxShadow: '4px 4px 0px 0px #000',
         padding: '16px 20px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        transition: 'transform 0.15s, box-shadow 0.15s',
+      }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLDivElement).style.transform = 'translate(-2px, -2px)'
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '6px 6px 0px 0px #000'
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLDivElement).style.transform = ''
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '4px 4px 0px 0px #000'
       }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -174,11 +199,13 @@ function RevenueProductCard({ code, value }: { code: string; value: number }) {
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            background: `${color}22`,
-            color,
-            borderRadius: 6,
+            background: color,
+            color: 'white',
+            border: '1px solid black',
+            boxShadow: '1px 1px 0 black',
             padding: '2px 10px',
-            fontSize: 12,
+            fontFamily: 'var(--font-pixel)',
+            fontSize: 10,
             fontWeight: 700,
             letterSpacing: '0.05em',
             width: 'fit-content',
@@ -186,9 +213,9 @@ function RevenueProductCard({ code, value }: { code: string; value: number }) {
         >
           {code}
         </span>
-        <span style={{ color: 'var(--goon-text-muted)', fontSize: 12 }}>{productNames[code]}</span>
+        <span style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 11 }}>{productNames[code]}</span>
       </div>
-      <span style={{ color: 'var(--goon-text-primary)', fontSize: 18, fontWeight: 700 }}>
+      <span style={{ fontFamily: 'var(--font-pixel)', color: 'black', fontSize: 13 }}>
         {fmtBRL(value)}
       </span>
     </div>
@@ -202,23 +229,23 @@ function PipelineSummary({ data }: { data: PipelineStage[] }) {
   return (
     <div
       style={{
-        background: 'var(--goon-dark-card)',
-        border: '1px solid var(--goon-border)',
-        borderRadius: 12,
+        background: 'white',
+        border: '2px solid black',
+        boxShadow: '4px 4px 0px 0px #000',
         padding: '20px 24px',
         flex: 1,
         minWidth: 0,
       }}
     >
-      <h3 style={{ color: 'var(--goon-text-primary)', fontSize: 14, fontWeight: 600, margin: '0 0 16px 0' }}>
-        Pipeline de Onboarding
+      <h3 style={{ fontFamily: 'var(--font-pixel)', color: 'black', fontSize: 10, margin: '0 0 16px 0', textTransform: 'uppercase' }}>
+        Pipeline Onboarding
       </h3>
       {data.length === 0 ? (
-        <p style={{ color: 'var(--goon-text-muted)', fontSize: 13 }}>Nenhum onboarding ativo</p>
+        <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 12 }}>Nenhum onboarding ativo</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {data.map(item => {
-            const color = STAGE_COLORS[item.stage] ?? '#6b7280'
+            const color = STAGE_COLORS[item.stage] ?? '#888'
             const label = STAGE_LABELS[item.stage] ?? item.stage
             const pct = Math.round((item.count / maxCount) * 100)
             return (
@@ -228,16 +255,16 @@ function PipelineSummary({ data }: { data: PipelineStage[] }) {
                 onClick={() => router.push('/onboarding')}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
-                    <span style={{ color: 'var(--goon-text-secondary)', fontSize: 12 }}>{label}</span>
-                  </div>
+                  <span style={{ fontFamily: 'var(--font-mono)', color: 'black', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>
+                    {label}
+                  </span>
                   <span
                     style={{
-                      background: `${color}22`,
-                      color,
-                      borderRadius: 12,
-                      padding: '1px 8px',
+                      background: 'black',
+                      color: 'white',
+                      border: '1px solid black',
+                      padding: '1px 6px',
+                      fontFamily: 'var(--font-mono)',
                       fontSize: 11,
                       fontWeight: 700,
                     }}
@@ -245,13 +272,12 @@ function PipelineSummary({ data }: { data: PipelineStage[] }) {
                     {item.count}
                   </span>
                 </div>
-                <div style={{ height: 4, background: 'var(--goon-border)', borderRadius: 4 }}>
+                <div style={{ height: 8, background: 'var(--retro-gray)', border: '1px solid black' }}>
                   <div
                     style={{
                       height: '100%',
                       width: `${pct}%`,
-                      background: color,
-                      borderRadius: 4,
+                      background: 'black',
                       transition: 'width 0.4s ease',
                     }}
                   />
@@ -269,24 +295,24 @@ function PipelineSummary({ data }: { data: PipelineStage[] }) {
 function ContractsStatus({ data }: { data: ContractStatusItem[] }) {
   const getCount = (status: string) => data.find(d => d.status === status)?.count ?? 0
   const items = [
-    { label: 'Rascunho', status: 'DRAFT', color: '#6b7280' },
-    { label: 'Enviado', status: 'SENT', color: '#f59e0b' },
-    { label: 'Assinado', status: 'SIGNED', color: '#10b981' },
+    { label: 'Rascunho', status: 'DRAFT', badgeClass: 'goon-badge goon-badge-draft' },
+    { label: 'Enviado', status: 'SENT', badgeClass: 'goon-badge goon-badge-sent' },
+    { label: 'Assinado', status: 'SIGNED', badgeClass: 'goon-badge goon-badge-signed' },
   ]
   return (
     <div
       style={{
-        background: 'var(--goon-dark-card)',
-        border: '1px solid var(--goon-border)',
-        borderRadius: 12,
+        background: 'white',
+        border: '2px solid black',
+        boxShadow: '4px 4px 0px 0px #000',
         padding: '20px 24px',
         flex: '0 0 240px',
       }}
     >
-      <h3 style={{ color: 'var(--goon-text-primary)', fontSize: 14, fontWeight: 600, margin: '0 0 16px 0' }}>
-        Status de Contratos
+      <h3 style={{ fontFamily: 'var(--font-pixel)', color: 'black', fontSize: 10, margin: '0 0 16px 0', textTransform: 'uppercase' }}>
+        Contratos
       </h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {items.map(item => (
           <div
             key={item.status}
@@ -295,16 +321,14 @@ function ContractsStatus({ data }: { data: ContractStatusItem[] }) {
               justifyContent: 'space-between',
               alignItems: 'center',
               padding: '10px 14px',
-              background: `${item.color}10`,
-              border: `1px solid ${item.color}33`,
-              borderRadius: 8,
+              border: '2px solid black',
+              background: 'var(--retro-gray)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.color }} />
-              <span style={{ color: 'var(--goon-text-secondary)', fontSize: 13 }}>{item.label}</span>
-            </div>
-            <span style={{ color: item.color, fontWeight: 700, fontSize: 20 }}>{getCount(item.status)}</span>
+            <span className={item.badgeClass}>{item.label}</span>
+            <span style={{ fontFamily: 'var(--font-pixel)', color: 'black', fontSize: 16 }}>
+              {getCount(item.status)}
+            </span>
           </div>
         ))}
       </div>
@@ -317,20 +341,20 @@ function RecentActivity({ data }: { data: ActivityEntry[] }) {
   return (
     <div
       style={{
-        background: 'var(--goon-dark-card)',
-        border: '1px solid var(--goon-border)',
-        borderRadius: 12,
+        background: 'white',
+        border: '2px solid black',
+        boxShadow: '4px 4px 0px 0px #000',
         padding: '20px 24px',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-        <Activity size={16} color="var(--goon-text-muted)" />
-        <h3 style={{ color: 'var(--goon-text-primary)', fontSize: 14, fontWeight: 600, margin: 0 }}>
+        <Activity size={16} color="black" />
+        <h3 style={{ fontFamily: 'var(--font-pixel)', color: 'black', fontSize: 10, margin: 0, textTransform: 'uppercase' }}>
           Atividade Recente
         </h3>
       </div>
       {data.length === 0 ? (
-        <p style={{ color: 'var(--goon-text-muted)', fontSize: 13 }}>Nenhuma atividade registrada</p>
+        <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 12 }}>Nenhuma atividade registrada</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0, maxHeight: 320, overflowY: 'auto' }}>
           {data.map((entry, idx) => (
@@ -340,27 +364,26 @@ function RecentActivity({ data }: { data: ActivityEntry[] }) {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
-                padding: '10px 0',
-                borderBottom: idx < data.length - 1 ? '1px solid var(--goon-border)' : 'none',
+                padding: '8px 0',
+                borderBottom: idx < data.length - 1 ? '1px solid black' : 'none',
                 gap: 12,
               }}
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: '50%',
-                    background: 'var(--goon-primary)',
-                    flexShrink: 0,
-                    marginTop: 5,
-                  }}
-                />
+                <span style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 11,
+                  color: 'black',
+                  fontWeight: 700,
+                  flexShrink: 0,
+                  marginTop: 2,
+                }}>{'>'}</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                   <span
                     style={{
-                      color: 'var(--goon-text-secondary)',
-                      fontSize: 13,
+                      fontFamily: 'var(--font-mono)',
+                      color: 'black',
+                      fontSize: 12,
                       lineHeight: 1.4,
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -370,14 +393,14 @@ function RecentActivity({ data }: { data: ActivityEntry[] }) {
                     {entry.description}
                   </span>
                   {entry.client && (
-                    <span style={{ color: 'var(--goon-text-muted)', fontSize: 11 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 10 }}>
                       {entry.client.companyName}
                     </span>
                   )}
                 </div>
               </div>
-              <span style={{ color: 'var(--goon-text-muted)', fontSize: 11, flexShrink: 0, paddingTop: 2 }}>
-                {timeAgo(entry.createdAt)}
+              <span style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 10, flexShrink: 0, paddingTop: 2 }}>
+                [{timeAgo(entry.createdAt)}]
               </span>
             </div>
           ))}
@@ -403,17 +426,17 @@ function LoadingSkeleton({ isMobile }: { isMobile: boolean }) {
           <div
             key={i}
             style={{
-              background: 'var(--goon-dark-card)',
-              border: '1px solid var(--goon-border)',
-              borderRadius: 12,
+              background: 'white',
+              border: '2px solid black',
+              boxShadow: '4px 4px 0px 0px #000',
               padding: '20px 24px',
               display: 'flex',
               flexDirection: 'column',
               gap: 12,
             }}
           >
-            <Skeleton height={12} width="60%" />
-            <Skeleton height={28} width="40%" />
+            <Skeleton height={10} width="60%" />
+            <Skeleton height={24} width="40%" />
           </div>
         ))}
       </div>
@@ -422,9 +445,9 @@ function LoadingSkeleton({ isMobile }: { isMobile: boolean }) {
           <div
             key={i}
             style={{
-              background: 'var(--goon-dark-card)',
-              border: '1px solid var(--goon-border)',
-              borderRadius: 10,
+              background: 'white',
+              border: '2px solid black',
+              boxShadow: '4px 4px 0px 0px #000',
               padding: '16px 20px',
             }}
           >
@@ -433,21 +456,21 @@ function LoadingSkeleton({ isMobile }: { isMobile: boolean }) {
         ))}
       </div>
       <div style={{ display: 'flex', gap, flexDirection: isMobile ? 'column' : 'row' }}>
-        <div style={{ flex: 1, background: 'var(--goon-dark-card)', border: '1px solid var(--goon-border)', borderRadius: 12, padding: '20px 24px' }}>
-          <Skeleton height={14} width="50%" />
+        <div style={{ flex: 1, background: 'white', border: '2px solid black', boxShadow: '4px 4px 0px 0px #000', padding: '20px 24px' }}>
+          <Skeleton height={12} width="50%" />
           <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[0, 1, 2, 3].map(i => <Skeleton key={i} height={10} />)}
           </div>
         </div>
-        <div style={{ flex: '0 0 240px', background: 'var(--goon-dark-card)', border: '1px solid var(--goon-border)', borderRadius: 12, padding: '20px 24px' }}>
-          <Skeleton height={14} width="60%" />
+        <div style={{ flex: '0 0 240px', background: 'white', border: '2px solid black', boxShadow: '4px 4px 0px 0px #000', padding: '20px 24px' }}>
+          <Skeleton height={12} width="60%" />
           <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[0, 1, 2].map(i => <Skeleton key={i} height={40} />)}
           </div>
         </div>
       </div>
-      <div style={{ background: 'var(--goon-dark-card)', border: '1px solid var(--goon-border)', borderRadius: 12, padding: '20px 24px' }}>
-        <Skeleton height={14} width="40%" />
+      <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0px 0px #000', padding: '20px 24px' }}>
+        <Skeleton height={12} width="40%" />
         <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {[0, 1, 2, 3, 4].map(i => <Skeleton key={i} height={12} />)}
         </div>
@@ -482,27 +505,37 @@ export default function DashboardPage() {
     <div>
       {/* Header */}
       <div style={{ marginBottom: isMobile ? 16 : 24 }}>
-        <h1 style={{ color: 'var(--goon-text-primary)', fontSize: isMobile ? 18 : 22, fontWeight: 700, margin: 0 }}>
+        <h1 style={{
+          fontFamily: 'var(--font-pixel)',
+          color: 'black',
+          fontSize: isMobile ? 12 : 16,
+          fontWeight: 700,
+          margin: 0,
+          textTransform: 'uppercase',
+          letterSpacing: 1,
+        }}>
           Dashboard
         </h1>
-        <p style={{ color: 'var(--goon-text-muted)', fontSize: 13, marginTop: 4, marginBottom: 0 }}>
-          Visão geral da operação
+        <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 12, marginTop: 6, marginBottom: 0 }}>
+          {'>'} Visão geral da operação
         </p>
       </div>
 
       {error && (
         <div
           style={{
-            background: '#ef444420',
-            border: '1px solid #ef444444',
-            borderRadius: 8,
+            background: '#fff0f0',
+            border: '2px solid var(--danger)',
+            boxShadow: '4px 4px 0 var(--danger)',
             padding: '12px 16px',
-            color: '#ef4444',
-            fontSize: 13,
+            fontFamily: 'var(--font-mono)',
+            color: 'var(--danger)',
+            fontSize: 12,
+            fontWeight: 700,
             marginBottom: 16,
           }}
         >
-          {error}
+          [ERRO] {error}
         </div>
       )}
 
@@ -522,25 +555,25 @@ export default function DashboardPage() {
               label="Clientes Ativos"
               value={stats.kpis.totalActiveClients}
               icon={<Building2 size={18} />}
-              accentColor="var(--goon-primary)"
+              accentColor="var(--retro-blue)"
             />
             <KpiCard
               label="Novos este Mês"
               value={stats.kpis.newClientsThisMonth}
               icon={<UserPlus size={18} />}
-              accentColor="#22c55e"
+              accentColor="var(--success)"
             />
             <KpiCard
               label="Receita Total"
               value={fmtBRL(stats.kpis.totalRevenue)}
               icon={<DollarSign size={18} />}
-              accentColor="#f59e0b"
+              accentColor="var(--warning)"
             />
             <KpiCard
               label="Contratos Assinados"
               value={signedContracts}
               icon={<FileCheck size={18} />}
-              accentColor="#10b981"
+              accentColor="var(--success)"
             />
           </div>
 
@@ -583,8 +616,8 @@ export default function DashboardPage() {
 
       <style>{`
         @keyframes pulse {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 0.8; }
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
         }
       `}</style>
     </div>

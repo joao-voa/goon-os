@@ -8,14 +8,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="dark" suppressHydrationWarning>
-      <body className="min-h-screen" suppressHydrationWarning>
-        <script
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: `(function(){var t=localStorage.getItem('goon-theme');if(t==='light'){document.documentElement.classList.remove('dark');document.documentElement.classList.add('light')}})();`,
-          }}
+    <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@400;700&family=Press+Start+2P&family=Permanent+Marker&display=swap"
+          rel="stylesheet"
         />
+      </head>
+      <body suppressHydrationWarning>
         {children}
       </body>
     </html>

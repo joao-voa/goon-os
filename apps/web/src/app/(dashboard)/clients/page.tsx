@@ -44,38 +44,39 @@ interface PaginatedClients {
 // ---- Helpers ----
 function statusBadge(status: string) {
   const map: Record<string, { label: string; className: string }> = {
-    ACTIVE: { label: 'Ativo', className: 'goon-badge goon-badge-success' },
-    PROSPECT: { label: 'Prospect', className: 'goon-badge goon-badge-primary' },
-    INACTIVE: { label: 'Inativo', className: 'goon-badge goon-badge-muted' },
+    ACTIVE: { label: 'Ativo', className: 'goon-badge goon-badge-active' },
+    PROSPECT: { label: 'Prospect', className: 'goon-badge goon-badge-pending' },
+    INACTIVE: { label: 'Inativo', className: 'goon-badge goon-badge-inactive' },
   }
-  const s = map[status] ?? { label: status, className: 'goon-badge goon-badge-muted' }
+  const s = map[status] ?? { label: status, className: 'goon-badge goon-badge-inactive' }
   return <span className={s.className}>{s.label}</span>
 }
 
 function productBadge(plans: ClientPlan[]) {
   const active = plans.find(p => p.status === 'ACTIVE')
-  if (!active) return <span style={{ color: 'var(--goon-text-muted)' }}>—</span>
+  if (!active) return <span style={{ fontFamily: 'var(--font-mono)', color: '#888' }}>—</span>
 
   const codeColors: Record<string, string> = {
-    GE: '#6C3FFF',
-    GI: '#06b6d4',
-    GS: '#22c55e',
+    GE: 'var(--retro-blue)',
+    GI: 'var(--success)',
+    GS: 'var(--warning)',
   }
   const code = active.product.code
-  const color = codeColors[code] ?? '#6C3FFF'
+  const bg = codeColors[code] ?? 'black'
 
   return (
     <span style={{
       display: 'inline-flex',
       alignItems: 'center',
-      padding: '2px 10px',
-      borderRadius: 9999,
-      fontSize: 11,
+      padding: '2px 8px',
+      fontFamily: 'var(--font-pixel)',
+      fontSize: 9,
       fontWeight: 700,
       letterSpacing: '0.04em',
-      background: `${color}22`,
-      color,
-      border: `1px solid ${color}44`,
+      background: bg,
+      color: 'white',
+      border: '1px solid black',
+      boxShadow: '1px 1px 0 black',
     }}>
       {code}
     </span>
@@ -83,24 +84,22 @@ function productBadge(plans: ClientPlan[]) {
 }
 
 function fitScoreBadge(score?: number) {
-  if (score == null) return <span style={{ color: 'var(--goon-text-muted)' }}>—</span>
-  const color = score >= 7 ? 'var(--goon-success)' : score >= 4 ? 'var(--goon-warning)' : 'var(--goon-danger)'
+  if (score == null) return <span style={{ fontFamily: 'var(--font-mono)', color: '#888' }}>—</span>
+  const bg = score >= 7 ? 'var(--success)' : score >= 4 ? 'var(--warning)' : 'var(--danger)'
   return (
     <span style={{
       display: 'inline-flex',
       alignItems: 'center',
-      gap: 4,
-      color,
+      justifyContent: 'center',
+      width: 28,
+      height: 28,
+      background: bg,
+      color: 'white',
+      border: '2px solid black',
+      fontFamily: 'var(--font-pixel)',
+      fontSize: 10,
       fontWeight: 700,
-      fontSize: 14,
     }}>
-      <span style={{
-        width: 8,
-        height: 8,
-        borderRadius: '50%',
-        background: color,
-        display: 'inline-block',
-      }} />
       {score}
     </span>
   )
@@ -158,12 +157,48 @@ function CreateClientModal({ onClose, onCreated }: CreateModalProps) {
 
   return (
     <div className="goon-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="goon-modal" style={{ maxWidth: 640 }}>
-        <div style={{ padding: '24px 28px', borderBottom: '1px solid var(--goon-border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--goon-text-primary)', margin: 0 }}>Novo Cliente</h2>
+      <div style={{
+        background: 'white',
+        border: '2px solid black',
+        boxShadow: '8px 8px 0px 0px #000',
+        width: '95%',
+        maxWidth: 640,
+        maxHeight: '85vh',
+        overflowY: 'auto',
+      }}>
+        {/* Modal header */}
+        <div style={{
+          background: 'black',
+          color: 'white',
+          fontFamily: 'var(--font-pixel)',
+          fontSize: 10,
+          textTransform: 'uppercase',
+          padding: '12px 16px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          letterSpacing: 1,
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)',
+          backgroundSize: '16px 16px',
+        }}>
+          <span>Novo Cliente</span>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', color: 'var(--goon-text-muted)', fontSize: 20, cursor: 'pointer', lineHeight: 1 }}
+            style={{
+              background: 'var(--danger)',
+              border: '1px solid white',
+              color: 'white',
+              cursor: 'pointer',
+              width: 20,
+              height: 20,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 14,
+              lineHeight: 1,
+              fontWeight: 700,
+            }}
           >×</button>
         </div>
 
@@ -208,7 +243,8 @@ function CreateClientModal({ onClose, onCreated }: CreateModalProps) {
           <button
             type="button"
             onClick={() => setShowMore(p => !p)}
-            style={{ background: 'none', border: 'none', color: 'var(--goon-primary)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: 0 }}
+            className="goon-btn-ghost"
+            style={{ alignSelf: 'flex-start', fontSize: 11 }}
           >
             {showMore ? '▲ Menos campos' : '▼ Mais campos'}
           </button>
@@ -262,9 +298,10 @@ function CreateClientModal({ onClose, onCreated }: CreateModalProps) {
           <button
             type="button"
             onClick={() => setShowStrategic(p => !p)}
-            style={{ background: 'none', border: 'none', color: 'var(--goon-primary)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: 0 }}
+            className="goon-btn-ghost"
+            style={{ alignSelf: 'flex-start', fontSize: 11 }}
           >
-            {showStrategic ? '▲ Ocultar dados estratégicos' : '▼ Dados Estratégicos'}
+            {showStrategic ? '▲ Ocultar estratégicos' : '▼ Dados Estratégicos'}
           </button>
 
           {showStrategic && (
@@ -303,8 +340,8 @@ function CreateClientModal({ onClose, onCreated }: CreateModalProps) {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingTop: 8 }}>
-            <button type="button" className="goon-btn-ghost" onClick={onClose}>Cancelar</button>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingTop: 8, borderTop: '2px solid black' }}>
+            <button type="button" className="goon-btn-secondary" onClick={onClose}>Cancelar</button>
             <button type="submit" className="goon-btn-primary" disabled={loading}>
               {loading ? 'Criando...' : 'Criar Cliente'}
             </button>
@@ -319,21 +356,36 @@ function CreateClientModal({ onClose, onCreated }: CreateModalProps) {
 function ClientCard({ client, onClick }: { client: Client; onClick: () => void }) {
   return (
     <div
-      className="goon-card"
+      style={{
+        background: 'white',
+        border: '2px solid black',
+        boxShadow: '4px 4px 0px 0px #000',
+        padding: 16,
+        cursor: 'pointer',
+        marginBottom: 12,
+        transition: 'transform 0.1s, box-shadow 0.1s',
+      }}
       onClick={onClick}
-      style={{ padding: 16, cursor: 'pointer', marginBottom: 12 }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLDivElement).style.transform = 'translate(-2px, -2px)'
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '6px 6px 0px 0px #000'
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLDivElement).style.transform = ''
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '4px 4px 0px 0px #000'
+      }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
         <div>
-          <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--goon-text-primary)' }}>{client.companyName}</div>
-          <div style={{ fontSize: 13, color: 'var(--goon-text-muted)', marginTop: 2 }}>{client.responsible}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 14, color: 'black' }}>{client.companyName}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', marginTop: 2 }}>{client.responsible}</div>
         </div>
         {statusBadge(client.status)}
       </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
         {productBadge(client.plans)}
         {client.segment && (
-          <span style={{ fontSize: 12, color: 'var(--goon-text-muted)' }}>{client.segment}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555' }}>{client.segment}</span>
         )}
       </div>
     </div>
@@ -393,7 +445,6 @@ export default function ClientsPage() {
     fetchClients()
   }, [fetchClients])
 
-  // Reset page when filters change
   useEffect(() => {
     setPage(1)
   }, [debouncedSearch, statusFilter, segmentFilter, sort])
@@ -402,23 +453,13 @@ export default function ClientsPage() {
     <div style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            background: 'var(--goon-primary-muted)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 18,
-          }}>
-            👥
-          </div>
-          <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--goon-text-primary)', margin: 0 }}>Clientes</h1>
-            <p style={{ fontSize: 13, color: 'var(--goon-text-muted)', margin: 0 }}>{total} cliente{total !== 1 ? 's' : ''} no total</p>
-          </div>
+        <div>
+          <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, fontWeight: 700, color: 'black', margin: 0, textTransform: 'uppercase', letterSpacing: 1 }}>
+            Clientes
+          </h1>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', margin: '4px 0 0 0' }}>
+            {'>'} {total} cliente{total !== 1 ? 's' : ''} no total
+          </p>
         </div>
         <button className="goon-btn-primary" onClick={() => setShowModal(true)}>
           + Novo Cliente
@@ -430,13 +471,13 @@ export default function ClientsPage() {
         <input
           className="goon-input"
           style={{ maxWidth: 280 }}
-          placeholder="Buscar empresa, responsável, CNPJ..."
+          placeholder="Buscar empresa, responsável..."
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
         <select
           className="goon-select"
-          style={{ maxWidth: 160 }}
+          style={{ maxWidth: 180 }}
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value)}
         >
@@ -454,7 +495,7 @@ export default function ClientsPage() {
         />
         <select
           className="goon-select"
-          style={{ maxWidth: 180 }}
+          style={{ maxWidth: 200 }}
           value={sort}
           onChange={e => setSort(e.target.value)}
         >
@@ -470,11 +511,12 @@ export default function ClientsPage() {
           <div style={{
             width: 32,
             height: 32,
-            border: '3px solid var(--goon-border)',
-            borderTopColor: 'var(--goon-primary)',
+            border: '3px solid black',
+            borderTopColor: 'transparent',
             borderRadius: '50%',
-            animation: 'spin 0.8s linear infinite',
+            animation: 'spin 0.6s linear infinite',
           }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
 
@@ -483,20 +525,22 @@ export default function ClientsPage() {
         <div style={{
           textAlign: 'center',
           padding: 60,
-          color: 'var(--goon-text-muted)',
-          background: 'var(--goon-dark-card)',
-          borderRadius: 12,
-          border: '1px solid var(--goon-border-subtle)',
+          background: 'white',
+          border: '2px solid black',
+          boxShadow: '4px 4px 0px 0px #000',
         }}>
-          <div style={{ fontSize: 36, marginBottom: 12 }}>🔍</div>
-          <p style={{ fontSize: 15, margin: 0 }}>Nenhum cliente encontrado</p>
-          <p style={{ fontSize: 13, marginTop: 6 }}>Tente ajustar os filtros ou crie um novo cliente</p>
+          <p style={{ fontFamily: 'var(--font-pixel)', fontSize: 12, color: 'black', margin: 0, textTransform: 'uppercase' }}>
+            Nenhum cliente encontrado
+          </p>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, marginTop: 12, color: '#555' }}>
+            Tente ajustar os filtros ou crie um novo cliente
+          </p>
         </div>
       )}
 
       {/* Desktop Table */}
       {!loading && clients.length > 0 && !isMobile && (
-        <div className="goon-card" style={{ overflow: 'hidden' }}>
+        <div style={{ overflow: 'hidden', border: '2px solid black', boxShadow: '6px 6px 0px 0px #000' }}>
           <table className="goon-table">
             <thead>
               <tr>
@@ -516,11 +560,11 @@ export default function ClientsPage() {
                   style={{ cursor: 'pointer' }}
                 >
                   <td>
-                    <div style={{ fontWeight: 600, color: 'var(--goon-text-primary)' }}>{client.companyName}</div>
-                    {client.tradeName && <div style={{ fontSize: 12, color: 'var(--goon-text-muted)' }}>{client.tradeName}</div>}
+                    <div style={{ fontWeight: 700, color: 'black' }}>{client.companyName}</div>
+                    {client.tradeName && <div style={{ fontSize: 11, color: '#555' }}>{client.tradeName}</div>}
                   </td>
                   <td>{client.responsible}</td>
-                  <td>{client.segment ?? <span style={{ color: 'var(--goon-text-muted)' }}>—</span>}</td>
+                  <td>{client.segment ?? <span style={{ color: '#888' }}>—</span>}</td>
                   <td>{productBadge(client.plans)}</td>
                   <td>{fitScoreBadge(client.goonFitScore)}</td>
                   <td>{statusBadge(client.status)}</td>
@@ -549,18 +593,16 @@ export default function ClientsPage() {
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 24, alignItems: 'center' }}>
           <button
             className="goon-btn-ghost"
-            style={{ padding: '6px 14px', fontSize: 13 }}
             disabled={page <= 1}
             onClick={() => setPage(p => Math.max(1, p - 1))}
           >
             ← Anterior
           </button>
-          <span style={{ fontSize: 13, color: 'var(--goon-text-muted)' }}>
-            Página {page} de {totalPages}
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'black', fontWeight: 700 }}>
+            Pág {page} / {totalPages}
           </span>
           <button
             className="goon-btn-ghost"
-            style={{ padding: '6px 14px', fontSize: 13 }}
             disabled={page >= totalPages}
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
           >

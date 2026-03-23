@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
-import { PRODUCT_COLORS } from '@/lib/constants'
 
 // ---- Types ----
 interface Product {
@@ -52,7 +51,7 @@ function EditModal({ product, onClose, onSaved }: EditModalProps) {
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.5)',
+        background: 'rgba(0,0,0,0.6)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -62,53 +61,71 @@ function EditModal({ product, onClose, onSaved }: EditModalProps) {
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
-        className="goon-card"
-        style={{ width: '100%', maxWidth: 440, padding: 28 }}
+        style={{
+          width: '100%',
+          maxWidth: 440,
+          background: 'white',
+          border: '2px solid black',
+          boxShadow: '8px 8px 0px 0px #000',
+        }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--goon-text-primary)', margin: 0 }}>
-            Editar Produto
-          </h2>
+        {/* Header */}
+        <div style={{
+          background: 'black',
+          color: 'white',
+          fontFamily: 'var(--font-pixel)',
+          fontSize: 10,
+          textTransform: 'uppercase',
+          padding: '12px 16px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          letterSpacing: 1,
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)',
+          backgroundSize: '16px 16px',
+        }}>
+          <span>Editar Produto</span>
           <button
             onClick={onClose}
             style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--goon-text-muted)',
+              background: 'var(--danger)',
+              border: '1px solid white',
+              color: 'white',
               cursor: 'pointer',
-              fontSize: 20,
-              lineHeight: 1,
-              padding: 4,
+              width: 20,
+              height: 20,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 14,
+              fontWeight: 700,
             }}
-          >
-            ×
-          </button>
+          >×</button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form onSubmit={handleSubmit} style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Nome</label>
+            <label className="goon-label">Nome</label>
             <input
               className="goon-input"
               value={name}
               onChange={e => setName(e.target.value)}
               required
-              style={{ width: '100%' }}
             />
           </div>
           <div>
-            <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Descrição</label>
+            <label className="goon-label">Descrição</label>
             <textarea
               className="goon-textarea"
               value={description}
               onChange={e => setDescription(e.target.value)}
               rows={3}
-              style={{ width: '100%' }}
             />
           </div>
 
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
-            <button type="button" className="goon-btn-ghost" onClick={onClose} disabled={saving}>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8, borderTop: '2px solid black', paddingTop: 16 }}>
+            <button type="button" className="goon-btn-secondary" onClick={onClose} disabled={saving}>
               Cancelar
             </button>
             <button type="submit" className="goon-btn-primary" disabled={saving}>
@@ -129,61 +146,85 @@ interface ProductCardProps {
 }
 
 function ProductCard({ product, onEdit, onToggleActive }: ProductCardProps) {
-  const color = PRODUCT_COLORS[product.code] ?? '#6b7280'
+  const codeColors: Record<string, string> = {
+    GE: 'var(--retro-blue)',
+    GI: 'var(--success)',
+    GS: 'var(--warning)',
+  }
+  const color = codeColors[product.code] ?? 'black'
 
   return (
     <div
-      className="goon-card"
       style={{
-        padding: 24,
+        background: 'white',
+        border: '2px solid black',
+        boxShadow: '6px 6px 0px 0px #000',
         cursor: 'pointer',
-        transition: 'box-shadow 0.15s ease, transform 0.15s ease',
         display: 'flex',
         flexDirection: 'column',
         gap: 16,
+        padding: 0,
+        overflow: 'hidden',
+        transition: 'transform 0.15s, box-shadow 0.15s',
       }}
       onClick={() => onEdit(product)}
       onMouseEnter={e => {
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 20px rgba(0,0,0,0.15)'
-        ;(e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'
+        (e.currentTarget as HTMLDivElement).style.transform = 'translate(-2px, -2px)'
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '8px 8px 0px 0px #000'
       }}
       onMouseLeave={e => {
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = ''
-        ;(e.currentTarget as HTMLDivElement).style.transform = ''
+        (e.currentTarget as HTMLDivElement).style.transform = ''
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '6px 6px 0px 0px #000'
       }}
     >
-      {/* Code badge */}
-      <div>
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 56,
-            height: 56,
-            borderRadius: 12,
-            background: `${color}22`,
-            color,
-            fontSize: 20,
-            fontWeight: 800,
-            letterSpacing: '0.05em',
-          }}
-        >
+      {/* Code header */}
+      <div style={{
+        background: color,
+        padding: '16px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundImage: 'radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px)',
+        backgroundSize: '12px 12px',
+      }}>
+        <span style={{
+          fontFamily: 'var(--font-pixel)',
+          fontSize: 20,
+          color: 'white',
+          fontWeight: 900,
+          letterSpacing: '0.05em',
+        }}>
           {product.code}
+        </span>
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          color: 'rgba(255,255,255,0.8)',
+          fontWeight: 700,
+          textTransform: 'uppercase',
+        }}>
+          {product.isActive ? '[ATIVO]' : '[INATIVO]'}
         </span>
       </div>
 
-      {/* Name & Description */}
-      <div style={{ flex: 1 }}>
-        <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--goon-text-primary)', margin: '0 0 6px 0' }}>
+      <div style={{ padding: '0 24px 0 24px', flex: 1 }}>
+        {/* Name & Description */}
+        <h3 style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 14,
+          fontWeight: 700,
+          color: 'black',
+          margin: '0 0 8px 0',
+          textTransform: 'uppercase',
+        }}>
           {product.name}
         </h3>
         {product.description ? (
-          <p style={{ fontSize: 13, color: 'var(--goon-text-muted)', margin: 0, lineHeight: 1.5 }}>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', margin: 0, lineHeight: 1.6 }}>
             {product.description}
           </p>
         ) : (
-          <p style={{ fontSize: 13, color: 'var(--goon-text-muted)', margin: 0, fontStyle: 'italic' }}>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#888', margin: 0, fontStyle: 'italic' }}>
             Sem descrição
           </p>
         )}
@@ -195,50 +236,43 @@ function ProductCard({ product, onEdit, onToggleActive }: ProductCardProps) {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          paddingTop: 12,
-          borderTop: '1px solid var(--goon-border-subtle)',
+          padding: '12px 24px',
+          borderTop: '2px solid black',
+          background: 'var(--retro-gray)',
         }}
         onClick={e => e.stopPropagation()}
       >
-        <span style={{ fontSize: 13, color: 'var(--goon-text-muted)' }}>
-          {product._count.plans} {product._count.plans === 1 ? 'cliente ativo' : 'clientes ativos'}
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'black', fontWeight: 700, textTransform: 'uppercase' }}>
+          {product._count.plans} {product._count.plans === 1 ? 'cliente' : 'clientes'}
         </span>
 
-        <label
-          style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+        <button
+          onClick={() => onToggleActive(product)}
           title={product.isActive ? 'Desativar produto' : 'Ativar produto'}
+          style={{
+            background: product.isActive ? 'var(--success)' : 'var(--retro-gray)',
+            color: product.isActive ? 'white' : 'black',
+            border: '2px solid black',
+            boxShadow: '2px 2px 0 black',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            padding: '4px 10px',
+            cursor: 'pointer',
+            transition: 'transform 0.1s, box-shadow 0.1s',
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLButtonElement).style.transform = 'translate(1px, 1px)'
+            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '1px 1px 0 black'
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLButtonElement).style.transform = ''
+            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '2px 2px 0 black'
+          }}
         >
-          <span style={{ fontSize: 12, color: product.isActive ? 'var(--goon-success)' : 'var(--goon-text-muted)' }}>
-            {product.isActive ? 'Ativo' : 'Inativo'}
-          </span>
-          <div
-            onClick={() => onToggleActive(product)}
-            style={{
-              width: 36,
-              height: 20,
-              borderRadius: 10,
-              background: product.isActive ? color : 'var(--goon-border)',
-              position: 'relative',
-              cursor: 'pointer',
-              transition: 'background 0.2s ease',
-              flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                top: 2,
-                left: product.isActive ? 18 : 2,
-                width: 16,
-                height: 16,
-                borderRadius: '50%',
-                background: '#fff',
-                transition: 'left 0.2s ease',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-              }}
-            />
-          </div>
-        </label>
+          {product.isActive ? 'Desativar' : 'Ativar'}
+        </button>
       </div>
     </div>
   )
@@ -273,7 +307,7 @@ export default function ProductsPage() {
         body: JSON.stringify({ isActive: !product.isActive }),
       })
       setProducts(prev => prev.map(p => (p.id === updated.id ? { ...updated, _count: p._count } : p)))
-      toast.success(updated.isActive ? 'Produto ativado' : 'Produto desativado')
+      toast.success(updated.isActive ? '[OK] Produto ativado' : '[OK] Produto desativado')
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Erro ao atualizar produto')
     }
@@ -289,11 +323,19 @@ export default function ProductsPage() {
     <div style={{ maxWidth: 900, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--goon-text-primary)', margin: '0 0 6px 0' }}>
+        <h1 style={{
+          fontFamily: 'var(--font-pixel)',
+          fontSize: 14,
+          fontWeight: 800,
+          color: 'black',
+          margin: '0 0 6px 0',
+          textTransform: 'uppercase',
+          letterSpacing: 1,
+        }}>
           Produtos
         </h1>
-        <p style={{ fontSize: 14, color: 'var(--goon-text-muted)', margin: 0 }}>
-          Gerencie os produtos GOON disponíveis para seus clientes
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', margin: 0 }}>
+          {'>'} Gerencie os produtos GOON disponíveis para seus clientes
         </p>
       </div>
 
@@ -304,12 +346,13 @@ export default function ProductsPage() {
             style={{
               width: 36,
               height: 36,
-              border: '3px solid var(--goon-border)',
-              borderTopColor: 'var(--goon-primary)',
+              border: '3px solid black',
+              borderTopColor: 'transparent',
               borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite',
+              animation: 'spin 0.6s linear infinite',
             }}
           />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       ) : (
         <div
@@ -332,10 +375,17 @@ export default function ProductsPage() {
 
       {products.length === 0 && !loading && (
         <div
-          className="goon-card"
-          style={{ padding: 48, textAlign: 'center', color: 'var(--goon-text-muted)' }}
+          style={{
+            background: 'white',
+            border: '2px solid black',
+            boxShadow: '4px 4px 0px 0px #000',
+            padding: 48,
+            textAlign: 'center',
+          }}
         >
-          <p style={{ fontSize: 14 }}>Nenhum produto cadastrado.</p>
+          <p style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, color: 'black', textTransform: 'uppercase' }}>
+            Nenhum produto cadastrado.
+          </p>
         </div>
       )}
 

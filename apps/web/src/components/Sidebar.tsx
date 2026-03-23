@@ -1,6 +1,6 @@
 'use client'
 
-import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, Sun, Moon, LogOut, ChevronLeft, ChevronRight } from 'lucide-react'
+import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, LogOut, ChevronLeft, ChevronRight } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 
 interface NavItem {
@@ -14,10 +14,8 @@ interface SidebarProps {
   collapsed: boolean
   isMobile: boolean
   mobileOpen: boolean
-  theme: 'dark' | 'light'
   onToggle: () => void
   onCloseMobile: () => void
-  onThemeToggle: () => void
   onLogout: () => void
 }
 
@@ -34,10 +32,8 @@ export function Sidebar({
   collapsed,
   isMobile,
   mobileOpen,
-  theme,
   onToggle,
   onCloseMobile,
-  onThemeToggle,
   onLogout,
 }: SidebarProps) {
   const pathname = usePathname()
@@ -51,8 +47,9 @@ export function Sidebar({
     left: 0,
     height: '100vh',
     width: sidebarWidth,
-    background: 'var(--goon-sidebar-bg)',
-    borderRight: '1px solid var(--goon-border-subtle)',
+    background: 'var(--retro-gray)',
+    borderRight: '2px solid black',
+    boxShadow: '4px 0 0 black',
     display: 'flex',
     flexDirection: 'column',
     zIndex: 51,
@@ -71,7 +68,6 @@ export function Sidebar({
             position: 'fixed',
             inset: 0,
             background: 'rgba(0, 0, 0, 0.6)',
-            backdropFilter: 'blur(2px)',
             zIndex: 50,
           }}
         />
@@ -85,32 +81,34 @@ export function Sidebar({
           alignItems: 'center',
           justifyContent: collapsed && !isMobile ? 'center' : 'space-between',
           padding: collapsed && !isMobile ? '0' : '0 12px 0 16px',
-          borderBottom: '1px solid var(--goon-border-subtle)',
+          borderBottom: '2px solid black',
           flexShrink: 0,
+          background: 'black',
         }}>
           {(!collapsed || isMobile) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <span style={{
-                color: 'var(--goon-primary)',
+                color: 'white',
                 fontWeight: 900,
-                fontSize: 18,
-                fontFamily: 'Arial Black, Arial, sans-serif',
-                letterSpacing: '-0.02em',
+                fontSize: 16,
+                fontFamily: 'var(--font-pixel)',
+                letterSpacing: '0.05em',
               }}>GOON</span>
               <span style={{
-                color: 'var(--goon-text-muted)',
-                fontSize: 11,
-                fontWeight: 600,
+                color: 'var(--retro-gray)',
+                fontSize: 10,
+                fontWeight: 700,
+                fontFamily: 'var(--font-mono)',
                 letterSpacing: '0.05em',
               }}>OS</span>
             </div>
           )}
           {collapsed && !isMobile && (
             <span style={{
-              color: 'var(--goon-primary)',
+              color: 'white',
               fontWeight: 900,
-              fontSize: 18,
-              fontFamily: 'Arial Black, Arial, sans-serif',
+              fontSize: 14,
+              fontFamily: 'var(--font-pixel)',
             }}>G</span>
           )}
           {!isMobile && (
@@ -122,20 +120,17 @@ export function Sidebar({
                 border: 'none',
                 cursor: 'pointer',
                 padding: 4,
-                borderRadius: 6,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--goon-text-muted)',
-                transition: 'color 0.15s ease, background 0.15s ease',
+                color: 'var(--retro-gray)',
+                transition: 'color 0.1s',
               }}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.color = 'var(--goon-text-primary)'
-                ;(e.currentTarget as HTMLButtonElement).style.background = 'var(--goon-primary-muted)'
+                (e.currentTarget as HTMLButtonElement).style.color = 'white'
               }}
               onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.color = 'var(--goon-text-muted)'
-                ;(e.currentTarget as HTMLButtonElement).style.background = 'none'
+                (e.currentTarget as HTMLButtonElement).style.color = 'var(--retro-gray)'
               }}
             >
               {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -144,7 +139,7 @@ export function Sidebar({
         </div>
 
         {/* Nav items */}
-        <div style={{ flex: 1, padding: '8px 0', overflowY: 'auto', overflowX: 'hidden' }}>
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
           {navItems.map(item => {
             const Icon = item.icon
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
@@ -157,28 +152,28 @@ export function Sidebar({
                   display: 'flex',
                   alignItems: 'center',
                   gap: 10,
-                  padding: collapsed && !isMobile ? '10px 0' : '10px 16px',
+                  padding: collapsed && !isMobile ? '12px 0' : '12px 16px',
                   justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
                   textDecoration: 'none',
-                  color: isActive ? 'var(--goon-text-primary)' : 'var(--goon-text-muted)',
-                  background: isActive ? 'var(--goon-primary-muted)' : 'transparent',
-                  borderLeft: isActive ? '3px solid var(--goon-primary)' : '3px solid transparent',
-                  margin: '2px 0',
-                  transition: 'color 0.15s ease, background 0.15s ease',
-                  fontWeight: isActive ? 600 : 400,
-                  fontSize: 14,
+                  color: isActive ? 'white' : 'black',
+                  background: isActive ? 'var(--retro-blue)' : 'transparent',
+                  boxShadow: isActive ? 'inset 3px 0 0 white' : 'none',
+                  borderBottom: '1px solid rgba(0,0,0,0.15)',
+                  fontFamily: 'var(--font-mono)',
+                  fontWeight: 700,
+                  fontSize: 12,
+                  textTransform: 'uppercase',
                   whiteSpace: 'nowrap',
+                  transition: 'all 0.1s',
                 }}
                 onMouseEnter={e => {
                   if (!isActive) {
-                    (e.currentTarget as HTMLAnchorElement).style.color = 'var(--goon-text-primary)'
-                    ;(e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.04)'
+                    (e.currentTarget as HTMLAnchorElement).style.background = '#b0b0b0'
                   }
                 }}
                 onMouseLeave={e => {
                   if (!isActive) {
-                    (e.currentTarget as HTMLAnchorElement).style.color = 'var(--goon-text-muted)'
-                    ;(e.currentTarget as HTMLAnchorElement).style.background = 'transparent'
+                    (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'
                   }
                 }}
               >
@@ -191,46 +186,9 @@ export function Sidebar({
 
         {/* Bottom actions */}
         <div style={{
-          borderTop: '1px solid var(--goon-border-subtle)',
-          padding: '8px 0',
+          borderTop: '2px solid black',
           flexShrink: 0,
         }}>
-          {/* Theme toggle */}
-          <button
-            onClick={onThemeToggle}
-            title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              width: '100%',
-              padding: collapsed && !isMobile ? '10px 0' : '10px 16px',
-              justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--goon-text-muted)',
-              fontSize: 14,
-              fontWeight: 400,
-              transition: 'color 0.15s ease',
-              whiteSpace: 'nowrap',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.color = 'var(--goon-text-primary)'
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.color = 'var(--goon-text-muted)'
-            }}
-          >
-            {theme === 'dark'
-              ? <Sun size={18} style={{ flexShrink: 0 }} />
-              : <Moon size={18} style={{ flexShrink: 0 }} />
-            }
-            {(!collapsed || isMobile) && (
-              <span>{theme === 'dark' ? 'Modo claro' : 'Modo escuro'}</span>
-            )}
-          </button>
-
           {/* Logout */}
           <button
             onClick={onLogout}
@@ -240,22 +198,26 @@ export function Sidebar({
               alignItems: 'center',
               gap: 10,
               width: '100%',
-              padding: collapsed && !isMobile ? '10px 0' : '10px 16px',
+              padding: collapsed && !isMobile ? '12px 0' : '12px 16px',
               justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: 'var(--goon-text-muted)',
-              fontSize: 14,
-              fontWeight: 400,
-              transition: 'color 0.15s ease',
+              color: 'black',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 12,
+              fontWeight: 700,
+              textTransform: 'uppercase',
               whiteSpace: 'nowrap',
+              transition: 'all 0.1s',
             }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.color = '#f87171'
+              (e.currentTarget as HTMLButtonElement).style.background = 'var(--danger)'
+              ;(e.currentTarget as HTMLButtonElement).style.color = 'white'
             }}
             onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.color = 'var(--goon-text-muted)'
+              (e.currentTarget as HTMLButtonElement).style.background = 'none'
+              ;(e.currentTarget as HTMLButtonElement).style.color = 'black'
             }}
           >
             <LogOut size={18} style={{ flexShrink: 0 }} />

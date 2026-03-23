@@ -47,14 +47,16 @@ function DraggableCard({
       {...attributes}
       onClick={() => onClick(item)}
       style={{
-        background: 'var(--goon-card-bg)',
-        border: '1px solid var(--goon-border)',
-        borderRadius: 6,
-        padding: 10,
+        background: 'white',
+        border: '2px solid black',
+        boxShadow: isDragging ? 'none' : '3px 3px 0px 0px #000',
+        padding: '10px 12px',
         cursor: isDragging ? 'grabbing' : 'grab',
-        opacity: isDragging ? 0.35 : 1,
+        opacity: isDragging ? 0.4 : 1,
         userSelect: 'none',
         marginBottom: 8,
+        transition: 'transform 0.1s, box-shadow 0.1s',
+        transform: isDragging ? 'rotate(2deg)' : 'none',
       }}
     >
       <CardContent item={item} />
@@ -64,24 +66,29 @@ function DraggableCard({
 
 // ---- Card Content (shared between draggable and overlay) ----
 function CardContent({ item }: { item: OnboardingItem }) {
-  const productColor = item.productCode ? (PRODUCT_COLORS[item.productCode] ?? '#888') : null
+  const codeColors: Record<string, string> = {
+    GE: 'var(--retro-blue)',
+    GI: 'var(--success)',
+    GS: 'var(--warning)',
+  }
+  const productColor = item.productCode ? (codeColors[item.productCode] ?? '#888') : null
   const daysWarning = item.daysInStage > 14
 
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-        <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--goon-text-primary)', lineHeight: 1.3, flex: 1 }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12, color: 'black', lineHeight: 1.3, flex: 1, textTransform: 'uppercase' }}>
           {item.client.companyName}
         </span>
         {productColor && item.productCode && (
           <span
             style={{
-              background: productColor + '22',
-              color: productColor,
-              border: `1px solid ${productColor}55`,
-              borderRadius: 4,
-              padding: '1px 6px',
-              fontSize: 11,
+              background: productColor,
+              color: 'white',
+              border: '1px solid black',
+              padding: '1px 5px',
+              fontFamily: 'var(--font-pixel)',
+              fontSize: 8,
               fontWeight: 700,
               marginLeft: 6,
               flexShrink: 0,
@@ -91,18 +98,20 @@ function CardContent({ item }: { item: OnboardingItem }) {
           </span>
         )}
       </div>
-      <div style={{ fontSize: 12, color: 'var(--goon-text-secondary)', marginBottom: 4 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', marginBottom: 6 }}>
         {item.client.responsible}
       </div>
       <div
         style={{
-          fontSize: 11,
-          color: daysWarning ? '#f59e0b' : 'var(--goon-text-muted)',
-          fontWeight: daysWarning ? 600 : 400,
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          color: daysWarning ? 'var(--danger)' : '#555',
+          fontWeight: daysWarning ? 700 : 400,
+          textTransform: 'uppercase',
         }}
       >
-        {item.daysInStage === 0 ? 'hoje' : `${item.daysInStage}d nesta etapa`}
-        {daysWarning && ' ⚠'}
+        {item.daysInStage === 0 ? '> hoje' : `> ${item.daysInStage}d`}
+        {daysWarning && ' [!]'}
       </div>
     </>
   )
@@ -139,32 +148,35 @@ function DroppableColumn({
           gap: 8,
           padding: '8px 10px',
           marginBottom: 8,
-          background: 'var(--goon-card-bg)',
-          border: '1px solid var(--goon-border)',
-          borderRadius: 8,
+          background: 'black',
+          border: '2px solid black',
+          boxShadow: '3px 3px 0 black',
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)',
+          backgroundSize: '12px 12px',
         }}
       >
         <div
-          style={{ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0 }}
+          style={{ width: 10, height: 10, background: color, border: '1px solid white', flexShrink: 0 }}
         />
         <span
           style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: 'var(--goon-text-primary)',
+            fontFamily: 'var(--font-pixel)',
+            fontSize: 8,
+            color: 'white',
             flex: 1,
-            lineHeight: 1.3,
+            lineHeight: 1.4,
+            textTransform: 'uppercase',
           }}
         >
           {label}
         </span>
         <span
           style={{
-            background: color + '22',
-            color: color,
-            border: `1px solid ${color}44`,
-            borderRadius: 10,
-            padding: '1px 7px',
+            background: color,
+            color: 'white',
+            border: '1px solid white',
+            padding: '1px 6px',
+            fontFamily: 'var(--font-mono)',
             fontSize: 11,
             fontWeight: 700,
             flexShrink: 0,
@@ -180,10 +192,9 @@ function DroppableColumn({
         style={{
           flex: 1,
           minHeight: 300,
-          padding: '4px 4px',
-          borderRadius: 8,
-          border: isOver ? '2px dashed ' + color : '2px dashed transparent',
-          background: isOver ? color + '0D' : 'transparent',
+          padding: '4px',
+          border: isOver ? '2px dashed black' : '2px dashed rgba(0,0,0,0.2)',
+          background: isOver ? 'rgba(0,0,0,0.05)' : 'transparent',
           transition: 'border-color 0.15s, background 0.15s',
         }}
       >
@@ -194,9 +205,12 @@ function DroppableColumn({
           <div
             style={{
               textAlign: 'center',
-              color: 'var(--goon-text-muted)',
-              fontSize: 12,
+              fontFamily: 'var(--font-mono)',
+              color: '#aaa',
+              fontSize: 11,
               padding: '20px 0',
+              textTransform: 'uppercase',
+              letterSpacing: 1,
             }}
           >
             Sem clientes
@@ -278,11 +292,10 @@ export default function KanbanBoard({ items, onStageChange, onCardClick }: Kanba
           <div
             style={{
               width: 212,
-              background: 'var(--goon-card-bg)',
-              border: '1px solid var(--goon-border)',
-              borderRadius: 6,
-              padding: 10,
-              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+              background: 'white',
+              border: '2px solid black',
+              boxShadow: '8px 8px 0px 0px #000',
+              padding: '10px 12px',
               transform: 'rotate(2deg)',
               opacity: 0.95,
             }}

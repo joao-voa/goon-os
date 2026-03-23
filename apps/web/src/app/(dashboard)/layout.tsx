@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { queryClient } from '@/lib/query-client'
@@ -10,28 +10,7 @@ import { SidebarProvider } from '@/contexts/SidebarContext'
 import { Sidebar, NAV_ITEMS } from '@/components/Sidebar'
 import { MobileHeader } from '@/components/MobileHeader'
 import { apiFetch } from '@/lib/api'
-
-// ---- useTheme ----
-function useTheme() {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
-
-  useEffect(() => {
-    const saved = localStorage.getItem('goon-theme') as 'dark' | 'light' | null
-    if (saved === 'light' || saved === 'dark') setTheme(saved)
-  }, [])
-
-  const toggleTheme = () => {
-    setTheme(prev => {
-      const next = prev === 'dark' ? 'light' : 'dark'
-      localStorage.setItem('goon-theme', next)
-      document.documentElement.classList.remove('dark', 'light')
-      document.documentElement.classList.add(next)
-      return next
-    })
-  }
-
-  return { theme, toggleTheme }
-}
+import { useEffect } from 'react'
 
 // ---- useKeepAlive ----
 function useKeepAlive() {
@@ -45,7 +24,6 @@ function useKeepAlive() {
 // ---- DashboardLayoutInner ----
 function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const { user, loading, logout } = useAuth()
-  const { theme, toggleTheme } = useTheme()
   const { state, isMobile, mobileOpen, toggle, closeMobile, sidebarWidth } = useSidebar()
   useKeepAlive()
 
@@ -56,31 +34,39 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'var(--goon-deep-dark)',
+        background: 'var(--retro-bg)',
+        flexDirection: 'column',
+        gap: 16,
       }}>
         <div style={{
-          width: 36,
-          height: 36,
-          border: '3px solid var(--goon-border)',
-          borderTopColor: 'var(--goon-primary)',
-          borderRadius: '50%',
-          animation: 'spin 0.8s linear infinite',
+          fontFamily: 'var(--font-pixel)',
+          fontSize: 12,
+          color: 'black',
+          textTransform: 'uppercase',
+          letterSpacing: 2,
+        }}>
+          CARREGANDO...
+        </div>
+        <div style={{
+          width: 40,
+          height: 8,
+          background: 'black',
+          animation: 'blink 0.8s step-end infinite',
         }} />
+        <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }`}</style>
       </div>
     )
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--goon-deep-dark)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--retro-bg)' }}>
       <Sidebar
         navItems={NAV_ITEMS}
         collapsed={state === 'collapsed'}
         isMobile={isMobile}
         mobileOpen={mobileOpen}
-        theme={theme}
         onToggle={toggle}
         onCloseMobile={closeMobile}
-        onThemeToggle={toggleTheme}
         onLogout={logout}
       />
 
@@ -97,9 +83,9 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
           left: sidebarWidth,
           right: 0,
           height: 56,
-          background: 'var(--goon-header-bg)',
-          backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid var(--goon-border)',
+          background: 'var(--retro-gray)',
+          borderBottom: '2px solid black',
+          boxShadow: '0 4px 0 black',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'flex-end',
@@ -108,7 +94,14 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
           transition: 'left 0.2s ease',
         }}>
           {user && (
-            <span style={{ color: 'var(--goon-text-secondary)', fontSize: 13 }}>
+            <span style={{
+              color: 'black',
+              fontSize: 11,
+              fontFamily: 'var(--font-mono)',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+            }}>
               {user.name}
             </span>
           )}

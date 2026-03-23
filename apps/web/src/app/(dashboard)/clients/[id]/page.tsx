@@ -109,11 +109,11 @@ function relativeTime(dateStr: string): string {
   const diffHours = Math.floor(diffMins / 60)
   const diffDays = Math.floor(diffHours / 24)
 
-  if (diffSecs < 60) return 'agora mesmo'
-  if (diffMins < 60) return `há ${diffMins}min`
-  if (diffHours < 24) return `há ${diffHours}h`
-  if (diffDays === 1) return 'há 1 dia'
-  if (diffDays < 30) return `há ${diffDays} dias`
+  if (diffSecs < 60) return 'agora'
+  if (diffMins < 60) return `${diffMins}min`
+  if (diffHours < 24) return `${diffHours}h`
+  if (diffDays === 1) return '1d'
+  if (diffDays < 30) return `${diffDays}d`
   return date.toLocaleDateString('pt-BR')
 }
 
@@ -124,28 +124,17 @@ function statusLabel(status: string) {
 
 function statusClass(status: string) {
   const map: Record<string, string> = {
-    ACTIVE: 'goon-badge goon-badge-success',
-    PROSPECT: 'goon-badge goon-badge-primary',
-    INACTIVE: 'goon-badge goon-badge-muted',
+    ACTIVE: 'goon-badge goon-badge-active',
+    PROSPECT: 'goon-badge goon-badge-pending',
+    INACTIVE: 'goon-badge goon-badge-inactive',
     CANCELLED: 'goon-badge goon-badge-danger',
   }
-  return map[status] ?? 'goon-badge goon-badge-muted'
+  return map[status] ?? 'goon-badge goon-badge-inactive'
 }
 
 function maturityLabel(v?: string) {
   const map: Record<string, string> = { LOW: 'Baixa', MEDIUM: 'Média', HIGH: 'Alta' }
   return v ? (map[v] ?? v) : '—'
-}
-
-function onboardingStageLabel(stage: string) {
-  const map: Record<string, string> = {
-    CLIENT_CLOSED: 'Cliente Fechado',
-    ONBOARDING_STARTED: 'Onboarding Iniciado',
-    DOCS_SENT: 'Docs Enviados',
-    SETUP_DONE: 'Setup Concluído',
-    LIVE: 'Em Produção',
-  }
-  return map[stage] ?? stage
 }
 
 // ---- Inline editable field ----
@@ -236,20 +225,20 @@ function InlineField({ label, value, field, type = 'text', options, onSave, min,
         <div
           onClick={() => { setDraft(value != null ? String(value) : ''); setEditing(true) }}
           style={{
-            fontSize: 14,
-            color: value != null && String(value) !== '' ? 'var(--goon-text-secondary)' : 'var(--goon-text-muted)',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 13,
+            color: value != null && String(value) !== '' ? 'black' : '#aaa',
             cursor: 'pointer',
             padding: '6px 8px',
-            borderRadius: 6,
             border: '1px solid transparent',
             minHeight: 34,
             display: 'flex',
             alignItems: 'center',
-            transition: 'border-color 0.15s ease, background 0.15s ease',
+            transition: 'border-color 0.1s, background 0.1s',
           }}
           onMouseEnter={e => {
-            (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--goon-border)'
-            ;(e.currentTarget as HTMLDivElement).style.background = 'var(--goon-input-bg)'
+            (e.currentTarget as HTMLDivElement).style.borderColor = 'black'
+            ;(e.currentTarget as HTMLDivElement).style.background = '#f5f5f5'
           }}
           onMouseLeave={e => {
             (e.currentTarget as HTMLDivElement).style.borderColor = 'transparent'
@@ -304,14 +293,12 @@ function AddPlanModal({ clientId, onClose, onCreated }: AddPlanModalProps) {
       .finally(() => setLoadingProducts(false))
   }, [])
 
-  // Auto-calculate installment value
   useEffect(() => {
     if (paymentType === 'INSTALLMENT' && value && installments && Number(installments) > 0) {
       setInstallmentValue(String(Math.round(Number(value) / Number(installments))))
     }
   }, [value, installments, paymentType])
 
-  // Auto-calculate end date from startDate + cycleDuration
   const endDate =
     startDate && cycleDuration && Number(cycleDuration) > 0
       ? (() => {
@@ -344,7 +331,7 @@ function AddPlanModal({ clientId, onClose, onCreated }: AddPlanModalProps) {
         body: JSON.stringify(body),
       })
       onCreated(created)
-      toast.success('Plano adicionado')
+      toast.success('[OK] Plano adicionado')
       onClose()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Erro ao criar plano')
@@ -353,14 +340,12 @@ function AddPlanModal({ clientId, onClose, onCreated }: AddPlanModalProps) {
     }
   }
 
-  const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box' }
-
   return (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.5)',
+        background: 'rgba(0,0,0,0.6)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -371,165 +356,101 @@ function AddPlanModal({ clientId, onClose, onCreated }: AddPlanModalProps) {
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
-        className="goon-card"
-        style={{ width: '100%', maxWidth: 480, padding: 28, margin: 'auto' }}
+        style={{
+          width: '100%',
+          maxWidth: 480,
+          background: 'white',
+          border: '2px solid black',
+          boxShadow: '8px 8px 0px 0px #000',
+          margin: 'auto',
+        }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--goon-text-primary)', margin: 0 }}>
-            Adicionar Plano
-          </h2>
-          <button
-            onClick={onClose}
-            style={{ background: 'none', border: 'none', color: 'var(--goon-text-muted)', cursor: 'pointer', fontSize: 20, lineHeight: 1, padding: 4 }}
-          >
-            ×
-          </button>
+        <div style={{
+          background: 'black',
+          color: 'white',
+          fontFamily: 'var(--font-pixel)',
+          fontSize: 10,
+          textTransform: 'uppercase',
+          padding: '12px 16px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          letterSpacing: 1,
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)',
+          backgroundSize: '16px 16px',
+        }}>
+          <span>Adicionar Plano</span>
+          <button onClick={onClose} style={{ background: 'var(--danger)', border: '1px solid white', color: 'white', cursor: 'pointer', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700 }}>×</button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form onSubmit={handleSubmit} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Product */}
           <div>
-            <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Produto *</label>
+            <label className="goon-label">Produto *</label>
             {loadingProducts ? (
-              <p style={{ fontSize: 13, color: 'var(--goon-text-muted)' }}>Carregando produtos...</p>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555' }}>Carregando produtos...</p>
             ) : (
-              <select
-                className="goon-select"
-                value={productId}
-                onChange={e => setProductId(e.target.value)}
-                required
-                style={inputStyle}
-              >
+              <select className="goon-select" value={productId} onChange={e => setProductId(e.target.value)} required style={{ width: '100%' }}>
                 <option value="">Selecionar produto...</option>
                 {products.map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.code} — {p.name}
-                  </option>
+                  <option key={p.id} value={p.id}>{p.code} — {p.name}</option>
                 ))}
               </select>
             )}
           </div>
 
-          {/* Value */}
           <div>
-            <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Valor (R$) *</label>
-            <input
-              className="goon-input"
-              type="number"
-              min={0}
-              step={1}
-              value={value}
-              onChange={e => setValue(e.target.value)}
-              required
-              placeholder="0"
-              style={inputStyle}
-            />
+            <label className="goon-label">Valor (R$) *</label>
+            <input className="goon-input" type="number" min={0} step={1} value={value} onChange={e => setValue(e.target.value)} required placeholder="0" />
           </div>
 
-          {/* Payment type */}
           <div>
-            <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Forma de Pagamento *</label>
-            <select
-              className="goon-select"
-              value={paymentType}
-              onChange={e => setPaymentType(e.target.value)}
-              style={inputStyle}
-            >
+            <label className="goon-label">Forma de Pagamento *</label>
+            <select className="goon-select" value={paymentType} onChange={e => setPaymentType(e.target.value)} style={{ width: '100%' }}>
               <option value="CASH">À Vista</option>
               <option value="INSTALLMENT">Parcelado</option>
               <option value="RECURRING">Recorrente</option>
             </select>
           </div>
 
-          {/* Installments (only for INSTALLMENT) */}
           {paymentType === 'INSTALLMENT' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Nº Parcelas</label>
-                <input
-                  className="goon-input"
-                  type="number"
-                  min={1}
-                  value={installments}
-                  onChange={e => setInstallments(e.target.value)}
-                  placeholder="12"
-                  style={inputStyle}
-                />
+                <label className="goon-label">Nº Parcelas</label>
+                <input className="goon-input" type="number" min={1} value={installments} onChange={e => setInstallments(e.target.value)} placeholder="12" />
               </div>
               <div>
-                <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Valor da Parcela (R$)</label>
-                <input
-                  className="goon-input"
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={installmentValue}
-                  onChange={e => setInstallmentValue(e.target.value)}
-                  placeholder="Auto"
-                  style={inputStyle}
-                />
+                <label className="goon-label">Valor da Parcela (R$)</label>
+                <input className="goon-input" type="number" min={0} step={1} value={installmentValue} onChange={e => setInstallmentValue(e.target.value)} placeholder="Auto" />
               </div>
             </div>
           )}
 
-          {/* Cycle & dates */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Duração (meses)</label>
-              <input
-                className="goon-input"
-                type="number"
-                min={1}
-                value={cycleDuration}
-                onChange={e => setCycleDuration(e.target.value)}
-                placeholder="12"
-                style={inputStyle}
-              />
+              <label className="goon-label">Duração (meses)</label>
+              <input className="goon-input" type="number" min={1} value={cycleDuration} onChange={e => setCycleDuration(e.target.value)} placeholder="12" />
             </div>
             <div>
-              <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Data de Início *</label>
-              <input
-                className="goon-input"
-                type="date"
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
-                required
-                style={inputStyle}
-              />
+              <label className="goon-label">Data de Início *</label>
+              <input className="goon-input" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required />
             </div>
           </div>
 
-          {/* End date (read-only, auto-calculated) */}
           {endDate && (
             <div>
-              <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Data de Término (calculada)</label>
-              <input
-                className="goon-input"
-                type="date"
-                value={endDate}
-                readOnly
-                style={{ ...inputStyle, opacity: 0.7, cursor: 'not-allowed' }}
-              />
+              <label className="goon-label">Término (calculado)</label>
+              <input className="goon-input" type="date" value={endDate} readOnly style={{ opacity: 0.7, cursor: 'not-allowed' }} />
             </div>
           )}
 
-          {/* Notes */}
           <div>
-            <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Observações</label>
-            <textarea
-              className="goon-textarea"
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              rows={3}
-              placeholder="Opcional..."
-              style={inputStyle}
-            />
+            <label className="goon-label">Observações</label>
+            <textarea className="goon-textarea" value={notes} onChange={e => setNotes(e.target.value)} rows={3} placeholder="Opcional..." />
           </div>
 
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
-            <button type="button" className="goon-btn-ghost" onClick={onClose} disabled={saving}>
-              Cancelar
-            </button>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '2px solid black', paddingTop: 16 }}>
+            <button type="button" className="goon-btn-secondary" onClick={onClose} disabled={saving}>Cancelar</button>
             <button type="submit" className="goon-btn-primary" disabled={saving || loadingProducts}>
               {saving ? 'Salvando...' : 'Adicionar Plano'}
             </button>
@@ -543,9 +464,9 @@ function AddPlanModal({ clientId, onClose, onCreated }: AddPlanModalProps) {
 // ---- Contract Status Badge ----
 function ContractStatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
-    DRAFT: 'goon-badge goon-badge-muted',
-    SENT: 'goon-badge goon-badge-warning',
-    SIGNED: 'goon-badge goon-badge-success',
+    DRAFT: 'goon-badge goon-badge-draft',
+    SENT: 'goon-badge goon-badge-sent',
+    SIGNED: 'goon-badge goon-badge-signed',
     CANCELLED: 'goon-badge goon-badge-danger',
   }
   const labels: Record<string, string> = {
@@ -554,10 +475,10 @@ function ContractStatusBadge({ status }: { status: string }) {
     SIGNED: 'Assinado',
     CANCELLED: 'Cancelado',
   }
-  return <span className={map[status] ?? 'goon-badge goon-badge-muted'}>{labels[status] ?? status}</span>
+  return <span className={map[status] ?? 'goon-badge goon-badge-inactive'}>{labels[status] ?? status}</span>
 }
 
-// ---- Contract Actions (inline) ----
+// ---- Contract Actions ----
 const CONTRACT_API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
 function openContractTab(path: string, method: 'GET' | 'POST' = 'GET') {
@@ -588,7 +509,7 @@ function ContractActions({ contract, onRefresh }: { contract: Contract; onRefres
         body: JSON.stringify({ status: newStatus }),
       })
       const labels: Record<string, string> = { SENT: 'Enviado', SIGNED: 'Assinado', CANCELLED: 'Cancelado' }
-      toast.success(`Status: ${labels[newStatus] ?? newStatus}`)
+      toast.success(`[OK] Status → ${labels[newStatus] ?? newStatus}`)
       onRefresh()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Erro ao alterar status')
@@ -599,30 +520,25 @@ function ContractActions({ contract, onRefresh }: { contract: Contract; onRefres
 
   const btnStyle: React.CSSProperties = {
     padding: '4px 10px',
-    borderRadius: 6,
-    border: '1px solid var(--goon-border)',
-    background: 'transparent',
-    color: 'var(--goon-text-secondary)',
+    border: '2px solid black',
+    background: 'var(--retro-gray)',
+    color: 'black',
     cursor: 'pointer',
-    fontSize: 12,
-    fontWeight: 600,
+    fontFamily: 'var(--font-mono)',
+    fontSize: 11,
+    fontWeight: 700,
+    textTransform: 'uppercase' as const,
+    boxShadow: '2px 2px 0 black',
+    transition: 'transform 0.1s, box-shadow 0.1s',
   }
 
   return (
     <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-      <button
-        style={btnStyle}
-        disabled={busy}
-        onClick={() => openContractTab(`/api/contracts/${contract.id}/generate-pdf`, 'POST')}
-      >
+      <button style={btnStyle} disabled={busy} onClick={() => openContractTab(`/api/contracts/${contract.id}/generate-pdf`, 'POST')}>
         Gerar PDF
       </button>
       {contract.generatedPdfUrl && (
-        <button
-          style={btnStyle}
-          disabled={busy}
-          onClick={() => openContractTab(`/api/contracts/${contract.id}/download`)}
-        >
+        <button style={btnStyle} disabled={busy} onClick={() => openContractTab(`/api/contracts/${contract.id}/download`)}>
           Baixar
         </button>
       )}
@@ -633,7 +549,7 @@ function ContractActions({ contract, onRefresh }: { contract: Contract; onRefres
         <button style={btnStyle} disabled={busy} onClick={() => handleStatus('SIGNED')}>Assinado</button>
       )}
       {(contract.status === 'DRAFT' || contract.status === 'SENT') && (
-        <button style={{ ...btnStyle, color: '#ef4444', borderColor: '#ef444440' }} disabled={busy} onClick={() => handleStatus('CANCELLED')}>
+        <button style={{ ...btnStyle, background: 'var(--danger)', color: 'white', boxShadow: '2px 2px 0 black' }} disabled={busy} onClick={() => handleStatus('CANCELLED')}>
           Cancelar
         </button>
       )}
@@ -656,14 +572,12 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
 
   const selectedPlan = plans.find(p => p.id === selectedPlanId)
 
-  // Auto-derive template from product code
   useEffect(() => {
     if (selectedPlan) {
       setTemplateType(selectedPlan.product.code.toLowerCase())
     }
   }, [selectedPlan])
 
-  // Preview fields
   const previewFields = selectedPlan
     ? {
         Produto: selectedPlan.product.name,
@@ -686,7 +600,7 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
           templateType,
         }),
       })
-      toast.success('Contrato criado com sucesso')
+      toast.success('[OK] Contrato criado')
       onCreated()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Erro ao criar contrato')
@@ -697,61 +611,33 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
 
   return (
     <div
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 1000, padding: 16, overflowY: 'auto',
-      }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16, overflowY: 'auto' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="goon-card" style={{ width: '100%', maxWidth: 480, padding: 28, margin: 'auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--goon-text-primary)', margin: 0 }}>
-            Gerar Contrato
-          </h2>
-          <button
-            onClick={onClose}
-            style={{ background: 'none', border: 'none', color: 'var(--goon-text-muted)', cursor: 'pointer', fontSize: 20, lineHeight: 1, padding: 4 }}
-          >
-            ×
-          </button>
+      <div style={{ width: '100%', maxWidth: 480, background: 'white', border: '2px solid black', boxShadow: '8px 8px 0px 0px #000', margin: 'auto' }}>
+        <div style={{ background: 'black', color: 'white', fontFamily: 'var(--font-pixel)', fontSize: 10, textTransform: 'uppercase', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', letterSpacing: 1, backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
+          <span>Gerar Contrato</span>
+          <button onClick={onClose} style={{ background: 'var(--danger)', border: '1px solid white', color: 'white', cursor: 'pointer', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700 }}>×</button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Plan selector */}
+        <form onSubmit={handleSubmit} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Plano</label>
+            <label className="goon-label">Plano</label>
             {plans.length === 0 ? (
-              <p style={{ fontSize: 13, color: 'var(--goon-text-muted)' }}>
-                Nenhum plano disponível. Adicione um plano primeiro.
-              </p>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555' }}>Nenhum plano disponível.</p>
             ) : (
-              <select
-                className="goon-select"
-                value={selectedPlanId}
-                onChange={e => setSelectedPlanId(e.target.value)}
-                style={{ width: '100%' }}
-              >
+              <select className="goon-select" value={selectedPlanId} onChange={e => setSelectedPlanId(e.target.value)} style={{ width: '100%' }}>
                 <option value="">Sem plano vinculado</option>
                 {plans.map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.product.code} — {p.product.name}
-                  </option>
+                  <option key={p.id} value={p.id}>{p.product.code} — {p.product.name}</option>
                 ))}
               </select>
             )}
           </div>
 
-          {/* Template type */}
           <div>
-            <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Template</label>
-            <select
-              className="goon-select"
-              value={templateType}
-              onChange={e => setTemplateType(e.target.value)}
-              required
-              style={{ width: '100%' }}
-            >
+            <label className="goon-label">Template</label>
+            <select className="goon-select" value={templateType} onChange={e => setTemplateType(e.target.value)} required style={{ width: '100%' }}>
               <option value="">Selecionar...</option>
               <option value="ge">GE — Gestão Estratégica</option>
               <option value="gi">GI — Gestão Integrada</option>
@@ -759,34 +645,22 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
             </select>
           </div>
 
-          {/* Preview */}
           {Object.keys(previewFields).length > 0 && (
-            <div
-              style={{
-                background: 'var(--goon-input-bg)',
-                borderRadius: 8,
-                border: '1px solid var(--goon-border-subtle)',
-                padding: 14,
-              }}
-            >
-              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--goon-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
-                Pré-visualização dos campos
-              </p>
+            <div style={{ background: 'var(--retro-gray)', border: '2px solid black', padding: 14 }}>
+              <p style={{ fontFamily: 'var(--font-pixel)', fontSize: 9, color: 'black', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Pré-visualização</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px' }}>
                 {Object.entries(previewFields).map(([label, value]) => (
                   <div key={label}>
-                    <span style={{ fontSize: 11, color: 'var(--goon-text-muted)', display: 'block' }}>{label}</span>
-                    <span style={{ fontSize: 13, color: 'var(--goon-text-secondary)' }}>{String(value)}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555', display: 'block', textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700 }}>{label}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'black' }}>{String(value)}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
-            <button type="button" className="goon-btn-ghost" onClick={onClose} disabled={saving}>
-              Cancelar
-            </button>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '2px solid black', paddingTop: 16 }}>
+            <button type="button" className="goon-btn-secondary" onClick={onClose} disabled={saving}>Cancelar</button>
             <button type="submit" className="goon-btn-primary" disabled={saving || !templateType}>
               {saving ? 'Criando...' : 'Criar Contrato'}
             </button>
@@ -800,11 +674,29 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
 // ---- Section wrapper ----
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="goon-card" style={{ padding: 24, marginBottom: 20 }}>
-      <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--goon-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 20px 0' }}>
+    <div style={{
+      background: 'white',
+      border: '2px solid black',
+      boxShadow: '4px 4px 0px 0px #000',
+      marginBottom: 20,
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        background: 'black',
+        color: 'white',
+        fontFamily: 'var(--font-pixel)',
+        fontSize: 9,
+        textTransform: 'uppercase',
+        padding: '8px 16px',
+        letterSpacing: 1,
+        backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)',
+        backgroundSize: '16px 16px',
+      }}>
         {title}
-      </h3>
-      {children}
+      </div>
+      <div style={{ padding: 24 }}>
+        {children}
+      </div>
     </div>
   )
 }
@@ -843,7 +735,7 @@ export default function ClientDetailPage() {
       const data = await apiFetch<ClientPlan[]>(`/api/clients/${id}/plans`)
       setPlans(data)
     } catch {
-      // silent — plans list is non-critical
+      // silent
     } finally {
       setLoadingPlans(false)
     }
@@ -880,7 +772,7 @@ export default function ClientDetailPage() {
         body: JSON.stringify(payload),
       })
       setClient(updated)
-      toast.success('Campo atualizado')
+      toast.success('[OK] Campo atualizado')
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Erro ao salvar')
       throw err
@@ -896,7 +788,7 @@ export default function ClientDetailPage() {
         body: JSON.stringify({ status: newStatus }),
       })
       setClient(updated)
-      toast.success(`Status alterado para ${statusLabel(newStatus)}`)
+      toast.success(`[OK] Status → ${statusLabel(newStatus)}`)
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Erro ao alterar status')
     } finally {
@@ -906,24 +798,25 @@ export default function ClientDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300, gap: 12 }}>
         <div style={{
-          width: 36,
-          height: 36,
-          border: '3px solid var(--goon-border)',
-          borderTopColor: 'var(--goon-primary)',
+          width: 32,
+          height: 32,
+          border: '3px solid black',
+          borderTopColor: 'transparent',
           borderRadius: '50%',
-          animation: 'spin 0.8s linear infinite',
+          animation: 'spin 0.6s linear infinite',
         }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     )
   }
 
   if (!client) {
     return (
-      <div style={{ textAlign: 'center', padding: 60, color: 'var(--goon-text-muted)' }}>
-        <p>Cliente não encontrado.</p>
-        <button className="goon-btn-ghost" onClick={() => router.push('/clients')} style={{ marginTop: 16 }}>
+      <div style={{ textAlign: 'center', padding: 60 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 13 }}>Cliente não encontrado.</p>
+        <button className="goon-btn-secondary" onClick={() => router.push('/clients')} style={{ marginTop: 16 }}>
           ← Voltar
         </button>
       </div>
@@ -943,64 +836,58 @@ export default function ClientDetailPage() {
         <button
           className="goon-btn-ghost"
           onClick={() => router.push('/clients')}
-          style={{ marginBottom: 16, padding: '6px 14px', fontSize: 13 }}
+          style={{ marginBottom: 16, fontSize: 11 }}
         >
           ← Clientes
         </button>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--goon-text-primary)', margin: '0 0 6px 0' }}>
+            <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, fontWeight: 800, color: 'black', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: 1 }}>
               {client.companyName}
             </h1>
             {client.tradeName && (
-              <p style={{ fontSize: 14, color: 'var(--goon-text-muted)', margin: 0 }}>{client.tradeName}</p>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', margin: 0 }}>{client.tradeName}</p>
             )}
           </div>
 
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            {/* Status dropdown */}
-            <div style={{ position: 'relative' }}>
-              <select
-                className="goon-select"
-                value={client.status}
-                onChange={e => handleStatusChange(e.target.value)}
-                disabled={changingStatus}
-                style={{ paddingLeft: 12, paddingRight: 32, fontSize: 13, width: 'auto', cursor: 'pointer' }}
-              >
-                <option value="ACTIVE">Ativo</option>
-                <option value="PROSPECT">Prospect</option>
-                <option value="INACTIVE">Inativo</option>
-              </select>
-            </div>
+            <select
+              className="goon-select"
+              value={client.status}
+              onChange={e => handleStatusChange(e.target.value)}
+              disabled={changingStatus}
+              style={{ width: 'auto', cursor: 'pointer' }}
+            >
+              <option value="ACTIVE">Ativo</option>
+              <option value="PROSPECT">Prospect</option>
+              <option value="INACTIVE">Inativo</option>
+            </select>
 
-            {/* WhatsApp */}
             {(client.whatsapp ?? client.phone) && (
               <a
                 href={`https://wa.me/${(client.whatsapp ?? client.phone ?? '').replace(/\D/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="goon-btn-ghost"
-                style={{ padding: '8px 14px', fontSize: 13, textDecoration: 'none' }}
+                className="goon-btn-secondary"
+                style={{ textDecoration: 'none', background: 'var(--success)', color: 'white', border: '2px solid black' }}
               >
-                💬 WhatsApp
+                WhatsApp
               </a>
             )}
 
-            {/* Email */}
             {client.email && (
               <a
                 href={`mailto:${client.email}`}
-                className="goon-btn-ghost"
-                style={{ padding: '8px 14px', fontSize: 13, textDecoration: 'none' }}
+                className="goon-btn-secondary"
+                style={{ textDecoration: 'none' }}
               >
-                ✉️ E-mail
+                E-mail
               </a>
             )}
           </div>
         </div>
 
-        {/* Status badge display */}
         <div style={{ marginTop: 12 }}>
           <span className={statusClass(client.status)}>{statusLabel(client.status)}</span>
         </div>
@@ -1072,21 +959,21 @@ export default function ClientDetailPage() {
       {/* Plans Section */}
       <Section title="Planos">
         {loadingPlans ? (
-          <p style={{ color: 'var(--goon-text-muted)', fontSize: 14 }}>Carregando planos...</p>
+          <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 13 }}>Carregando planos...</p>
         ) : plans.length === 0 ? (
-          <p style={{ color: 'var(--goon-text-muted)', fontSize: 14 }}>Nenhum plano vinculado ainda.</p>
+          <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 13 }}>Nenhum plano vinculado ainda.</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {plans.map(plan => {
-              const color = PRODUCT_COLORS[plan.product.code] ?? '#6b7280'
+              const codeColors: Record<string, string> = { GE: 'var(--retro-blue)', GI: 'var(--success)', GS: 'var(--warning)' }
+              const color = codeColors[plan.product.code] ?? 'black'
               return (
                 <div
                   key={plan.id}
                   style={{
                     padding: '14px 16px',
-                    background: 'var(--goon-input-bg)',
-                    borderRadius: 8,
-                    border: '1px solid var(--goon-border-subtle)',
+                    background: 'var(--retro-gray)',
+                    border: '2px solid black',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
@@ -1095,7 +982,6 @@ export default function ClientDetailPage() {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    {/* Product badge */}
                     <span
                       style={{
                         display: 'inline-flex',
@@ -1103,10 +989,11 @@ export default function ClientDetailPage() {
                         justifyContent: 'center',
                         width: 40,
                         height: 40,
-                        borderRadius: 8,
-                        background: `${color}22`,
-                        color,
-                        fontSize: 13,
+                        background: color,
+                        color: 'white',
+                        border: '2px solid black',
+                        fontFamily: 'var(--font-pixel)',
+                        fontSize: 10,
                         fontWeight: 800,
                         flexShrink: 0,
                       }}
@@ -1114,10 +1001,10 @@ export default function ClientDetailPage() {
                       {plan.product.code}
                     </span>
                     <div>
-                      <span style={{ fontWeight: 600, color: 'var(--goon-text-primary)', fontSize: 14 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'black', fontSize: 13, textTransform: 'uppercase' }}>
                         {plan.product.name}
                       </span>
-                      <div style={{ fontSize: 12, color: 'var(--goon-text-muted)', marginTop: 3, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', marginTop: 3, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                         <span>{paymentTypeLabel(plan.paymentType)}</span>
                         {plan.installments && <span>{plan.installments}x {fmtBRL(plan.installmentValue ?? undefined)}</span>}
                         <span>Início: {new Date(plan.startDate).toLocaleDateString('pt-BR')}</span>
@@ -1126,7 +1013,7 @@ export default function ClientDetailPage() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                    <span style={{ fontWeight: 700, color: 'var(--goon-text-primary)', fontSize: 15 }}>
+                    <span style={{ fontFamily: 'var(--font-pixel)', fontWeight: 700, color: 'black', fontSize: 12 }}>
                       {fmtBRL(plan.value)}
                     </span>
                     <span className={statusClass(plan.status)}>{statusLabel(plan.status)}</span>
@@ -1136,23 +1023,17 @@ export default function ClientDetailPage() {
             })}
           </div>
         )}
-        <button
-          className="goon-btn-ghost"
-          onClick={() => setShowAddPlan(true)}
-          style={{ marginTop: 16 }}
-        >
+        <button className="goon-btn-ghost" onClick={() => setShowAddPlan(true)} style={{ marginTop: 16 }}>
           + Adicionar Plano
         </button>
       </Section>
 
-      {/* Add Plan Modal */}
       {showAddPlan && (
         <AddPlanModal
           clientId={id}
           onClose={() => setShowAddPlan(false)}
           onCreated={plan => {
             setPlans(prev => [plan, ...prev])
-            // Refresh client to get updated onboarding
             fetchClient()
           }}
         />
@@ -1161,14 +1042,15 @@ export default function ClientDetailPage() {
       {/* Contracts Section */}
       <Section title="Contratos">
         {loadingContracts ? (
-          <p style={{ color: 'var(--goon-text-muted)', fontSize: 14 }}>Carregando contratos...</p>
+          <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 13 }}>Carregando contratos...</p>
         ) : contracts.length === 0 ? (
-          <p style={{ color: 'var(--goon-text-muted)', fontSize: 14 }}>Nenhum contrato gerado ainda.</p>
+          <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 13 }}>Nenhum contrato gerado ainda.</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {contracts.map(contract => {
               const productCode = contract.templateType.toUpperCase()
-              const color = PRODUCT_COLORS[productCode] ?? '#6b7280'
+              const codeColors: Record<string, string> = { GE: 'var(--retro-blue)', GI: 'var(--success)', GS: 'var(--warning)' }
+              const color = codeColors[productCode] ?? 'black'
               const productName = contract.clientPlan?.product?.name ?? contract.templateType
 
               return (
@@ -1176,9 +1058,8 @@ export default function ClientDetailPage() {
                   key={contract.id}
                   style={{
                     padding: '14px 16px',
-                    background: 'var(--goon-input-bg)',
-                    borderRadius: 8,
-                    border: '1px solid var(--goon-border-subtle)',
+                    background: 'var(--retro-gray)',
+                    border: '2px solid black',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
@@ -1190,15 +1071,16 @@ export default function ClientDetailPage() {
                     <span
                       style={{
                         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                        width: 36, height: 36, borderRadius: 6, background: `${color}22`,
-                        color, fontSize: 12, fontWeight: 800, flexShrink: 0,
+                        width: 36, height: 36, background: color,
+                        color: 'white', border: '2px solid black',
+                        fontFamily: 'var(--font-pixel)', fontSize: 9, fontWeight: 800, flexShrink: 0,
                       }}
                     >
                       {productCode}
                     </span>
                     <div>
-                      <span style={{ fontWeight: 600, color: 'var(--goon-text-primary)', fontSize: 14 }}>{productName}</span>
-                      <div style={{ fontSize: 12, color: 'var(--goon-text-muted)', marginTop: 2, display: 'flex', gap: 8 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'black', fontSize: 13, textTransform: 'uppercase' }}>{productName}</span>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', marginTop: 2, display: 'flex', gap: 8 }}>
                         <span>v{contract.version}</span>
                         <span>{new Date(contract.createdAt).toLocaleDateString('pt-BR')}</span>
                       </div>
@@ -1213,16 +1095,11 @@ export default function ClientDetailPage() {
             })}
           </div>
         )}
-        <button
-          className="goon-btn-ghost"
-          onClick={() => setShowCreateContract(true)}
-          style={{ marginTop: 16 }}
-        >
+        <button className="goon-btn-ghost" onClick={() => setShowCreateContract(true)} style={{ marginTop: 16 }}>
           + Gerar Contrato
         </button>
       </Section>
 
-      {/* Create Contract Modal */}
       {showCreateContract && (
         <CreateContractModal
           clientId={id}
@@ -1240,65 +1117,27 @@ export default function ClientDetailPage() {
         {client.onboarding ? (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <div>
-              <p style={{ fontSize: 13, color: 'var(--goon-text-muted)', margin: '0 0 6px 0' }}>Etapa atual</p>
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  background: (STAGE_COLORS[client.onboarding.currentStage] ?? '#888') + '22',
-                  color: STAGE_COLORS[client.onboarding.currentStage] ?? '#888',
-                  border: `1px solid ${(STAGE_COLORS[client.onboarding.currentStage] ?? '#888')}44`,
-                  borderRadius: 10,
-                  padding: '3px 10px',
-                  fontSize: 13,
-                  fontWeight: 600,
-                }}
-              >
-                <span
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    background: STAGE_COLORS[client.onboarding.currentStage] ?? '#888',
-                    flexShrink: 0,
-                  }}
-                />
+              <label className="goon-label" style={{ marginBottom: 8 }}>Etapa atual</label>
+              <span className="goon-badge goon-badge-pending">
                 {STAGE_LABELS[client.onboarding.currentStage] ?? client.onboarding.currentStage}
               </span>
             </div>
-            <a
-              href="/onboarding"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '8px 14px',
-                background: 'transparent',
-                border: '1px solid var(--goon-border)',
-                borderRadius: 8,
-                color: 'var(--goon-text-secondary)',
-                fontSize: 13,
-                fontWeight: 600,
-                textDecoration: 'none',
-                cursor: 'pointer',
-              }}
-            >
+            <a href="/onboarding" className="goon-btn-secondary" style={{ textDecoration: 'none' }}>
               Ver no Kanban →
             </a>
           </div>
         ) : (
-          <p style={{ color: 'var(--goon-text-muted)', fontSize: 14 }}>Sem onboarding registrado.</p>
+          <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 13 }}>Sem onboarding registrado.</p>
         )}
       </Section>
 
       {/* Activity Log */}
       <Section title="Histórico de Atividades">
         {client.activityLogs.length === 0 ? (
-          <p style={{ color: 'var(--goon-text-muted)', fontSize: 14 }}>Nenhuma atividade registrada.</p>
+          <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 13 }}>Nenhuma atividade registrada.</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {client.activityLogs.map(log => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {client.activityLogs.map((log, idx) => (
               <div
                 key={log.id}
                 style={{
@@ -1306,22 +1145,25 @@ export default function ClientDetailPage() {
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
                   gap: 12,
-                  padding: '12px 0',
-                  borderBottom: '1px solid var(--goon-border-subtle)',
+                  padding: '10px 0',
+                  borderBottom: idx < client.activityLogs.length - 1 ? '1px solid black' : 'none',
                 }}
               >
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, color: 'var(--goon-text-secondary)' }}>
-                    {log.description ?? log.action}
-                  </div>
-                  {log.fromValue && log.toValue && (
-                    <div style={{ fontSize: 12, color: 'var(--goon-text-muted)', marginTop: 3 }}>
-                      {log.fromValue} → {log.toValue}
+                <div style={{ flex: 1, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'black', fontWeight: 700, flexShrink: 0, marginTop: 2 }}>{'>'}</span>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'black' }}>
+                      {log.description ?? log.action}
                     </div>
-                  )}
+                    {log.fromValue && log.toValue && (
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', marginTop: 3 }}>
+                        {log.fromValue} → {log.toValue}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--goon-text-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                  {relativeTime(log.createdAt)}
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  [{relativeTime(log.createdAt)}]
                 </div>
               </div>
             ))}

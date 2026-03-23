@@ -11,20 +11,50 @@ export function MobileHeader({ onMenuClick, userName }: MobileHeaderProps) {
   return (
     <header style={{
       position: 'fixed', top: 0, left: 0, right: 0, height: 56,
-      background: 'var(--goon-header-bg)', backdropFilter: 'blur(12px)',
-      borderBottom: '1px solid var(--goon-border)',
+      background: 'var(--retro-gray)',
+      borderBottom: '2px solid black',
+      boxShadow: '0 4px 0 black',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '0 16px', zIndex: 30,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button onClick={onMenuClick} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-          <Menu size={22} color="var(--goon-text-primary)" />
+        <button
+          onClick={onMenuClick}
+          style={{
+            background: 'black',
+            border: '2px solid black',
+            cursor: 'pointer',
+            padding: 4,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '2px 2px 0 black',
+          }}
+        >
+          <Menu size={18} color="white" />
         </button>
-        <span style={{ color: 'var(--goon-primary)', fontWeight: 900, fontSize: 16, fontFamily: 'Arial Black' }}>GOON</span>
-        <span style={{ color: 'var(--goon-text-muted)', fontSize: 11, fontWeight: 600 }}>OS</span>
+        <span style={{
+          color: 'black',
+          fontWeight: 900,
+          fontSize: 14,
+          fontFamily: 'var(--font-pixel)',
+          letterSpacing: '0.05em',
+        }}>GOON</span>
+        <span style={{
+          color: '#555',
+          fontSize: 10,
+          fontWeight: 700,
+          fontFamily: 'var(--font-mono)',
+        }}>OS</span>
       </div>
       {userName && (
-        <span style={{ color: 'var(--goon-text-secondary)', fontSize: 12 }}>{userName}</span>
+        <span style={{
+          color: 'black',
+          fontSize: 11,
+          fontFamily: 'var(--font-mono)',
+          fontWeight: 700,
+          textTransform: 'uppercase',
+        }}>{userName}</span>
       )}
     </header>
   )
