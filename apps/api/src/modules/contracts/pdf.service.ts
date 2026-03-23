@@ -25,13 +25,16 @@ export class PdfService {
   generateHtml(templateType: string, fields: Record<string, string>): string {
     let html = this.getTemplate(templateType)
 
-    // Replace all {{field}} markers
+    // Replace all {{field}} markers with provided values
     for (const [key, value] of Object.entries(fields)) {
-      html = html.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value ?? '—')
+      html = html.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value ?? '')
     }
 
-    // Add generated date
+    // Legacy: replace generatedDate if not already in fields
     html = html.replace(/\{\{generatedDate\}\}/g, new Date().toLocaleDateString('pt-BR'))
+
+    // Replace any remaining unreplaced {{field}} markers with empty string
+    html = html.replace(/\{\{[^}]+\}\}/g, '')
 
     return html
   }

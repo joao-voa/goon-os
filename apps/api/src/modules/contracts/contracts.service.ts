@@ -7,10 +7,32 @@ const fmtBRL = (n: unknown) =>
   new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(Number(n))
 
 const fmtDate = (d: unknown) => new Date(d as string).toLocaleDateString('pt-BR')
+
+function addMonths(date: Date, months: number): Date {
+  const result = new Date(date)
+  result.setMonth(result.getMonth() + months)
+  return result
+}
+
+function buildPaymentDescription(plan: {
+  paymentType: string
+  value: { toNumber: () => number }
+  installments?: number | null
+  installmentValue?: { toNumber: () => number } | null
+  paymentDay?: number | null
+}): string {
+  if (plan.paymentType === 'CASH') {
+    return `${fmtBRL(plan.value.toNumber())} à vista`
+  }
+  const installments = plan.installments ?? 1
+  const installmentValue = plan.installmentValue ? fmtBRL(plan.installmentValue.toNumber()) : fmtBRL(plan.value.toNumber() / installments)
+  const day = plan.paymentDay ? `, vencimento todo dia ${plan.paymentDay}` : ''
+  return `${installments}x de ${installmentValue} via boleto${day}`
+}
 
 @Injectable()
 export class ContractsService {
@@ -83,11 +105,13 @@ export class ContractsService {
 
     let plan: {
       value: { toNumber: () => number }
+      paymentType: string
       installments?: number | null
       installmentValue?: { toNumber: () => number } | null
       startDate: Date
       endDate?: Date | null
       cycleDuration?: number | null
+      paymentDay?: number | null
       product: { name: string; code: string }
     } | null = null
 
@@ -111,11 +135,29 @@ export class ContractsService {
     ].filter(Boolean)
 
     const dynamicFields: Record<string, string> = {
+      // New template fields
+      contratanteNome: client.responsible,
+      contratanteCPF: '',
+      contratanteEndereco: addressParts.length > 0 ? addressParts.join(', ') : '',
+      contratanteEmail: client.email ?? '',
+      contratanteEmpresa: client.companyName,
+      contratanteCNPJ: client.cnpj ?? '',
+      valorTotal: plan ? fmtBRL(plan.value.toNumber()) : '',
+      formaPagamento: plan ? buildPaymentDescription(plan) : '',
+      valorParcela: plan?.installmentValue ? fmtBRL(plan.installmentValue.toNumber()) : '',
+      numParcelas: plan?.installments?.toString() ?? '',
+      diaVencimento: plan?.paymentDay?.toString() ?? '',
+      vigenciaInicio: plan ? fmtDate(plan.startDate) : '',
+      vigenciaFim: plan?.endDate ? fmtDate(plan.endDate) : '',
+      acessoFim: plan ? fmtDate(addMonths(plan.startDate, 12)) : '',
+      dataContrato: fmtDate(new Date()),
+      cidadeForo: 'São Paulo/SP',
+      productName: plan?.product?.name ?? dto.templateType,
+      // Legacy fields (kept for backward compatibility)
       companyName: client.companyName,
       cnpj: client.cnpj ?? '—',
       responsible: client.responsible,
       address: addressParts.length > 0 ? addressParts.join(', ') : '—',
-      productName: plan?.product?.name ?? dto.templateType,
       value: plan ? fmtBRL(plan.value.toNumber()) : '—',
       installments: plan?.installments?.toString() ?? '—',
       installmentValue: plan?.installmentValue ? fmtBRL(plan.installmentValue.toNumber()) : '—',
@@ -152,15 +194,42 @@ export class ContractsService {
     return contract
   }
 
-  async update(id: string, dto: { dynamicFields: Record<string, string> }) {
+  async update(
+    id: string,
+    dto: {
+      dynamicFields?: Record<string, string>
+      isSigned?: boolean
+      signatureDate?: string
+    },
+  ) {
     const existing = await this.prisma.contract.findUnique({ where: { id } })
     if (!existing) {
       throw new NotFoundException(`Contrato com ID ${id} não encontrado`)
     }
 
+    const updateData: Record<string, unknown> = {}
+
+    if (dto.dynamicFields !== undefined) {
+      updateData.dynamicFields = dto.dynamicFields
+    }
+
+    if (dto.isSigned !== undefined) {
+      updateData.isSigned = dto.isSigned
+      if (dto.isSigned) {
+        updateData.signatureDate = dto.signatureDate ? new Date(dto.signatureDate) : new Date()
+        // Also advance status to SIGNED if not already
+        if (existing.status !== 'SIGNED' && existing.status !== 'CANCELLED') {
+          updateData.status = 'SIGNED'
+          updateData.signedAt = updateData.signatureDate
+        }
+      } else {
+        updateData.signatureDate = null
+      }
+    }
+
     const contract = await this.prisma.contract.update({
       where: { id },
-      data: { dynamicFields: dto.dynamicFields },
+      data: updateData,
       include: {
         client: { select: { id: true, companyName: true, responsible: true } },
         clientPlan: {
@@ -171,12 +240,16 @@ export class ContractsService {
       },
     })
 
+    const description = dto.isSigned
+      ? `Contrato marcado como assinado`
+      : `Campos do contrato atualizados`
+
     await this.activityLog.log({
       clientId: existing.clientId,
       entityType: 'CONTRACT',
       entityId: contract.id,
       action: 'UPDATED',
-      description: `Campos do contrato atualizados`,
+      description,
     })
 
     return contract
@@ -233,8 +306,10 @@ export class ContractsService {
 
     const fields = contract.dynamicFields as Record<string, string>
 
-    // Validate required fields
-    const required = ['companyName', 'responsible', 'productName', 'value', 'startDate']
+    // Validate required fields (support both old and new field names)
+    const required = fields['contratanteNome']
+      ? ['contratanteNome', 'productName', 'valorTotal']
+      : ['companyName', 'responsible', 'productName', 'value', 'startDate']
     const missing = required.filter(f => !fields[f] || fields[f] === '—')
     if (missing.length > 0) {
       throw new BadRequestException({

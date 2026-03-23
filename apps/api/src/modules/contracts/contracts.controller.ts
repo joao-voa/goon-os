@@ -50,7 +50,7 @@ export class ContractsController {
   @Put(':id')
   update(
     @Param('id') id: string,
-    @Body() dto: { dynamicFields: Record<string, string> },
+    @Body() dto: { dynamicFields?: Record<string, string>; isSigned?: boolean; signatureDate?: string },
   ) {
     return this.contractsService.update(id, dto)
   }

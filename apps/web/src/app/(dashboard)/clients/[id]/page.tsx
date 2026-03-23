@@ -45,10 +45,17 @@ interface Contract {
   version: number
   dynamicFields: Record<string, string>
   generatedPdfUrl?: string | null
+  isSigned?: boolean
+  signatureDate?: string | null
+  signedAt?: string | null
   createdAt: string
   clientPlan?: {
     id: string
     value: number
+    startDate?: string | null
+    endDate?: string | null
+    paymentStartDate?: string | null
+    paymentEndDate?: string | null
     product: { id: string; code: string; name: string }
   } | null
 }
@@ -501,6 +508,46 @@ function ContractStatusBadge({ status }: { status: string }) {
   return <span className={map[status] ?? 'goon-badge goon-badge-inactive'}>{labels[status] ?? status}</span>
 }
 
+// ---- Contract Signature Badge ----
+function ContractSignatureBadge({ isSigned, signatureDate }: { isSigned?: boolean; signatureDate?: string | null }) {
+  const fmtD = (d?: string | null) => d ? new Date(d).toLocaleDateString('pt-BR') : ''
+  if (isSigned) {
+    return (
+      <span style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 3,
+        padding: '2px 7px',
+        background: 'var(--success)',
+        color: 'white',
+        border: '1px solid black',
+        fontFamily: 'var(--font-mono)',
+        fontSize: 10,
+        fontWeight: 700,
+        whiteSpace: 'nowrap',
+      }}>
+        &#10003; ASSINADO{signatureDate ? ` ${fmtD(signatureDate)}` : ''}
+      </span>
+    )
+  }
+  return (
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 3,
+      padding: '2px 7px',
+      background: 'var(--danger)',
+      color: 'white',
+      border: '1px solid black',
+      fontFamily: 'var(--font-mono)',
+      fontSize: 10,
+      fontWeight: 700,
+    }}>
+      &#10007; PENDENTE
+    </span>
+  )
+}
+
 // ---- Contract Actions ----
 const CONTRACT_API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
@@ -541,6 +588,22 @@ function ContractActions({ contract, onRefresh }: { contract: Contract; onRefres
     }
   }
 
+  const handleMarkSigned = async () => {
+    setBusy(true)
+    try {
+      await apiFetch(`/api/contracts/${contract.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ isSigned: true, signatureDate: new Date().toISOString() }),
+      })
+      toast.success('[OK] Contrato marcado como assinado')
+      onRefresh()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao marcar assinatura')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const btnStyle: React.CSSProperties = {
     padding: '4px 10px',
     border: '2px solid black',
@@ -563,6 +626,15 @@ function ContractActions({ contract, onRefresh }: { contract: Contract; onRefres
       {contract.generatedPdfUrl && (
         <button style={btnStyle} disabled={busy} onClick={() => openContractTab(`/api/contracts/${contract.id}/download`)}>
           Baixar
+        </button>
+      )}
+      {!contract.isSigned && contract.status !== 'CANCELLED' && (
+        <button
+          style={{ ...btnStyle, background: 'var(--success)', color: 'white', boxShadow: '2px 2px 0 black' }}
+          disabled={busy}
+          onClick={handleMarkSigned}
+        >
+          ✓ Assinar
         </button>
       )}
       {contract.status === 'DRAFT' && (
@@ -1113,7 +1185,7 @@ export default function ClientDetailPage() {
                     flexWrap: 'wrap',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
                     <span
                       style={{
                         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -1124,16 +1196,33 @@ export default function ClientDetailPage() {
                     >
                       {productCode}
                     </span>
-                    <div>
+                    <div style={{ minWidth: 0 }}>
                       <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'black', fontSize: 13, textTransform: 'uppercase' }}>{productName}</span>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', marginTop: 2, display: 'flex', gap: 8 }}>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', marginTop: 2, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         <span>v{contract.version}</span>
                         <span>{new Date(contract.createdAt).toLocaleDateString('pt-BR')}</span>
+                        {/* Vigência */}
+                        {(contract.clientPlan?.startDate || contract.dynamicFields?.vigenciaInicio) && (
+                          <span>
+                            Vigência: {contract.dynamicFields?.vigenciaInicio || new Date(contract.clientPlan!.startDate!).toLocaleDateString('pt-BR')}
+                            {' '}→{' '}
+                            {contract.dynamicFields?.vigenciaFim || (contract.clientPlan?.endDate ? new Date(contract.clientPlan.endDate).toLocaleDateString('pt-BR') : '—')}
+                          </span>
+                        )}
+                        {/* Prazo financeiro (if different from vigência) */}
+                        {contract.clientPlan?.paymentStartDate && contract.clientPlan.paymentStartDate !== contract.clientPlan.startDate && (
+                          <span style={{ color: '#888' }}>
+                            Fin: {new Date(contract.clientPlan.paymentStartDate).toLocaleDateString('pt-BR')}
+                            {' '}→{' '}
+                            {contract.clientPlan?.paymentEndDate ? new Date(contract.clientPlan.paymentEndDate).toLocaleDateString('pt-BR') : '—'}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                     <ContractStatusBadge status={contract.status} />
+                    <ContractSignatureBadge isSigned={contract.isSigned} signatureDate={contract.signatureDate} />
                     <ContractActions contract={contract} onRefresh={fetchContracts} />
                   </div>
                 </div>
