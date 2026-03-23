@@ -32,9 +32,9 @@ async function main() {
 
   // Create products
   const products = [
-    { code: 'GE', name: 'GOON Experience', description: 'Programa de entrada — fundamentos e posicionamento' },
-    { code: 'GI', name: 'GOON Intensive', description: 'Programa intermediário — aquisição e vendas' },
-    { code: 'GS', name: 'GOON Scale', description: 'Programa avançado — escala e operação' },
+    { code: 'GE', name: 'GOON ELITE', description: 'Programa de entrada — fundamentos e posicionamento' },
+    { code: 'GI', name: 'GOON INFINITY', description: 'Programa intermediário — aquisição e vendas' },
+    { code: 'GS', name: 'GOON SCALE', description: 'Programa avançado — escala e operação' },
   ]
 
   for (const product of products) {

@@ -37,9 +37,9 @@ export const PRODUCT_COLORS: Record<string, string> = {
 }
 
 export const PRODUCT_NAMES: Record<string, string> = {
-  GE: 'GOON Experience',
-  GI: 'GOON Intensive',
-  GS: 'GOON Scale',
+  GE: 'GOON ELITE',
+  GI: 'GOON INFINITY',
+  GS: 'GOON SCALE',
 }
 
 export const PAYMENT_STATUS_COLORS: Record<string, string> = {
