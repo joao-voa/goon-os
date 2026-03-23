@@ -17,6 +17,19 @@ async function main() {
   })
   console.log('✓ Admin user created: admin@goon.com.br / goon2026')
 
+  // Create test user
+  const testPassword = await bcrypt.hash('teste123', 10)
+  await prisma.user.upsert({
+    where: { email: 'teste@teste.com' },
+    update: {},
+    create: {
+      name: 'Teste',
+      email: 'teste@teste.com',
+      password: testPassword,
+    },
+  })
+  console.log('✓ Test user created: teste@teste.com / teste123')
+
   // Create products
   const products = [
     { code: 'GE', name: 'GOON ELITE', description: 'Plano básico de consultoria de gestão' },

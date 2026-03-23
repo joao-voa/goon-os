@@ -8,6 +8,7 @@
   --retro-bg: #e0e0e0;
   --retro-gray: #c0c0c0;
   --retro-blue: #000080;
+  --retro-green: #ccff00;
   --black: #000000;
   --white: #ffffff;
   --danger: #cc0000;
@@ -83,6 +84,30 @@ body {
   cursor: not-allowed;
   transform: none;
   box-shadow: var(--shadow-md);
+}
+
+.goon-btn-accent {
+  background: var(--retro-green);
+  color: black;
+  border: 2px solid black;
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  border-radius: 0;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+}
+.goon-btn-accent:hover {
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-sm);
+}
+.goon-btn-accent:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
 }
 
 .goon-btn-secondary {
@@ -305,6 +330,8 @@ body {
 .goon-badge-danger { background: var(--danger); color: white; }
 .goon-badge-warning { background: var(--warning); color: white; }
 .goon-badge-draft { background: var(--retro-gray); color: black; }
+.goon-badge-highlight { background: var(--retro-green); color: black; border: 2px solid black; }
+.goon-badge-prospect { background: var(--retro-green); color: black; }
 .goon-badge-sent { background: var(--warning); color: white; }
 .goon-badge-signed { background: var(--success); color: white; }
 
