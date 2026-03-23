@@ -4,21 +4,37 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
+import { PRODUCT_COLORS } from '@/lib/constants'
+
+// ---- Helpers ----
+const fmtBRL = (n?: number | null) =>
+  n != null
+    ? new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        maximumFractionDigits: 0,
+      }).format(n)
+    : '—'
 
 // ---- Types ----
 interface Product {
   id: string
   code: string
   name: string
+  isActive?: boolean
 }
 
 interface ClientPlan {
   id: string
   status: string
-  value: string
+  value: number
   paymentType: string
+  installments?: number | null
+  installmentValue?: number | null
+  cycleDuration?: number | null
   startDate: string
-  endDate?: string
+  endDate?: string | null
+  notes?: string | null
   product: Product
 }
 
@@ -242,6 +258,280 @@ function InlineField({ label, value, field, type = 'text', options, onSave, min,
   )
 }
 
+// ---- Payment type label ----
+function paymentTypeLabel(pt: string) {
+  const map: Record<string, string> = {
+    CASH: 'À Vista',
+    INSTALLMENT: 'Parcelado',
+    RECURRING: 'Recorrente',
+  }
+  return map[pt] ?? pt
+}
+
+// ---- Add Plan Modal ----
+interface AddPlanModalProps {
+  clientId: string
+  onClose: () => void
+  onCreated: (plan: ClientPlan) => void
+}
+
+function AddPlanModal({ clientId, onClose, onCreated }: AddPlanModalProps) {
+  const [products, setProducts] = useState<Product[]>([])
+  const [loadingProducts, setLoadingProducts] = useState(true)
+
+  const [productId, setProductId] = useState('')
+  const [value, setValue] = useState('')
+  const [paymentType, setPaymentType] = useState('CASH')
+  const [installments, setInstallments] = useState('')
+  const [installmentValue, setInstallmentValue] = useState('')
+  const [cycleDuration, setCycleDuration] = useState('')
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    apiFetch<Product[]>('/api/products')
+      .then(data => setProducts(data.filter(p => p.isActive)))
+      .catch(() => toast.error('Erro ao carregar produtos'))
+      .finally(() => setLoadingProducts(false))
+  }, [])
+
+  // Auto-calculate installment value
+  useEffect(() => {
+    if (paymentType === 'INSTALLMENT' && value && installments && Number(installments) > 0) {
+      setInstallmentValue(String(Math.round(Number(value) / Number(installments))))
+    }
+  }, [value, installments, paymentType])
+
+  // Auto-calculate end date from startDate + cycleDuration
+  const endDate =
+    startDate && cycleDuration && Number(cycleDuration) > 0
+      ? (() => {
+          const d = new Date(startDate)
+          d.setMonth(d.getMonth() + Number(cycleDuration))
+          return d.toISOString().slice(0, 10)
+        })()
+      : null
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!productId) { toast.error('Selecione um produto'); return }
+    setSaving(true)
+    try {
+      const body: Record<string, unknown> = {
+        productId,
+        value: Number(value),
+        paymentType,
+        startDate,
+      }
+      if (paymentType === 'INSTALLMENT') {
+        if (installments) body.installments = Number(installments)
+        if (installmentValue) body.installmentValue = Number(installmentValue)
+      }
+      if (cycleDuration) body.cycleDuration = Number(cycleDuration)
+      if (notes) body.notes = notes
+
+      const created = await apiFetch<ClientPlan>(`/api/clients/${clientId}/plans`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      })
+      onCreated(created)
+      toast.success('Plano adicionado')
+      onClose()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao criar plano')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box' }
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: 16,
+        overflowY: 'auto',
+      }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div
+        className="goon-card"
+        style={{ width: '100%', maxWidth: 480, padding: 28, margin: 'auto' }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--goon-text-primary)', margin: 0 }}>
+            Adicionar Plano
+          </h2>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', color: 'var(--goon-text-muted)', cursor: 'pointer', fontSize: 20, lineHeight: 1, padding: 4 }}
+          >
+            ×
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Product */}
+          <div>
+            <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Produto *</label>
+            {loadingProducts ? (
+              <p style={{ fontSize: 13, color: 'var(--goon-text-muted)' }}>Carregando produtos...</p>
+            ) : (
+              <select
+                className="goon-select"
+                value={productId}
+                onChange={e => setProductId(e.target.value)}
+                required
+                style={inputStyle}
+              >
+                <option value="">Selecionar produto...</option>
+                {products.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.code} — {p.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Value */}
+          <div>
+            <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Valor (R$) *</label>
+            <input
+              className="goon-input"
+              type="number"
+              min={0}
+              step={1}
+              value={value}
+              onChange={e => setValue(e.target.value)}
+              required
+              placeholder="0"
+              style={inputStyle}
+            />
+          </div>
+
+          {/* Payment type */}
+          <div>
+            <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Forma de Pagamento *</label>
+            <select
+              className="goon-select"
+              value={paymentType}
+              onChange={e => setPaymentType(e.target.value)}
+              style={inputStyle}
+            >
+              <option value="CASH">À Vista</option>
+              <option value="INSTALLMENT">Parcelado</option>
+              <option value="RECURRING">Recorrente</option>
+            </select>
+          </div>
+
+          {/* Installments (only for INSTALLMENT) */}
+          {paymentType === 'INSTALLMENT' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Nº Parcelas</label>
+                <input
+                  className="goon-input"
+                  type="number"
+                  min={1}
+                  value={installments}
+                  onChange={e => setInstallments(e.target.value)}
+                  placeholder="12"
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Valor da Parcela (R$)</label>
+                <input
+                  className="goon-input"
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={installmentValue}
+                  onChange={e => setInstallmentValue(e.target.value)}
+                  placeholder="Auto"
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Cycle & dates */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Duração (meses)</label>
+              <input
+                className="goon-input"
+                type="number"
+                min={1}
+                value={cycleDuration}
+                onChange={e => setCycleDuration(e.target.value)}
+                placeholder="12"
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Data de Início *</label>
+              <input
+                className="goon-input"
+                type="date"
+                value={startDate}
+                onChange={e => setStartDate(e.target.value)}
+                required
+                style={inputStyle}
+              />
+            </div>
+          </div>
+
+          {/* End date (read-only, auto-calculated) */}
+          {endDate && (
+            <div>
+              <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Data de Término (calculada)</label>
+              <input
+                className="goon-input"
+                type="date"
+                value={endDate}
+                readOnly
+                style={{ ...inputStyle, opacity: 0.7, cursor: 'not-allowed' }}
+              />
+            </div>
+          )}
+
+          {/* Notes */}
+          <div>
+            <label className="goon-label" style={{ display: 'block', marginBottom: 6 }}>Observações</label>
+            <textarea
+              className="goon-textarea"
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              rows={3}
+              placeholder="Opcional..."
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
+            <button type="button" className="goon-btn-ghost" onClick={onClose} disabled={saving}>
+              Cancelar
+            </button>
+            <button type="submit" className="goon-btn-primary" disabled={saving || loadingProducts}>
+              {saving ? 'Salvando...' : 'Adicionar Plano'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ---- Section wrapper ----
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -263,6 +553,9 @@ export default function ClientDetailPage() {
   const [client, setClient] = useState<ClientDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [changingStatus, setChangingStatus] = useState(false)
+  const [showAddPlan, setShowAddPlan] = useState(false)
+  const [plans, setPlans] = useState<ClientPlan[]>([])
+  const [loadingPlans, setLoadingPlans] = useState(false)
 
   const fetchClient = useCallback(async () => {
     setLoading(true)
@@ -276,9 +569,22 @@ export default function ClientDetailPage() {
     }
   }, [id])
 
+  const fetchPlans = useCallback(async () => {
+    setLoadingPlans(true)
+    try {
+      const data = await apiFetch<ClientPlan[]>(`/api/clients/${id}/plans`)
+      setPlans(data)
+    } catch {
+      // silent — plans list is non-critical
+    } finally {
+      setLoadingPlans(false)
+    }
+  }, [id])
+
   useEffect(() => {
     fetchClient()
-  }, [fetchClient])
+    fetchPlans()
+  }, [fetchClient, fetchPlans])
 
   const handleSaveField = async (field: string, value: string) => {
     try {
@@ -484,47 +790,92 @@ export default function ClientDetailPage() {
 
       {/* Plans Section */}
       <Section title="Planos">
-        {client.plans.length === 0 ? (
+        {loadingPlans ? (
+          <p style={{ color: 'var(--goon-text-muted)', fontSize: 14 }}>Carregando planos...</p>
+        ) : plans.length === 0 ? (
           <p style={{ color: 'var(--goon-text-muted)', fontSize: 14 }}>Nenhum plano vinculado ainda.</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {client.plans.map(plan => (
-              <div
-                key={plan.id}
-                style={{
-                  padding: '14px 16px',
-                  background: 'var(--goon-input-bg)',
-                  borderRadius: 8,
-                  border: '1px solid var(--goon-border-subtle)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: 12,
-                  flexWrap: 'wrap',
-                }}
-              >
-                <div>
-                  <span style={{ fontWeight: 600, color: 'var(--goon-text-primary)', fontSize: 14 }}>
-                    {plan.product.code} — {plan.product.name}
-                  </span>
-                  <div style={{ fontSize: 13, color: 'var(--goon-text-muted)', marginTop: 4 }}>
-                    {plan.paymentType} · Início: {new Date(plan.startDate).toLocaleDateString('pt-BR')}
+            {plans.map(plan => {
+              const color = PRODUCT_COLORS[plan.product.code] ?? '#6b7280'
+              return (
+                <div
+                  key={plan.id}
+                  style={{
+                    padding: '14px 16px',
+                    background: 'var(--goon-input-bg)',
+                    borderRadius: 8,
+                    border: '1px solid var(--goon-border-subtle)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: 12,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {/* Product badge */}
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 40,
+                        height: 40,
+                        borderRadius: 8,
+                        background: `${color}22`,
+                        color,
+                        fontSize: 13,
+                        fontWeight: 800,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {plan.product.code}
+                    </span>
+                    <div>
+                      <span style={{ fontWeight: 600, color: 'var(--goon-text-primary)', fontSize: 14 }}>
+                        {plan.product.name}
+                      </span>
+                      <div style={{ fontSize: 12, color: 'var(--goon-text-muted)', marginTop: 3, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                        <span>{paymentTypeLabel(plan.paymentType)}</span>
+                        {plan.installments && <span>{plan.installments}x {fmtBRL(plan.installmentValue ?? undefined)}</span>}
+                        <span>Início: {new Date(plan.startDate).toLocaleDateString('pt-BR')}</span>
+                        {plan.endDate && <span>Término: {new Date(plan.endDate).toLocaleDateString('pt-BR')}</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--goon-text-primary)', fontSize: 15 }}>
+                      {fmtBRL(plan.value)}
+                    </span>
+                    <span className={statusClass(plan.status)}>{statusLabel(plan.status)}</span>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                  <span style={{ fontWeight: 700, color: 'var(--goon-text-primary)', fontSize: 15 }}>
-                    R$ {Number(plan.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
-                  <span className={statusClass(plan.status)}>{statusLabel(plan.status)}</span>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
-        <button className="goon-btn-ghost" disabled style={{ marginTop: 16, opacity: 0.4, cursor: 'not-allowed' }}>
+        <button
+          className="goon-btn-ghost"
+          onClick={() => setShowAddPlan(true)}
+          style={{ marginTop: 16 }}
+        >
           + Adicionar Plano
         </button>
       </Section>
+
+      {/* Add Plan Modal */}
+      {showAddPlan && (
+        <AddPlanModal
+          clientId={id}
+          onClose={() => setShowAddPlan(false)}
+          onCreated={plan => {
+            setPlans(prev => [plan, ...prev])
+            // Refresh client to get updated onboarding
+            fetchClient()
+          }}
+        />
+      )}
 
       {/* Contracts Section */}
       <Section title="Contratos">
