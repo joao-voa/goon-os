@@ -196,13 +196,20 @@ interface TabBarProps {
 
 function TabBar({ tabs, active, onChange }: TabBarProps) {
   return (
-    <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid black' }}>
+    <div style={{
+      display: 'flex',
+      gap: 0,
+      borderBottom: '2px solid black',
+      overflowX: 'auto',
+      WebkitOverflowScrolling: 'touch' as React.CSSProperties['WebkitOverflowScrolling'],
+      scrollbarWidth: 'none' as React.CSSProperties['scrollbarWidth'],
+    }}>
       {tabs.map((tab, i) => (
         <button
           key={tab}
           onClick={() => onChange(i)}
           style={{
-            padding: '10px 18px',
+            padding: '10px 14px',
             background: i === active ? 'black' : '#c0c0c0',
             color: i === active ? 'white' : 'black',
             border: '2px solid black',
@@ -214,6 +221,10 @@ function TabBar({ tabs, active, onChange }: TabBarProps) {
             marginBottom: i === active ? -2 : 0,
             zIndex: i === active ? 1 : 0,
             position: 'relative',
+            whiteSpace: 'nowrap',
+            minWidth: 'fit-content',
+            minHeight: 44,
+            flexShrink: 0,
           }}
         >
           {tab}

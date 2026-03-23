@@ -179,6 +179,7 @@ interface NewPaymentModalProps {
 }
 
 function NewPaymentModal({ onClose, onCreated }: NewPaymentModalProps) {
+  const isMobile = useIsMobile()
   const [clients, setClients] = useState<Client[]>([])
   const [form, setForm] = useState({
     clientId: '',
@@ -230,8 +231,20 @@ function NewPaymentModal({ onClose, onCreated }: NewPaymentModalProps) {
   const fl: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6 }
 
   return (
-    <div className="goon-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="goon-modal">
+    <div
+      className="goon-overlay"
+      onClick={e => e.target === e.currentTarget && onClose()}
+      style={isMobile ? { alignItems: 'flex-end', padding: 0 } : undefined}
+    >
+      <div className="goon-modal" style={isMobile ? {
+        width: '100%',
+        maxWidth: '100%',
+        borderTop: '2px solid black',
+        border: 'none',
+        boxShadow: '0 -4px 0 black',
+        maxHeight: '85vh',
+        overflowY: 'auto',
+      } : undefined}>
         <div className="goon-modal-header">
           <span>Novo Pagamento</span>
           <button

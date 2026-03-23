@@ -109,6 +109,7 @@ interface CreateModalProps {
 }
 
 function CreateClientModal({ onClose, onCreated }: CreateModalProps) {
+  const isMobile = useIsMobile()
   const [form, setForm] = useState<Record<string, string>>({
     companyName: '',
     responsible: '',
@@ -153,8 +154,20 @@ function CreateClientModal({ onClose, onCreated }: CreateModalProps) {
   const fieldStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6 }
 
   return (
-    <div className="goon-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{
+    <div
+      className="goon-overlay"
+      onClick={e => e.target === e.currentTarget && onClose()}
+      style={isMobile ? { alignItems: 'flex-end', padding: 0 } : undefined}
+    >
+      <div style={isMobile ? {
+        background: 'white',
+        border: 'none',
+        borderTop: '2px solid black',
+        boxShadow: '0 -4px 0 black',
+        width: '100%',
+        maxHeight: '85vh',
+        overflowY: 'auto',
+      } : {
         background: 'white',
         border: '2px solid black',
         boxShadow: '8px 8px 0px 0px #000',
@@ -199,9 +212,9 @@ function CreateClientModal({ onClose, onCreated }: CreateModalProps) {
           >×</button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <form onSubmit={handleSubmit} style={{ padding: isMobile ? '16px' : '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Essential fields */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 16 }}>
             <div style={fieldStyle}>
               <label className="goon-label">Empresa *</label>
               <input className="goon-input" value={form.companyName} onChange={e => set('companyName', e.target.value)} placeholder="Nome da empresa" />
@@ -465,42 +478,65 @@ export default function ClientsPage() {
       </div>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: statusFilter ? 8 : 20, flexWrap: 'wrap' }}>
+      <div style={isMobile ? {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        marginBottom: statusFilter ? 8 : 16,
+      } : {
+        display: 'flex',
+        gap: 10,
+        marginBottom: statusFilter ? 8 : 20,
+        flexWrap: 'wrap',
+      }}>
         <input
           className="goon-input"
-          style={{ maxWidth: 280 }}
+          style={isMobile ? { width: '100%' } : { maxWidth: 280 }}
           placeholder="Buscar empresa, responsável..."
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
-        <select
-          className="goon-select"
-          style={{ maxWidth: 180 }}
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
-        >
-          <option value="">Todos os status</option>
-          <option value="ACTIVE">Ativo</option>
-          <option value="PROSPECT">Prospect</option>
-          <option value="INACTIVE">Inativo</option>
-        </select>
-        <input
-          className="goon-input"
-          style={{ maxWidth: 180 }}
-          placeholder="Filtrar segmento..."
-          value={segmentFilter}
-          onChange={e => setSegmentFilter(e.target.value)}
-        />
-        <select
-          className="goon-select"
-          style={{ maxWidth: 200 }}
-          value={sort}
-          onChange={e => setSort(e.target.value)}
-        >
-          <option value="companyName">Ordenar: Empresa</option>
-          <option value="createdAt">Ordenar: Mais recentes</option>
-          <option value="goonFitScore">Ordenar: Fit Score</option>
-        </select>
+        {/* Filter chips row — horizontally scrollable on mobile */}
+        <div style={isMobile ? {
+          display: 'flex',
+          gap: 8,
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch' as React.CSSProperties['WebkitOverflowScrolling'],
+          paddingBottom: 4,
+        } : {
+          display: 'flex',
+          gap: 10,
+          flexWrap: 'wrap',
+        }}>
+          <select
+            className="goon-select"
+            style={isMobile ? { minWidth: 150, flexShrink: 0 } : { maxWidth: 180 }}
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+          >
+            <option value="">Todos os status</option>
+            <option value="ACTIVE">Ativo</option>
+            <option value="PROSPECT">Prospect</option>
+            <option value="INACTIVE">Inativo</option>
+          </select>
+          <input
+            className="goon-input"
+            style={isMobile ? { minWidth: 150, flexShrink: 0 } : { maxWidth: 180 }}
+            placeholder="Filtrar segmento..."
+            value={segmentFilter}
+            onChange={e => setSegmentFilter(e.target.value)}
+          />
+          <select
+            className="goon-select"
+            style={isMobile ? { minWidth: 180, flexShrink: 0 } : { maxWidth: 200 }}
+            value={sort}
+            onChange={e => setSort(e.target.value)}
+          >
+            <option value="companyName">Ordenar: Empresa</option>
+            <option value="createdAt">Ordenar: Mais recentes</option>
+            <option value="goonFitScore">Ordenar: Fit Score</option>
+          </select>
+        </div>
       </div>
 
       {/* Active filter indicator */}

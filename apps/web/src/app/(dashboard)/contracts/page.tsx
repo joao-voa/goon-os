@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 import { PRODUCT_COLORS } from '@/lib/constants'
 
 // ---- Types ----
@@ -155,6 +156,7 @@ interface DetailModalProps {
 }
 
 function ContractDetailModal({ contract, onClose, onRefresh }: DetailModalProps) {
+  const isMobile = useIsMobile()
   const [loading, setLoading] = useState(false)
   const fields = contract.dynamicFields ?? {}
 
@@ -247,16 +249,24 @@ function ContractDetailModal({ contract, onClose, onRefresh }: DetailModalProps)
         inset: 0,
         background: 'rgba(0,0,0,0.6)',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: isMobile ? 'flex-end' : 'center',
         justifyContent: 'center',
         zIndex: 1000,
-        padding: 16,
-        overflowY: 'auto',
+        padding: isMobile ? 0 : 16,
+        overflowY: isMobile ? 'hidden' : 'auto',
       }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
-        style={{
+        style={isMobile ? {
+          width: '100%',
+          background: 'white',
+          border: 'none',
+          borderTop: '2px solid black',
+          boxShadow: '0 -4px 0 black',
+          maxHeight: '85vh',
+          overflowY: 'auto',
+        } : {
           width: '100%',
           maxWidth: 580,
           background: 'white',
@@ -532,8 +542,72 @@ function RenewalSection({ contracts, onRefresh }: { contracts: Contract[]; onRef
   )
 }
 
+// ---- Mobile Contract Card ----
+function ContractCard({ contract, onClick }: { contract: Contract; onClick: () => void }) {
+  const productCode = contract.templateType.toUpperCase()
+  const color = PRODUCT_COLORS[productCode] ?? '#888'
+  const fields = contract.dynamicFields ?? {}
+  const startDate = fields.vigenciaInicio || fmtDate(contract.clientPlan?.startDate)
+  const endDate = fields.vigenciaFim || fmtDate(contract.clientPlan?.endDate)
+  const value = contract.clientPlan?.value
+
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        background: 'white',
+        border: '2px solid black',
+        boxShadow: '4px 4px 0px 0px #000',
+        padding: 14,
+        marginBottom: 12,
+        cursor: 'pointer',
+        borderLeft: `4px solid ${color}`,
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+        <div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 13, color: 'black' }}>
+            {contract.client.companyName}
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', marginTop: 2 }}>
+            {contract.client.responsible}
+          </div>
+        </div>
+        <span className={contractStatusClass(contract.status)}>{contractStatusLabel(contract.status)}</span>
+      </div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 6 }}>
+        <span style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          padding: '2px 8px',
+          background: color,
+          color: 'white',
+          border: '1px solid black',
+          fontFamily: 'var(--font-pixel)',
+          fontSize: 9,
+          fontWeight: 700,
+        }}>
+          {productCode}
+        </span>
+        {value != null && (
+          <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 10, fontWeight: 700, color: 'black' }}>
+            {fmtBRL(value)}
+          </span>
+        )}
+        <SignatureBadge isSigned={contract.isSigned} signatureDate={contract.signatureDate} />
+      </div>
+      {startDate !== '—' && (
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555' }}>
+          {startDate} → {endDate}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ---- Main Page ----
 export default function ContractsPage() {
+  const isMobile = useIsMobile()
   const searchParams = useSearchParams()
   const [contracts, setContracts] = useState<Contract[]>([])
   const [allContracts, setAllContracts] = useState<Contract[]>([])
@@ -740,8 +814,21 @@ export default function ContractsPage() {
         </div>
       ) : (
         <>
-          {/* Table */}
-          <div style={{ overflow: 'hidden', border: '2px solid black', boxShadow: '6px 6px 0px 0px #000', overflowX: 'auto' }}>
+          {/* Mobile Cards */}
+          {isMobile && (
+            <div>
+              {displayedContracts.map(contract => (
+                <ContractCard
+                  key={contract.id}
+                  contract={contract}
+                  onClick={() => setSelected(contract)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Desktop Table */}
+          {!isMobile && <div style={{ overflow: 'hidden', border: '2px solid black', boxShadow: '6px 6px 0px 0px #000', overflowX: 'auto' }}>
             <table className="goon-table">
               <thead>
                 <tr>
@@ -855,10 +942,10 @@ export default function ContractsPage() {
                 })}
               </tbody>
             </table>
-          </div>
+          </div>}
 
           {/* Pagination */}
-          {totalPages > 1 && !filterRenewal && !filterPendingSig && (
+          {!isMobile && totalPages > 1 && !filterRenewal && !filterPendingSig && (
             <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 24, flexWrap: 'wrap', alignItems: 'center' }}>
               <button
                 className="goon-btn-ghost"

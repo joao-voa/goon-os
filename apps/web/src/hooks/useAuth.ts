@@ -16,23 +16,28 @@ export function useAuth() {
   useEffect(() => {
     const token = localStorage.getItem('access_token')
     if (!token) {
-      window.location.href = '/login'
+      // Keep loading=true so no content flashes before redirect
+      window.location.replace('/login')
       return
     }
 
     apiFetch<AuthUser>('/api/auth/me')
-      .then(setUser)
+      .then(data => {
+        setUser(data)
+        setLoading(false)
+      })
       .catch(() => {
         localStorage.removeItem('access_token')
-        window.location.href = '/login'
+        localStorage.removeItem('refresh_token')
+        // Keep loading=true so no content flashes before redirect
+        window.location.replace('/login')
       })
-      .finally(() => setLoading(false))
   }, [])
 
   const logout = useCallback(() => {
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
-    window.location.href = '/login'
+    window.location.replace('/login')
   }, [])
 
   return { user, loading, logout }

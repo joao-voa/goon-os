@@ -8,9 +8,10 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSidebar } from '@/hooks/useSidebar'
 import { SidebarProvider } from '@/contexts/SidebarContext'
 import { Sidebar, NAV_ITEMS } from '@/components/Sidebar'
-import { MobileHeader } from '@/components/MobileHeader'
 import { apiFetch } from '@/lib/api'
 import { useEffect } from 'react'
+import { usePathname } from 'next/navigation'
+import { LayoutDashboard, Building2, Package, FileText, DollarSign, AlertTriangle, GitBranch } from 'lucide-react'
 
 // ---- useKeepAlive ----
 function useKeepAlive() {
@@ -19,6 +20,106 @@ function useKeepAlive() {
     const id = setInterval(ping, 10 * 60 * 1000)
     return () => clearInterval(id)
   }, [])
+}
+
+// ---- Bottom Nav Items (max 6 most important) ----
+const BOTTOM_NAV = [
+  { href: '/dashboard',  label: 'Home',    Icon: LayoutDashboard },
+  { href: '/clients',    label: 'Clientes', Icon: Building2 },
+  { href: '/products',   label: 'Progr.',  Icon: Package },
+  { href: '/contracts',  label: 'Contr.',  Icon: FileText },
+  { href: '/payments',   label: 'Financ.', Icon: DollarSign },
+  { href: '/pendencies', label: 'Pend.',   Icon: AlertTriangle },
+]
+
+// ---- Mobile Bottom Nav ----
+function MobileBottomNav({ onMenuClick }: { onMenuClick: () => void }) {
+  const pathname = usePathname()
+
+  return (
+    <nav style={{
+      position: 'fixed',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: 56,
+      background: 'var(--retro-gray)',
+      borderTop: '2px solid black',
+      boxShadow: '0 -4px 0 black',
+      display: 'flex',
+      alignItems: 'stretch',
+      zIndex: 40,
+    }}>
+      {BOTTOM_NAV.map(({ href, label, Icon }) => {
+        const isActive = pathname === href || pathname.startsWith(href + '/')
+        return (
+          <a
+            key={href}
+            href={href}
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 3,
+              textDecoration: 'none',
+              background: isActive ? 'var(--retro-blue)' : 'transparent',
+              color: isActive ? 'white' : 'black',
+              borderRight: '1px solid rgba(0,0,0,0.15)',
+              padding: '4px 2px',
+              minHeight: 44,
+            }}
+          >
+            <Icon size={16} style={{ flexShrink: 0 }} />
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 7,
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: 0.3,
+              lineHeight: 1,
+              whiteSpace: 'nowrap',
+            }}>
+              {label}
+            </span>
+          </a>
+        )
+      })}
+      {/* Menu button for full sidebar */}
+      <button
+        onClick={onMenuClick}
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 3,
+          background: 'none',
+          border: 'none',
+          borderLeft: '1px solid rgba(0,0,0,0.15)',
+          cursor: 'pointer',
+          padding: '4px 2px',
+          minHeight: 44,
+          color: 'black',
+        }}
+        title="Menu"
+      >
+        <GitBranch size={16} />
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 7,
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: 0.3,
+          lineHeight: 1,
+        }}>
+          Menu
+        </span>
+      </button>
+    </nav>
+  )
 }
 
 // ---- DashboardLayoutInner ----
@@ -70,9 +171,51 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         onLogout={logout}
       />
 
-      {/* Mobile header */}
+      {/* Mobile top bar — simplified, no hamburger (bottom nav handles navigation) */}
       {isMobile && (
-        <MobileHeader onMenuClick={toggle} userName={user?.name} />
+        <header style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 48,
+          background: 'black',
+          borderBottom: '2px solid black',
+          boxShadow: '0 4px 0 black',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 16px',
+          zIndex: 30,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{
+              color: 'white',
+              fontWeight: 900,
+              fontSize: 14,
+              fontFamily: 'var(--font-pixel)',
+              letterSpacing: '0.05em',
+            }}>GOON</span>
+            <span style={{
+              color: 'var(--retro-gray)',
+              fontSize: 10,
+              fontWeight: 700,
+              fontFamily: 'var(--font-mono)',
+            }}>OS</span>
+          </div>
+          {user && (
+            <span style={{
+              color: 'var(--retro-gray)',
+              fontSize: 10,
+              fontFamily: 'var(--font-mono)',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+            }}>
+              {user.name}
+            </span>
+          )}
+        </header>
       )}
 
       {/* Desktop header */}
@@ -111,13 +254,17 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       {/* Main content */}
       <main style={{
         marginLeft: isMobile ? 0 : sidebarWidth,
-        marginTop: 56,
-        padding: isMobile ? 16 : 28,
+        marginTop: isMobile ? 48 : 56,
+        padding: isMobile ? 12 : 28,
+        paddingBottom: isMobile ? 72 : undefined,
         transition: 'margin-left 0.2s ease',
-        minHeight: 'calc(100vh - 56px)',
+        minHeight: isMobile ? 'calc(100vh - 48px)' : 'calc(100vh - 56px)',
       }}>
         {children}
       </main>
+
+      {/* Mobile bottom navigation */}
+      {isMobile && <MobileBottomNav onMenuClick={toggle} />}
     </div>
   )
 }
