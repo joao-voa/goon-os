@@ -169,7 +169,7 @@ function KpiCard({ label, value, icon, accentColor }: KpiCardProps) {
 
 // ---- Revenue Product Card ----
 function RevenueProductCard({ code, value }: { code: string; value: number }) {
-  const productNames: Record<string, string> = { GE: 'Gestão Empresarial', GI: 'Gestão Imobiliária', GS: 'Gestão de Saúde' }
+  const productNames: Record<string, string> = { GE: 'GOON ELITE', GI: 'GOON INFINITY', GS: 'GOON SCALE' }
   const colors: Record<string, string> = { GE: 'var(--retro-blue)', GI: 'var(--success)', GS: 'var(--warning)' }
   const color = colors[code] ?? 'black'
 
