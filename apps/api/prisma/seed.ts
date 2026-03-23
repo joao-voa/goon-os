@@ -32,9 +32,9 @@ async function main() {
 
   // Create products
   const products = [
-    { code: 'GE', name: 'GOON ELITE', description: 'Plano básico de consultoria de gestão' },
-    { code: 'GI', name: 'GOON INFINITY', description: 'Plano intermediário com acompanhamento expandido' },
-    { code: 'GS', name: 'GOON SCALE', description: 'Plano premium com consultoria completa e escalabilidade' },
+    { code: 'GE', name: 'GOON Experience', description: 'Programa de entrada — fundamentos e posicionamento' },
+    { code: 'GI', name: 'GOON Intensive', description: 'Programa intermediário — aquisição e vendas' },
+    { code: 'GS', name: 'GOON Scale', description: 'Programa avançado — escala e operação' },
   ]
 
   for (const product of products) {

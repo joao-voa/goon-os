@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
+import { PRODUCT_COLORS } from '@/lib/constants'
 
 // ---- Types ----
 interface Product {
@@ -146,12 +147,7 @@ interface ProductCardProps {
 }
 
 function ProductCard({ product, onEdit, onToggleActive }: ProductCardProps) {
-  const codeColors: Record<string, string> = {
-    GE: 'var(--retro-blue)',
-    GI: 'var(--success)',
-    GS: 'var(--warning)',
-  }
-  const color = codeColors[product.code] ?? 'black'
+  const color = PRODUCT_COLORS[product.code] ?? 'black'
 
   return (
     <div

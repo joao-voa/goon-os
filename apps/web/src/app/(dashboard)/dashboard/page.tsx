@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { useIsMobile } from '@/hooks/useMediaQuery'
-import { STAGE_LABELS, STAGE_COLORS, PRODUCT_COLORS } from '@/lib/constants'
+import { STAGE_LABELS, STAGE_COLORS, PRODUCT_COLORS, PRODUCT_NAMES } from '@/lib/constants'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -250,9 +250,11 @@ interface KpiCardProps {
   value: React.ReactNode
   icon: React.ReactNode
   accentColor: string
+  href?: string
 }
 
-function KpiCard({ label, value, icon, accentColor }: KpiCardProps) {
+function KpiCard({ label, value, icon, accentColor, href }: KpiCardProps) {
+  const router = useRouter()
   return (
     <div
       style={{
@@ -266,7 +268,9 @@ function KpiCard({ label, value, icon, accentColor }: KpiCardProps) {
         position: 'relative',
         overflow: 'hidden',
         transition: 'transform 0.15s, box-shadow 0.15s',
+        cursor: href ? 'pointer' : 'default',
       }}
+      onClick={href ? () => router.push(href) : undefined}
       onMouseEnter={e => {
         (e.currentTarget as HTMLDivElement).style.transform = 'translate(-2px,-2px)'
         ;(e.currentTarget as HTMLDivElement).style.boxShadow = '6px 6px 0 black'
@@ -430,7 +434,7 @@ function ContractsStatus({ data }: { data: ContractStatusItem[] }) {
 // ── Revenue by Product ────────────────────────────────────────────────────────
 
 function RevenueProductCard({ code, value }: { code: string; value: number }) {
-  const productNames: Record<string, string> = { GE: 'GOON ELITE', GI: 'GOON INFINITY', GS: 'GOON SCALE' }
+  const router = useRouter()
   const color = PRODUCT_COLORS[code] ?? 'black'
   return (
     <div
@@ -445,7 +449,9 @@ function RevenueProductCard({ code, value }: { code: string; value: number }) {
         position: 'relative',
         overflow: 'hidden',
         transition: 'transform 0.15s, box-shadow 0.15s',
+        cursor: 'pointer',
       }}
+      onClick={() => router.push('/products')}
       onMouseEnter={e => {
         (e.currentTarget as HTMLDivElement).style.transform = 'translate(-2px,-2px)'
         ;(e.currentTarget as HTMLDivElement).style.boxShadow = '6px 6px 0 black'
@@ -460,7 +466,7 @@ function RevenueProductCard({ code, value }: { code: string; value: number }) {
         <span style={{ background: color, color: 'white', border: '1px solid black', padding: '2px 10px', fontFamily: 'var(--font-pixel)', fontSize: 12, fontWeight: 700 }}>
           {code}
         </span>
-        <span style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 11 }}>{productNames[code]}</span>
+        <span style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 11 }}>{PRODUCT_NAMES[code]}</span>
       </div>
       <span style={{ fontFamily: 'var(--font-pixel)', color: 'black', fontSize: 16, lineHeight: 1.3 }}>
         {fmtBRL(value)}
@@ -472,6 +478,7 @@ function RevenueProductCard({ code, value }: { code: string; value: number }) {
 // ── Recent Activity ───────────────────────────────────────────────────────────
 
 function RecentActivity({ data }: { data: ActivityEntry[] }) {
+  const router = useRouter()
   const sliced = data.slice(0, 10)
   return (
     <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black' }}>
@@ -500,7 +507,10 @@ function RecentActivity({ data }: { data: ActivityEntry[] }) {
                       {entry.description}
                     </span>
                     {entry.client && (
-                      <span style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 10 }}>
+                      <span
+                        style={{ fontFamily: 'var(--font-mono)', color: 'var(--retro-blue)', fontSize: 10, cursor: 'pointer', textDecoration: 'underline' }}
+                        onClick={() => router.push(`/clients/${entry.client!.id}`)}
+                      >
                         {entry.client.companyName}
                       </span>
                     )}
@@ -663,6 +673,7 @@ export default function DashboardPage() {
               value={stats.kpis.totalActiveClients}
               icon={<Building2 size={16} />}
               accentColor="black"
+              href="/clients"
             />
             <KpiCard
               label="Clientes Ativos"
@@ -674,18 +685,21 @@ export default function DashboardPage() {
               }
               icon={<Users size={16} />}
               accentColor="#ccff00"
+              href="/clients?status=ACTIVE"
             />
             <KpiCard
               label="Receita Mês"
               value={fmtBRL(stats.financialKpis?.mrr ?? stats.kpis.totalRevenue)}
               icon={<DollarSign size={16} />}
               accentColor="#ccff00"
+              href="/payments"
             />
             <KpiCard
               label="Ticket Médio"
               value={fmtBRL(stats.financialKpis?.averageTicket)}
               icon={<TrendingUp size={16} />}
               accentColor="black"
+              href="/payments"
             />
           </div>
 
@@ -696,24 +710,28 @@ export default function DashboardPage() {
               value={stats.pendencies?.total ?? 0}
               icon={<AlertTriangle size={16} />}
               accentColor={(stats.pendencies?.total ?? 0) > 0 ? '#cc0000' : 'black'}
+              href="/pendencies"
             />
             <KpiCard
               label="Em Renovação"
               value={stats.renewals?.count ?? 0}
               icon={<RefreshCw size={16} />}
               accentColor={(stats.renewals?.count ?? 0) > 0 ? '#ff6600' : 'black'}
+              href="/contracts?renewal=true"
             />
             <KpiCard
               label="Contratos Ativos"
               value={signedContracts}
               icon={<FileText size={16} />}
               accentColor="black"
+              href="/contracts?status=SIGNED"
             />
             <KpiCard
               label="Inadimplentes"
               value={stats.financialKpis?.overdueCount ?? 0}
               icon={<AlertCircle size={16} />}
               accentColor={(stats.financialKpis?.overdueCount ?? 0) > 0 ? '#cc0000' : 'black'}
+              href="/payments?status=OVERDUE"
             />
           </div>
 

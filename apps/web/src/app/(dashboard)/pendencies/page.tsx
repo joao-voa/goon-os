@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 import { useIsMobile } from '@/hooks/useMediaQuery'
@@ -434,13 +435,18 @@ function NewPendencyModal({ onClose, onCreated }: NewPendencyModalProps) {
 // ---- Main Page ----
 export default function PendenciesPage() {
   const isMobile = useIsMobile()
+  const searchParams = useSearchParams()
 
   const [pendencies, setPendencies] = useState<Pendency[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [showResolved, setShowResolved] = useState(false)
   const [typeFilter, setTypeFilter] = useState('')
-  const [search, setSearch] = useState('')
+  const [clientIdFilter] = useState(() => searchParams.get('clientId') ?? '')
+  const [search, setSearch] = useState(() => {
+    // If clientId param provided, we'll filter by it in the list
+    return ''
+  })
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [mobileStatusFilter, setMobileStatusFilter] = useState<string>('OPEN')
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -504,6 +510,7 @@ export default function PendenciesPage() {
   // Filter pendencies
   const filtered = pendencies.filter(p => {
     if (typeFilter && p.type !== typeFilter) return false
+    if (clientIdFilter && p.client.id !== clientIdFilter) return false
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase()
       if (!p.client.companyName.toLowerCase().includes(q)) return false
@@ -565,6 +572,15 @@ export default function PendenciesPage() {
           </button>
         </div>
       </div>
+
+      {/* Active filter indicator */}
+      {clientIdFilter && (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 16, padding: '6px 12px', background: '#ccff00', border: '2px solid black', boxShadow: '2px 2px 0 black' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'black', textTransform: 'uppercase' }}>
+            Filtro ativo: cliente={clientIdFilter}
+          </span>
+        </div>
+      )}
 
       {/* KPI Strip */}
       <KpiStrip pendencies={pendencies} />

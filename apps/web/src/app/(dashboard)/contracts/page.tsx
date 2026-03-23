@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 import { PRODUCT_COLORS } from '@/lib/constants'
@@ -533,13 +534,14 @@ function RenewalSection({ contracts, onRefresh }: { contracts: Contract[]; onRef
 
 // ---- Main Page ----
 export default function ContractsPage() {
+  const searchParams = useSearchParams()
   const [contracts, setContracts] = useState<Contract[]>([])
   const [allContracts, setAllContracts] = useState<Contract[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
-  const [statusFilter, setStatusFilter] = useState('')
-  const [filterRenewal, setFilterRenewal] = useState(false)
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') ?? '')
+  const [filterRenewal, setFilterRenewal] = useState(() => searchParams.get('renewal') === 'true')
   const [filterPendingSig, setFilterPendingSig] = useState(false)
   const [selected, setSelected] = useState<Contract | null>(null)
 
@@ -680,6 +682,32 @@ export default function ContractsPage() {
         </div>
       </div>
 
+      {/* Active filter indicators */}
+      {(statusFilter || filterRenewal) && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          {statusFilter && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: '#ccff00', border: '2px solid black', boxShadow: '2px 2px 0 black' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'black', textTransform: 'uppercase' }}>
+                Filtro ativo: status={statusFilter}
+              </span>
+              <button onClick={() => setStatusFilter('')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: 'black', padding: '0 4px', lineHeight: 1 }}>
+                ✕ limpar
+              </button>
+            </div>
+          )}
+          {filterRenewal && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: '#ccff00', border: '2px solid black', boxShadow: '2px 2px 0 black' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'black', textTransform: 'uppercase' }}>
+                Filtro ativo: em renovação
+              </span>
+              <button onClick={() => setFilterRenewal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: 'black', padding: '0 4px', lineHeight: 1 }}>
+                ✕ limpar
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Renewal Banner */}
       <RenewalSection contracts={allContracts} onRefresh={handleRefresh} />
 
@@ -725,8 +753,7 @@ export default function ContractsPage() {
               <tbody>
                 {displayedContracts.map(contract => {
                   const productCode = contract.templateType.toUpperCase()
-                  const codeColors: Record<string, string> = { GE: 'var(--retro-blue)', GI: 'var(--success)', GS: 'var(--warning)' }
-                  const color = codeColors[productCode] ?? '#888'
+                  const color = PRODUCT_COLORS[productCode] ?? '#888'
                   const productName = contract.clientPlan?.product?.name ?? contract.templateType
                   const value = contract.clientPlan?.value
                   const fields = contract.dynamicFields ?? {}

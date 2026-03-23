@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 import { useIsMobile } from '@/hooks/useMediaQuery'
+import { PRODUCT_COLORS } from '@/lib/constants'
 
 // ---- Types ----
 interface Product {
@@ -56,13 +57,8 @@ function productBadge(plans: ClientPlan[]) {
   const active = plans.find(p => p.status === 'ACTIVE')
   if (!active) return <span style={{ fontFamily: 'var(--font-mono)', color: '#888' }}>—</span>
 
-  const codeColors: Record<string, string> = {
-    GE: 'var(--retro-blue)',
-    GI: 'var(--success)',
-    GS: 'var(--warning)',
-  }
   const code = active.product.code
-  const bg = codeColors[code] ?? 'black'
+  const bg = PRODUCT_COLORS[code] ?? 'black'
 
   return (
     <span style={{
@@ -77,6 +73,7 @@ function productBadge(plans: ClientPlan[]) {
       color: 'white',
       border: '1px solid black',
       boxShadow: '1px 1px 0 black',
+      cursor: 'pointer',
     }}>
       {code}
     </span>
@@ -395,6 +392,7 @@ function ClientCard({ client, onClick }: { client: Client; onClick: () => void }
 // ---- Main Page ----
 export default function ClientsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const isMobile = useIsMobile()
 
   const [clients, setClients] = useState<Client[]>([])
@@ -404,7 +402,7 @@ export default function ClientsPage() {
   const [showModal, setShowModal] = useState(false)
 
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') ?? '')
   const [segmentFilter, setSegmentFilter] = useState('')
   const [sort, setSort] = useState('companyName')
 
@@ -467,7 +465,7 @@ export default function ClientsPage() {
       </div>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 10, marginBottom: statusFilter ? 8 : 20, flexWrap: 'wrap' }}>
         <input
           className="goon-input"
           style={{ maxWidth: 280 }}
@@ -504,6 +502,21 @@ export default function ClientsPage() {
           <option value="goonFitScore">Ordenar: Fit Score</option>
         </select>
       </div>
+
+      {/* Active filter indicator */}
+      {statusFilter && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, padding: '6px 12px', background: '#ccff00', border: '2px solid black', boxShadow: '2px 2px 0 black', width: 'fit-content' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'black', textTransform: 'uppercase' }}>
+            Filtro ativo: status={statusFilter}
+          </span>
+          <button
+            onClick={() => setStatusFilter('')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: 'black', padding: '0 4px', lineHeight: 1 }}
+          >
+            ✕ limpar
+          </button>
+        </div>
+      )}
 
       {/* Loading */}
       {loading && (

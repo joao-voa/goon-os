@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 import { useIsMobile } from '@/hooks/useMediaQuery'
-import { PAYMENT_STATUS_COLORS, PAYMENT_STATUS_LABELS } from '@/lib/constants'
+import { PAYMENT_STATUS_COLORS, PAYMENT_STATUS_LABELS, PRODUCT_COLORS, PRODUCT_NAMES } from '@/lib/constants'
 
 // ---- Types ----
 interface Client {
@@ -22,6 +23,7 @@ interface Payment {
   status: string
   client: Client
   programName?: string | null
+  productCode?: string | null
 }
 
 interface PaginatedPayments {
@@ -65,6 +67,54 @@ function rowBackground(payment: Payment): string {
   if (payment.status === 'OVERDUE') return '#fff0f0'
   if (payment.status === 'PENDING' && isDueSoon(payment.dueDate)) return '#fff8f0'
   return ''
+}
+
+// ---- Program Selector ----
+function ProgramSelector({ active, onChange }: { active: string; onChange: (v: string) => void }) {
+  const programs = [
+    { code: '', label: 'TODOS' },
+    { code: 'GE', label: 'GE' },
+    { code: 'GI', label: 'GI' },
+    { code: 'GS', label: 'GS' },
+  ]
+  return (
+    <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+      {programs.map(p => {
+        const isActive = active === p.code
+        const bg = isActive
+          ? (p.code === '' ? 'black' : (PRODUCT_COLORS[p.code] ?? 'black'))
+          : '#e0e0e0'
+        return (
+          <button
+            key={p.code}
+            onClick={() => onChange(p.code)}
+            style={{
+              background: bg,
+              color: isActive ? 'white' : 'black',
+              border: '2px solid black',
+              boxShadow: isActive ? 'none' : '2px 2px 0 black',
+              padding: '8px 16px',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              fontWeight: 700,
+              textTransform: 'uppercase' as const,
+              cursor: 'pointer',
+              transform: isActive ? 'translate(2px,2px)' : 'none',
+              transition: 'transform 0.1s, box-shadow 0.1s',
+            }}
+            title={p.code ? PRODUCT_NAMES[p.code] : 'Todos os programas'}
+          >
+            {p.label}
+          </button>
+        )
+      })}
+      {active && (
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', alignSelf: 'center', marginLeft: 4 }}>
+          — {PRODUCT_NAMES[active]}
+        </span>
+      )}
+    </div>
+  )
 }
 
 // ---- KPI Cards ----
@@ -333,6 +383,7 @@ function PaymentCard({ payment, onPay }: { payment: Payment; onPay: (id: string)
 // ---- Main Page ----
 export default function PaymentsPage() {
   const isMobile = useIsMobile()
+  const searchParams = useSearchParams()
 
   const [payments, setPayments] = useState<Payment[]>([])
   const [total, setTotal] = useState(0)
@@ -340,7 +391,8 @@ export default function PaymentsPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
 
-  const [statusFilter, setStatusFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') ?? '')
+  const [productFilter, setProductFilter] = useState(() => searchParams.get('product') ?? '')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -360,6 +412,7 @@ export default function PaymentsPage() {
       const params = new URLSearchParams()
       if (statusFilter) params.set('status', statusFilter)
       if (debouncedSearch) params.set('search', debouncedSearch)
+      if (productFilter) params.set('product', productFilter)
       params.set('page', String(page))
       params.set('limit', String(limit))
       const result = await apiFetch<PaginatedPayments>(`/api/payments?${params.toString()}`)
@@ -370,11 +423,11 @@ export default function PaymentsPage() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, debouncedSearch, page])
+  }, [statusFilter, productFilter, debouncedSearch, page])
 
   useEffect(() => { fetchPayments() }, [fetchPayments])
 
-  useEffect(() => { setPage(1) }, [statusFilter, debouncedSearch])
+  useEffect(() => { setPage(1) }, [statusFilter, productFilter, debouncedSearch])
 
   // KPIs
   const now = new Date()
@@ -445,6 +498,25 @@ export default function PaymentsPage() {
           </button>
         </div>
       </div>
+
+      {/* Program Selector */}
+      <ProgramSelector active={productFilter} onChange={setProductFilter} />
+
+      {/* Active filter indicators */}
+      {(statusFilter || productFilter) && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          {statusFilter && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: '#ccff00', border: '2px solid black', boxShadow: '2px 2px 0 black' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'black', textTransform: 'uppercase' }}>
+                Filtro ativo: status={statusFilter}
+              </span>
+              <button onClick={() => setStatusFilter('')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: 'black', padding: '0 4px', lineHeight: 1 }}>
+                ✕ limpar
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 20 }}>

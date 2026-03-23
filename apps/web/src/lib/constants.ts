@@ -31,9 +31,15 @@ export const STAGE_COLORS: Record<string, string> = {
 }
 
 export const PRODUCT_COLORS: Record<string, string> = {
-  GE: '#8b5cf6',
-  GI: '#3B82F6',
-  GS: '#22c55e',
+  GE: '#7B2FBE',
+  GI: '#000080',
+  GS: '#006600',
+}
+
+export const PRODUCT_NAMES: Record<string, string> = {
+  GE: 'GOON Experience',
+  GI: 'GOON Intensive',
+  GS: 'GOON Scale',
 }
 
 export const PAYMENT_STATUS_COLORS: Record<string, string> = {
