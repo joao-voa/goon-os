@@ -15,11 +15,12 @@ export class ClientsService {
     search?: string
     status?: string
     segment?: string
+    product?: string
     page?: number
     limit?: number
     sort?: string
   }) {
-    const { search, status, segment, page = 1, limit = 20, sort = 'companyName' } = params
+    const { search, status, segment, product, page = 1, limit = 20, sort = 'companyName' } = params
 
     const where: Record<string, unknown> = {}
 
@@ -37,6 +38,14 @@ export class ClientsService {
 
     if (segment) {
       where.segment = { contains: segment, mode: 'insensitive' }
+    }
+
+    if (product) {
+      where.plans = {
+        some: {
+          product: { code: product.toUpperCase() },
+        },
+      }
     }
 
     const validSortFields: Record<string, object> = {

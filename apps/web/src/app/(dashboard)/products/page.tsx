@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 import { PRODUCT_COLORS } from '@/lib/constants'
@@ -144,9 +145,10 @@ interface ProductCardProps {
   product: Product
   onEdit: (product: Product) => void
   onToggleActive: (product: Product) => void
+  onNavigate: (product: Product) => void
 }
 
-function ProductCard({ product, onEdit, onToggleActive }: ProductCardProps) {
+function ProductCard({ product, onEdit, onToggleActive, onNavigate }: ProductCardProps) {
   const color = PRODUCT_COLORS[product.code] ?? 'black'
 
   return (
@@ -163,7 +165,7 @@ function ProductCard({ product, onEdit, onToggleActive }: ProductCardProps) {
         overflow: 'hidden',
         transition: 'transform 0.15s, box-shadow 0.15s',
       }}
-      onClick={() => onEdit(product)}
+      onClick={() => onNavigate(product)}
       onMouseEnter={e => {
         (e.currentTarget as HTMLDivElement).style.transform = 'translate(-2px, -2px)'
         ;(e.currentTarget as HTMLDivElement).style.boxShadow = '8px 8px 0px 0px #000'
@@ -242,8 +244,36 @@ function ProductCard({ product, onEdit, onToggleActive }: ProductCardProps) {
           {product._count.plans} {product._count.plans === 1 ? 'cliente' : 'clientes'}
         </span>
 
-        <button
-          onClick={() => onToggleActive(product)}
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button
+            onClick={e => { e.stopPropagation(); onEdit(product) }}
+            title="Editar produto"
+            style={{
+              background: '#c0c0c0',
+              color: 'black',
+              border: '2px solid black',
+              boxShadow: '2px 2px 0 black',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              padding: '4px 10px',
+              cursor: 'pointer',
+              transition: 'transform 0.1s, box-shadow 0.1s',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.transform = 'translate(1px, 1px)'
+              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '1px 1px 0 black'
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.transform = ''
+              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '2px 2px 0 black'
+            }}
+          >
+            Editar
+          </button>
+          <button
+            onClick={() => onToggleActive(product)}
           title={product.isActive ? 'Desativar produto' : 'Ativar produto'}
           style={{
             background: product.isActive ? 'var(--success)' : 'var(--retro-gray)',
@@ -268,7 +298,8 @@ function ProductCard({ product, onEdit, onToggleActive }: ProductCardProps) {
           }}
         >
           {product.isActive ? 'Desativar' : 'Ativar'}
-        </button>
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -276,6 +307,7 @@ function ProductCard({ product, onEdit, onToggleActive }: ProductCardProps) {
 
 // ---- Main Page ----
 export default function ProductsPage() {
+  const router = useRouter()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
@@ -364,6 +396,7 @@ export default function ProductsPage() {
               product={product}
               onEdit={setEditingProduct}
               onToggleActive={handleToggleActive}
+              onNavigate={p => router.push(`/products/${p.id}`)}
             />
           ))}
         </div>

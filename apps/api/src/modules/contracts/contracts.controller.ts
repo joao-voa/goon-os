@@ -25,12 +25,14 @@ export class ContractsController {
   findAll(
     @Query('clientId') clientId?: string,
     @Query('status') status?: string,
+    @Query('product') product?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
     return this.contractsService.findAll({
       clientId,
       status,
+      product,
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
     })

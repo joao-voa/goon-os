@@ -45,14 +45,20 @@ export class ContractsService {
   async findAll(params: {
     clientId?: string
     status?: string
+    product?: string
     page?: number
     limit?: number
   }) {
-    const { clientId, status, page = 1, limit = 20 } = params
+    const { clientId, status, product, page = 1, limit = 20 } = params
 
     const where: Record<string, unknown> = {}
     if (clientId) where.clientId = clientId
     if (status) where.status = status
+    if (product) {
+      where.clientPlan = {
+        product: { code: product.toUpperCase() },
+      }
+    }
 
     const skip = (page - 1) * limit
 
