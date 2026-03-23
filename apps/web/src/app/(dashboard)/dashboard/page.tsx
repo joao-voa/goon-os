@@ -623,50 +623,7 @@ export default function DashboardPage() {
       ) : stats ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap }}>
 
-          {/* ── Section 1: Alert Cards ─────────────────────────────────── */}
-          {(() => {
-            const overdueCount = stats.pendencies?.paymentOverdue ?? stats.financialKpis?.overdueCount ?? 0
-            const renewalCount = stats.renewals?.count ?? 0
-            const unsignedCount = stats.pendencies?.contractUnsigned ?? 0
-            const hasAny = (overdueCount > 0 && showOverdue) || (renewalCount > 0 && showRenewal) || (unsignedCount > 0 && showUnsigned)
-            if (!hasAny) return null
-            return (
-              <div style={{ display: 'flex', gap, flexWrap: 'wrap' }}>
-                {overdueCount > 0 && showOverdue && (
-                  <AlertCard
-                    icon="▲"
-                    count={overdueCount}
-                    label="boletos vencidos"
-                    bg="#cc0000"
-                    href="/payments"
-                    onDismiss={() => setShowOverdue(false)}
-                  />
-                )}
-                {renewalCount > 0 && showRenewal && (
-                  <AlertCard
-                    icon="↺"
-                    count={renewalCount}
-                    label="clientes em renovação"
-                    bg="#ff6600"
-                    href="/contracts"
-                    onDismiss={() => setShowRenewal(false)}
-                  />
-                )}
-                {unsignedCount > 0 && showUnsigned && (
-                  <AlertCard
-                    icon="✦"
-                    count={unsignedCount}
-                    label="contratos s/ assinatura"
-                    bg="#000080"
-                    href="/contracts"
-                    onDismiss={() => setShowUnsigned(false)}
-                  />
-                )}
-              </div>
-            )
-          })()}
-
-          {/* ── Section 2: KPI Strip — Row 1 ──────────────────────────── */}
+          {/* ══ 1. VISÃO ESTRATÉGICA — KPIs do negócio ══════════════════ */}
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap }}>
             <KpiCard
               label="Total Clientes"
@@ -688,8 +645,8 @@ export default function DashboardPage() {
               href="/clients?status=ACTIVE"
             />
             <KpiCard
-              label="Receita Mês"
-              value={fmtBRL(stats.financialKpis?.mrr ?? stats.kpis.totalRevenue)}
+              label="Receita Total"
+              value={fmtBRL(stats.kpis.totalRevenue)}
               icon={<DollarSign size={16} />}
               accentColor="#ccff00"
               href="/payments"
@@ -703,52 +660,7 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* ── Section 2: KPI Strip — Row 2 ──────────────────────────── */}
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap }}>
-            <KpiCard
-              label="Pendências Abertas"
-              value={stats.pendencies?.total ?? 0}
-              icon={<AlertTriangle size={16} />}
-              accentColor={(stats.pendencies?.total ?? 0) > 0 ? '#cc0000' : 'black'}
-              href="/pendencies"
-            />
-            <KpiCard
-              label="Em Renovação"
-              value={stats.renewals?.count ?? 0}
-              icon={<RefreshCw size={16} />}
-              accentColor={(stats.renewals?.count ?? 0) > 0 ? '#ff6600' : 'black'}
-              href="/contracts?renewal=true"
-            />
-            <KpiCard
-              label="Contratos Ativos"
-              value={signedContracts}
-              icon={<FileText size={16} />}
-              accentColor="black"
-              href="/contracts?status=SIGNED"
-            />
-            <KpiCard
-              label="Inadimplentes"
-              value={stats.financialKpis?.overdueCount ?? 0}
-              icon={<AlertCircle size={16} />}
-              accentColor={(stats.financialKpis?.overdueCount ?? 0) > 0 ? '#cc0000' : 'black'}
-              href="/payments?status=OVERDUE"
-            />
-          </div>
-
-          {/* ── Section 3: Renewals ────────────────────────────────────── */}
-          {stats.renewals && (
-            <RenewalSection renewals={stats.renewals} isMobile={isMobile} />
-          )}
-
-          {/* ── Section 4: Pipeline + Contracts ───────────────────────── */}
-          <div style={{ display: 'flex', gap, flexDirection: isMobile ? 'column' : 'row', alignItems: 'stretch' }}>
-            <PipelineSummary data={stats.pipelineSummary} />
-            <div style={isMobile ? {} : { flex: '0 0 260px' }}>
-              <ContractsStatus data={stats.contractsStatus} />
-            </div>
-          </div>
-
-          {/* ── Section 5: Revenue by Product ─────────────────────────── */}
+          {/* ══ 2. RECEITA POR PROGRAMA — onde está o dinheiro ══════════ */}
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap }}>
             {(['GE', 'GI', 'GS'] as const).map(code => (
               <RevenueProductCard
@@ -759,13 +671,80 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* ── Section 6: Recent Activity ─────────────────────────────── */}
-          <RecentActivity data={stats.recentActivity} />
-
-          {/* ── Section 7: Financial Summary ───────────────────────────── */}
+          {/* ══ 3. SAÚDE FINANCEIRA — recebido / pendente / vencido ════ */}
           {stats.financialKpis && (
             <FinancialSummary financialKpis={stats.financialKpis} isMobile={isMobile} />
           )}
+
+          {/* ══ 4. OPERAÇÃO — pipeline + contratos ═════════════════════ */}
+          <div style={{ display: 'flex', gap, flexDirection: isMobile ? 'column' : 'row', alignItems: 'stretch' }}>
+            <PipelineSummary data={stats.pipelineSummary} />
+            <div style={isMobile ? {} : { flex: '0 0 260px' }}>
+              <ContractsStatus data={stats.contractsStatus} />
+            </div>
+          </div>
+
+          {/* ══ 5. INDICADORES OPERACIONAIS ════════════════════════════ */}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap }}>
+            <KpiCard
+              label="Contratos Ativos"
+              value={signedContracts}
+              icon={<FileText size={16} />}
+              accentColor="black"
+              href="/contracts?status=SIGNED"
+            />
+            <KpiCard
+              label="Novos este Mês"
+              value={stats.kpis.newClientsThisMonth}
+              icon={<Users size={16} />}
+              accentColor={stats.kpis.newClientsThisMonth > 0 ? '#ccff00' : 'black'}
+              href="/clients"
+            />
+            <KpiCard
+              label="Pendências"
+              value={stats.pendencies?.total ?? 0}
+              icon={<AlertTriangle size={16} />}
+              accentColor={(stats.pendencies?.total ?? 0) > 0 ? '#cc0000' : 'black'}
+              href="/pendencies"
+            />
+            <KpiCard
+              label="Inadimplentes"
+              value={stats.financialKpis?.overdueCount ?? 0}
+              icon={<AlertCircle size={16} />}
+              accentColor={(stats.financialKpis?.overdueCount ?? 0) > 0 ? '#cc0000' : 'black'}
+              href="/payments?status=OVERDUE"
+            />
+          </div>
+
+          {/* ══ 6. ALERTAS — ações urgentes (só se houver) ════════════ */}
+          {(() => {
+            const overdueCount = stats.pendencies?.paymentOverdue ?? stats.financialKpis?.overdueCount ?? 0
+            const renewalCount = stats.renewals?.count ?? 0
+            const unsignedCount = stats.pendencies?.contractUnsigned ?? 0
+            const hasAny = (overdueCount > 0 && showOverdue) || (renewalCount > 0 && showRenewal) || (unsignedCount > 0 && showUnsigned)
+            if (!hasAny) return null
+            return (
+              <div style={{ display: 'flex', gap, flexWrap: 'wrap' }}>
+                {overdueCount > 0 && showOverdue && (
+                  <AlertCard icon="▲" count={overdueCount} label="boletos vencidos" bg="#cc0000" href="/payments" onDismiss={() => setShowOverdue(false)} />
+                )}
+                {renewalCount > 0 && showRenewal && (
+                  <AlertCard icon="↺" count={renewalCount} label="em renovação" bg="#ff6600" href="/contracts?renewal=true" onDismiss={() => setShowRenewal(false)} />
+                )}
+                {unsignedCount > 0 && showUnsigned && (
+                  <AlertCard icon="✦" count={unsignedCount} label="contratos s/ assinatura" bg="#000080" href="/contracts" onDismiss={() => setShowUnsigned(false)} />
+                )}
+              </div>
+            )
+          })()}
+
+          {/* ══ 7. RENOVAÇÕES — se houver ═════════════════════════════ */}
+          {stats.renewals && stats.renewals.count > 0 && (
+            <RenewalSection renewals={stats.renewals} isMobile={isMobile} />
+          )}
+
+          {/* ══ 8. ATIVIDADE RECENTE — histórico ═════════════════════ */}
+          <RecentActivity data={stats.recentActivity} />
         </div>
       ) : null}
 
