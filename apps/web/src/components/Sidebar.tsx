@@ -159,12 +159,14 @@ export function Sidebar({
                   background: isActive ? 'var(--retro-blue)' : 'transparent',
                   boxShadow: isActive ? 'inset 3px 0 0 white' : 'none',
                   borderBottom: '1px solid rgba(0,0,0,0.15)',
+                  borderLeft: isActive ? '3px solid #ccff00' : 'none',
                   fontFamily: 'var(--font-mono)',
                   fontWeight: 700,
                   fontSize: 12,
                   textTransform: 'uppercase',
                   whiteSpace: 'nowrap',
                   transition: 'all 0.1s',
+                  paddingLeft: isActive && !collapsed && !isMobile ? '13px' : undefined,
                 }}
                 onMouseEnter={e => {
                   if (!isActive) {

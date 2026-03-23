@@ -451,7 +451,30 @@ function AddPlanModal({ clientId, onClose, onCreated }: AddPlanModalProps) {
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '2px solid black', paddingTop: 16 }}>
             <button type="button" className="goon-btn-secondary" onClick={onClose} disabled={saving}>Cancelar</button>
-            <button type="submit" className="goon-btn-primary" disabled={saving || loadingProducts}>
+            <button
+              type="submit"
+              disabled={saving || loadingProducts}
+              style={{
+                background: '#ccff00',
+                color: 'black',
+                border: '2px solid black',
+                boxShadow: '4px 4px 0px black',
+                fontFamily: 'var(--font-pixel)',
+                fontSize: 10,
+                textTransform: 'uppercase',
+                padding: '10px 20px',
+                cursor: 'pointer',
+                transition: 'transform 0.1s, box-shadow 0.1s',
+                borderRadius: 0,
+                letterSpacing: 0.5,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                textDecoration: 'none',
+                fontWeight: 700,
+              }}
+            >
               {saving ? 'Salvando...' : 'Adicionar Plano'}
             </button>
           </div>
@@ -661,7 +684,30 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '2px solid black', paddingTop: 16 }}>
             <button type="button" className="goon-btn-secondary" onClick={onClose} disabled={saving}>Cancelar</button>
-            <button type="submit" className="goon-btn-primary" disabled={saving || !templateType}>
+            <button
+              type="submit"
+              disabled={saving || !templateType}
+              style={{
+                background: '#ccff00',
+                color: 'black',
+                border: '2px solid black',
+                boxShadow: '4px 4px 0px black',
+                fontFamily: 'var(--font-pixel)',
+                fontSize: 10,
+                textTransform: 'uppercase',
+                padding: '10px 20px',
+                cursor: 'pointer',
+                transition: 'transform 0.1s, box-shadow 0.1s',
+                borderRadius: 0,
+                letterSpacing: 0.5,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                textDecoration: 'none',
+                fontWeight: 700,
+              }}
+            >
               {saving ? 'Criando...' : 'Criar Contrato'}
             </button>
           </div>

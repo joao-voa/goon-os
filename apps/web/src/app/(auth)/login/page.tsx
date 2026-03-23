@@ -177,12 +177,27 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="goon-btn-primary"
               style={{
+                background: '#ccff00',
+                color: 'black',
+                border: '2px solid black',
+                boxShadow: '4px 4px 0px black',
+                fontFamily: 'var(--font-pixel)',
+                fontSize: '11px',
+                textTransform: 'uppercase',
+                padding: '14px',
+                cursor: 'pointer',
+                transition: 'transform 0.1s, box-shadow 0.1s',
+                borderRadius: 0,
+                letterSpacing: 0.5,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                textDecoration: 'none',
                 marginTop: '0.5rem',
                 width: '100%',
-                padding: '14px',
-                fontSize: '11px',
+                fontWeight: 700,
               }}
             >
               {loading ? 'AGUARDE...' : 'ENTRAR NO SISTEMA'}

@@ -553,7 +553,22 @@ export default function DashboardPage() {
           >
             <KpiCard
               label="Clientes Ativos"
-              value={stats.kpis.totalActiveClients}
+              value={
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>{stats.kpis.totalActiveClients}</span>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: 8,
+                      height: 8,
+                      background: 'var(--retro-green)',
+                      border: '1px solid black',
+                      borderRadius: '50%',
+                      animation: 'pulse 2s ease-in-out infinite',
+                    }}
+                  />
+                </div>
+              }
               icon={<Building2 size={18} />}
               accentColor="var(--retro-blue)"
             />
@@ -561,13 +576,13 @@ export default function DashboardPage() {
               label="Novos este Mês"
               value={stats.kpis.newClientsThisMonth}
               icon={<UserPlus size={18} />}
-              accentColor="var(--success)"
+              accentColor={stats.kpis.newClientsThisMonth > 0 ? "var(--retro-green)" : "var(--success)"}
             />
             <KpiCard
               label="Receita Total"
               value={fmtBRL(stats.kpis.totalRevenue)}
               icon={<DollarSign size={18} />}
-              accentColor="var(--warning)"
+              accentColor="var(--retro-green)"
             />
             <KpiCard
               label="Contratos Assinados"

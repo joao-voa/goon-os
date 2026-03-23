@@ -45,7 +45,7 @@ interface PaginatedClients {
 function statusBadge(status: string) {
   const map: Record<string, { label: string; className: string }> = {
     ACTIVE: { label: 'Ativo', className: 'goon-badge goon-badge-active' },
-    PROSPECT: { label: 'Prospect', className: 'goon-badge goon-badge-pending' },
+    PROSPECT: { label: 'Prospect', className: 'goon-badge goon-badge-highlight' },
     INACTIVE: { label: 'Inativo', className: 'goon-badge goon-badge-inactive' },
   }
   const s = map[status] ?? { label: status, className: 'goon-badge goon-badge-inactive' }
@@ -461,7 +461,7 @@ export default function ClientsPage() {
             {'>'} {total} cliente{total !== 1 ? 's' : ''} no total
           </p>
         </div>
-        <button className="goon-btn-primary" onClick={() => setShowModal(true)}>
+        <button className="goon-btn-accent" onClick={() => setShowModal(true)}>
           + Novo Cliente
         </button>
       </div>
