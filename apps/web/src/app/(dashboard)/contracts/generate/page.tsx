@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
@@ -33,7 +33,7 @@ interface ContractFields {
   dataContrato: string
 }
 
-interface ClientSearchResult {
+interface ClientResult {
   id: string
   companyName: string
   responsible: string
@@ -45,11 +45,35 @@ interface ClientSearchResult {
   city?: string | null
   state?: string | null
   zipCode?: string | null
-  clientPlans?: Array<{
+  status?: string
+  mainPains?: string | null
+  plans?: Array<{
     id: string
     value: number
-    product: { code: string; name: string }
+    installmentValue?: number
+    installments?: number
+    paymentDay?: number
+    product: { id: string; code: string; name: string }
+    notes?: string | null
   }>
+}
+
+// Default suggested values per program
+const PROGRAM_VALUES: Record<string, string> = {
+  GE: '35.000,00',
+  GI: '12.000,00',
+  GS: '60.000,00',
+}
+
+// Parse mainPains field to extract structured data
+function parseMainPains(mainPains: string | null | undefined): Record<string, string> {
+  if (!mainPains) return {}
+  const result: Record<string, string> = {}
+  mainPains.split('\n').forEach(line => {
+    const match = line.match(/^(.+?):\s*(.+)$/)
+    if (match) result[match[1].trim()] = match[2].trim()
+  })
+  return result
 }
 
 // ---- Programs ----
@@ -196,12 +220,22 @@ export default function GenerateContractPage() {
   const router = useRouter()
   const isMobile = useIsMobile()
 
-  // Client search
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<ClientSearchResult[]>([])
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [searching, setSearching] = useState(false)
+  // Client dropdown
+  const [allClients, setAllClients] = useState<ClientResult[]>([])
+  const [selectedClientId, setSelectedClientId] = useState<string>('')
+  const [loadingClients, setLoadingClients] = useState(true)
   const searchRef = useRef<HTMLDivElement>(null)
+
+  // Load all clients on mount
+  useEffect(() => {
+    apiFetch<{ data: ClientResult[] }>('/api/clients?limit=200')
+      .then(res => {
+        const sorted = (res.data ?? []).sort((a, b) => a.companyName.localeCompare(b.companyName))
+        setAllClients(sorted)
+      })
+      .catch(() => toast.error('[ERRO] Erro ao carregar clientes'))
+      .finally(() => setLoadingClients(false))
+  }, [])
 
   // Loading states
   const [loadingDocx, setLoadingDocx] = useState(false)
@@ -237,27 +271,17 @@ export default function GenerateContractPage() {
     setFields(prev => ({ ...prev, [key]: value }))
   }, [])
 
-  // ---- Client search ----
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return
-    setSearching(true)
-    try {
-      const res = await apiFetch<{ data: ClientSearchResult[] }>(
-        `/api/clients?search=${encodeURIComponent(searchQuery)}&limit=10`,
-      )
-      setSearchResults(res.data ?? [])
-      setSearchOpen(true)
-    } catch {
-      toast.error('[ERRO] Erro ao buscar cliente')
-    } finally {
-      setSearching(false)
-    }
-  }
+  // ---- Client select from dropdown ----
+  const handleSelectClient = (clientId: string) => {
+    setSelectedClientId(clientId)
+    if (!clientId) return
 
-  const handleSelectClient = (c: ClientSearchResult) => {
-    setSearchOpen(false)
-    setSearchQuery(c.companyName ?? c.responsible)
-    // Auto-fill fields
+    const c = allClients.find(cl => cl.id === clientId)
+    if (!c) return
+
+    // Parse mainPains for CPF, RG, nationality, etc.
+    const extra = parseMainPains(c.mainPains)
+
     const updates: Partial<ContractFields> = {
       nome: c.responsible ?? '',
       email: c.email ?? '',
@@ -267,29 +291,50 @@ export default function GenerateContractPage() {
       enderecoNumero: c.addressNumber ?? '',
       cep: c.zipCode ?? '',
       cidade: c.city ?? '',
-      estado: c.state ?? 'SP',
+      estado: c.state || 'SP',
+      // From mainPains parsed data
+      cpf: extra['CPF'] ?? '',
+      rg: extra['RG'] ?? '',
+      nacionalidade: extra['Nacionalidade']?.toLowerCase() ?? 'brasileira',
+      estadoCivil: extra['Estado Civil']?.toLowerCase() ?? 'solteiro(a)',
+      profissao: extra['Profissão']?.toLowerCase() ?? '',
+      formaPagamento: extra['Pagamento'] ?? '',
     }
+
     // If client has a plan, auto-fill programa and valor
-    if (c.clientPlans && c.clientPlans.length > 0) {
-      const plan = c.clientPlans[0]
-      const progMap: Record<string, string> = {
-        GE: 'GE', GI: 'GI', GS: 'GS',
-      }
+    if (c.plans && c.plans.length > 0) {
+      const plan = c.plans[0]
       const code = plan.product.code?.toUpperCase()
-      if (progMap[code]) setActiveProgram(progMap[code])
-      updates.programa = plan.product.name ?? fields.programa
-      updates.valorTotal = plan.value
-        ? new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(plan.value)
-        : ''
+      if (code === 'GE' || code === 'GI' || code === 'GS') {
+        setActiveProgram(code)
+        updates.programa = plan.product.name ?? fields.programa
+      }
+      if (plan.value) {
+        updates.valorTotal = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(plan.value))
+      }
+      // Build payment description from plan data
+      if (plan.notes && !updates.formaPagamento) {
+        updates.formaPagamento = plan.notes
+      }
     }
+
     setFields(prev => ({ ...prev, ...updates }))
+    toast.success(`[OK] Dados de ${c.companyName} carregados`)
   }
 
   // ---- Program select ----
   const handleProgramSelect = (code: string) => {
     setActiveProgram(code)
     const p = PROGRAMS.find(x => x.code === code)
-    if (p) set('programa', p.programa)
+    if (p) {
+      set('programa', p.programa)
+      // Update suggested value if field is empty or still a default value
+      const currentVal = fields.valorTotal.replace(/\./g, '').replace(',', '.')
+      const isDefault = !fields.valorTotal || Object.values(PROGRAM_VALUES).some(v => fields.valorTotal === v)
+      if (isDefault || !currentVal) {
+        set('valorTotal', PROGRAM_VALUES[code] ?? '')
+      }
+    }
   }
 
   // ---- Validate ----
@@ -413,73 +458,50 @@ export default function GenerateContractPage() {
         </button>
       </div>
 
-      {/* Client search */}
-      <SectionCard title="BUSCAR CLIENTE">
-        <div style={{ display: 'flex', gap: 8, position: 'relative' }}>
-          <input
-            className="goon-input"
-            style={{ flex: 1 }}
-            placeholder="Nome da empresa ou responsável..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSearch()}
-          />
-          <button
-            className="goon-btn-secondary"
-            onClick={handleSearch}
-            disabled={searching}
-            style={{ whiteSpace: 'nowrap', minWidth: 90 }}
-          >
-            {searching ? '...' : 'BUSCAR'}
-          </button>
-        </div>
-        {searchOpen && searchResults.length > 0 && (
-          <div
-            ref={searchRef}
+      {/* Client select dropdown */}
+      <SectionCard title="SELECIONAR CLIENTE">
+        <div style={{ marginBottom: 12 }}>
+          <select
             style={{
+              width: '100%',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 13,
+              padding: '10px 12px',
               border: '2px solid black',
-              boxShadow: '4px 4px 0 black',
+              boxShadow: '3px 3px 0 black',
+              borderRadius: 0,
               background: 'white',
-              marginTop: 4,
-              maxHeight: 220,
-              overflowY: 'auto',
-              zIndex: 50,
-              position: 'relative',
+              cursor: 'pointer',
+              appearance: 'none',
             }}
+            value={selectedClientId}
+            onChange={e => handleSelectClient(e.target.value)}
+            disabled={loadingClients}
           >
-            {searchResults.map(c => (
-              <button
-                key={c.id}
-                onClick={() => handleSelectClient(c)}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  textAlign: 'left',
-                  padding: '10px 14px',
-                  border: 'none',
-                  borderBottom: '1px solid #eee',
-                  background: 'white',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 12,
-                }}
-                onMouseEnter={e => (e.currentTarget.style.background = '#f5f5f5')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'white')}
-              >
-                <strong>{c.companyName}</strong>
-                <span style={{ color: '#555', marginLeft: 8 }}>{c.responsible}</span>
-              </button>
-            ))}
-          </div>
-        )}
-        {searchOpen && searchResults.length === 0 && !searching && (
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#888', marginTop: 8 }}>
-            Nenhum cliente encontrado. Preencha manualmente abaixo.
-          </div>
-        )}
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', marginTop: 8 }}>
-          — ou preencha manualmente os campos abaixo —
+            <option value="">{loadingClients ? 'Carregando clientes...' : '— Selecione um cliente —'}</option>
+            {allClients.filter(c => c.status === 'ACTIVE').map(c => {
+              const prod = c.plans?.[0]?.product?.code || ''
+              return (
+                <option key={c.id} value={c.id}>
+                  {c.companyName} — {c.responsible} {prod ? `(${prod})` : ''}
+                </option>
+              )
+            })}
+          </select>
         </div>
+        {selectedClientId && (
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11, color: '#006600', fontWeight: 700,
+            padding: '6px 10px', background: '#f0fff0', border: '1px solid #006600',
+          }}>
+            [OK] Dados carregados — confira e ajuste os campos abaixo
+          </div>
+        )}
+        {!selectedClientId && (
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', marginTop: 4 }}>
+            Selecione um cliente para preencher automaticamente ou preencha manualmente abaixo
+          </div>
+        )}
       </SectionCard>
 
       {/* Program selector */}
