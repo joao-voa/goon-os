@@ -753,6 +753,21 @@ export default function ContractsPage() {
             <option value="SIGNED">Assinado</option>
             <option value="CANCELLED">Cancelado</option>
           </select>
+
+          {/* Generate contract link */}
+          <a
+            href="/contracts/generate"
+            className="goon-btn-primary"
+            style={{
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            + GERAR CONTRATO
+          </a>
         </div>
       </div>
 
