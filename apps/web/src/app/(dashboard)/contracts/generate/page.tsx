@@ -60,9 +60,9 @@ interface ClientResult {
 
 // Default suggested values per program
 const PROGRAM_VALUES: Record<string, string> = {
-  GE: '35.000,00',
-  GI: '12.000,00',
-  GS: '60.000,00',
+  GE: '60.000,00',
+  GI: '30.000,00',
+  GS: '1.000,00',
 }
 
 // Parse mainPains field to extract structured data
