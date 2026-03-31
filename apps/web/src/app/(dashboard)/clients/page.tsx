@@ -334,18 +334,6 @@ function CreateClientModal({ onClose, onCreated }: CreateModalProps) {
                     <option value="HIGH">Alta</option>
                   </select>
                 </div>
-                <div style={fieldStyle}>
-                  <label className="goon-label">Goon Fit Score (1-10)</label>
-                  <input
-                    className="goon-input"
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={form.goonFitScore ?? ''}
-                    onChange={e => set('goonFitScore', e.target.value)}
-                    placeholder="1-10"
-                  />
-                </div>
               </div>
             </div>
           )}
@@ -534,7 +522,6 @@ export default function ClientsPage() {
           >
             <option value="companyName">Ordenar: Empresa</option>
             <option value="createdAt">Ordenar: Mais recentes</option>
-            <option value="goonFitScore">Ordenar: Fit Score</option>
           </select>
         </div>
       </div>
@@ -597,7 +584,6 @@ export default function ClientsPage() {
                 <th>Responsável</th>
                 <th>Segmento</th>
                 <th>Produto</th>
-                <th>Fit Score</th>
                 <th>Status</th>
                 <th style={{ width: 80 }}>Ações</th>
               </tr>
@@ -615,7 +601,6 @@ export default function ClientsPage() {
                   <td onClick={() => router.push(`/clients/${client.id}`)}>{client.responsible}</td>
                   <td onClick={() => router.push(`/clients/${client.id}`)}>{client.segment ?? <span style={{ color: '#888' }}>—</span>}</td>
                   <td onClick={() => router.push(`/clients/${client.id}`)}>{productBadge(client.plans)}</td>
-                  <td onClick={() => router.push(`/clients/${client.id}`)}>{fitScoreBadge(client.goonFitScore)}</td>
                   <td onClick={() => router.push(`/clients/${client.id}`)}>{statusBadge(client.status)}</td>
                   <td>
                     {client.status !== 'INACTIVE' && (
