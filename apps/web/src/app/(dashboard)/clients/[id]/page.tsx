@@ -951,7 +951,7 @@ export default function ClientDetailPage() {
             >
               Gerar Contrato
             </button>
-            {client.status !== 'INACTIVE' && (
+            {client.status !== 'INACTIVE' ? (
               <button
                 onClick={async () => {
                   if (!confirm(`Cancelar ${client.companyName}? Pagamentos e comissoes pendentes serao cancelados.`)) return
@@ -968,6 +968,24 @@ export default function ClientDetailPage() {
                 }}
               >
                 Cancelar Cliente
+              </button>
+            ) : (
+              <button
+                onClick={async () => {
+                  if (!confirm(`Excluir ${client.companyName} permanentemente? Essa acao nao pode ser desfeita.`)) return
+                  try {
+                    await apiFetch(`/api/clients/${client.id}`, { method: 'DELETE' })
+                    toast.success('Cliente excluido')
+                    router.push('/clients')
+                  } catch { toast.error('Erro ao excluir') }
+                }}
+                style={{
+                  background: '#cc0000', color: 'white', border: '2px solid black',
+                  boxShadow: '3px 3px 0 black', fontFamily: 'var(--font-pixel)', fontSize: 9,
+                  textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', letterSpacing: 0.5,
+                }}
+              >
+                Excluir Cliente
               </button>
             )}
             <a
