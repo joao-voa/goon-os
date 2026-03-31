@@ -1,96 +1,86 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 
-interface MonthData {
-  month: number
-  year: number
-  label: string
-  entradas: { received: number; pending: number; overdue: number; total: number }
-  saidas: { previsto: number; pago: number; total: number }
-  comissoes: { pending: number; paid: number; total: number }
-  saldo: number
-  saldoProjetado: number
-}
-
 @Injectable()
 export class CashflowService {
   constructor(private prisma: PrismaService) {}
 
   async getMonthly(year: number) {
-    const months: MonthData[] = []
+    const yearStart = new Date(year, 0, 1)
+    const yearEnd = new Date(year + 1, 0, 1)
 
-    for (let m = 0; m < 12; m++) {
-      const start = new Date(year, m, 1)
-      const end = new Date(year, m + 1, 1)
-      const label = start.toLocaleString('pt-BR', { month: 'long' })
+    // Fetch all data for the year in 3 queries
+    const [payments, expenses, commissions] = await this.prisma.$transaction([
+      this.prisma.payment.findMany({
+        where: { dueDate: { gte: yearStart, lt: yearEnd } },
+        select: { dueDate: true, value: true, status: true },
+      }),
+      this.prisma.expense.findMany({
+        where: { dueDate: { gte: yearStart, lt: yearEnd } },
+        select: { dueDate: true, value: true, status: true },
+      }),
+      this.prisma.commission.findMany({
+        where: {
+          OR: [
+            { createdAt: { gte: yearStart, lt: yearEnd } },
+            { paidAt: { gte: yearStart, lt: yearEnd } },
+          ],
+        },
+        select: { createdAt: true, paidAt: true, value: true, status: true },
+      }),
+    ])
 
-      // Entradas (payments)
-      const [paidAgg, pendingAgg, overdueAgg] = await this.prisma.$transaction([
-        this.prisma.payment.aggregate({
-          where: { status: 'PAID', dueDate: { gte: start, lt: end } },
-          _sum: { value: true },
-        }),
-        this.prisma.payment.aggregate({
-          where: { status: 'PENDING', dueDate: { gte: start, lt: end } },
-          _sum: { value: true },
-        }),
-        this.prisma.payment.aggregate({
-          where: { status: 'OVERDUE', dueDate: { gte: start, lt: end } },
-          _sum: { value: true },
-        }),
-      ])
+    // Build monthly buckets
+    const months = Array.from({ length: 12 }, (_, m) => ({
+      month: m + 1,
+      year,
+      label: new Date(year, m, 1).toLocaleString('pt-BR', { month: 'long' }),
+      entradas: { received: 0, pending: 0, overdue: 0, total: 0 },
+      saidas: { previsto: 0, pago: 0, total: 0 },
+      comissoes: { pending: 0, paid: 0, total: 0 },
+      saldo: 0,
+      saldoProjetado: 0,
+    }))
 
-      const received = Number(paidAgg._sum.value ?? 0)
-      const pending = Number(pendingAgg._sum.value ?? 0)
-      const overdue = Number(overdueAgg._sum.value ?? 0)
-
-      // Saidas (expenses)
-      const [expPrevistoAgg, expPagoAgg] = await this.prisma.$transaction([
-        this.prisma.expense.aggregate({
-          where: { status: 'PREVISTO', dueDate: { gte: start, lt: end } },
-          _sum: { value: true },
-        }),
-        this.prisma.expense.aggregate({
-          where: { status: 'PAGO', dueDate: { gte: start, lt: end } },
-          _sum: { value: true },
-        }),
-      ])
-
-      const expPrevisto = Number(expPrevistoAgg._sum.value ?? 0)
-      const expPago = Number(expPagoAgg._sum.value ?? 0)
-
-      // Comissoes
-      const [comPendingAgg, comPaidAgg] = await this.prisma.$transaction([
-        this.prisma.commission.aggregate({
-          where: { status: 'PENDING', createdAt: { gte: start, lt: end } },
-          _sum: { value: true },
-        }),
-        this.prisma.commission.aggregate({
-          where: { status: 'PAID', paidAt: { gte: start, lt: end } },
-          _sum: { value: true },
-        }),
-      ])
-
-      const comPending = Number(comPendingAgg._sum.value ?? 0)
-      const comPaid = Number(comPaidAgg._sum.value ?? 0)
-
-      const entradasTotal = received + pending + overdue
-      const saidasTotal = expPrevisto + expPago
-      const comissoesTotal = comPending + comPaid
-
-      months.push({
-        month: m + 1,
-        year,
-        label,
-        entradas: { received, pending, overdue, total: entradasTotal },
-        saidas: { previsto: expPrevisto, pago: expPago, total: saidasTotal },
-        comissoes: { pending: comPending, paid: comPaid, total: comissoesTotal },
-        saldo: received - expPago - comPaid,
-        saldoProjetado: entradasTotal - saidasTotal - comissoesTotal,
-      })
+    // Distribute payments into months
+    for (const p of payments) {
+      const m = new Date(p.dueDate).getMonth()
+      const val = Number(p.value)
+      if (p.status === 'PAID') months[m].entradas.received += val
+      else if (p.status === 'PENDING') months[m].entradas.pending += val
+      else if (p.status === 'OVERDUE') months[m].entradas.overdue += val
     }
 
-    // Totals
+    // Distribute expenses into months
+    for (const e of expenses) {
+      const m = new Date(e.dueDate).getMonth()
+      const val = Number(e.value)
+      if (e.status === 'PAGO') months[m].saidas.pago += val
+      else if (e.status === 'PREVISTO') months[m].saidas.previsto += val
+    }
+
+    // Distribute commissions into months (by createdAt for pending, paidAt for paid)
+    for (const c of commissions) {
+      const val = Number(c.value)
+      if (c.status === 'PAID' && c.paidAt) {
+        const m = new Date(c.paidAt).getMonth()
+        if (m >= 0 && m < 12) months[m].comissoes.paid += val
+      } else if (c.status === 'PENDING') {
+        const m = new Date(c.createdAt).getMonth()
+        if (m >= 0 && m < 12) months[m].comissoes.pending += val
+      }
+    }
+
+    // Compute totals per month
+    for (const m of months) {
+      m.entradas.total = m.entradas.received + m.entradas.pending + m.entradas.overdue
+      m.saidas.total = m.saidas.previsto + m.saidas.pago
+      m.comissoes.total = m.comissoes.pending + m.comissoes.paid
+      m.saldo = m.entradas.received - m.saidas.pago - m.comissoes.paid
+      m.saldoProjetado = m.entradas.total - m.saidas.total - m.comissoes.total
+    }
+
+    // Year totals
     const totals = months.reduce(
       (acc, m) => ({
         entradas: acc.entradas + m.entradas.total,
