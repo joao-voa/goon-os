@@ -49,6 +49,9 @@ model Client {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Product {
@@ -94,6 +97,12 @@ model ClientPlan {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([productId])
+  @@index([status])
+  @@index([endDate])
+  @@index([clientId, status])
 }
 
 model Contract {
@@ -116,6 +125,11 @@ model Contract {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([clientPlanId])
+  @@index([status])
+  @@index([isSigned])
 }
 
 model Onboarding {
@@ -144,6 +158,10 @@ model ActivityLog {
   client Client? @relation(fields: [clientId], references: [id])
 
   createdAt DateTime @default(now())
+
+  @@index([clientId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
 }
 
 model Payment {
@@ -165,6 +183,13 @@ model Payment {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([clientPlanId])
+  @@index([contractId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([status, dueDate])
 }
 
 model Pendency {
@@ -180,4 +205,9 @@ model Pendency {
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+  @@index([type])
+  @@index([type, clientId, status])
 }
