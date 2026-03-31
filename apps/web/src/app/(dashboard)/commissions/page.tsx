@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 
 interface Commission {
@@ -52,34 +53,42 @@ export default function CommissionsPage() {
   const [year, setYear] = useState(now.getFullYear())
 
   const loadData = useCallback(async () => {
-    const params = new URLSearchParams()
-    if (salesRepFilter) params.set('salesRep', salesRepFilter)
-    if (statusFilter) params.set('status', statusFilter)
-    if (month) params.set('month', String(month))
-    if (year) params.set('year', String(year))
-    params.set('page', String(page))
-    params.set('limit', '20')
+    try {
+      const params = new URLSearchParams()
+      if (salesRepFilter) params.set('salesRep', salesRepFilter)
+      if (statusFilter) params.set('status', statusFilter)
+      if (month) params.set('month', String(month))
+      if (year) params.set('year', String(year))
+      params.set('page', String(page))
+      params.set('limit', '20')
 
-    const [list, sum] = await Promise.all([
-      apiFetch<{ data: Commission[]; total: number }>(`/api/commissions?${params}`),
-      apiFetch<Summary>(`/api/commissions/summary?month=${month}&year=${year}`),
-    ])
+      const [list, sum] = await Promise.all([
+        apiFetch<{ data: Commission[]; total: number }>(`/api/commissions?${params}`),
+        apiFetch<Summary>(`/api/commissions/summary?month=${month}&year=${year}`),
+      ])
 
-    setCommissions(list.data)
-    setTotal(list.total)
-    setSummary(sum)
+      setCommissions(list.data)
+      setTotal(list.total)
+      setSummary(sum)
+    } catch { toast.error('Erro ao carregar comissoes') }
   }, [salesRepFilter, statusFilter, month, year, page])
 
   useEffect(() => { loadData() }, [loadData])
 
   const handlePay = async (id: string) => {
-    await apiFetch(`/api/commissions/${id}/pay`, { method: 'PATCH' })
-    loadData()
+    try {
+      await apiFetch(`/api/commissions/${id}/pay`, { method: 'PATCH' })
+      toast.success('Comissao paga')
+      loadData()
+    } catch { toast.error('Erro ao pagar comissao') }
   }
 
   const handleRevert = async (id: string) => {
-    await apiFetch(`/api/commissions/${id}/revert`, { method: 'PATCH' })
-    loadData()
+    try {
+      await apiFetch(`/api/commissions/${id}/revert`, { method: 'PATCH' })
+      toast.success('Comissao revertida')
+      loadData()
+    } catch { toast.error('Erro ao reverter') }
   }
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })

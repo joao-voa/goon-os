@@ -7,22 +7,16 @@ export class DashboardService {
   constructor(private prisma: PrismaService) {}
 
   async getStats() {
-    // 1. Total active clients
-    const totalActiveClients = await this.prisma.client.count({ where: { status: 'ACTIVE' } })
-
-    // 2. New clients this month
     const startOfMonth = new Date()
     startOfMonth.setDate(1)
     startOfMonth.setHours(0, 0, 0, 0)
-    const newClientsThisMonth = await this.prisma.client.count({
-      where: { createdAt: { gte: startOfMonth } },
-    })
 
-    // 3. Total revenue (aggregate in DB)
-    const revenueAgg = await this.prisma.clientPlan.aggregate({
-      where: { status: 'ACTIVE' },
-      _sum: { value: true },
-    })
+    // Batch independent queries in a single transaction
+    const [totalActiveClients, newClientsThisMonth, revenueAgg] = await this.prisma.$transaction([
+      this.prisma.client.count({ where: { status: 'ACTIVE' } }),
+      this.prisma.client.count({ where: { createdAt: { gte: startOfMonth } } }),
+      this.prisma.clientPlan.aggregate({ where: { status: 'ACTIVE' }, _sum: { value: true } }),
+    ])
     const totalRevenue = Number(revenueAgg._sum.value ?? 0)
 
     // 4. Revenue by product (groupBy in DB)

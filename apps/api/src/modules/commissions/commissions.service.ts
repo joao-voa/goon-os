@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
+import { getNextCommissionPaymentDate, getNextClosingCutoff } from '../../shared/constants'
 
 @Injectable()
 export class CommissionsService {
@@ -99,29 +100,9 @@ export class CommissionsService {
       reps[row.salesRep][key] = Number(row._sum.value ?? 0)
     }
 
-    // Closing info: rule is closing day 2, payment day 10
     const now = new Date()
-    const day = now.getDate()
-    const currentMonth = now.getMonth()
-    const currentYear = now.getFullYear()
-
-    // Closing cutoff: day 2 of current month
-    const closingCutoff = new Date(currentYear, currentMonth, 2, 23, 59, 59)
-
-    // Next payment date
-    let paymentDate: Date
-    if (now <= closingCutoff) {
-      // Before or on day 2 → pays day 10 same month
-      paymentDate = new Date(currentYear, currentMonth, 10)
-    } else {
-      // After day 2 → pays day 10 next month
-      paymentDate = new Date(currentYear, currentMonth + 1, 10)
-    }
-
-    // Next closing date
-    const nextClosingDate = now <= closingCutoff
-      ? closingCutoff
-      : new Date(currentYear, currentMonth + 1, 2, 23, 59, 59)
+    const paymentDate = getNextCommissionPaymentDate(now)
+    const nextClosingDate = getNextClosingCutoff(now)
 
     // Commissions for current closing period (pending, created before closing cutoff)
     const closingCommissions = await this.prisma.commission.aggregate({

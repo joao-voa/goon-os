@@ -3,12 +3,14 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
 
+  const { headers: extraHeaders, ...restOptions } = options ?? {}
   const res = await fetch(`${API_URL}${path}`, {
+    ...restOptions,
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(extraHeaders as Record<string, string> ?? {}),
     },
-    ...options,
   })
 
   if (res.status === 401) {

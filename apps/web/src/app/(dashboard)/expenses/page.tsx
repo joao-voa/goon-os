@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 
 interface Expense {
@@ -43,37 +44,42 @@ export default function ExpensesPage() {
   const [form, setForm] = useState(emptyForm)
 
   const loadData = useCallback(async () => {
-    const params = new URLSearchParams()
-    if (categoryFilter) params.set('category', categoryFilter)
-    if (statusFilter) params.set('status', statusFilter)
-    if (month) params.set('month', String(month))
-    if (year) params.set('year', String(year))
-    params.set('page', String(page))
-    params.set('limit', '20')
+    try {
+      const params = new URLSearchParams()
+      if (categoryFilter) params.set('category', categoryFilter)
+      if (statusFilter) params.set('status', statusFilter)
+      if (month) params.set('month', String(month))
+      if (year) params.set('year', String(year))
+      params.set('page', String(page))
+      params.set('limit', '20')
 
-    const [list, sum] = await Promise.all([
-      apiFetch<{ data: Expense[]; total: number }>(`/api/expenses?${params}`),
-      apiFetch<Summary>(`/api/expenses/summary?month=${month}&year=${year}`),
-    ])
+      const [list, sum] = await Promise.all([
+        apiFetch<{ data: Expense[]; total: number }>(`/api/expenses?${params}`),
+        apiFetch<Summary>(`/api/expenses/summary?month=${month}&year=${year}`),
+      ])
 
-    setExpenses(list.data)
-    setTotal(list.total)
-    setSummary(sum)
+      setExpenses(list.data)
+      setTotal(list.total)
+      setSummary(sum)
+    } catch { toast.error('Erro ao carregar despesas') }
   }, [categoryFilter, statusFilter, month, year, page])
 
   useEffect(() => { loadData() }, [loadData])
 
   const handleSave = async () => {
-    const body = { ...form, value: parseFloat(form.value) }
-    if (editId) {
-      await apiFetch(`/api/expenses/${editId}`, { method: 'PUT', body: JSON.stringify(body) })
-    } else {
-      await apiFetch('/api/expenses', { method: 'POST', body: JSON.stringify(body) })
-    }
-    setShowModal(false)
-    setEditId(null)
-    setForm(emptyForm)
-    loadData()
+    try {
+      const body = { ...form, value: parseFloat(form.value) }
+      if (editId) {
+        await apiFetch(`/api/expenses/${editId}`, { method: 'PUT', body: JSON.stringify(body) })
+      } else {
+        await apiFetch('/api/expenses', { method: 'POST', body: JSON.stringify(body) })
+      }
+      toast.success(editId ? 'Despesa atualizada' : 'Despesa criada')
+      setShowModal(false)
+      setEditId(null)
+      setForm(emptyForm)
+      loadData()
+    } catch { toast.error('Erro ao salvar despesa') }
   }
 
   const handleEdit = (e: Expense) => {
@@ -83,14 +89,20 @@ export default function ExpensesPage() {
   }
 
   const handlePay = async (id: string) => {
-    await apiFetch(`/api/expenses/${id}/pay`, { method: 'PATCH' })
-    loadData()
+    try {
+      await apiFetch(`/api/expenses/${id}/pay`, { method: 'PATCH' })
+      toast.success('Despesa paga')
+      loadData()
+    } catch { toast.error('Erro ao pagar despesa') }
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm('Excluir despesa?')) return
-    await apiFetch(`/api/expenses/${id}`, { method: 'DELETE' })
-    loadData()
+    try {
+      await apiFetch(`/api/expenses/${id}`, { method: 'DELETE' })
+      toast.success('Despesa excluida')
+      loadData()
+    } catch { toast.error('Erro ao excluir') }
   }
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })

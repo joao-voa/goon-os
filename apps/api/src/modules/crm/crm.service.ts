@@ -4,6 +4,7 @@ import { ActivityLogService } from '../activity-log/activity-log.service'
 import { PaymentsService } from '../payments/payments.service'
 import { CommissionsService } from '../commissions/commissions.service'
 import { ExpensesService } from '../expenses/expenses.service'
+import { TAX_RATE, getNextCommissionPaymentDate } from '../../shared/constants'
 
 const VALID_LEAD_STAGES = [
   'NOVO',
@@ -226,11 +227,7 @@ export class CrmService {
         return sum + Math.round(val * (dto.commissionPercentage ?? 10)) / 100
       }, 0)
 
-      // Determine payment date based on closing rule (day 2/10)
-      const day = now.getDate()
-      const commPayDate = day <= 2
-        ? new Date(now.getFullYear(), now.getMonth(), 10)
-        : new Date(now.getFullYear(), now.getMonth() + 1, 10)
+      const commPayDate = getNextCommissionPaymentDate(now)
 
       await this.expensesService.create({
         description: `Comissao ${salesRep} — ${client.companyName}`,
@@ -243,7 +240,7 @@ export class CrmService {
     }
 
     // 7. Auto-create expense for tax (6% of sale value)
-    const taxValue = Math.round(dto.saleValue * 0.06 * 100) / 100
+    const taxValue = Math.round(dto.saleValue * TAX_RATE * 100) / 100
     if (taxValue > 0) {
       await this.expensesService.create({
         description: `Imposto 6% — ${client.companyName}`,
