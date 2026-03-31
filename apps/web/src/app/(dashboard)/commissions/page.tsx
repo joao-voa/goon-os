@@ -24,6 +24,8 @@ interface Summary {
   totalPaid: number
   totalPaidCount: number
   bySalesRep: Record<string, { pending: number; paid: number; cancelled: number }>
+  closing: { cutoffDate: string; paymentDate: string; amount: number; count: number }
+  future: { amount: number; count: number }
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -88,14 +90,14 @@ export default function CommissionsPage() {
 
       {/* KPI Strip */}
       {summary && (
-        <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
           <div style={{ background: '#e6a800', color: 'white', padding: '12px 20px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-            <div style={{ fontSize: 10, textTransform: 'uppercase' }}>A Pagar</div>
+            <div style={{ fontSize: 10, textTransform: 'uppercase' }}>Total Pendente</div>
             <div style={{ fontSize: 18 }}>{fmt(summary.totalToPay)}</div>
             <div style={{ fontSize: 10 }}>{summary.totalToPayCount} parcelas</div>
           </div>
           <div style={{ background: '#006600', color: 'white', padding: '12px 20px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-            <div style={{ fontSize: 10, textTransform: 'uppercase' }}>Pago</div>
+            <div style={{ fontSize: 10, textTransform: 'uppercase' }}>Total Pago</div>
             <div style={{ fontSize: 18 }}>{fmt(summary.totalPaid)}</div>
             <div style={{ fontSize: 10 }}>{summary.totalPaidCount} parcelas</div>
           </div>
@@ -106,6 +108,27 @@ export default function CommissionsPage() {
               <div style={{ fontSize: 14 }}>Pago: {fmt(vals.paid)}</div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Fechamento Cards */}
+      {summary?.closing && (
+        <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+          <div style={{ background: 'white', padding: '12px 20px', border: '3px solid #4A78FF', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700, flex: '1 1 200px' }}>
+            <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#4A78FF' }}>Proximo Fechamento</div>
+            <div style={{ fontSize: 20, color: 'black', marginTop: 4 }}>{fmt(summary.closing.amount)}</div>
+            <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>{summary.closing.count} comissoes</div>
+            <div style={{ fontSize: 10, color: '#666' }}>Corte: {new Date(summary.closing.cutoffDate).toLocaleDateString('pt-BR')}</div>
+            <div style={{ fontSize: 11, color: '#4A78FF', fontWeight: 900, marginTop: 4 }}>Pagamento: {new Date(summary.closing.paymentDate).toLocaleDateString('pt-BR')}</div>
+          </div>
+          <div style={{ background: 'white', padding: '12px 20px', border: '3px solid #888', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700, flex: '1 1 200px' }}>
+            <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#888' }}>A Pagar Futuro</div>
+            <div style={{ fontSize: 20, color: 'black', marginTop: 4 }}>{fmt(summary.future.amount)}</div>
+            <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>{summary.future.count} comissoes futuras</div>
+          </div>
+          <div style={{ background: '#fff5f5', padding: '12px 20px', border: '2px solid #cc0000', fontFamily: 'var(--font-mono)', fontSize: 10, flex: '1 1 200px', display: 'flex', alignItems: 'center' }}>
+            <span style={{ color: '#cc0000' }}>Atencao: se um cliente der churn, as comissoes pendentes dele sao automaticamente canceladas e saem do fechamento.</span>
+          </div>
         </div>
       )}
 

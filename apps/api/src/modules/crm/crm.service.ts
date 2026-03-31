@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
 import { PaymentsService } from '../payments/payments.service'
 import { CommissionsService } from '../commissions/commissions.service'
+import { ExpensesService } from '../expenses/expenses.service'
 
 const VALID_LEAD_STAGES = [
   'NOVO',
@@ -27,6 +28,7 @@ export class CrmService {
     private activityLog: ActivityLogService,
     private paymentsService: PaymentsService,
     private commissionsService: CommissionsService,
+    private expensesService: ExpensesService,
   ) {}
 
   async findPipeline(params: { salesRep?: string; leadSource?: string }) {
@@ -216,7 +218,43 @@ export class CrmService {
       commissionsCreated = commissions.length
     }
 
-    // 6. Log activity
+    // 6. Auto-create expense for commissions (if any)
+    if (commissionsCreated > 0 && salesRep) {
+      const totalCommissionValue = payments.reduce((sum, p) => {
+        const val = typeof p.value === 'number' ? p.value : Number(p.value)
+        return sum + Math.round(val * (dto.commissionPercentage ?? 10)) / 100
+      }, 0)
+
+      // Determine payment date based on closing rule (day 2/10)
+      const day = now.getDate()
+      const commPayDate = day <= 2
+        ? new Date(now.getFullYear(), now.getMonth(), 10)
+        : new Date(now.getFullYear(), now.getMonth() + 1, 10)
+
+      await this.expensesService.create({
+        description: `Comissao ${salesRep} — ${client.companyName}`,
+        category: 'PESSOAS',
+        value: Math.round(totalCommissionValue * 100) / 100,
+        recurrence: 'UNICA',
+        dueDate: commPayDate,
+        notes: `Auto-gerada ao fechar venda. ${commissionsCreated} parcelas.`,
+      })
+    }
+
+    // 7. Auto-create expense for tax (6% of sale value)
+    const taxValue = Math.round(dto.saleValue * 0.06 * 100) / 100
+    if (taxValue > 0) {
+      await this.expensesService.create({
+        description: `Imposto 6% — ${client.companyName}`,
+        category: 'OUTRO',
+        value: taxValue,
+        recurrence: 'UNICA',
+        dueDate: now,
+        notes: `Imposto sobre faturamento de R$${dto.saleValue}. Auto-gerado.`,
+      })
+    }
+
+    // 8. Log activity
     await this.activityLog.log({
       clientId: id,
       entityType: 'CRM',

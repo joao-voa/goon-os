@@ -99,12 +99,66 @@ export class CommissionsService {
       reps[row.salesRep][key] = Number(row._sum.value ?? 0)
     }
 
+    // Closing info: rule is closing day 2, payment day 10
+    const now = new Date()
+    const day = now.getDate()
+    const currentMonth = now.getMonth()
+    const currentYear = now.getFullYear()
+
+    // Closing cutoff: day 2 of current month
+    const closingCutoff = new Date(currentYear, currentMonth, 2, 23, 59, 59)
+
+    // Next payment date
+    let paymentDate: Date
+    if (now <= closingCutoff) {
+      // Before or on day 2 → pays day 10 same month
+      paymentDate = new Date(currentYear, currentMonth, 10)
+    } else {
+      // After day 2 → pays day 10 next month
+      paymentDate = new Date(currentYear, currentMonth + 1, 10)
+    }
+
+    // Next closing date
+    const nextClosingDate = now <= closingCutoff
+      ? closingCutoff
+      : new Date(currentYear, currentMonth + 1, 2, 23, 59, 59)
+
+    // Commissions for current closing period (pending, created before closing cutoff)
+    const closingCommissions = await this.prisma.commission.aggregate({
+      where: {
+        status: 'PENDING',
+        createdAt: { lte: nextClosingDate },
+      },
+      _sum: { value: true },
+      _count: true,
+    })
+
+    // Future commissions (pending, created after closing cutoff)
+    const futureCommissions = await this.prisma.commission.aggregate({
+      where: {
+        status: 'PENDING',
+        createdAt: { gt: nextClosingDate },
+      },
+      _sum: { value: true },
+      _count: true,
+    })
+
     return {
       totalToPay: Number(totalToPay._sum.value ?? 0),
       totalToPayCount: totalToPay._count,
       totalPaid: Number(totalPaid._sum.value ?? 0),
       totalPaidCount: totalPaid._count,
       bySalesRep: reps,
+      closing: {
+        cutoffDate: nextClosingDate.toISOString(),
+        paymentDate: paymentDate.toISOString(),
+        amount: Number(closingCommissions._sum.value ?? 0),
+        count: closingCommissions._count,
+      },
+      future: {
+        amount: Number(futureCommissions._sum.value ?? 0),
+        count: futureCommissions._count,
+      },
     }
   }
 
