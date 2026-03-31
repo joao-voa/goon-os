@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
+import { PaymentsService } from '../payments/payments.service'
+import { CommissionsService } from '../commissions/commissions.service'
 
 const VALID_LEAD_STAGES = [
   'NOVO_LEAD',
@@ -25,6 +27,8 @@ export class CrmService {
   constructor(
     private prisma: PrismaService,
     private activityLog: ActivityLogService,
+    private paymentsService: PaymentsService,
+    private commissionsService: CommissionsService,
   ) {}
 
   async findPipeline(params: { salesRep?: string; leadSource?: string }) {
@@ -128,11 +132,13 @@ export class CrmService {
       saleInstallments: number
       installmentValue: number
       productId: string
+      paymentDay?: number
+      commissionPercentage?: number
     },
   ) {
     const client = await this.prisma.client.findUnique({
       where: { id },
-      select: { id: true, companyName: true, leadStage: true },
+      select: { id: true, companyName: true, leadStage: true, salesRep: true },
     })
 
     if (!client) {
@@ -170,6 +176,7 @@ export class CrmService {
         installments: dto.saleInstallments,
         installmentValue: dto.installmentValue,
         startDate: now,
+        paymentDay: dto.paymentDay ?? now.getDate(),
       },
     })
 
@@ -181,7 +188,35 @@ export class CrmService {
       })
     }
 
-    // 4. Log activity
+    // 4. Auto-create payment installments
+    const paymentDay = dto.paymentDay ?? now.getDate()
+    const payments = await this.paymentsService.createBulk(id, plan.id, {
+      totalInstallments: dto.saleInstallments,
+      value: dto.installmentValue,
+      startDate: now,
+      paymentDay,
+    })
+
+    // 5. Auto-create commissions (if salesRep exists)
+    let commissionsCreated = 0
+    const salesRep = client.salesRep
+    if (salesRep) {
+      const percentage = dto.commissionPercentage ?? 10
+      const commissions = await this.commissionsService.createForPayments(
+        id,
+        salesRep,
+        percentage,
+        payments.map(p => ({
+          id: p.id,
+          installment: p.installment,
+          totalInstallments: p.totalInstallments,
+          value: typeof p.value === 'number' ? p.value : Number(p.value),
+        })),
+      )
+      commissionsCreated = commissions.length
+    }
+
+    // 6. Log activity
     await this.activityLog.log({
       clientId: id,
       entityType: 'CRM',
@@ -189,10 +224,10 @@ export class CrmService {
       action: 'DEAL_CLOSED',
       fromValue: client.leadStage ?? undefined,
       toValue: 'FECHADO',
-      description: `Lead ${client.companyName} fechado — ${product.name} R$${dto.saleValue}`,
+      description: `Lead ${client.companyName} fechado — ${product.name} R$${dto.saleValue} | ${payments.length} parcelas + ${commissionsCreated} comissoes criadas`,
     })
 
-    return { client: updated, plan }
+    return { client: updated, plan, paymentsCreated: payments.length, commissionsCreated }
   }
 
   async createLead(dto: {
