@@ -11,6 +11,8 @@ import {
   LEAD_SOURCE_LABELS,
   PRODUCT_COLORS,
   PRODUCT_NAMES,
+  INTERACTION_TYPES,
+  INTERACTION_ICONS,
 } from '@/lib/constants'
 import dynamic from 'next/dynamic'
 
@@ -33,6 +35,7 @@ interface LeadItem {
   installmentValue: number | null
   leadNotes: string | null
   productCode: string | null
+  stageChangedAt: string | null
   createdAt: string
   closedAt: string | null
 }
@@ -315,13 +318,179 @@ function NewLeadModal({
   )
 }
 
+// ---- Interaction / Timeline Types ----
+interface Interaction {
+  id: string
+  type: string
+  description: string
+  userName: string | null
+  scheduledAt: string | null
+  createdAt: string
+}
+
+interface CrmMetrics {
+  byStage: Record<string, number>
+  newThisMonth: number
+  closedThisMonth: number
+  closedValueThisMonth: number
+  lostThisMonth: number
+  conversionRate: number
+  avgDaysInStage: number
+  staleLeads: number
+  pendingFollowUps: number
+  bySalesRep: Record<string, { total: number; closed: number; lost: number; value: number }>
+}
+
+// ---- Lead Detail Modal with Timeline ----
+function LeadDetailModal({
+  lead,
+  onClose,
+  onCloseDeal,
+}: {
+  lead: LeadItem
+  onClose: () => void
+  onCloseDeal: () => void
+}) {
+  const [interactions, setInteractions] = useState<Interaction[]>([])
+  const [newType, setNewType] = useState('NOTA')
+  const [newDesc, setNewDesc] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const loadInteractions = useCallback(async () => {
+    try {
+      const data = await apiFetch<Interaction[]>(`/api/crm/${lead.id}/interactions`)
+      setInteractions(data)
+    } catch { /* ignore */ }
+  }, [lead.id])
+
+  useEffect(() => { loadInteractions() }, [loadInteractions])
+
+  async function handleAddInteraction(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newDesc.trim()) return
+    setSubmitting(true)
+    try {
+      await apiFetch(`/api/crm/${lead.id}/interactions`, {
+        method: 'POST',
+        body: JSON.stringify({ type: newType, description: newDesc }),
+      })
+      setNewDesc('')
+      loadInteractions()
+    } catch { /* ignore */ }
+    setSubmitting(false)
+  }
+
+  const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR')
+  const fmtTime = (d: string) => {
+    const date = new Date(d)
+    return `${date.toLocaleDateString('pt-BR')} ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+  }
+
+  const daysInStage = lead.stageChangedAt
+    ? Math.floor((Date.now() - new Date(lead.stageChangedAt).getTime()) / (1000 * 60 * 60 * 24))
+    : Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div style={{ background: 'white', border: '2px solid black', boxShadow: '8px 8px 0 black', width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'auto' }}>
+        {/* Header */}
+        <div style={{ background: LEAD_STAGE_COLORS[lead.leadStage] ?? 'black', color: 'white', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 12 }}>{lead.companyName}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, opacity: 0.8 }}>{LEAD_STAGE_LABELS[lead.leadStage] ?? lead.leadStage} | {daysInStage}d</span>
+        </div>
+
+        <div style={{ padding: 16 }}>
+          {/* Info Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16, fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+            <div><strong>Responsavel:</strong> {lead.responsible}</div>
+            <div><strong>Vendedor:</strong> {lead.salesRep ?? '-'}</div>
+            <div><strong>Telefone:</strong> {lead.phone ?? '-'}</div>
+            <div><strong>WhatsApp:</strong> {lead.whatsapp ?? '-'}</div>
+            <div><strong>Email:</strong> {lead.email ?? '-'}</div>
+            <div><strong>Origem:</strong> {lead.leadSource ? (LEAD_SOURCE_LABELS[lead.leadSource] ?? lead.leadSource) : '-'}</div>
+            {lead.saleValue && <div><strong>Valor:</strong> {fmt(lead.saleValue)}</div>}
+            <div><strong>Criado:</strong> {fmtDate(lead.createdAt)}</div>
+          </div>
+          {lead.leadNotes && (
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, background: '#f5f5f5', padding: 10, border: '1px solid #ddd', marginBottom: 16 }}>
+              <strong>Notas:</strong> {lead.leadNotes}
+            </div>
+          )}
+
+          {/* WhatsApp link */}
+          {lead.whatsapp && (
+            <a href={`https://wa.me/55${lead.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+              style={{ display: 'inline-block', background: '#25d366', color: 'white', padding: '6px 14px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', marginBottom: 16 }}>
+              ABRIR WHATSAPP
+            </a>
+          )}
+
+          {/* Add Interaction */}
+          <form onSubmit={handleAddInteraction} style={{ marginBottom: 16, borderTop: '2px solid black', paddingTop: 12 }}>
+            <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, marginBottom: 8 }}>REGISTRAR INTERACAO</div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <select value={newType} onChange={e => setNewType(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
+                {Object.entries(INTERACTION_TYPES).map(([k, v]) => (
+                  <option key={k} value={k}>{v}</option>
+                ))}
+              </select>
+              <input placeholder="Descreva..." value={newDesc} onChange={e => setNewDesc(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+              <button type="submit" disabled={submitting} style={{ background: 'black', color: 'white', border: '2px solid black', padding: '6px 12px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>+</button>
+            </div>
+          </form>
+
+          {/* Timeline */}
+          <div style={{ borderTop: '2px solid black', paddingTop: 12 }}>
+            <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, marginBottom: 8 }}>TIMELINE ({interactions.length})</div>
+            {interactions.length === 0 ? (
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', padding: 10 }}>Nenhuma interacao registrada</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {interactions.map(i => (
+                  <div key={i.id} style={{ display: 'flex', gap: 8, padding: '8px 10px', background: '#fafafa', border: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                    <span style={{ fontSize: 16, lineHeight: 1 }}>{INTERACTION_ICONS[i.type] ?? '📝'}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <strong>{INTERACTION_TYPES[i.type] ?? i.type}</strong>
+                        <span style={{ fontSize: 9, color: '#888' }}>{fmtTime(i.createdAt)}</span>
+                      </div>
+                      <div style={{ marginTop: 2 }}>{i.description}</div>
+                      {i.userName && <div style={{ fontSize: 9, color: '#888', marginTop: 2 }}>por {i.userName}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 16, borderTop: '2px solid black', paddingTop: 12 }}>
+            <button onClick={onClose} style={{ flex: 1, padding: '8px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>FECHAR</button>
+            {lead.leadStage !== 'FECHADO' && lead.leadStage !== 'PERDIDO' && (
+              <button onClick={onCloseDeal} style={{ flex: 1, padding: '8px', border: '2px solid black', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0 black' }}>FECHAR NEGOCIO</button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ---- Main Page ----
 export default function CrmPage() {
   const [leads, setLeads] = useState<LeadItem[]>([])
   const [loading, setLoading] = useState(true)
   const [products, setProducts] = useState<Array<{ id: string; code: string; name: string }>>([])
   const [closingLead, setClosingLead] = useState<LeadItem | null>(null)
+  const [detailLead, setDetailLead] = useState<LeadItem | null>(null)
   const [showNewLead, setShowNewLead] = useState(false)
+  const [metrics, setMetrics] = useState<CrmMetrics | null>(null)
   const isMobile = useIsMobile()
 
   const PIPELINE_STAGES = LEAD_STAGES.filter(s => s !== 'FECHADO' && s !== 'PERDIDO')
@@ -337,12 +506,20 @@ export default function CrmPage() {
     }
   }, [])
 
+  const fetchMetrics = useCallback(async () => {
+    try {
+      const data = await apiFetch<CrmMetrics>('/api/crm/metrics')
+      setMetrics(data)
+    } catch { /* ignore */ }
+  }, [])
+
   useEffect(() => {
     fetchLeads()
+    fetchMetrics()
     apiFetch<Array<{ id: string; code: string; name: string }>>('/api/products')
       .then(setProducts)
       .catch(() => {})
-  }, [fetchLeads])
+  }, [fetchLeads, fetchMetrics])
 
   async function handleStageChange(id: string, toStage: string) {
     const lead = leads.find(l => l.id === id)
@@ -407,13 +584,8 @@ export default function CrmPage() {
   }
 
   const activeLeads = leads.filter(l => l.leadStage !== 'FECHADO' && l.leadStage !== 'PERDIDO')
-  const inNegotiation = leads.filter(l => l.leadStage === 'NEGOCIACAO').length
-  const closedThisMonth = leads.filter(l => {
-    if (l.leadStage !== 'FECHADO' || !l.closedAt) return false
-    const d = new Date(l.closedAt)
-    const now = new Date()
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-  }).length
+
+  const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 
   if (loading) {
     return (
@@ -444,40 +616,65 @@ export default function CrmPage() {
         </button>
       </div>
 
+      {/* KPI Strip */}
       <div style={{
-        display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr 1fr' : 'repeat(3, 1fr)',
+        display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)',
         gap: isMobile ? 8 : 12, marginBottom: 20,
       }}>
         {[
-          { label: 'Leads Ativos', value: activeLeads.length, color: '#4A78FF' },
-          { label: 'Em Negociação', value: inNegotiation, color: '#f97316' },
-          { label: 'Fechados (mês)', value: closedThisMonth, color: '#22c55e' },
+          { label: 'Leads Ativos', value: String(activeLeads.length), color: '#4A78FF' },
+          { label: 'Novos (mes)', value: String(metrics?.newThisMonth ?? 0), color: '#06b6d4' },
+          { label: 'Fechados (mes)', value: String(metrics?.closedThisMonth ?? 0), color: '#22c55e' },
+          { label: 'Conversao', value: `${metrics?.conversionRate ?? 0}%`, color: '#f97316' },
+          { label: 'Parados >7d', value: String(metrics?.staleLeads ?? 0), color: (metrics?.staleLeads ?? 0) > 0 ? '#cc0000' : '#888' },
         ].map(kpi => (
           <div key={kpi.label} style={{
             border: '2px solid black', boxShadow: '4px 4px 0px 0px #000',
             padding: isMobile ? '10px 8px' : '14px 16px', background: 'white',
           }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5, color: '#666' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5, color: '#666' }}>
               {kpi.label}
             </div>
-            <div style={{ fontFamily: 'var(--font-pixel)', fontSize: isMobile ? 18 : 24, color: kpi.color, marginTop: 4 }}>
+            <div style={{ fontFamily: 'var(--font-pixel)', fontSize: isMobile ? 16 : 22, color: kpi.color, marginTop: 4 }}>
               {kpi.value}
             </div>
           </div>
         ))}
       </div>
 
+      {/* Valor fechado + Performance vendedores */}
+      {metrics && metrics.closedValueThisMonth > 0 && (
+        <div style={{ marginBottom: 16, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ background: '#22c55e', color: 'white', padding: '8px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12 }}>
+            Fechado no mes: {fmtBRL(metrics.closedValueThisMonth)}
+          </div>
+          {Object.entries(metrics.bySalesRep).filter(([, v]) => v.closed > 0).map(([rep, v]) => (
+            <div key={rep} style={{ background: 'var(--retro-gray)', padding: '8px 16px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11 }}>
+              {rep}: {v.closed} fechados ({fmtBRL(v.value)})
+            </div>
+          ))}
+        </div>
+      )}
+
       <CrmKanbanBoard
         items={activeLeads}
         stages={PIPELINE_STAGES}
         onStageChange={handleStageChange}
         onCardClick={(item) => {
-          if (item.leadStage === 'NEGOCIACAO') {
-            setClosingLead(item as unknown as LeadItem)
-          }
+          setDetailLead(item as unknown as LeadItem)
         }}
       />
 
+      {detailLead && (
+        <LeadDetailModal
+          lead={detailLead}
+          onClose={() => setDetailLead(null)}
+          onCloseDeal={() => {
+            setClosingLead(detailLead)
+            setDetailLead(null)
+          }}
+        />
+      )}
       {closingLead && (
         <CloseDealModal
           lead={closingLead}
