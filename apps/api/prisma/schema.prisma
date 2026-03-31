@@ -38,6 +38,18 @@ model Client {
   strategicGoals   String?
   maturity         String?
   goonFitScore     Int?
+
+  // CRM fields
+  leadStage        String?   // NOVO_LEAD, CONTATO_FEITO, PROPOSTA_ENVIADA, NEGOCIACAO, FECHADO, PERDIDO
+  leadSource       String?   // instagram, indicacao, evento, site, outro
+  salesRep         String?   // nome do vendedor
+  saleValue        Decimal?  @db.Decimal(10, 2)
+  paymentMethod    String?   // BOLETO, PIX
+  saleInstallments Int?
+  installmentValue Decimal?  @db.Decimal(10, 2)
+  leadNotes        String?   // observações / histórico de contatos
+  closedAt         DateTime? // data de fechamento
+
   status           String   @default("ACTIVE")
 
   plans        ClientPlan[]
@@ -52,6 +64,7 @@ model Client {
 
   @@index([status])
   @@index([createdAt])
+  @@index([leadStage])
 }
 
 model Product {
