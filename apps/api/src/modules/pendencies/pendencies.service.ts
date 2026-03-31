@@ -9,23 +9,36 @@ export class PendenciesService {
     private activityLog: ActivityLogService,
   ) {}
 
-  async findAll(params: { status?: string; type?: string; clientId?: string }) {
-    const { status, type, clientId } = params
+  async findAll(params: {
+    status?: string
+    type?: string
+    clientId?: string
+    page?: number
+    limit?: number
+  }) {
+    const { status, type, clientId, page = 1, limit = 50 } = params
 
     const where: Record<string, unknown> = {}
     if (status) where.status = status
     if (type) where.type = type
     if (clientId) where.clientId = clientId
 
-    const pendencies = await this.prisma.pendency.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        client: { select: { id: true, companyName: true } },
-      },
-    })
+    const skip = (page - 1) * limit
 
-    return pendencies
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.pendency.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          client: { select: { id: true, companyName: true } },
+        },
+      }),
+      this.prisma.pendency.count({ where }),
+    ])
+
+    return { data, total, page, limit }
   }
 
   async create(dto: {

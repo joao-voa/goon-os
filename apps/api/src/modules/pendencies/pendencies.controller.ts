@@ -22,8 +22,16 @@ export class PendenciesController {
     @Query('status') status?: string,
     @Query('type') type?: string,
     @Query('clientId') clientId?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.pendenciesService.findAll({ status, type, clientId })
+    return this.pendenciesService.findAll({
+      status,
+      type,
+      clientId,
+      page: page ? parseInt(page) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+    })
   }
 
   @Post()
