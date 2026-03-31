@@ -13,6 +13,7 @@ import {
   PRODUCT_NAMES,
   INTERACTION_TYPES,
   INTERACTION_ICONS,
+  AURA_MODULES,
 } from '@/lib/constants'
 import dynamic from 'next/dynamic'
 
@@ -34,6 +35,7 @@ interface LeadItem {
   saleInstallments: number | null
   installmentValue: number | null
   leadNotes: string | null
+  selectedModules: string | null
   productCode: string | null
   stageChangedAt: string | null
   createdAt: string
@@ -210,6 +212,7 @@ function NewLeadModal({
     leadSource?: string
     salesRep?: string
     leadNotes?: string
+    selectedModules?: string
   }) => Promise<void>
 }) {
   const [companyName, setCompanyName] = useState('')
@@ -220,12 +223,17 @@ function NewLeadModal({
   const [leadSource, setLeadSource] = useState('')
   const [salesRep, setSalesRep] = useState('')
   const [leadNotes, setLeadNotes] = useState('')
+  const [modules, setModules] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
+
+  function toggleModule(code: string) {
+    setModules(prev => prev.includes(code) ? prev.filter(m => m !== code) : [...prev, code])
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!companyName.trim() || !responsible.trim()) {
-      toast.error('Nome e responsável são obrigatórios')
+      toast.error('Nome e responsavel sao obrigatorios')
       return
     }
     setSubmitting(true)
@@ -239,6 +247,7 @@ function NewLeadModal({
         leadSource: leadSource || undefined,
         salesRep: salesRep.trim() || undefined,
         leadNotes: leadNotes.trim() || undefined,
+        selectedModules: modules.length > 0 ? JSON.stringify(modules) : undefined,
       })
     } finally {
       setSubmitting(false)
@@ -301,7 +310,8 @@ function NewLeadModal({
               <select value={leadSource} onChange={e => setLeadSource(e.target.value)} style={inputStyle}>
                 <option value="">Selecione...</option>
                 <option value="instagram">Instagram</option>
-                <option value="indicacao">Indicação</option>
+                <option value="facebook">Facebook</option>
+                <option value="indicacao">Indicacao</option>
                 <option value="evento">Evento</option>
                 <option value="site">Site</option>
                 <option value="outro">Outro</option>
@@ -312,8 +322,20 @@ function NewLeadModal({
               <input value={salesRep} onChange={e => setSalesRep(e.target.value)} style={inputStyle} />
             </div>
           </div>
+          {/* AURA 360 Modules */}
           <div>
-            <label style={labelStyle}>Observações</label>
+            <label style={labelStyle}>Modulos AURA 360</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+              {AURA_MODULES.map(m => (
+                <label key={m.code} style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 11, cursor: 'pointer', padding: '4px 6px', background: modules.includes(m.code) ? '#D4A017' : '#f5f5f5', color: modules.includes(m.code) ? 'white' : 'black', border: '1px solid #ccc' }}>
+                  <input type="checkbox" checked={modules.includes(m.code)} onChange={() => toggleModule(m.code)} style={{ accentColor: '#D4A017' }} />
+                  {m.label}
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Observacoes</label>
             <textarea value={leadNotes} onChange={e => setLeadNotes(e.target.value)} rows={3}
               style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
@@ -439,6 +461,22 @@ function LeadDetailModal({
             {lead.saleValue && <div><strong>Valor:</strong> {fmt(lead.saleValue)}</div>}
             <div><strong>Criado:</strong> {fmtDate(lead.createdAt)}</div>
           </div>
+          {/* AURA Modules */}
+          {lead.selectedModules && (() => {
+            let mods: string[] = []
+            try { mods = JSON.parse(lead.selectedModules) } catch { /* ignore */ }
+            return mods.length > 0 ? (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', marginBottom: 6 }}>Modulos AURA 360</div>
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                  {mods.map(m => {
+                    const mod = AURA_MODULES.find(a => a.code === m)
+                    return <span key={m} style={{ background: '#D4A017', color: 'white', padding: '2px 8px', fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{mod?.label ?? m}</span>
+                  })}
+                </div>
+              </div>
+            ) : null
+          })()}
           {lead.leadNotes && (
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, background: '#f5f5f5', padding: 10, border: '1px solid #ddd', marginBottom: 16 }}>
               <strong>Notas:</strong> {lead.leadNotes}
@@ -592,6 +630,7 @@ export default function CrmPage() {
     leadSource?: string
     salesRep?: string
     leadNotes?: string
+    selectedModules?: string
   }) {
     try {
       await apiFetch('/api/crm/leads', {

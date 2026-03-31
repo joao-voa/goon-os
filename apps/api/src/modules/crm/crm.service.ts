@@ -59,6 +59,7 @@ export class CrmService {
         saleInstallments: true,
         installmentValue: true,
         leadNotes: true,
+        selectedModules: true,
         stageChangedAt: true,
         createdAt: true,
         closedAt: true,
@@ -392,6 +393,7 @@ export class CrmService {
     salesRep?: string
     leadNotes?: string
     segment?: string
+    selectedModules?: string
   }) {
     const client = await this.prisma.client.create({
       data: {

@@ -52,6 +52,9 @@ model Client {
   leadNotes        String?   // observações / histórico de contatos
   closedAt         DateTime? // data de fechamento
 
+  // AURA 360 modules (JSON array of selected module codes)
+  selectedModules  String?  // JSON array: ["BRANDING","DIRECAO_CRIATIVA",...]
+
   // Checklist flags
   hasContract      Boolean  @default(false)
   hasBilling       Boolean  @default(false)

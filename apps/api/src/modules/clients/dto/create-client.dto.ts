@@ -88,6 +88,9 @@ export class CreateClientDto {
   @IsOptional() @IsString()
   status?: string
 
+  @IsOptional() @IsString()
+  selectedModules?: string
+
   @IsOptional() @IsBoolean()
   hasContract?: boolean
 

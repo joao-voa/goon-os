@@ -16,6 +16,7 @@ import {
   PENDENCY_TYPE_COLORS,
   PENDENCY_TYPE_LABELS,
   PENDENCY_TYPE_ICONS,
+  AURA_MODULES,
 } from '@/lib/constants'
 
 // ---- Types ----
@@ -129,6 +130,7 @@ interface ClientDetail {
   strategicGoals?: string | null
   maturity?: string | null
   goonFitScore?: number | null
+  selectedModules?: string | null
   status: string
   plans: ClientPlan[]
   contracts: Contract[]
@@ -1035,6 +1037,30 @@ export default function ClientDetailPage() {
                   <InlineField label="Segmento" value={client.segment} field="segment" onSave={handleSaveField} />
                   <InlineField label="Nº de Funcionários" value={client.employeeCount} field="employeeCount" onSave={handleSaveField} />
                   <InlineField label="Faturamento Estimado" value={client.estimatedRevenue} field="estimatedRevenue" onSave={handleSaveField} />
+                </div>
+              </div>
+
+              {/* AURA 360 Modules */}
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 9, color: '#D4A017', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, paddingBottom: 8, borderBottom: '2px solid #D4A017' }}>
+                  Modulos AURA 360
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 8 }}>
+                  {AURA_MODULES.map(m => {
+                    const currentMods: string[] = (() => { try { return JSON.parse(client.selectedModules ?? '[]') } catch { return [] } })()
+                    const isSelected = currentMods.includes(m.code)
+                    return (
+                      <label key={m.code} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-mono)', fontSize: 11, cursor: 'pointer', padding: '8px 10px', background: isSelected ? '#D4A017' : '#f5f5f5', color: isSelected ? 'white' : 'black', border: '2px solid ' + (isSelected ? '#D4A017' : '#ddd'), fontWeight: isSelected ? 700 : 400 }}>
+                        <input type="checkbox" checked={isSelected} onChange={async () => {
+                          const newMods = isSelected ? currentMods.filter(c => c !== m.code) : [...currentMods, m.code]
+                          try {
+                            await handleSaveField('selectedModules', JSON.stringify(newMods))
+                          } catch { /* ignore */ }
+                        }} style={{ accentColor: '#D4A017', width: 16, height: 16 }} />
+                        {m.label}
+                      </label>
+                    )
+                  })}
                 </div>
               </div>
 

@@ -34,13 +34,24 @@ export const PRODUCT_COLORS: Record<string, string> = {
   GE: '#7B2FBE',
   GI: '#000080',
   GS: '#006600',
+  AURA: '#D4A017',
 }
 
 export const PRODUCT_NAMES: Record<string, string> = {
   GE: 'GOON ELITE',
   GI: 'GOON INFINITY',
   GS: 'GOON SCALE',
+  AURA: 'AURA 360',
 }
+
+export const AURA_MODULES = [
+  { code: 'BRANDING', label: 'Branding 360' },
+  { code: 'DIRECAO_CRIATIVA', label: 'Direcao Criativa' },
+  { code: 'PRODUCAO_OUTSOURCING', label: 'Producao Outsourcing' },
+  { code: 'RETAIL_360', label: 'Retail 360' },
+  { code: 'VENDAS_B2B', label: 'Implementacao Vendas B2B' },
+  { code: 'VENDAS_B2C', label: 'Implementacao Vendas B2C' },
+] as const
 
 export const PAYMENT_STATUS_COLORS: Record<string, string> = {
   PAID: '#006600',
