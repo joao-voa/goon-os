@@ -75,6 +75,11 @@ export default function CommissionsPage() {
     loadData()
   }
 
+  const handleRevert = async (id: string) => {
+    await apiFetch(`/api/commissions/${id}/revert`, { method: 'PATCH' })
+    loadData()
+  }
+
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
   return (
@@ -151,9 +156,14 @@ export default function CommissionsPage() {
                   <span style={{ background: STATUS_COLORS[c.status] ?? '#888', color: 'white', padding: '2px 8px', fontSize: 10, fontWeight: 700 }}>{STATUS_LABELS[c.status] ?? c.status}</span>
                 </td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                  {c.status === 'PENDING' && (
-                    <button onClick={() => handlePay(c.id)} style={{ background: '#006600', color: 'white', border: '2px solid black', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>PAGAR</button>
-                  )}
+                  <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                    {c.status === 'PENDING' && (
+                      <button onClick={() => handlePay(c.id)} style={{ background: '#006600', color: 'white', border: '2px solid black', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>PAGAR</button>
+                    )}
+                    {c.status === 'PAID' && (
+                      <button onClick={() => handleRevert(c.id)} style={{ background: '#e6a800', color: 'white', border: '2px solid black', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>REVERTER</button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

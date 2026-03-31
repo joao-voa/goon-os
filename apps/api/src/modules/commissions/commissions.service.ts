@@ -135,6 +135,33 @@ export class CommissionsService {
     }
   }
 
+  async revertToPending(id: string) {
+    const existing = await this.prisma.commission.findUnique({ where: { id } })
+    if (!existing) throw new NotFoundException(`Commission ${id} not found`)
+
+    const commission = await this.prisma.commission.update({
+      where: { id },
+      data: { status: 'PENDING', paidAt: null },
+    })
+
+    await this.activityLog.log({
+      clientId: commission.clientId,
+      entityType: 'COMMISSION',
+      entityId: commission.id,
+      action: 'REVERTED',
+      fromValue: 'PAID',
+      toValue: 'PENDING',
+      description: `Comissao parcela ${commission.installment}/${commission.totalInstallments} revertida para pendente`,
+    })
+
+    return {
+      ...commission,
+      percentage: Number(commission.percentage),
+      baseValue: Number(commission.baseValue),
+      value: Number(commission.value),
+    }
+  }
+
   async cancelByClient(clientId: string) {
     const result = await this.prisma.commission.updateMany({
       where: { clientId, status: 'PENDING' },

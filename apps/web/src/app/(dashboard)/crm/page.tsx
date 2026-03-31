@@ -56,17 +56,23 @@ function CloseDealModal({
     saleInstallments: number
     installmentValue: number
     productId: string
+    entryValue?: number
+    paymentDay?: number
   }) => Promise<void>
 }) {
   const [productId, setProductId] = useState(products[0]?.id ?? '')
   const [saleValue, setSaleValue] = useState(lead.saleValue?.toString() ?? '')
   const [paymentMethod, setPaymentMethod] = useState(lead.paymentMethod ?? 'BOLETO')
   const [saleInstallments, setSaleInstallments] = useState(lead.saleInstallments?.toString() ?? '1')
+  const [entryValue, setEntryValue] = useState('')
+  const [paymentDay, setPaymentDay] = useState(String(new Date().getDate()))
   const [submitting, setSubmitting] = useState(false)
 
   const value = parseFloat(saleValue) || 0
+  const entry = parseFloat(entryValue) || 0
+  const remaining = value - entry
   const installments = parseInt(saleInstallments) || 1
-  const installmentVal = installments > 0 ? value / installments : 0
+  const installmentVal = installments > 0 ? remaining / installments : 0
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -82,6 +88,8 @@ function CloseDealModal({
         saleInstallments: installments,
         installmentValue: Math.round(installmentVal * 100) / 100,
         productId,
+        entryValue: entry > 0 ? entry : undefined,
+        paymentDay: parseInt(paymentDay) || undefined,
       })
     } finally {
       setSubmitting(false)
@@ -132,13 +140,19 @@ function CloseDealModal({
               {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.code})</option>)}
             </select>
           </div>
-          <div>
-            <label style={labelStyle}>Valor Total (R$)</label>
-            <input type="number" step="0.01" value={saleValue} onChange={e => setSaleValue(e.target.value)} style={inputStyle} required />
-          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
-              <label style={labelStyle}>Forma de Pagamento</label>
+              <label style={labelStyle}>Valor Total (R$)</label>
+              <input type="number" step="0.01" value={saleValue} onChange={e => setSaleValue(e.target.value)} style={inputStyle} required />
+            </div>
+            <div>
+              <label style={labelStyle}>Valor Entrada (R$)</label>
+              <input type="number" step="0.01" placeholder="0" value={entryValue} onChange={e => setEntryValue(e.target.value)} style={inputStyle} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={labelStyle}>Forma Pagamento</label>
               <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={inputStyle}>
                 <option value="BOLETO">Boleto</option>
                 <option value="PIX">PIX</option>
@@ -148,10 +162,16 @@ function CloseDealModal({
               <label style={labelStyle}>Parcelas</label>
               <input type="number" min="1" value={saleInstallments} onChange={e => setSaleInstallments(e.target.value)} style={inputStyle} required />
             </div>
+            <div>
+              <label style={labelStyle}>Dia Vencimento</label>
+              <input type="number" min="1" max="31" value={paymentDay} onChange={e => setPaymentDay(e.target.value)} style={inputStyle} />
+            </div>
           </div>
           {installments > 0 && value > 0 && (
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, background: '#f0f0f0', padding: '8px 12px', border: '1px solid #ccc' }}>
+              {entry > 0 && <div>Entrada: R$ {entry.toFixed(2)}</div>}
               {installments}x de R$ {installmentVal.toFixed(2)}
+              <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>Vencimento todo dia {paymentDay}</div>
             </div>
           )}
           <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
@@ -346,10 +366,12 @@ function LeadDetailModal({
   lead,
   onClose,
   onCloseDeal,
+  onDelete,
 }: {
   lead: LeadItem
   onClose: () => void
   onCloseDeal: () => void
+  onDelete: () => void
 }) {
   const [interactions, setInteractions] = useState<Interaction[]>([])
   const [newType, setNewType] = useState('NOTA')
@@ -475,6 +497,7 @@ function LeadDetailModal({
             {lead.leadStage !== 'FECHADO' && lead.leadStage !== 'PERDIDO' && (
               <button onClick={onCloseDeal} style={{ flex: 1, padding: '8px', border: '2px solid black', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0 black' }}>FECHAR NEGOCIO</button>
             )}
+            <button onClick={onDelete} style={{ padding: '8px 12px', border: '2px solid black', background: '#cc0000', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>EXCLUIR</button>
           </div>
         </div>
       </div>
@@ -672,6 +695,16 @@ export default function CrmPage() {
           onCloseDeal={() => {
             setClosingLead(detailLead)
             setDetailLead(null)
+          }}
+          onDelete={async () => {
+            if (!confirm(`Excluir ${detailLead.companyName}? Isso cancela pagamentos e comissoes pendentes.`)) return
+            try {
+              await apiFetch(`/api/clients/${detailLead.id}/cancel`, { method: 'PATCH' })
+              toast.success('Cliente excluido')
+              setDetailLead(null)
+              fetchLeads()
+              fetchMetrics()
+            } catch { toast.error('Erro ao excluir') }
           }}
         />
       )}

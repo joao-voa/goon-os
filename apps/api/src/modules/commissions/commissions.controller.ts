@@ -39,4 +39,9 @@ export class CommissionsController {
   markAsPaid(@Param('id') id: string) {
     return this.service.markAsPaid(id)
   }
+
+  @Patch(':id/revert')
+  revertToPending(@Param('id') id: string) {
+    return this.service.revertToPending(id)
+  }
 }
