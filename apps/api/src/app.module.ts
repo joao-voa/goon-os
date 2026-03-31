@@ -12,6 +12,7 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module'
 import { DashboardModule } from './modules/dashboard/dashboard.module'
 import { PaymentsModule } from './modules/payments/payments.module'
 import { PendenciesModule } from './modules/pendencies/pendencies.module'
+import { CrmModule } from './modules/crm/crm.module'
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { PendenciesModule } from './modules/pendencies/pendencies.module'
     DashboardModule,
     PaymentsModule,
     PendenciesModule,
+    CrmModule,
   ],
   controllers: [AppController],
 })
