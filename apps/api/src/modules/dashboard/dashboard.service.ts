@@ -136,6 +136,40 @@ export class DashboardService {
       daysLeft: plan.endDate ? daysUntil(plan.endDate) : null,
     }))
 
+    // 11. Expenses summary for current month
+    const [expensesPrevistoAgg, expensesPagoAgg] = await this.prisma.$transaction([
+      this.prisma.expense.aggregate({
+        where: { status: 'PREVISTO', dueDate: { gte: startOfMonth, lt: endOfMonth } },
+        _sum: { value: true },
+      }),
+      this.prisma.expense.aggregate({
+        where: { status: 'PAGO', dueDate: { gte: startOfMonth, lt: endOfMonth } },
+        _sum: { value: true },
+      }),
+    ])
+
+    const totalExpensesPrevisto = Number(expensesPrevistoAgg._sum.value ?? 0)
+    const totalExpensesPago = Number(expensesPagoAgg._sum.value ?? 0)
+
+    // 12. Commissions summary for current month
+    const [commissionsPendingAgg, commissionsPaidAgg] = await this.prisma.$transaction([
+      this.prisma.commission.aggregate({
+        where: { status: 'PENDING', createdAt: { gte: startOfMonth, lt: endOfMonth } },
+        _sum: { value: true },
+      }),
+      this.prisma.commission.aggregate({
+        where: { status: 'PAID', paidAt: { gte: startOfMonth, lt: endOfMonth } },
+        _sum: { value: true },
+      }),
+    ])
+
+    const totalCommissionsPending = Number(commissionsPendingAgg._sum.value ?? 0)
+    const totalCommissionsPaid = Number(commissionsPaidAgg._sum.value ?? 0)
+
+    // 13. Net balance = entradas recebidas - despesas pagas - comissoes pagas
+    const netBalance = totalReceived - totalExpensesPago - totalCommissionsPaid
+    const projectedBalance = (totalReceived + totalPending) - (totalExpensesPrevisto + totalExpensesPago) - (totalCommissionsPending + totalCommissionsPaid)
+
     return {
       kpis: { totalActiveClients, newClientsThisMonth, totalRevenue, revenueByProduct },
       pipelineSummary,
@@ -158,6 +192,13 @@ export class DashboardService {
       renewals: {
         count: renewalClients.length,
         clients: renewalClients,
+      },
+      financialConsolidation: {
+        entradas: { received: totalReceived, pending: totalPending, overdue: totalOverdue },
+        expenses: { previsto: totalExpensesPrevisto, pago: totalExpensesPago },
+        commissions: { pending: totalCommissionsPending, paid: totalCommissionsPaid },
+        netBalance,
+        projectedBalance,
       },
     }
   }
