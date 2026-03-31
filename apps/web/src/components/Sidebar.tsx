@@ -1,6 +1,6 @@
 'use client'
 
-import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, DollarSign, AlertTriangle, LogOut, ChevronLeft, ChevronRight, Users, Percent, Receipt, ArrowLeftRight } from 'lucide-react'
+import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, DollarSign, AlertTriangle, LogOut, ChevronLeft, ChevronRight, Users, Percent, Receipt, ArrowLeftRight, Settings } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
@@ -20,12 +20,7 @@ interface SidebarProps {
   onCloseMobile: () => void
   onLogout: () => void
   userRole?: string
-}
-
-const ROLE_ACCESS: Record<string, string[]> = {
-  comercial: ['/dashboard', '/crm'],
-  analitico: ['/dashboard', '/crm', '/clients', '/products', '/contracts', '/onboarding', '/pendencies'],
-  gestao: [],
+  userAllowedModules?: string | null
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -40,6 +35,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/expenses',    label: 'Despesas',    icon: Receipt },
   { href: '/cashflow',    label: 'Fluxo Caixa', icon: ArrowLeftRight },
   { href: '/pendencies',  label: 'Pendencias',  icon: AlertTriangle },
+  { href: '/admin',       label: 'Admin',       icon: Settings },
 ]
 
 export function Sidebar({
@@ -51,12 +47,23 @@ export function Sidebar({
   onCloseMobile,
   onLogout,
   userRole,
+  userAllowedModules,
 }: SidebarProps) {
   const pathname = usePathname()
 
-  const visibleItems = userRole && ROLE_ACCESS[userRole]?.length
-    ? navItems.filter(item => ROLE_ACCESS[userRole]!.includes(item.href))
-    : navItems
+  const visibleItems = (() => {
+    // If user has allowedModules set, use that (granular control)
+    if (userAllowedModules) {
+      try {
+        const mods: string[] = JSON.parse(userAllowedModules)
+        if (mods.length > 0) return navItems.filter(item => mods.includes(item.href))
+      } catch { /* fall through */ }
+    }
+    // Admin sees everything
+    if (userRole === 'admin') return navItems
+    // Default: show all
+    return navItems
+  })()
   const [openPendenciesCount, setOpenPendenciesCount] = useState(0)
 
   useEffect(() => {

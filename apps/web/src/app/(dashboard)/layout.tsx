@@ -127,7 +127,20 @@ function MobileBottomNav({ onMenuClick }: { onMenuClick: () => void }) {
 function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const { user, loading, logout } = useAuth()
   const { state, isMobile, mobileOpen, toggle, closeMobile, sidebarWidth } = useSidebar()
+  const pathname = usePathname()
   useKeepAlive()
+
+  // Route protection: check if user has access to current module
+  const isBlocked = (() => {
+    if (!user || !user.allowedModules) return false
+    if (user.role === 'admin') return false
+    try {
+      const mods: string[] = JSON.parse(user.allowedModules)
+      if (mods.length === 0) return false
+      // Check if current path starts with any allowed module
+      return !mods.some(m => pathname === m || pathname.startsWith(m + '/'))
+    } catch { return false }
+  })()
 
   if (loading) {
     return (
@@ -171,6 +184,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         onCloseMobile={closeMobile}
         onLogout={logout}
         userRole={user?.role}
+        userAllowedModules={user?.allowedModules}
       />
 
       {/* Mobile top bar — simplified, no hamburger (bottom nav handles navigation) */}
@@ -262,7 +276,13 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         transition: 'margin-left 0.2s ease',
         minHeight: isMobile ? 'calc(100vh - 48px)' : 'calc(100vh - 56px)',
       }}>
-        {children}
+        {isBlocked ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 16 }}>
+            <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: '#cc0000', textTransform: 'uppercase' }}>ACESSO NEGADO</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#666' }}>Voce nao tem permissao para acessar este modulo.</div>
+            <a href="/dashboard" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#4A78FF', textDecoration: 'underline' }}>Voltar ao Dashboard</a>
+          </div>
+        ) : children}
       </main>
 
       {/* Mobile bottom navigation */}
