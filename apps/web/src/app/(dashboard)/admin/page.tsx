@@ -40,11 +40,11 @@ const ROLE_PRESETS: Record<string, { label: string; modules: string[] }> = {
   },
   comercial: {
     label: 'Comercial',
-    modules: ['/dashboard', '/crm', '/clients'],
+    modules: ['/crm', '/clients'],
   },
   analitico: {
     label: 'Analitico',
-    modules: ['/dashboard', '/crm', '/clients', '/products', '/contracts', '/onboarding', '/pendencies'],
+    modules: ['/crm', '/clients', '/products', '/contracts', '/onboarding', '/pendencies'],
   },
 }
 
