@@ -11,7 +11,7 @@ import { Sidebar, NAV_ITEMS } from '@/components/Sidebar'
 import { apiFetch } from '@/lib/api'
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Building2, Package, FileText, DollarSign, AlertTriangle, GitBranch } from 'lucide-react'
+import { LayoutDashboard, Building2, Package, FileText, DollarSign, AlertTriangle, GitBranch, Users } from 'lucide-react'
 
 // ---- useKeepAlive ----
 function useKeepAlive() {
@@ -25,6 +25,7 @@ function useKeepAlive() {
 // ---- Bottom Nav Items (max 6 most important) ----
 const BOTTOM_NAV = [
   { href: '/dashboard',  label: 'Home',    Icon: LayoutDashboard },
+  { href: '/crm',        label: 'CRM',     Icon: Users },
   { href: '/clients',    label: 'Clientes', Icon: Building2 },
   { href: '/products',   label: 'Progr.',  Icon: Package },
   { href: '/contracts',  label: 'Contr.',  Icon: FileText },
