@@ -4,6 +4,7 @@ import {
   Post,
   Put,
   Delete,
+  Patch,
   Body,
   Param,
   Query,
@@ -56,6 +57,11 @@ export class ClientsController {
   @Put(':id')
   update(@Param('id') id: string, @Body() dto: UpdateClientDto) {
     return this.clientsService.update(id, dto)
+  }
+
+  @Patch(':id/cancel')
+  cancelClient(@Param('id') id: string) {
+    return this.clientsService.cancelClient(id)
   }
 
   @Delete(':id')

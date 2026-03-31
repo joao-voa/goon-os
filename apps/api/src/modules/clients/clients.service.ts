@@ -181,4 +181,43 @@ export class ClientsService {
 
     return client
   }
+
+  async cancelClient(id: string) {
+    const client = await this.prisma.client.findUnique({ where: { id } })
+    if (!client) throw new NotFoundException(`Client ${id} not found`)
+
+    // 1. Cancel pending payments
+    const cancelledPayments = await this.prisma.payment.updateMany({
+      where: { clientId: id, status: { in: ['PENDING', 'SCHEDULED'] } },
+      data: { status: 'CANCELLED' },
+    })
+
+    // 2. Cancel pending commissions
+    const cancelledCommissions = await this.prisma.commission.updateMany({
+      where: { clientId: id, status: 'PENDING' },
+      data: { status: 'CANCELLED', cancelledAt: new Date() },
+    })
+
+    // 3. Cancel active plans
+    await this.prisma.clientPlan.updateMany({
+      where: { clientId: id, status: 'ACTIVE' },
+      data: { status: 'CANCELLED' },
+    })
+
+    // 4. Update client status
+    const updated = await this.prisma.client.update({
+      where: { id },
+      data: { status: 'INACTIVE' },
+    })
+
+    await this.activityLog.log({
+      clientId: id,
+      entityType: 'CLIENT',
+      entityId: id,
+      action: 'CANCELLED',
+      description: `Cliente cancelado — ${cancelledPayments.count} pagamentos e ${cancelledCommissions.count} comissoes cancelados`,
+    })
+
+    return updated
+  }
 }
