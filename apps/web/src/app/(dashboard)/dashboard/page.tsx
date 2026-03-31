@@ -85,10 +85,25 @@ interface FinancialConsolidation {
   projectedBalance: number
 }
 
+interface NegotiationLead {
+  id: string
+  companyName: string
+  stage: string
+  value: number
+  salesRep: string | null
+}
+
+interface Negotiation {
+  total: number
+  count: number
+  leads: NegotiationLead[]
+}
+
 interface DashboardStats {
   kpis: KPIs
   financialKpis: FinancialKPIs
   financialConsolidation?: FinancialConsolidation
+  negotiation?: Negotiation
   pendencies: Pendencies
   renewals: Renewals
   pipelineSummary: PipelineStage[]
@@ -547,6 +562,56 @@ function RecentActivity({ data }: { data: ActivityEntry[] }) {
 
 // ── Financial Summary ─────────────────────────────────────────────────────────
 
+const STAGE_LABEL_MAP: Record<string, string> = {
+  NOVO_LEAD: 'Novo Lead',
+  CONTATO_FEITO: 'Contato Feito',
+  PROPOSTA_ENVIADA: 'Proposta Enviada',
+  NEGOCIACAO: 'Negociacao',
+}
+
+function NegotiationCard({ data, isMobile }: { data: Negotiation; isMobile: boolean }) {
+  const fmt = (n: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n)
+
+  return (
+    <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black' }}>
+      <div className="goon-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>EM NEGOCIACAO</span>
+        <span style={{ fontSize: 11, fontFamily: 'var(--font-pixel)', color: '#e6a800' }}>{fmt(data.total)} ({data.count} leads)</span>
+      </div>
+      {data.leads.length > 0 ? (
+        <div style={{ padding: '12px 16px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+            <thead>
+              <tr style={{ borderBottom: '2px solid black' }}>
+                <th style={{ padding: '4px 8px', textAlign: 'left', fontWeight: 700, textTransform: 'uppercase', fontSize: 9 }}>Empresa</th>
+                <th style={{ padding: '4px 8px', textAlign: 'center', fontWeight: 700, textTransform: 'uppercase', fontSize: 9 }}>Etapa</th>
+                {!isMobile && <th style={{ padding: '4px 8px', textAlign: 'left', fontWeight: 700, textTransform: 'uppercase', fontSize: 9 }}>Vendedor</th>}
+                <th style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700, textTransform: 'uppercase', fontSize: 9 }}>Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.leads.map(l => (
+                <tr key={l.id} style={{ borderBottom: '1px solid #ddd' }}>
+                  <td style={{ padding: '6px 8px' }}>{l.companyName}</td>
+                  <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                    <span style={{ background: '#e6a800', color: 'white', padding: '1px 6px', fontSize: 9, fontWeight: 700 }}>{STAGE_LABEL_MAP[l.stage] ?? l.stage}</span>
+                  </td>
+                  {!isMobile && <td style={{ padding: '6px 8px' }}>{l.salesRep ?? '-'}</td>}
+                  <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(l.value)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div style={{ padding: '20px 16px', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888' }}>
+          Nenhum lead com valor em negociacao
+        </div>
+      )}
+    </div>
+  )
+}
+
 function FinancialSummary({ financialKpis, isMobile }: { financialKpis: FinancialKPIs; isMobile: boolean }) {
   return (
     <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black' }}>
@@ -708,6 +773,11 @@ export default function DashboardPage() {
               />
             ))}
           </div>
+
+          {/* ══ 2b. EM NEGOCIAÇÃO — leads no pipeline com valor ═════════ */}
+          {stats.negotiation && stats.negotiation.count > 0 && (
+            <NegotiationCard data={stats.negotiation} isMobile={isMobile} />
+          )}
 
           {/* ══ 3. SAÚDE FINANCEIRA — recebido / pendente / vencido ════ */}
           {stats.financialKpis && (

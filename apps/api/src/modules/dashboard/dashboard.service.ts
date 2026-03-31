@@ -166,7 +166,26 @@ export class DashboardService {
     const totalCommissionsPending = Number(commissionsPendingAgg._sum.value ?? 0)
     const totalCommissionsPaid = Number(commissionsPaidAgg._sum.value ?? 0)
 
-    // 13. Net balance = entradas recebidas - despesas pagas - comissoes pagas
+    // 13. Pipeline de negociacao (leads ativos com saleValue)
+    const negotiationLeads = await this.prisma.client.findMany({
+      where: {
+        status: 'PROSPECT',
+        leadStage: { in: ['NOVO_LEAD', 'CONTATO_FEITO', 'PROPOSTA_ENVIADA', 'NEGOCIACAO'] },
+        saleValue: { not: null },
+      },
+      select: {
+        id: true,
+        companyName: true,
+        leadStage: true,
+        saleValue: true,
+        salesRep: true,
+      },
+    })
+
+    const negotiationTotal = negotiationLeads.reduce((sum, l) => sum + Number(l.saleValue ?? 0), 0)
+    const negotiationCount = negotiationLeads.length
+
+    // 14. Net balance = entradas recebidas - despesas pagas - comissoes pagas
     const netBalance = totalReceived - totalExpensesPago - totalCommissionsPaid
     const projectedBalance = (totalReceived + totalPending) - (totalExpensesPrevisto + totalExpensesPago) - (totalCommissionsPending + totalCommissionsPaid)
 
@@ -192,6 +211,17 @@ export class DashboardService {
       renewals: {
         count: renewalClients.length,
         clients: renewalClients,
+      },
+      negotiation: {
+        total: negotiationTotal,
+        count: negotiationCount,
+        leads: negotiationLeads.map(l => ({
+          id: l.id,
+          companyName: l.companyName,
+          stage: l.leadStage,
+          value: Number(l.saleValue),
+          salesRep: l.salesRep,
+        })),
       },
       financialConsolidation: {
         entradas: { received: totalReceived, pending: totalPending, overdue: totalOverdue },
