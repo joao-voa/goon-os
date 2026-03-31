@@ -62,5 +62,29 @@ export class CreateClientDto {
   goonFitScore?: number
 
   @IsOptional() @IsString()
+  leadStage?: string
+
+  @IsOptional() @IsString()
+  leadSource?: string
+
+  @IsOptional() @IsString()
+  salesRep?: string
+
+  @IsOptional()
+  saleValue?: number
+
+  @IsOptional() @IsString()
+  paymentMethod?: string
+
+  @IsOptional() @IsInt() @Min(1)
+  saleInstallments?: number
+
+  @IsOptional()
+  installmentValue?: number
+
+  @IsOptional() @IsString()
+  leadNotes?: string
+
+  @IsOptional() @IsString()
   status?: string
 }
