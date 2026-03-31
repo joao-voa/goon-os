@@ -170,6 +170,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         onToggle={toggle}
         onCloseMobile={closeMobile}
         onLogout={logout}
+        userRole={user?.role}
       />
 
       {/* Mobile top bar — simplified, no hamburger (bottom nav handles navigation) */}

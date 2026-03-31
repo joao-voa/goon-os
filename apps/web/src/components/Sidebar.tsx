@@ -1,6 +1,6 @@
 'use client'
 
-import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, DollarSign, AlertTriangle, LogOut, ChevronLeft, ChevronRight, Users } from 'lucide-react'
+import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, DollarSign, AlertTriangle, LogOut, ChevronLeft, ChevronRight, Users, Percent, Receipt } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
@@ -19,6 +19,13 @@ interface SidebarProps {
   onToggle: () => void
   onCloseMobile: () => void
   onLogout: () => void
+  userRole?: string
+}
+
+const ROLE_ACCESS: Record<string, string[]> = {
+  comercial: ['/dashboard', '/crm'],
+  analitico: ['/dashboard', '/crm', '/clients', '/products', '/contracts', '/onboarding', '/pendencies'],
+  gestao: [],
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -28,8 +35,10 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/products',   label: 'Programas',  icon: Package },
   { href: '/contracts',  label: 'Contratos',  icon: FileText },
   { href: '/onboarding', label: 'Onboarding', icon: GitBranch },
-  { href: '/payments',   label: 'Financeiro', icon: DollarSign },
-  { href: '/pendencies', label: 'Pendências', icon: AlertTriangle },
+  { href: '/payments',    label: 'Financeiro',  icon: DollarSign },
+  { href: '/commissions', label: 'Comissoes',   icon: Percent },
+  { href: '/expenses',    label: 'Despesas',    icon: Receipt },
+  { href: '/pendencies',  label: 'Pendencias',  icon: AlertTriangle },
 ]
 
 export function Sidebar({
@@ -40,8 +49,13 @@ export function Sidebar({
   onToggle,
   onCloseMobile,
   onLogout,
+  userRole,
 }: SidebarProps) {
   const pathname = usePathname()
+
+  const visibleItems = userRole && ROLE_ACCESS[userRole]?.length
+    ? navItems.filter(item => ROLE_ACCESS[userRole]!.includes(item.href))
+    : navItems
   const [openPendenciesCount, setOpenPendenciesCount] = useState(0)
 
   useEffect(() => {
@@ -158,7 +172,7 @@ export function Sidebar({
 
         {/* Nav items */}
         <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-          {navItems.map(item => {
+          {visibleItems.map(item => {
             const Icon = item.icon
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
             return (
