@@ -1,9 +1,12 @@
 import { NestFactory } from '@nestjs/core'
 import { ValidationPipe } from '@nestjs/common'
 import { AppModule } from './app.module'
+import { GlobalExceptionFilter } from './filters/http-exception.filter'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
+
+  app.enableShutdownHooks()
 
   app.enableCors({
     origin: [
@@ -21,6 +24,8 @@ async function bootstrap() {
       transform: true,
     }),
   )
+
+  app.useGlobalFilters(new GlobalExceptionFilter())
 
   await app.listen(process.env.PORT ?? 3001)
   console.log(`API running on http://localhost:${process.env.PORT ?? 3001}`)
