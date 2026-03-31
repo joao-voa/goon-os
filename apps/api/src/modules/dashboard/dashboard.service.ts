@@ -18,19 +18,30 @@ export class DashboardService {
       where: { createdAt: { gte: startOfMonth } },
     })
 
-    // 3. Total revenue (sum of active plans' value)
-    const activePlans = await this.prisma.clientPlan.findMany({
+    // 3. Total revenue (aggregate in DB)
+    const revenueAgg = await this.prisma.clientPlan.aggregate({
       where: { status: 'ACTIVE' },
-      select: { value: true, productId: true, product: { select: { code: true } } },
+      _sum: { value: true },
+    })
+    const totalRevenue = Number(revenueAgg._sum.value ?? 0)
+
+    // 4. Revenue by product (groupBy in DB)
+    const revenueByProductRaw = await this.prisma.clientPlan.groupBy({
+      by: ['productId'],
+      where: { status: 'ACTIVE' },
+      _sum: { value: true },
     })
 
-    const totalRevenue = activePlans.reduce((sum, p) => sum + Number(p.value), 0)
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: revenueByProductRaw.map(r => r.productId) } },
+      select: { id: true, code: true },
+    })
+    const productCodeMap = new Map(products.map(p => [p.id, p.code]))
 
-    // 4. Revenue by product
     const revenueByProduct: Record<string, number> = { GE: 0, GI: 0, GS: 0 }
-    for (const plan of activePlans) {
-      const code = plan.product.code
-      revenueByProduct[code] = (revenueByProduct[code] ?? 0) + Number(plan.value)
+    for (const row of revenueByProductRaw) {
+      const code = productCodeMap.get(row.productId) ?? 'UNKNOWN'
+      revenueByProduct[code] = Number(row._sum.value ?? 0)
     }
 
     // 5. Pipeline summary (onboarding stages count)
@@ -70,29 +81,31 @@ export class DashboardService {
       this.prisma.pendency.count({ where: { type: 'RENEWAL_PENDING', status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
     ])
 
-    // 9. Financial KPIs
     const endOfMonth = new Date(startOfMonth)
     endOfMonth.setMonth(endOfMonth.getMonth() + 1)
 
-    const [paidPayments, pendingPayments, overduePayments] = await this.prisma.$transaction([
-      this.prisma.payment.findMany({
+    // 9. Financial KPIs (aggregate in DB)
+    const [paidAgg, pendingAgg, overdueAgg] = await this.prisma.$transaction([
+      this.prisma.payment.aggregate({
         where: { status: 'PAID', paidAt: { gte: startOfMonth, lt: endOfMonth } },
-        select: { value: true },
+        _sum: { value: true },
       }),
-      this.prisma.payment.findMany({
+      this.prisma.payment.aggregate({
         where: { status: 'PENDING' },
-        select: { value: true },
+        _sum: { value: true },
+        _count: true,
       }),
-      this.prisma.payment.findMany({
+      this.prisma.payment.aggregate({
         where: { status: 'OVERDUE' },
-        select: { value: true },
+        _sum: { value: true },
+        _count: true,
       }),
     ])
 
-    const totalReceived = paidPayments.reduce((sum, p) => sum + Number(p.value), 0)
-    const totalPending = pendingPayments.reduce((sum, p) => sum + Number(p.value), 0)
-    const totalOverdue = overduePayments.reduce((sum, p) => sum + Number(p.value), 0)
-    const overdueCount = overduePayments.length
+    const totalReceived = Number(paidAgg._sum.value ?? 0)
+    const totalPending = Number(pendingAgg._sum.value ?? 0)
+    const totalOverdue = Number(overdueAgg._sum.value ?? 0)
+    const overdueCount = overdueAgg._count ?? 0
 
     // MRR: sum of active plan values (treating each as monthly)
     const mrr = totalRevenue
