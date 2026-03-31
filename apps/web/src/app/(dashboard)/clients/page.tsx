@@ -30,7 +30,9 @@ interface Client {
   email?: string
   whatsapp?: string
   segment?: string
-  goonFitScore?: number
+  hasContract: boolean
+  hasBilling: boolean
+  isClientActive: boolean
   status: string
   plans: ClientPlan[]
 }
@@ -582,8 +584,10 @@ export default function ClientsPage() {
               <tr>
                 <th>Empresa</th>
                 <th>Responsável</th>
-                <th>Segmento</th>
                 <th>Produto</th>
+                <th style={{ textAlign: 'center', width: 70 }}>Contrato</th>
+                <th style={{ textAlign: 'center', width: 70 }}>Boleto</th>
+                <th style={{ textAlign: 'center', width: 60 }}>Ativo</th>
                 <th>Status</th>
                 <th style={{ width: 80 }}>Ações</th>
               </tr>
@@ -599,8 +603,31 @@ export default function ClientsPage() {
                     {client.tradeName && <div style={{ fontSize: 11, color: '#555' }}>{client.tradeName}</div>}
                   </td>
                   <td onClick={() => router.push(`/clients/${client.id}`)}>{client.responsible}</td>
-                  <td onClick={() => router.push(`/clients/${client.id}`)}>{client.segment ?? <span style={{ color: '#888' }}>—</span>}</td>
                   <td onClick={() => router.push(`/clients/${client.id}`)}>{productBadge(client.plans)}</td>
+                  <td style={{ textAlign: 'center' }}>
+                    <input type="checkbox" checked={client.hasContract} onChange={async () => {
+                      try {
+                        await apiFetch(`/api/clients/${client.id}`, { method: 'PUT', body: JSON.stringify({ hasContract: !client.hasContract }) })
+                        fetchClients()
+                      } catch { toast.error('Erro ao atualizar') }
+                    }} style={{ width: 18, height: 18, cursor: 'pointer', accentColor: '#006600' }} />
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <input type="checkbox" checked={client.hasBilling} onChange={async () => {
+                      try {
+                        await apiFetch(`/api/clients/${client.id}`, { method: 'PUT', body: JSON.stringify({ hasBilling: !client.hasBilling }) })
+                        fetchClients()
+                      } catch { toast.error('Erro ao atualizar') }
+                    }} style={{ width: 18, height: 18, cursor: 'pointer', accentColor: '#006600' }} />
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <input type="checkbox" checked={client.isClientActive} onChange={async () => {
+                      try {
+                        await apiFetch(`/api/clients/${client.id}`, { method: 'PUT', body: JSON.stringify({ isClientActive: !client.isClientActive }) })
+                        fetchClients()
+                      } catch { toast.error('Erro ao atualizar') }
+                    }} style={{ width: 18, height: 18, cursor: 'pointer', accentColor: '#006600' }} />
+                  </td>
                   <td onClick={() => router.push(`/clients/${client.id}`)}>{statusBadge(client.status)}</td>
                   <td>
                     {client.status !== 'INACTIVE' && (

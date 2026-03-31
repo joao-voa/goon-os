@@ -52,6 +52,11 @@ model Client {
   leadNotes        String?   // observações / histórico de contatos
   closedAt         DateTime? // data de fechamento
 
+  // Checklist flags
+  hasContract      Boolean  @default(false)
+  hasBilling       Boolean  @default(false)
+  isClientActive   Boolean  @default(false)
+
   status           String   @default("ACTIVE")
 
   plans        ClientPlan[]

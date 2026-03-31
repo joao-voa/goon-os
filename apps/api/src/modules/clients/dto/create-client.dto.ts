@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEmail, IsInt, Min, Max } from 'class-validator'
+import { IsString, IsOptional, IsEmail, IsInt, IsBoolean, Min, Max } from 'class-validator'
 
 export class CreateClientDto {
   @IsString()
@@ -87,4 +87,13 @@ export class CreateClientDto {
 
   @IsOptional() @IsString()
   status?: string
+
+  @IsOptional() @IsBoolean()
+  hasContract?: boolean
+
+  @IsOptional() @IsBoolean()
+  hasBilling?: boolean
+
+  @IsOptional() @IsBoolean()
+  isClientActive?: boolean
 }
