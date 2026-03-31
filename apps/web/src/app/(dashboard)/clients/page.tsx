@@ -599,24 +599,42 @@ export default function ClientsPage() {
                 <th>Produto</th>
                 <th>Fit Score</th>
                 <th>Status</th>
+                <th style={{ width: 80 }}>Ações</th>
               </tr>
             </thead>
             <tbody>
               {clients.map(client => (
                 <tr
                   key={client.id}
-                  onClick={() => router.push(`/clients/${client.id}`)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <td>
+                  <td onClick={() => router.push(`/clients/${client.id}`)}>
                     <div style={{ fontWeight: 700, color: 'black' }}>{client.companyName}</div>
                     {client.tradeName && <div style={{ fontSize: 11, color: '#555' }}>{client.tradeName}</div>}
                   </td>
-                  <td>{client.responsible}</td>
-                  <td>{client.segment ?? <span style={{ color: '#888' }}>—</span>}</td>
-                  <td>{productBadge(client.plans)}</td>
-                  <td>{fitScoreBadge(client.goonFitScore)}</td>
-                  <td>{statusBadge(client.status)}</td>
+                  <td onClick={() => router.push(`/clients/${client.id}`)}>{client.responsible}</td>
+                  <td onClick={() => router.push(`/clients/${client.id}`)}>{client.segment ?? <span style={{ color: '#888' }}>—</span>}</td>
+                  <td onClick={() => router.push(`/clients/${client.id}`)}>{productBadge(client.plans)}</td>
+                  <td onClick={() => router.push(`/clients/${client.id}`)}>{fitScoreBadge(client.goonFitScore)}</td>
+                  <td onClick={() => router.push(`/clients/${client.id}`)}>{statusBadge(client.status)}</td>
+                  <td>
+                    {client.status !== 'INACTIVE' && (
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          if (!confirm(`Cancelar ${client.companyName}? Pagamentos e comissoes pendentes serao cancelados.`)) return
+                          try {
+                            await apiFetch(`/api/clients/${client.id}/cancel`, { method: 'PATCH' })
+                            toast.success('Cliente cancelado')
+                            fetchClients()
+                          } catch { toast.error('Erro ao cancelar') }
+                        }}
+                        style={{ background: '#cc0000', color: 'white', border: '2px solid black', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}
+                      >
+                        CANCELAR
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

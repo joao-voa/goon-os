@@ -949,6 +949,25 @@ export default function ClientDetailPage() {
             >
               Gerar Contrato
             </button>
+            {client.status !== 'INACTIVE' && (
+              <button
+                onClick={async () => {
+                  if (!confirm(`Cancelar ${client.companyName}? Pagamentos e comissoes pendentes serao cancelados.`)) return
+                  try {
+                    await apiFetch(`/api/clients/${client.id}/cancel`, { method: 'PATCH' })
+                    toast.success('Cliente cancelado')
+                    router.push('/clients')
+                  } catch { toast.error('Erro ao cancelar') }
+                }}
+                style={{
+                  background: '#cc0000', color: 'white', border: '2px solid black',
+                  boxShadow: '3px 3px 0 black', fontFamily: 'var(--font-pixel)', fontSize: 9,
+                  textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', letterSpacing: 0.5,
+                }}
+              >
+                Cancelar Cliente
+              </button>
+            )}
             <a
               href="/contracts/generate"
               style={{
