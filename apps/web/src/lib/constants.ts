@@ -95,3 +95,38 @@ export const CONTRACT_STATUS_COLORS: Record<string, string> = {
   CANCELLED: '#cc0000',
   RENEWAL: '#ff6600',
 }
+
+export const LEAD_STAGES = [
+  'NOVO_LEAD',
+  'CONTATO_FEITO',
+  'PROPOSTA_ENVIADA',
+  'NEGOCIACAO',
+  'FECHADO',
+  'PERDIDO',
+] as const
+
+export const LEAD_STAGE_LABELS: Record<string, string> = {
+  NOVO_LEAD: 'Novo Lead',
+  CONTATO_FEITO: 'Contato Feito',
+  PROPOSTA_ENVIADA: 'Proposta Enviada',
+  NEGOCIACAO: 'Negociação',
+  FECHADO: 'Fechado ✅',
+  PERDIDO: 'Perdido ❌',
+}
+
+export const LEAD_STAGE_COLORS: Record<string, string> = {
+  NOVO_LEAD: '#4A78FF',
+  CONTATO_FEITO: '#06b6d4',
+  PROPOSTA_ENVIADA: '#f59e0b',
+  NEGOCIACAO: '#f97316',
+  FECHADO: '#22c55e',
+  PERDIDO: '#cc0000',
+}
+
+export const LEAD_SOURCE_LABELS: Record<string, string> = {
+  instagram: 'Instagram',
+  indicacao: 'Indicação',
+  evento: 'Evento',
+  site: 'Site',
+  outro: 'Outro',
+}
