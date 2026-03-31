@@ -98,62 +98,33 @@ export class PendenciesService {
     const renewalThreshold = new Date(today)
     renewalThreshold.setDate(renewalThreshold.getDate() + 90)
 
-    // Helper: check if open pendency already exists
-    const exists = async (type: string, clientId: string, relatedId?: string) => {
-      const existing = await this.prisma.pendency.findFirst({
-        where: {
-          type,
-          clientId,
-          relatedId: relatedId ?? null,
-          status: { in: ['OPEN', 'IN_PROGRESS'] },
-        },
-      })
-      return !!existing
-    }
+    // Fetch ALL open/in-progress pendencies upfront (single query)
+    const existingPendencies = await this.prisma.pendency.findMany({
+      where: { status: { in: ['OPEN', 'IN_PROGRESS'] } },
+      select: { type: true, clientId: true, relatedId: true },
+    })
 
-    // 1. CONTRACT_UNSIGNED: contracts where isSigned = false
+    // Build a Set for O(1) lookups
+    const existsSet = new Set(
+      existingPendencies.map(p => `${p.type}|${p.clientId}|${p.relatedId ?? ''}`),
+    )
+
+    const exists = (type: string, clientId: string, relatedId?: string) =>
+      existsSet.has(`${type}|${clientId}|${relatedId ?? ''}`)
+
+    // 1. CONTRACT_UNSIGNED
     const unsignedContracts = await this.prisma.contract.findMany({
       where: { isSigned: false, status: { not: 'CANCELLED' } },
       select: { id: true, clientId: true },
     })
 
-    for (const contract of unsignedContracts) {
-      if (!(await exists('CONTRACT_UNSIGNED', contract.clientId, contract.id))) {
-        await this.prisma.pendency.create({
-          data: {
-            clientId: contract.clientId,
-            type: 'CONTRACT_UNSIGNED',
-            status: 'OPEN',
-            description: 'Contrato não assinado',
-            relatedId: contract.id,
-          },
-        })
-        newCount++
-      }
-    }
-
-    // 2. PAYMENT_OVERDUE: payments with status OVERDUE
+    // 2. PAYMENT_OVERDUE
     const overduePayments = await this.prisma.payment.findMany({
       where: { status: 'OVERDUE' },
       select: { id: true, clientId: true },
     })
 
-    for (const payment of overduePayments) {
-      if (!(await exists('PAYMENT_OVERDUE', payment.clientId, payment.id))) {
-        await this.prisma.pendency.create({
-          data: {
-            clientId: payment.clientId,
-            type: 'PAYMENT_OVERDUE',
-            status: 'OPEN',
-            description: 'Boleto vencido sem pagamento',
-            relatedId: payment.id,
-          },
-        })
-        newCount++
-      }
-    }
-
-    // 3. PAYMENT_DUE_SOON: PENDING payments with dueDate within 5 days
+    // 3. PAYMENT_DUE_SOON
     const dueSoonPayments = await this.prisma.payment.findMany({
       where: {
         status: 'PENDING',
@@ -162,43 +133,78 @@ export class PendenciesService {
       select: { id: true, clientId: true },
     })
 
-    for (const payment of dueSoonPayments) {
-      if (!(await exists('PAYMENT_DUE_SOON', payment.clientId, payment.id))) {
-        await this.prisma.pendency.create({
-          data: {
-            clientId: payment.clientId,
-            type: 'PAYMENT_DUE_SOON',
-            status: 'OPEN',
-            description: 'Boleto vence em breve',
-            relatedId: payment.id,
-          },
-        })
-        newCount++
-      }
-    }
-
-    // 4. RENEWAL_PENDING: clients where plan endDate is within 90 days
+    // 4. RENEWAL_PENDING
     const renewalPlans = await this.prisma.clientPlan.findMany({
       where: {
         status: 'ACTIVE',
         endDate: { gte: today, lte: renewalThreshold },
       },
-      select: { id: true, clientId: true, endDate: true },
+      select: { id: true, clientId: true },
     })
 
-    for (const plan of renewalPlans) {
-      if (!(await exists('RENEWAL_PENDING', plan.clientId, plan.id))) {
-        await this.prisma.pendency.create({
-          data: {
-            clientId: plan.clientId,
-            type: 'RENEWAL_PENDING',
-            status: 'OPEN',
-            description: 'Contrato próximo do vencimento — renovação necessária',
-            relatedId: plan.id,
-          },
+    // Collect all new pendencies to create in a single transaction
+    const toCreate: Array<{
+      clientId: string
+      type: string
+      status: string
+      description: string
+      relatedId: string | null
+    }> = []
+
+    for (const contract of unsignedContracts) {
+      if (!exists('CONTRACT_UNSIGNED', contract.clientId, contract.id)) {
+        toCreate.push({
+          clientId: contract.clientId,
+          type: 'CONTRACT_UNSIGNED',
+          status: 'OPEN',
+          description: 'Contrato não assinado',
+          relatedId: contract.id,
         })
-        newCount++
       }
+    }
+
+    for (const payment of overduePayments) {
+      if (!exists('PAYMENT_OVERDUE', payment.clientId, payment.id)) {
+        toCreate.push({
+          clientId: payment.clientId,
+          type: 'PAYMENT_OVERDUE',
+          status: 'OPEN',
+          description: 'Boleto vencido sem pagamento',
+          relatedId: payment.id,
+        })
+      }
+    }
+
+    for (const payment of dueSoonPayments) {
+      if (!exists('PAYMENT_DUE_SOON', payment.clientId, payment.id)) {
+        toCreate.push({
+          clientId: payment.clientId,
+          type: 'PAYMENT_DUE_SOON',
+          status: 'OPEN',
+          description: 'Boleto vence em breve',
+          relatedId: payment.id,
+        })
+      }
+    }
+
+    for (const plan of renewalPlans) {
+      if (!exists('RENEWAL_PENDING', plan.clientId, plan.id)) {
+        toCreate.push({
+          clientId: plan.clientId,
+          type: 'RENEWAL_PENDING',
+          status: 'OPEN',
+          description: 'Contrato próximo do vencimento — renovação necessária',
+          relatedId: plan.id,
+        })
+      }
+    }
+
+    // Batch create all pendencies in a single transaction
+    if (toCreate.length > 0) {
+      await this.prisma.$transaction(
+        toCreate.map(data => this.prisma.pendency.create({ data })),
+      )
+      newCount = toCreate.length
     }
 
     return newCount
