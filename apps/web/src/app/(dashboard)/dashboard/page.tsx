@@ -77,9 +77,18 @@ interface ActivityEntry {
   client?: { id: string; companyName: string } | null
 }
 
+interface FinancialConsolidation {
+  entradas: { received: number; pending: number; overdue: number }
+  expenses: { previsto: number; pago: number }
+  commissions: { pending: number; paid: number }
+  netBalance: number
+  projectedBalance: number
+}
+
 interface DashboardStats {
   kpis: KPIs
   financialKpis: FinancialKPIs
+  financialConsolidation?: FinancialConsolidation
   pendencies: Pendencies
   renewals: Renewals
   pipelineSummary: PipelineStage[]
@@ -573,6 +582,35 @@ function FinancialSummary({ financialKpis, isMobile }: { financialKpis: Financia
   )
 }
 
+function FinancialConsolidationCard({ data, isMobile }: { data: FinancialConsolidation; isMobile: boolean }) {
+  const items = [
+    { label: 'Despesas Previstas', value: fmtBRL(data.expenses.previsto), color: '#e6a800' },
+    { label: 'Despesas Pagas', value: fmtBRL(data.expenses.pago), color: '#cc0000' },
+    { label: 'Comissoes Pendentes', value: fmtBRL(data.commissions.pending), color: '#e6a800' },
+    { label: 'Comissoes Pagas', value: fmtBRL(data.commissions.paid), color: '#cc0000' },
+    { label: 'Saldo Liquido', value: fmtBRL(data.netBalance), color: data.netBalance >= 0 ? '#006600' : '#cc0000' },
+    { label: 'Saldo Projetado', value: fmtBRL(data.projectedBalance), color: data.projectedBalance >= 0 ? '#006600' : '#cc0000' },
+  ]
+
+  return (
+    <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black' }}>
+      <div className="goon-card-header">BALANCO DO MES</div>
+      <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: 16 }}>
+        {items.map(item => (
+          <div key={item.label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              {item.label}
+            </span>
+            <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 15, color: item.color, lineHeight: 1.3 }}>
+              {item.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
@@ -674,6 +712,11 @@ export default function DashboardPage() {
           {/* ══ 3. SAÚDE FINANCEIRA — recebido / pendente / vencido ════ */}
           {stats.financialKpis && (
             <FinancialSummary financialKpis={stats.financialKpis} isMobile={isMobile} />
+          )}
+
+          {/* ══ 3b. BALANÇO CONSOLIDADO ════════════════════════════════ */}
+          {stats.financialConsolidation && (
+            <FinancialConsolidationCard data={stats.financialConsolidation} isMobile={isMobile} />
           )}
 
           {/* ══ 4. OPERAÇÃO — pipeline + contratos ═════════════════════ */}
