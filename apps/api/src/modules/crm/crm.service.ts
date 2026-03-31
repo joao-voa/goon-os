@@ -230,6 +230,120 @@ export class CrmService {
     return { client: updated, plan, paymentsCreated: payments.length, commissionsCreated }
   }
 
+  async getInteractions(clientId: string) {
+    return this.prisma.leadInteraction.findMany({
+      where: { clientId },
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
+  async addInteraction(dto: {
+    clientId: string
+    type: string
+    description: string
+    userName?: string
+    scheduledAt?: Date | string
+  }) {
+    const interaction = await this.prisma.leadInteraction.create({
+      data: {
+        clientId: dto.clientId,
+        type: dto.type,
+        description: dto.description,
+        userName: dto.userName,
+        scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
+      },
+    })
+
+    await this.activityLog.log({
+      clientId: dto.clientId,
+      entityType: 'CRM',
+      entityId: interaction.id,
+      action: 'INTERACTION_ADDED',
+      description: `${dto.type}: ${dto.description.substring(0, 100)}`,
+    })
+
+    return interaction
+  }
+
+  async getMetrics() {
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+    // All prospects
+    const prospects = await this.prisma.client.findMany({
+      where: { leadStage: { not: null } },
+      select: { id: true, leadStage: true, salesRep: true, stageChangedAt: true, createdAt: true, closedAt: true, saleValue: true },
+    })
+
+    // Count by stage
+    const byStage: Record<string, number> = {}
+    for (const p of prospects) {
+      byStage[p.leadStage!] = (byStage[p.leadStage!] ?? 0) + 1
+    }
+
+    // Total leads this month
+    const newThisMonth = prospects.filter(p => p.createdAt >= startOfMonth).length
+
+    // Closed this month
+    const closedThisMonth = prospects.filter(p => p.leadStage === 'FECHADO' && p.closedAt && p.closedAt >= startOfMonth)
+    const closedCount = closedThisMonth.length
+    const closedValue = closedThisMonth.reduce((sum, p) => sum + Number(p.saleValue ?? 0), 0)
+
+    // Lost this month
+    const lostThisMonth = prospects.filter(p => p.leadStage === 'PERDIDO' && p.stageChangedAt && p.stageChangedAt >= startOfMonth).length
+
+    // Conversion rate
+    const totalWithOutcome = closedCount + lostThisMonth
+    const conversionRate = totalWithOutcome > 0 ? Math.round((closedCount / totalWithOutcome) * 100) : 0
+
+    // Average days in current stage
+    const activeLeads = prospects.filter(p => p.leadStage && !['FECHADO', 'PERDIDO'].includes(p.leadStage))
+    const avgDaysInStage = activeLeads.length > 0
+      ? Math.round(activeLeads.reduce((sum, p) => {
+          const from = p.stageChangedAt ?? p.createdAt
+          return sum + (now.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)
+        }, 0) / activeLeads.length)
+      : 0
+
+    // Performance by salesRep
+    const repStats: Record<string, { total: number; closed: number; lost: number; value: number }> = {}
+    for (const p of prospects) {
+      const rep = p.salesRep ?? 'Sem vendedor'
+      if (!repStats[rep]) repStats[rep] = { total: 0, closed: 0, lost: 0, value: 0 }
+      repStats[rep].total++
+      if (p.leadStage === 'FECHADO') {
+        repStats[rep].closed++
+        repStats[rep].value += Number(p.saleValue ?? 0)
+      }
+      if (p.leadStage === 'PERDIDO') repStats[rep].lost++
+    }
+
+    // Stale leads (> 7 days without movement)
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const staleLeads = activeLeads.filter(p => {
+      const from = p.stageChangedAt ?? p.createdAt
+      return from < sevenDaysAgo
+    }).length
+
+    // Scheduled follow-ups
+    const pendingFollowUps = await this.prisma.leadInteraction.count({
+      where: { scheduledAt: { gte: now }, type: 'FOLLOW_UP' },
+    })
+
+    return {
+      byStage,
+      newThisMonth,
+      closedThisMonth: closedCount,
+      closedValueThisMonth: closedValue,
+      lostThisMonth,
+      conversionRate,
+      avgDaysInStage,
+      staleLeads,
+      pendingFollowUps,
+      bySalesRep: repStats,
+    }
+  }
+
   async createLead(dto: {
     companyName: string
     responsible: string

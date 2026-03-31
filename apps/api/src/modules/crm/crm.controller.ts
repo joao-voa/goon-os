@@ -16,14 +16,19 @@ import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 @Controller('api/crm')
 @UseGuards(JwtAuthGuard)
 export class CrmController {
-  constructor(private readonly crmService: CrmService) {}
+  constructor(private readonly service: CrmService) {}
 
   @Get('pipeline')
   findPipeline(
     @Query('salesRep') salesRep?: string,
     @Query('leadSource') leadSource?: string,
   ) {
-    return this.crmService.findPipeline({ salesRep, leadSource })
+    return this.service.findPipeline({ salesRep, leadSource })
+  }
+
+  @Get('metrics')
+  getMetrics() {
+    return this.service.getMetrics()
   }
 
   @Post('leads')
@@ -42,12 +47,28 @@ export class CrmController {
       segment?: string
     },
   ) {
-    return this.crmService.createLead(dto)
+    return this.service.createLead(dto)
+  }
+
+  @Get(':id/interactions')
+  getInteractions(@Param('id') id: string) {
+    return this.service.getInteractions(id)
+  }
+
+  @Post(':id/interactions')
+  @HttpCode(201)
+  addInteraction(@Param('id') id: string, @Body() dto: {
+    type: string
+    description: string
+    userName?: string
+    scheduledAt?: string
+  }) {
+    return this.service.addInteraction({ ...dto, clientId: id })
   }
 
   @Patch(':id/stage')
   changeStage(@Param('id') id: string, @Body() dto: { toStage: string }) {
-    return this.crmService.changeStage(id, dto.toStage)
+    return this.service.changeStage(id, dto.toStage)
   }
 
   @Post(':id/close')
@@ -63,6 +84,6 @@ export class CrmController {
       productId: string
     },
   ) {
-    return this.crmService.closeDeal(id, dto)
+    return this.service.closeDeal(id, dto)
   }
 }
