@@ -62,42 +62,45 @@ export class OnboardingService {
       orderBy: { updatedAt: 'desc' },
     })
 
-    // Fetch last STAGE_CHANGED log for each onboarding to compute daysInStage
-    const results = await Promise.all(
-      onboardings.map(async (ob) => {
-        const lastStageLog = await this.prisma.activityLog.findFirst({
-          where: {
-            entityType: 'ONBOARDING',
-            entityId: ob.id,
-            action: 'STAGE_CHANGED',
-          },
-          orderBy: { createdAt: 'desc' },
-        })
+    // Batch-fetch the latest STAGE_CHANGED log for all onboardings in ONE query
+    const onboardingIds = onboardings.map(ob => ob.id)
 
-        const stageChangedAt = lastStageLog ? lastStageLog.createdAt : ob.updatedAt
-        const daysInStage = daysAgo(stageChangedAt)
+    const latestStageLogs = onboardingIds.length > 0
+      ? await this.prisma.$queryRaw<Array<{ entityId: string; createdAt: Date }>>`
+          SELECT DISTINCT ON ("entityId") "entityId", "createdAt"
+          FROM "ActivityLog"
+          WHERE "entityType" = 'ONBOARDING'
+            AND "action" = 'STAGE_CHANGED'
+            AND "entityId" = ANY(${onboardingIds})
+          ORDER BY "entityId", "createdAt" DESC
+        `
+      : []
 
-        const firstActivePlan = ob.client.plans[0] ?? null
-
-        return {
-          id: ob.id,
-          clientId: ob.clientId,
-          currentStage: ob.currentStage,
-          notes: ob.notes,
-          createdAt: ob.createdAt,
-          updatedAt: ob.updatedAt,
-          daysInStage,
-          productCode: firstActivePlan?.product?.code ?? null,
-          client: {
-            companyName: ob.client.companyName,
-            responsible: ob.client.responsible,
-            phone: ob.client.phone,
-          },
-        }
-      }),
+    const stageLogMap = new Map(
+      latestStageLogs.map(log => [log.entityId, log.createdAt]),
     )
 
-    return results
+    return onboardings.map(ob => {
+      const stageChangedAt = stageLogMap.get(ob.id) ?? ob.updatedAt
+      const daysInStage = daysAgo(stageChangedAt)
+      const firstActivePlan = ob.client.plans[0] ?? null
+
+      return {
+        id: ob.id,
+        clientId: ob.clientId,
+        currentStage: ob.currentStage,
+        notes: ob.notes,
+        createdAt: ob.createdAt,
+        updatedAt: ob.updatedAt,
+        daysInStage,
+        productCode: firstActivePlan?.product?.code ?? null,
+        client: {
+          companyName: ob.client.companyName,
+          responsible: ob.client.responsible,
+          phone: ob.client.phone,
+        },
+      }
+    })
   }
 
   async findOne(id: string) {
