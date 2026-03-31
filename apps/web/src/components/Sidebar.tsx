@@ -1,6 +1,6 @@
 'use client'
 
-import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, DollarSign, AlertTriangle, LogOut, ChevronLeft, ChevronRight, Users, Percent, Receipt } from 'lucide-react'
+import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, DollarSign, AlertTriangle, LogOut, ChevronLeft, ChevronRight, Users, Percent, Receipt, ArrowLeftRight } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
@@ -38,6 +38,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/payments',    label: 'Financeiro',  icon: DollarSign },
   { href: '/commissions', label: 'Comissoes',   icon: Percent },
   { href: '/expenses',    label: 'Despesas',    icon: Receipt },
+  { href: '/cashflow',    label: 'Fluxo Caixa', icon: ArrowLeftRight },
   { href: '/pendencies',  label: 'Pendencias',  icon: AlertTriangle },
 ]
 
