@@ -97,36 +97,54 @@ export const CONTRACT_STATUS_COLORS: Record<string, string> = {
 }
 
 export const LEAD_STAGES = [
-  'NOVO_LEAD',
-  'CONTATO_FEITO',
-  'PROPOSTA_ENVIADA',
-  'NEGOCIACAO',
+  'NOVO',
+  'FOLLOW_UP',
+  'EM_NEGOCIACAO',
   'FECHADO',
   'PERDIDO',
 ] as const
 
 export const LEAD_STAGE_LABELS: Record<string, string> = {
-  NOVO_LEAD: 'Novo Lead',
-  CONTATO_FEITO: 'Contato Feito',
-  PROPOSTA_ENVIADA: 'Proposta Enviada',
-  NEGOCIACAO: 'Negociação',
-  FECHADO: 'Fechado ✅',
-  PERDIDO: 'Perdido ❌',
+  NOVO: 'Novo',
+  FOLLOW_UP: 'Follow Up',
+  EM_NEGOCIACAO: 'Em Negociacao',
+  FECHADO: 'Fechado',
+  PERDIDO: 'Perdido',
 }
 
 export const LEAD_STAGE_COLORS: Record<string, string> = {
-  NOVO_LEAD: '#4A78FF',
-  CONTATO_FEITO: '#06b6d4',
-  PROPOSTA_ENVIADA: '#f59e0b',
-  NEGOCIACAO: '#f97316',
+  NOVO: '#4A78FF',
+  FOLLOW_UP: '#06b6d4',
+  EM_NEGOCIACAO: '#f97316',
   FECHADO: '#22c55e',
   PERDIDO: '#cc0000',
 }
 
 export const LEAD_SOURCE_LABELS: Record<string, string> = {
   instagram: 'Instagram',
-  indicacao: 'Indicação',
+  indicacao: 'Indicacao',
   evento: 'Evento',
   site: 'Site',
+  facebook: 'Facebook',
   outro: 'Outro',
+}
+
+export const INTERACTION_TYPES: Record<string, string> = {
+  LIGACAO: 'Ligacao',
+  WHATSAPP: 'WhatsApp',
+  EMAIL: 'E-mail',
+  REUNIAO: 'Reuniao',
+  NOTA: 'Nota',
+  PROPOSTA: 'Proposta',
+  FOLLOW_UP: 'Follow Up',
+}
+
+export const INTERACTION_ICONS: Record<string, string> = {
+  LIGACAO: '📞',
+  WHATSAPP: '💬',
+  EMAIL: '📧',
+  REUNIAO: '🤝',
+  NOTA: '📝',
+  PROPOSTA: '📄',
+  FOLLOW_UP: '🔄',
 }

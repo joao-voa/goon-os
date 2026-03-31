@@ -41,9 +41,10 @@ model Client {
   goonFitScore     Int?
 
   // CRM fields
-  leadStage        String?   // NOVO_LEAD, CONTATO_FEITO, PROPOSTA_ENVIADA, NEGOCIACAO, FECHADO, PERDIDO
-  leadSource       String?   // instagram, indicacao, evento, site, outro
+  leadStage        String?   // NOVO, FOLLOW_UP, EM_NEGOCIACAO, FECHADO, PERDIDO
+  leadSource       String?   // instagram, indicacao, evento, site, facebook, outro
   salesRep         String?   // nome do vendedor
+  stageChangedAt   DateTime? // quando mudou de etapa (tracking de tempo)
   saleValue        Decimal?  @db.Decimal(10, 2)
   paymentMethod    String?   // BOLETO, PIX
   saleInstallments Int?
@@ -60,6 +61,7 @@ model Client {
   payments     Payment[]
   pendencies   Pendency[]
   commissions  Commission[]
+  interactions LeadInteraction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -67,6 +69,7 @@ model Client {
   @@index([status])
   @@index([createdAt])
   @@index([leadStage])
+  @@index([salesRep])
 }
 
 model Product {
@@ -273,4 +276,22 @@ model Expense {
   @@index([status])
   @@index([dueDate])
   @@index([recurrence])
+}
+
+model LeadInteraction {
+  id          String   @id @default(cuid())
+  clientId    String
+  type        String   // LIGACAO, WHATSAPP, EMAIL, REUNIAO, NOTA, PROPOSTA, FOLLOW_UP
+  description String
+  userId      String?  // quem registrou
+  userName    String?  // nome de quem registrou
+  scheduledAt DateTime? // agendamento de proximo contato
+
+  client      Client   @relation(fields: [clientId], references: [id])
+
+  createdAt   DateTime @default(now())
+
+  @@index([clientId])
+  @@index([clientId, createdAt])
+  @@index([type])
 }

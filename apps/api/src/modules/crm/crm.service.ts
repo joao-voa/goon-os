@@ -5,19 +5,17 @@ import { PaymentsService } from '../payments/payments.service'
 import { CommissionsService } from '../commissions/commissions.service'
 
 const VALID_LEAD_STAGES = [
-  'NOVO_LEAD',
-  'CONTATO_FEITO',
-  'PROPOSTA_ENVIADA',
-  'NEGOCIACAO',
+  'NOVO',
+  'FOLLOW_UP',
+  'EM_NEGOCIACAO',
   'FECHADO',
   'PERDIDO',
 ]
 
 const STAGE_LABELS: Record<string, string> = {
-  NOVO_LEAD: 'Novo Lead',
-  CONTATO_FEITO: 'Contato Feito',
-  PROPOSTA_ENVIADA: 'Proposta Enviada',
-  NEGOCIACAO: 'Negociação',
+  NOVO: 'Novo',
+  FOLLOW_UP: 'Follow Up',
+  EM_NEGOCIACAO: 'Em Negociacao',
   FECHADO: 'Fechado',
   PERDIDO: 'Perdido',
 }
@@ -59,6 +57,7 @@ export class CrmService {
         saleInstallments: true,
         installmentValue: true,
         leadNotes: true,
+        stageChangedAt: true,
         createdAt: true,
         closedAt: true,
         plans: {
@@ -107,6 +106,7 @@ export class CrmService {
       where: { id },
       data: {
         leadStage: toStage,
+        stageChangedAt: new Date(),
         status: toStage === 'PERDIDO' ? 'INACTIVE' : 'PROSPECT',
       },
     })
@@ -245,7 +245,8 @@ export class CrmService {
       data: {
         ...dto,
         status: 'PROSPECT',
-        leadStage: 'NOVO_LEAD',
+        leadStage: 'NOVO',
+        stageChangedAt: new Date(),
       },
     })
 
