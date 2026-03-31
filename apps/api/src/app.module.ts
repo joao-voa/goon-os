@@ -14,6 +14,7 @@ import { PaymentsModule } from './modules/payments/payments.module'
 import { PendenciesModule } from './modules/pendencies/pendencies.module'
 import { CrmModule } from './modules/crm/crm.module'
 import { CommissionsModule } from './modules/commissions/commissions.module'
+import { ExpensesModule } from './modules/expenses/expenses.module'
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { CommissionsModule } from './modules/commissions/commissions.module'
     PendenciesModule,
     CrmModule,
     CommissionsModule,
+    ExpensesModule,
   ],
   controllers: [AppController],
 })
