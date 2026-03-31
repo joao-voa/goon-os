@@ -13,6 +13,7 @@ model User {
   name      String
   email     String   @unique
   password  String
+  role      String   @default("gestao") // comercial, analitico, gestao
   createdAt DateTime @default(now())
 }
 
@@ -58,6 +59,7 @@ model Client {
   activityLogs ActivityLog[]
   payments     Payment[]
   pendencies   Pendency[]
+  commissions  Commission[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -193,6 +195,7 @@ model Payment {
   client      Client      @relation(fields: [clientId], references: [id])
   clientPlan  ClientPlan? @relation(fields: [clientPlanId], references: [id])
   contract    Contract?   @relation(fields: [contractId], references: [id])
+  commissions Commission[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -223,4 +226,51 @@ model Pendency {
   @@index([status])
   @@index([type])
   @@index([type, clientId, status])
+}
+
+model Commission {
+  id            String    @id @default(cuid())
+  clientId      String
+  paymentId     String
+  salesRep      String    // vendedor name
+  percentage    Decimal   @db.Decimal(5, 2) // ex: 10.00 = 10%
+  baseValue     Decimal   @db.Decimal(10, 2) // valor da parcela
+  value         Decimal   @db.Decimal(10, 2) // valor da comissão calculado
+  installment   Int       // parcela number
+  totalInstallments Int   // total parcelas
+  status        String    @default("PENDING") // PENDING, PAID, CANCELLED
+  paidAt        DateTime?
+  cancelledAt   DateTime?
+
+  client        Client    @relation(fields: [clientId], references: [id])
+  payment       Payment   @relation(fields: [paymentId], references: [id])
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([paymentId])
+  @@index([salesRep])
+  @@index([status])
+  @@index([salesRep, status])
+}
+
+model Expense {
+  id          String    @id @default(cuid())
+  description String
+  category    String    // SISTEMAS, MARKETING, PESSOAS, ESTRUTURA, OUTRO
+  value       Decimal   @db.Decimal(10, 2)
+  recurrence  String    @default("UNICA") // UNICA, MENSAL, TRIMESTRAL, ANUAL
+  dueDate     DateTime
+  status      String    @default("PREVISTO") // PREVISTO, PAGO
+  paidAt      DateTime?
+  notes       String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([category])
+  @@index([status])
+  @@index([dueDate])
+  @@index([recurrence])
 }
