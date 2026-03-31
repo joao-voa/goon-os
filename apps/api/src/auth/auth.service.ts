@@ -17,17 +17,17 @@ export class AuthService {
     const valid = await bcrypt.compare(password, user.password)
     if (!valid) throw new UnauthorizedException('Credenciais inválidas')
 
-    const payload = { sub: user.id, email: user.email }
+    const payload = { sub: user.id, email: user.email, role: user.role }
     return {
       access_token: this.jwt.sign(payload),
       refresh_token: this.jwt.sign(payload, { expiresIn: '30d' }),
-      user: { id: user.id, name: user.name, email: user.email },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role },
     }
   }
 
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } })
     if (!user) throw new UnauthorizedException()
-    return { id: user.id, name: user.name, email: user.email }
+    return { id: user.id, name: user.name, email: user.email, role: user.role }
   }
 }
