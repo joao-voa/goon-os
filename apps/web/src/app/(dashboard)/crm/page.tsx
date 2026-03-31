@@ -201,6 +201,7 @@ function CloseDealModal({
 function NewLeadModal({
   onClose,
   onConfirm,
+  products,
 }: {
   onClose: () => void
   onConfirm: (data: {
@@ -213,7 +214,9 @@ function NewLeadModal({
     salesRep?: string
     leadNotes?: string
     selectedModules?: string
+    productInterest?: string
   }) => Promise<void>
+  products: Array<{ id: string; code: string; name: string }>
 }) {
   const [companyName, setCompanyName] = useState('')
   const [responsible, setResponsible] = useState('')
@@ -223,8 +226,11 @@ function NewLeadModal({
   const [leadSource, setLeadSource] = useState('')
   const [salesRep, setSalesRep] = useState('')
   const [leadNotes, setLeadNotes] = useState('')
+  const [productInterest, setProductInterest] = useState('')
   const [modules, setModules] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
+
+  const isAura = products.find(p => p.id === productInterest)?.code === 'AURA'
 
   function toggleModule(code: string) {
     setModules(prev => prev.includes(code) ? prev.filter(m => m !== code) : [...prev, code])
@@ -248,6 +254,7 @@ function NewLeadModal({
         salesRep: salesRep.trim() || undefined,
         leadNotes: leadNotes.trim() || undefined,
         selectedModules: modules.length > 0 ? JSON.stringify(modules) : undefined,
+        productInterest: productInterest || undefined,
       })
     } finally {
       setSubmitting(false)
@@ -322,18 +329,28 @@ function NewLeadModal({
               <input value={salesRep} onChange={e => setSalesRep(e.target.value)} style={inputStyle} />
             </div>
           </div>
-          {/* AURA 360 Modules */}
+          {/* Programa de interesse */}
           <div>
-            <label style={labelStyle}>Modulos AURA 360</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              {AURA_MODULES.map(m => (
-                <label key={m.code} style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 11, cursor: 'pointer', padding: '4px 6px', background: modules.includes(m.code) ? '#D4A017' : '#f5f5f5', color: modules.includes(m.code) ? 'white' : 'black', border: '1px solid #ccc' }}>
-                  <input type="checkbox" checked={modules.includes(m.code)} onChange={() => toggleModule(m.code)} style={{ accentColor: '#D4A017' }} />
-                  {m.label}
-                </label>
-              ))}
-            </div>
+            <label style={labelStyle}>Programa Negociado</label>
+            <select value={productInterest} onChange={e => { setProductInterest(e.target.value); if (products.find(p => p.id === e.target.value)?.code !== 'AURA') setModules([]) }} style={inputStyle}>
+              <option value="">Selecione...</option>
+              {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.code})</option>)}
+            </select>
           </div>
+          {/* AURA 360 Modules - só aparece quando AURA selecionado */}
+          {isAura && (
+            <div>
+              <label style={labelStyle}>Modulos AURA 360</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                {AURA_MODULES.map(m => (
+                  <label key={m.code} style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 11, cursor: 'pointer', padding: '4px 6px', background: modules.includes(m.code) ? '#D4A017' : '#f5f5f5', color: modules.includes(m.code) ? 'white' : 'black', border: '1px solid #ccc' }}>
+                    <input type="checkbox" checked={modules.includes(m.code)} onChange={() => toggleModule(m.code)} style={{ accentColor: '#D4A017' }} />
+                    {m.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
           <div>
             <label style={labelStyle}>Observacoes</label>
             <textarea value={leadNotes} onChange={e => setLeadNotes(e.target.value)} rows={3}
@@ -759,6 +776,7 @@ export default function CrmPage() {
         <NewLeadModal
           onClose={() => setShowNewLead(false)}
           onConfirm={handleCreateLead}
+          products={products}
         />
       )}
     </div>
