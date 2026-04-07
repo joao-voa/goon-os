@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
 
 const VALID_STAGES = [
+  'STAND_BY',
   'CLIENT_CLOSED',
   'SYSTEM_REGISTERED',
   'INFO_COLLECTED',
@@ -16,6 +17,7 @@ const VALID_STAGES = [
 ]
 
 const STAGE_LABELS: Record<string, string> = {
+  STAND_BY: 'Stand By',
   CLIENT_CLOSED: 'Cliente Fechado',
   SYSTEM_REGISTERED: 'Cadastro no Sistema',
   INFO_COLLECTED: 'Coleta de Informações',

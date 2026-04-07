@@ -1,10 +1,12 @@
 export const ONBOARDING_STAGES = [
+  'STAND_BY',
   'CLIENT_CLOSED', 'SYSTEM_REGISTERED', 'INFO_COLLECTED', 'CONTRACT_DRAFTED',
   'CONTRACT_SENT', 'CONTRACT_SIGNED', 'INITIAL_PAYMENT', 'BILLING_CREATED',
   'KICKOFF_SCHEDULED', 'ONBOARDING_DONE',
 ] as const
 
 export const STAGE_LABELS: Record<string, string> = {
+  STAND_BY: 'Stand By',
   CLIENT_CLOSED: 'Cliente Fechado',
   SYSTEM_REGISTERED: 'Cadastro no Sistema',
   INFO_COLLECTED: 'Coleta de Informações',
@@ -18,6 +20,7 @@ export const STAGE_LABELS: Record<string, string> = {
 }
 
 export const STAGE_COLORS: Record<string, string> = {
+  STAND_BY: '#6b7280',
   CLIENT_CLOSED: '#8b5cf6',
   SYSTEM_REGISTERED: '#4A78FF',
   INFO_COLLECTED: '#06b6d4',
