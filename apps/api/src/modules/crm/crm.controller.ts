@@ -31,6 +31,12 @@ export class CrmController {
     return this.service.getMetrics()
   }
 
+  @Post('sync-sheets')
+  @HttpCode(HttpStatus.OK)
+  syncFromSheets() {
+    return this.service.syncFromSheets()
+  }
+
   @Post('leads')
   @HttpCode(HttpStatus.CREATED)
   createLead(

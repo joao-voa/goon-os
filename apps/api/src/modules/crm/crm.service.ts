@@ -380,6 +380,218 @@ export class CrmService {
     }
   }
 
+  async syncFromSheets(): Promise<{ imported: number; skipped: number; errors: string[] }> {
+    const SHEETS = [
+      {
+        name: 'Meta Ads',
+        url: 'https://docs.google.com/spreadsheets/d/1q8aLXTZiEvE8FE2d9NSnm50CZJVwz9G7Oy3EnS33FhY/gviz/tq?tqx=out:csv&sheet=0',
+        type: 'meta' as const,
+      },
+      {
+        name: 'Respondi',
+        url: 'https://docs.google.com/spreadsheets/d/1ahwY6sYpWT0WSv42J6zKtGPtg5PjCWncDCJXHX28Zp0/gviz/tq?tqx=out:csv&sheet=0',
+        type: 'respondi' as const,
+      },
+    ]
+
+    let imported = 0
+    let skipped = 0
+    const errors: string[] = []
+
+    for (const sheet of SHEETS) {
+      try {
+        const response = await fetch(sheet.url)
+        if (!response.ok) {
+          errors.push(`${sheet.name}: erro ao acessar planilha (${response.status})`)
+          continue
+        }
+        const csv = await response.text()
+        const rows = this.parseCsv(csv)
+        if (rows.length <= 1) continue // header only
+
+        const header = rows[0]
+        const dataRows = rows.slice(1)
+
+        for (const row of dataRows) {
+          try {
+            const record = this.mapRow(header, row)
+            const lead = sheet.type === 'meta'
+              ? this.parseMetaLead(record)
+              : this.parseRespondiLead(record)
+
+            if (!lead || !lead.companyName || lead.companyName.length < 2) {
+              skipped++
+              continue
+            }
+
+            // Skip spam/invalid leads
+            if (this.isSpamLead(lead, record)) {
+              skipped++
+              continue
+            }
+
+            // Check duplicate by email or whatsapp
+            const orConditions: Array<Record<string, string>> = []
+            if (lead.email) orConditions.push({ email: lead.email })
+            if (lead.whatsapp) orConditions.push({ whatsapp: lead.whatsapp })
+
+            if (orConditions.length > 0) {
+              const existing = await this.prisma.client.findFirst({
+                where: { OR: orConditions },
+              })
+              if (existing) {
+                skipped++
+                continue
+              }
+            }
+
+            await this.prisma.client.create({ data: lead })
+            imported++
+          } catch {
+            skipped++
+          }
+        }
+      } catch (err) {
+        errors.push(`${sheet.name}: ${err instanceof Error ? err.message : 'erro desconhecido'}`)
+      }
+    }
+
+    return { imported, skipped, errors }
+  }
+
+  private parseCsv(csv: string): string[][] {
+    const rows: string[][] = []
+    let current = ''
+    let inQuotes = false
+    let row: string[] = []
+
+    for (let i = 0; i < csv.length; i++) {
+      const char = csv[i]
+      const next = csv[i + 1]
+
+      if (inQuotes) {
+        if (char === '"' && next === '"') {
+          current += '"'
+          i++
+        } else if (char === '"') {
+          inQuotes = false
+        } else {
+          current += char
+        }
+      } else {
+        if (char === '"') {
+          inQuotes = true
+        } else if (char === ',') {
+          row.push(current)
+          current = ''
+        } else if (char === '\n' || (char === '\r' && next === '\n')) {
+          row.push(current)
+          current = ''
+          rows.push(row)
+          row = []
+          if (char === '\r') i++
+        } else {
+          current += char
+        }
+      }
+    }
+    if (current || row.length > 0) {
+      row.push(current)
+      rows.push(row)
+    }
+    return rows
+  }
+
+  private mapRow(header: string[], row: string[]): Record<string, string> {
+    const record: Record<string, string> = {}
+    for (let i = 0; i < header.length; i++) {
+      record[header[i]] = row[i] ?? ''
+    }
+    return record
+  }
+
+  private parseMetaLead(r: Record<string, string>) {
+    const companyName = r['qual_o_nome_da_sua_marca?']?.trim()
+    const responsible = r['full_name']?.trim()
+    const whatsapp = r['whatsapp_number']?.trim() || null
+    const email = r['email']?.trim() || null
+    const cargo = r['qual_é_seu_cargo_na_empresa?']?.trim()
+    const faturamento = r['qual_é_seu_faturamento_anual?']?.trim()
+    const instagram = r['deixe_aqui_o_instagram_da_sua_marca:_@']?.trim()
+    const website = r['website']?.trim()
+    const platform = r['platform']?.trim()
+    const createdTime = r['created_time']?.trim()
+
+    const notes = [
+      cargo ? `Cargo: ${cargo}` : null,
+      instagram ? `IG: ${instagram}` : null,
+      website ? `Site: ${website}` : null,
+    ].filter(Boolean).join(' | ')
+
+    return {
+      companyName: companyName || responsible || '',
+      responsible: responsible || companyName || '',
+      whatsapp,
+      phone: whatsapp,
+      email,
+      estimatedRevenue: faturamento || null,
+      segment: 'Moda',
+      status: 'PROSPECT',
+      leadStage: 'NOVO',
+      leadSource: platform === 'fb' ? 'facebook' : 'instagram',
+      leadNotes: notes || null,
+      stageChangedAt: createdTime ? new Date(createdTime) : new Date(),
+      createdAt: createdTime ? new Date(createdTime) : new Date(),
+    }
+  }
+
+  private parseRespondiLead(r: Record<string, string>) {
+    const fullName = r['Qual o seu nome completo?']?.trim()
+    const nickname = r['E como você prefere ser chamado?']?.trim()
+    const email = r['Qual o seu email?']?.trim() || null
+    const whatsapp = r['Qual o seu Whatsapp com DDD?']?.trim() || null
+    const companyName = r['Qual o nome da sua marca, ___?']?.trim()
+    const cargo = r['E qual é o seu cargo na empresa?']?.trim()
+    const faturamento = r['Qual é o seu faturamento anual?']?.trim()
+    const createdTime = r['Data']?.trim()
+
+    const notes = [
+      cargo ? `Cargo: ${cargo}` : null,
+      'Fonte: Respondi',
+    ].filter(Boolean).join(' | ')
+
+    return {
+      companyName: companyName || fullName || '',
+      responsible: nickname || fullName || '',
+      whatsapp: whatsapp ? `+${whatsapp.replace(/\D/g, '')}` : null,
+      phone: whatsapp ? `+${whatsapp.replace(/\D/g, '')}` : null,
+      email,
+      estimatedRevenue: faturamento || null,
+      segment: 'Moda',
+      status: 'PROSPECT',
+      leadStage: 'NOVO',
+      leadSource: 'site',
+      leadNotes: notes || null,
+      stageChangedAt: createdTime ? new Date(createdTime) : new Date(),
+      createdAt: createdTime ? new Date(createdTime) : new Date(),
+    }
+  }
+
+  private isSpamLead(lead: { companyName: string; responsible: string; email?: string | null }, raw: Record<string, string>): boolean {
+    const name = lead.companyName.toLowerCase()
+    const cargo = (raw['qual_é_seu_cargo_na_empresa?'] || raw['E qual é o seu cargo na empresa?'] || '').toLowerCase()
+    const faturamento = (raw['qual_é_seu_faturamento_anual?'] || raw['Qual é o seu faturamento anual?'] || '').toLowerCase()
+
+    // Name too short or numeric
+    if (name.length < 3 || /^\d+$/.test(name)) return true
+    // All fields identical (test/spam)
+    if (name === cargo && cargo === faturamento) return true
+    // Known spam patterns
+    if (/^(sim|nao|teste|99|00)$/i.test(faturamento)) return true
+
+    return false
+  }
+
   async createLead(dto: {
     companyName: string
     responsible: string

@@ -568,6 +568,7 @@ export default function CrmPage() {
   const [closingLead, setClosingLead] = useState<LeadItem | null>(null)
   const [detailLead, setDetailLead] = useState<LeadItem | null>(null)
   const [showNewLead, setShowNewLead] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [metrics, setMetrics] = useState<CrmMetrics | null>(null)
   const isMobile = useIsMobile()
 
@@ -683,16 +684,48 @@ export default function CrmPage() {
         <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: isMobile ? 14 : 18, margin: 0 }}>
           CRM — PIPELINE
         </h1>
-        <button
-          onClick={() => setShowNewLead(true)}
-          style={{
-            padding: '8px 16px', border: '2px solid black', background: '#4A78FF', color: 'white',
-            fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-            boxShadow: '3px 3px 0px 0px #000',
-          }}
-        >
-          + NOVO LEAD
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={async () => {
+              setSyncing(true)
+              try {
+                const res = await apiFetch<{ imported: number; skipped: number; errors: string[] }>('/api/crm/sync-sheets', { method: 'POST' })
+                if (res.imported > 0) {
+                  toast.success(`${res.imported} novos leads importados!`)
+                  fetchLeads()
+                  fetchMetrics()
+                } else {
+                  toast.info('Nenhum lead novo encontrado')
+                }
+                if (res.errors.length > 0) {
+                  toast.error(res.errors.join(', '))
+                }
+              } catch {
+                toast.error('Erro ao sincronizar')
+              } finally {
+                setSyncing(false)
+              }
+            }}
+            disabled={syncing}
+            style={{
+              padding: '8px 16px', border: '2px solid black', background: syncing ? '#888' : '#22c55e', color: 'white',
+              fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: syncing ? 'wait' : 'pointer',
+              boxShadow: '3px 3px 0px 0px #000',
+            }}
+          >
+            {syncing ? 'SINCRONIZANDO...' : 'SINCRONIZAR LEADS'}
+          </button>
+          <button
+            onClick={() => setShowNewLead(true)}
+            style={{
+              padding: '8px 16px', border: '2px solid black', background: '#4A78FF', color: 'white',
+              fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              boxShadow: '3px 3px 0px 0px #000',
+            }}
+          >
+            + NOVO LEAD
+          </button>
+        </div>
       </div>
 
       {/* KPI Strip */}
