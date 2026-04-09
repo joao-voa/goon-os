@@ -206,11 +206,16 @@ export default function CommissionsPage() {
     }
   })
 
+  const [mentorsList, setMentorsList] = useState<Array<{ id: string; mentorName: string; value: number; notes: string | null; client: string; product: string; productName: string; planValue: number }>>([])
+
   useEffect(() => { loadData() }, [loadData])
 
   useEffect(() => {
     apiFetch<{ data: Client[] }>('/api/clients?limit=200')
       .then(res => setClients(res.data || []))
+      .catch(() => {})
+    apiFetch<Array<{ id: string; mentorName: string; value: number; notes: string | null; client: string; product: string; productName: string; planValue: number }>>('/api/mentors')
+      .then(setMentorsList)
       .catch(() => {})
   }, [])
 
@@ -281,6 +286,43 @@ export default function CommissionsPage() {
           </div>
           <div style={{ background: '#fff5f5', padding: '12px 20px', border: '2px solid #cc0000', fontFamily: 'var(--font-mono)', fontSize: 10, flex: '1 1 200px', display: 'flex', alignItems: 'center' }}>
             <span style={{ color: '#cc0000' }}>Atencao: se um cliente der churn, as comissoes pendentes dele sao automaticamente canceladas e saem do fechamento.</span>
+          </div>
+        </div>
+      )}
+
+      {/* Mentors Section */}
+      {mentorsList.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, marginBottom: 10 }}>MENTORIAS</div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+              <thead>
+                <tr style={{ background: '#4A78FF', color: 'white', textTransform: 'uppercase' }}>
+                  <th style={{ padding: '8px 12px', textAlign: 'left' }}>Mentor</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'left' }}>Cliente</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>Programa</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'right' }}>Valor Plano</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'right' }}>Valor Mentor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mentorsList.map(m => (
+                  <tr key={m.id} style={{ borderBottom: '1px solid #ccc' }}>
+                    <td style={{ padding: '8px 12px', fontWeight: 700 }}>{m.mentorName}</td>
+                    <td style={{ padding: '8px 12px' }}>{m.client}</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                      <span style={{ background: '#4A78FF', color: 'white', padding: '2px 8px', fontSize: 10, fontWeight: 700 }}>{m.product}</span>
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmt(m.planValue)}</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700 }}>{fmt(m.value)}</td>
+                  </tr>
+                ))}
+                <tr style={{ background: '#f0f0f0', fontWeight: 700 }}>
+                  <td colSpan={4} style={{ padding: '8px 12px', textAlign: 'right' }}>TOTAL MENTORIAS</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmt(mentorsList.reduce((s, m) => s + m.value, 0))}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       )}

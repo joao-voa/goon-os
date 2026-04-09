@@ -188,6 +188,32 @@ export class PlansService {
 
   // ---- Mentors ----
 
+  async getAllMentors() {
+    const mentors = await this.prisma.planMentor.findMany({
+      include: {
+        plan: {
+          include: {
+            client: { select: { id: true, companyName: true } },
+            product: { select: { code: true, name: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+    return mentors.map(m => ({
+      id: m.id,
+      mentorName: m.mentorName,
+      value: Number(m.value),
+      notes: m.notes,
+      createdAt: m.createdAt,
+      client: m.plan.client.companyName,
+      clientId: m.plan.client.id,
+      product: m.plan.product.code,
+      productName: m.plan.product.name,
+      planValue: Number(m.plan.value),
+    }))
+  }
+
   async getMentors(planId: string) {
     return this.prisma.planMentor.findMany({
       where: { planId },

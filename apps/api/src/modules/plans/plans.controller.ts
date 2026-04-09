@@ -45,6 +45,11 @@ export class PlansController {
 
   // ---- Mentors ----
 
+  @Get('mentors')
+  getAllMentors() {
+    return this.plansService.getAllMentors()
+  }
+
   @Get('plans/:planId/mentors')
   getMentors(@Param('planId') planId: string) {
     return this.plansService.getMentors(planId)
