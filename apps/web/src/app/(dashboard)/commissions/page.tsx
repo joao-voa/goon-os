@@ -515,8 +515,9 @@ export default function CommissionsPage() {
 
                 {/* Group by client */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {[...new Set((mentorFilter ? mentorsList.filter(m => m.mentorName === mentorFilter) : mentorsList).map(m => m.client))].map(clientName => {
-                    const clientMentors = (mentorFilter ? mentorsList.filter(m => m.mentorName === mentorFilter) : mentorsList).filter(m => m.client === clientName)
+                  {[...new Set((mentorFilter ? mentorsList.filter(m => m.mentorName === mentorFilter) : mentorsList).map(m => m.client + '||' + m.product))].map(key => {
+                    const [clientName, productCode] = key.split('||')
+                    const clientMentors = (mentorFilter ? mentorsList.filter(m => m.mentorName === mentorFilter) : mentorsList).filter(m => m.client === clientName && m.product === productCode)
                     const clientTotal = clientMentors.reduce((s, m) => s + m.value, 0)
                     const planValue = clientMentors[0]?.planValue ?? 0
                     const product = clientMentors[0]?.product ?? ''
