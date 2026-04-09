@@ -27,7 +27,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard',   label: 'Dashboard',   icon: LayoutDashboard },
   { href: '/crm',         label: 'CRM',         icon: Users },
   { href: '/products',    label: 'Programas',   icon: Package },
-  { href: '/onboarding',  label: 'Onboarding',  icon: GitBranch },
+  { href: '/onboarding',  label: 'Acompanhamento CX',  icon: GitBranch },
   { href: '/payments',    label: 'Financeiro',  icon: DollarSign },
   { href: '/pendencies',  label: 'Pendencias',  icon: AlertTriangle },
   { href: '/contracts',   label: 'Contratos',   icon: FileText },

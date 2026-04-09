@@ -148,6 +148,9 @@ function DroppableColumn({
           boxShadow: '3px 3px 0 black',
           backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)',
           backgroundSize: '12px 12px',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
         }}
       >
         <div
@@ -268,8 +271,10 @@ export default function KanbanBoard({ items, onStageChange, onCardClick }: Kanba
           display: 'flex',
           gap: 12,
           overflowX: 'auto',
+          overflowY: 'auto',
           paddingBottom: 16,
           alignItems: 'flex-start',
+          maxHeight: 'calc(100vh - 200px)',
         }}
       >
         {ONBOARDING_STAGES.map((stage) => (

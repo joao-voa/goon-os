@@ -23,7 +23,7 @@ export default function LoginPage() {
     })
       .then(res => {
         if (res.ok) {
-          window.location.replace('/dashboard')
+          window.location.replace('/home')
         } else {
           localStorage.removeItem('access_token')
           localStorage.removeItem('refresh_token')
@@ -75,7 +75,7 @@ export default function LoginPage() {
 
       localStorage.setItem('access_token', data.access_token)
       localStorage.setItem('refresh_token', data.refresh_token)
-      window.location.href = '/dashboard'
+      window.location.href = '/home'
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erro ao fazer login')
     } finally {
