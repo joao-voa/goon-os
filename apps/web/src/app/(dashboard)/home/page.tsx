@@ -70,8 +70,9 @@ export default function HomePage() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
+        justifyContent: 'center',
         padding: '40px 20px',
-        minHeight: '100vh',
+        minHeight: 'calc(100vh - 80px)',
       }}
     >
       <h1
@@ -100,10 +101,10 @@ export default function HomePage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
           gap: '16px',
           width: '100%',
-          maxWidth: '900px',
+          maxWidth: '800px',
         }}
       >
         {menuItems.map((item) => {
