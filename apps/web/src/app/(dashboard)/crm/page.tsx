@@ -447,22 +447,45 @@ interface CrmMetrics {
   bySalesRep: Record<string, { total: number; closed: number; lost: number; value: number }>
 }
 
+interface CommissionItem {
+  id: string
+  salesRep: string
+  percentage: number
+  baseValue: number
+  value: number
+  installment: number
+  totalInstallments: number
+  status: string
+}
+
 // ---- Lead Detail Modal with Timeline ----
 function LeadDetailModal({
   lead,
   onClose,
   onCloseDeal,
   onDelete,
+  onUpdated,
 }: {
   lead: LeadItem
   onClose: () => void
   onCloseDeal: () => void
   onDelete: () => void
+  onUpdated: () => void
 }) {
   const [interactions, setInteractions] = useState<Interaction[]>([])
+  const [commissions, setCommissions] = useState<CommissionItem[]>([])
   const [newType, setNewType] = useState('NOTA')
   const [newDesc, setNewDesc] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  // Editable fields for closed deals
+  const [editing, setEditing] = useState(false)
+  const [editSaleValue, setEditSaleValue] = useState(lead.saleValue?.toString() ?? '')
+  const [editInstallments, setEditInstallments] = useState(lead.saleInstallments?.toString() ?? '')
+  const [editInstallmentValue, setEditInstallmentValue] = useState(lead.installmentValue?.toString() ?? '')
+  const [editPaymentMethod, setEditPaymentMethod] = useState(lead.paymentMethod ?? '')
+  const [editSalesRep, setEditSalesRep] = useState(lead.salesRep ?? '')
+  const [saving, setSaving] = useState(false)
 
   const loadInteractions = useCallback(async () => {
     try {
@@ -471,7 +494,16 @@ function LeadDetailModal({
     } catch { /* ignore */ }
   }, [lead.id])
 
+  const loadCommissions = useCallback(async () => {
+    if (lead.leadStage !== 'FECHADO') return
+    try {
+      const data = await apiFetch<{ data: CommissionItem[] }>(`/api/commissions?clientId=${lead.id}&limit=50`)
+      setCommissions(data.data ?? [])
+    } catch { /* ignore */ }
+  }, [lead.id, lead.leadStage])
+
   useEffect(() => { loadInteractions() }, [loadInteractions])
+  useEffect(() => { loadCommissions() }, [loadCommissions])
 
   async function handleAddInteraction(e: React.FormEvent) {
     e.preventDefault()
@@ -592,6 +624,98 @@ function LeadDetailModal({
               </div>
             )}
           </div>
+
+          {/* Closed Deal Data - Editable */}
+          {lead.leadStage === 'FECHADO' && (
+            <div style={{ borderTop: '2px solid black', paddingTop: 12, marginTop: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11 }}>DADOS DO FECHAMENTO</div>
+                {!editing && (
+                  <button onClick={() => setEditing(true)} style={{ background: '#4A78FF', color: 'white', border: '2px solid black', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>EDITAR</button>
+                )}
+              </div>
+              {editing ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div>
+                      <label style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 2 }}>VALOR TOTAL (R$)</label>
+                      <input type="number" step="0.01" value={editSaleValue} onChange={e => setEditSaleValue(e.target.value)} style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 2 }}>PARCELAS</label>
+                      <input type="number" min="1" value={editInstallments} onChange={e => setEditInstallments(e.target.value)} style={inputStyle} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div>
+                      <label style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 2 }}>VALOR PARCELA (R$)</label>
+                      <input type="number" step="0.01" value={editInstallmentValue} onChange={e => setEditInstallmentValue(e.target.value)} style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 2 }}>PAGAMENTO</label>
+                      <select value={editPaymentMethod} onChange={e => setEditPaymentMethod(e.target.value)} style={inputStyle}>
+                        <option value="BOLETO">Boleto</option>
+                        <option value="PIX">PIX</option>
+                        <option value="CARTAO">Cartao</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 2 }}>VENDEDOR</label>
+                    <input value={editSalesRep} onChange={e => setEditSalesRep(e.target.value)} style={inputStyle} />
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => setEditing(false)} style={{ flex: 1, padding: '6px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
+                    <button disabled={saving} onClick={async () => {
+                      setSaving(true)
+                      try {
+                        await apiFetch(`/api/clients/${lead.id}`, {
+                          method: 'PUT',
+                          body: JSON.stringify({
+                            saleValue: parseFloat(editSaleValue) || undefined,
+                            saleInstallments: parseInt(editInstallments) || undefined,
+                            installmentValue: parseFloat(editInstallmentValue) || undefined,
+                            paymentMethod: editPaymentMethod || undefined,
+                            salesRep: editSalesRep.trim() || undefined,
+                          }),
+                        })
+                        toast.success('Dados atualizados')
+                        setEditing(false)
+                        onUpdated()
+                      } catch { toast.error('Erro ao salvar') }
+                      setSaving(false)
+                    }} style={{ flex: 1, padding: '6px', border: '2px solid black', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', boxShadow: '3px 3px 0 black' }}>
+                      {saving ? 'SALVANDO...' : 'SALVAR'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                  <div><strong>Valor:</strong> {lead.saleValue ? fmt(lead.saleValue) : '-'}</div>
+                  <div><strong>Parcelas:</strong> {lead.saleInstallments ?? '-'}x {lead.installmentValue ? fmt(lead.installmentValue) : ''}</div>
+                  <div><strong>Pagamento:</strong> {lead.paymentMethod ?? '-'}</div>
+                  <div><strong>Vendedor:</strong> {lead.salesRep ?? '-'}</div>
+                  {lead.closedAt && <div><strong>Fechado em:</strong> {fmtDate(lead.closedAt)}</div>}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Commissions for closed deals */}
+          {lead.leadStage === 'FECHADO' && commissions.length > 0 && (
+            <div style={{ borderTop: '2px solid black', paddingTop: 12, marginTop: 8 }}>
+              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, marginBottom: 8 }}>COMISSOES ({commissions.length})</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {commissions.map(c => (
+                  <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#fafafa', border: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                    <span>{c.salesRep} — {c.installment}/{c.totalInstallments}</span>
+                    <span style={{ fontWeight: 700 }}>{fmt(c.value)}</span>
+                    <span style={{ background: c.status === 'PAID' ? '#006600' : c.status === 'PENDING' ? '#e6a800' : '#cc0000', color: 'white', padding: '1px 6px', fontSize: 9, fontWeight: 700 }}>{c.status === 'PAID' ? 'PAGO' : c.status === 'PENDING' ? 'PENDENTE' : 'CANCELADO'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: 8, marginTop: 16, borderTop: '2px solid black', paddingTop: 12 }}>
@@ -841,6 +965,10 @@ export default function CrmPage() {
               fetchLeads()
               fetchMetrics()
             } catch { toast.error('Erro ao excluir') }
+          }}
+          onUpdated={() => {
+            fetchLeads()
+            fetchMetrics()
           }}
         />
       )}

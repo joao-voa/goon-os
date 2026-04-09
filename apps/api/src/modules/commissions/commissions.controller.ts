@@ -9,6 +9,7 @@ export class CommissionsController {
   findAll(
     @Query('salesRep') salesRep?: string,
     @Query('status') status?: string,
+    @Query('clientId') clientId?: string,
     @Query('month') month?: string,
     @Query('year') year?: string,
     @Query('page') page?: string,
@@ -17,6 +18,7 @@ export class CommissionsController {
     return this.service.findAll({
       salesRep,
       status,
+      clientId,
       month: month ? parseInt(month) : undefined,
       year: year ? parseInt(year) : undefined,
       page: page ? parseInt(page) : 1,

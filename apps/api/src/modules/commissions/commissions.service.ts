@@ -13,16 +13,18 @@ export class CommissionsService {
   async findAll(params: {
     salesRep?: string
     status?: string
+    clientId?: string
     month?: number
     year?: number
     page?: number
     limit?: number
   }) {
-    const { salesRep, status, month, year, page = 1, limit = 20 } = params
+    const { salesRep, status, clientId, month, year, page = 1, limit = 20 } = params
     const where: Record<string, unknown> = {}
 
     if (salesRep) where.salesRep = salesRep
     if (status) where.status = status
+    if (clientId) where.clientId = clientId
 
     if (month && year) {
       const start = new Date(year, month - 1, 1)
