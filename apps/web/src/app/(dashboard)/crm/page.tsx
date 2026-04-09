@@ -135,7 +135,11 @@ function CloseDealModal({
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
         zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
       }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      onClick={e => {
+        if (e.target !== e.currentTarget) return
+        if (!confirm('Tem certeza que deseja sair? Os dados serao perdidos.')) return
+        onClose()
+      }}
     >
       <form
         onSubmit={handleSubmit}
@@ -327,13 +331,23 @@ function NewLeadModal({
     textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4, display: 'block',
   }
 
+  const hasData = companyName.trim() || responsible.trim() || phone.trim() || email.trim()
+
+  function handleBackdropClick(e: React.MouseEvent) {
+    if (e.target !== e.currentTarget) return
+    if (hasData) {
+      if (!confirm('Tem certeza que deseja sair? Os dados preenchidos serao perdidos.')) return
+    }
+    onClose()
+  }
+
   return (
     <div
       style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
         zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
       }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      onClick={handleBackdropClick}
     >
       <form
         onSubmit={handleSubmit}
