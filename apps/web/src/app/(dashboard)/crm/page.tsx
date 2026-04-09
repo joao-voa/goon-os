@@ -63,6 +63,7 @@ function CloseDealModal({
     wasAdvanced?: boolean
     advanceValue?: number
     closedAt?: string
+    commissionPercentage?: number
   }) => Promise<void>
 }) {
   const [productId, setProductId] = useState(products[0]?.id ?? '')
@@ -74,6 +75,7 @@ function CloseDealModal({
   const [wasAdvanced, setWasAdvanced] = useState(false)
   const [advanceValue, setAdvanceValue] = useState('')
   const [closedAt, setClosedAt] = useState(new Date().toISOString().split('T')[0])
+  const [commissionPercentage, setCommissionPercentage] = useState('10')
   const [submitting, setSubmitting] = useState(false)
 
   const value = parseFloat(saleValue) || 0
@@ -101,6 +103,7 @@ function CloseDealModal({
         wasAdvanced: wasAdvanced || undefined,
         advanceValue: wasAdvanced && parseFloat(advanceValue) > 0 ? parseFloat(advanceValue) : undefined,
         closedAt: closedAt || undefined,
+        commissionPercentage: parseFloat(commissionPercentage) || 10,
       })
     } finally {
       setSubmitting(false)
@@ -165,7 +168,7 @@ function CloseDealModal({
             <label style={labelStyle}>Data de Fechamento</label>
             <input type="date" value={closedAt} onChange={e => setClosedAt(e.target.value)} style={inputStyle} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
               <label style={labelStyle}>Forma Pagamento</label>
               <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={inputStyle}>
@@ -178,9 +181,15 @@ function CloseDealModal({
               <label style={labelStyle}>Parcelas</label>
               <input type="number" min="1" value={saleInstallments} onChange={e => setSaleInstallments(e.target.value)} style={inputStyle} required />
             </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
               <label style={labelStyle}>Dia Vencimento</label>
               <input type="number" min="1" max="31" value={paymentDay} onChange={e => setPaymentDay(e.target.value)} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>% Comissao</label>
+              <input type="number" step="0.5" min="0" value={commissionPercentage} onChange={e => setCommissionPercentage(e.target.value)} style={inputStyle} />
             </div>
           </div>
           {/* Adiantamento */}
@@ -208,6 +217,9 @@ function CloseDealModal({
               <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>Vencimento todo dia {paymentDay}</div>
               {wasAdvanced && parseFloat(advanceValue) > 0 && (
                 <div style={{ fontSize: 10, color: '#4A78FF', marginTop: 2 }}>Adiantado: R$ {parseFloat(advanceValue).toFixed(2)}</div>
+              )}
+              {parseFloat(commissionPercentage) > 0 && (
+                <div style={{ fontSize: 10, color: '#e6a800', marginTop: 2 }}>Comissao: {commissionPercentage}% = R$ {(installmentVal * parseFloat(commissionPercentage) / 100).toFixed(2)}/parcela</div>
               )}
             </div>
           )}
