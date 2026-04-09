@@ -7,7 +7,7 @@ export class ProductsService {
 
   async findAll() {
     const products = await this.prisma.product.findMany({
-      orderBy: { code: 'asc' },
+      orderBy: { createdAt: 'asc' },
       include: {
         _count: {
           select: {
