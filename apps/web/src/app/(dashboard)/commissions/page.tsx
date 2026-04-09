@@ -282,7 +282,7 @@ export default function CommissionsPage() {
             <div style={{ fontSize: 10 }}>{summary.totalPaidCount} parcelas</div>
           </div>
           {Object.entries(summary.bySalesRep).map(([rep, vals]) => (
-            <div key={rep} style={{ background: 'var(--retro-gray)', padding: '12px 20px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+            <div key={rep} onClick={() => { setSalesRepFilter(salesRepFilter === rep ? '' : rep); setPage(1) }} style={{ background: salesRepFilter === rep ? '#4A78FF' : 'var(--retro-gray)', color: salesRepFilter === rep ? 'white' : 'inherit', padding: '12px 20px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700, cursor: 'pointer' }}>
               <div style={{ fontSize: 10, textTransform: 'uppercase' }}>{rep}</div>
               <div style={{ fontSize: 14 }}>Pendente: {fmt(vals.pending)}</div>
               <div style={{ fontSize: 14 }}>Pago: {fmt(vals.paid)}</div>
