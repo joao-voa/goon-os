@@ -922,6 +922,7 @@ export default function CrmPage() {
   const [metrics, setMetrics] = useState<CrmMetrics | null>(null)
   const [suggestions, setSuggestions] = useState<{ salesReps: string[]; mentors: string[] }>({ salesReps: [], mentors: [] })
   const [crmTab, setCrmTab] = useState<'pipeline' | 'clientes'>('pipeline')
+  const [salesRepFilter, setSalesRepFilter] = useState('')
   const isMobile = useIsMobile()
 
   const PIPELINE_STAGES = LEAD_STAGES.filter(s => s !== 'PERDIDO')
@@ -1018,7 +1019,7 @@ export default function CrmPage() {
     }
   }
 
-  const activeLeads = leads.filter(l => l.leadStage !== 'PERDIDO')
+  const activeLeads = leads.filter(l => l.leadStage !== 'PERDIDO' && (!salesRepFilter || l.salesRep === salesRepFilter))
 
   const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 
@@ -1103,6 +1104,27 @@ export default function CrmPage() {
           </button>
         </div>
       </div>
+
+      {/* Vendor Filter Chips */}
+      {(() => {
+        const reps = [...new Set(leads.map(l => l.salesRep).filter(Boolean))] as string[]
+        if (reps.length === 0) return null
+        return (
+          <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Vendedor:</span>
+            <button onClick={() => setSalesRepFilter('')} style={{
+              padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+              background: salesRepFilter === '' ? 'black' : 'white', color: salesRepFilter === '' ? 'white' : 'black',
+            }}>TODOS</button>
+            {reps.map(rep => (
+              <button key={rep} onClick={() => setSalesRepFilter(salesRepFilter === rep ? '' : rep)} style={{
+                padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+                background: salesRepFilter === rep ? 'black' : 'white', color: salesRepFilter === rep ? 'white' : 'black',
+              }}>{rep}</button>
+            ))}
+          </div>
+        )
+      })()}
 
       {/* KPI Strip */}
       <div style={{
