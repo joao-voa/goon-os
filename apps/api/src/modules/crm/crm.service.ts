@@ -633,10 +633,12 @@ export class CrmService {
     leadNotes?: string
     segment?: string
     selectedModules?: string
+    productInterest?: string
   }) {
+    const { productInterest, ...clientData } = dto
     const client = await this.prisma.client.create({
       data: {
-        ...dto,
+        ...clientData,
         status: 'PROSPECT',
         leadStage: 'NOVO',
         stageChangedAt: new Date(),
