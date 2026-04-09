@@ -38,6 +38,7 @@ export const PRODUCT_COLORS: Record<string, string> = {
   GI: '#000080',
   GS: '#006600',
   AURA: '#D4A017',
+  TTS: '#ff0050',
 }
 
 export const PRODUCT_NAMES: Record<string, string> = {
@@ -45,6 +46,7 @@ export const PRODUCT_NAMES: Record<string, string> = {
   GI: 'GOON INFINITY',
   GS: 'GOON SCALE',
   AURA: 'AURA 360',
+  TTS: 'TIK TOK SCALE',
 }
 
 export const AURA_MODULES = [
