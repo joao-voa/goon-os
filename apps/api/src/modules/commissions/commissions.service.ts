@@ -26,14 +26,15 @@ export class CommissionsService {
     if (status) where.status = status
     if (clientId) where.clientId = clientId
 
+    // Filter by payment dueDate (not commission createdAt)
     if (month && year) {
       const start = new Date(year, month - 1, 1)
       const end = new Date(year, month, 1)
-      where.createdAt = { gte: start, lt: end }
+      where.payment = { dueDate: { gte: start, lt: end } }
     } else if (year) {
       const start = new Date(year, 0, 1)
       const end = new Date(year + 1, 0, 1)
-      where.createdAt = { gte: start, lt: end }
+      where.payment = { dueDate: { gte: start, lt: end } }
     }
 
     const skip = (page - 1) * limit
@@ -41,7 +42,7 @@ export class CommissionsService {
     const [data, total] = await this.prisma.$transaction([
       this.prisma.commission.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { payment: { dueDate: 'asc' } },
         skip,
         take: limit,
         include: {
@@ -72,34 +73,27 @@ export class CommissionsService {
     if (month && year) {
       const start = new Date(year, month - 1, 1)
       const end = new Date(year, month, 1)
-      where.createdAt = { gte: start, lt: end }
+      where.payment = { dueDate: { gte: start, lt: end } }
     }
 
-    const [totalToPay, totalPaid] = await this.prisma.$transaction([
-      this.prisma.commission.aggregate({
-        where: { ...where, status: 'PENDING' },
-        _sum: { value: true },
-        _count: true,
-      }),
-      this.prisma.commission.aggregate({
-        where: { ...where, status: 'PAID' },
-        _sum: { value: true },
-        _count: true,
-      }),
-    ])
-
-    const bySalesRep = await this.prisma.commission.groupBy({
-      by: ['salesRep', 'status'],
+    // Fetch all commissions for the period and aggregate in JS
+    const allCommissions = await this.prisma.commission.findMany({
       where,
-      _sum: { value: true },
-      _count: true,
+      select: { salesRep: true, status: true, value: true },
     })
 
+    let totalToPaySum = 0, totalToPayCount = 0
+    let totalPaidSum = 0, totalPaidCount = 0
     const reps: Record<string, { pending: number; paid: number; cancelled: number }> = {}
-    for (const row of bySalesRep) {
-      if (!reps[row.salesRep]) reps[row.salesRep] = { pending: 0, paid: 0, cancelled: 0 }
-      const key = row.status.toLowerCase() as 'pending' | 'paid' | 'cancelled'
-      reps[row.salesRep][key] = Number(row._sum.value ?? 0)
+
+    for (const c of allCommissions) {
+      const val = Number(c.value)
+      if (c.status === 'PENDING') { totalToPaySum += val; totalToPayCount++ }
+      if (c.status === 'PAID') { totalPaidSum += val; totalPaidCount++ }
+
+      if (!reps[c.salesRep]) reps[c.salesRep] = { pending: 0, paid: 0, cancelled: 0 }
+      const key = c.status.toLowerCase() as 'pending' | 'paid' | 'cancelled'
+      reps[c.salesRep][key] += val
     }
 
     const now = new Date()
@@ -127,10 +121,10 @@ export class CommissionsService {
     })
 
     return {
-      totalToPay: Number(totalToPay._sum.value ?? 0),
-      totalToPayCount: totalToPay._count,
-      totalPaid: Number(totalPaid._sum.value ?? 0),
-      totalPaidCount: totalPaid._count,
+      totalToPay: totalToPaySum,
+      totalToPayCount: totalToPayCount,
+      totalPaid: totalPaidSum,
+      totalPaidCount: totalPaidCount,
       bySalesRep: reps,
       closing: {
         cutoffDate: nextClosingDate.toISOString(),
