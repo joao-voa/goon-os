@@ -140,6 +140,7 @@ export class CrmService {
       commissionPercentage?: number
       wasAdvanced?: boolean
       advanceValue?: number
+      closedAt?: string
     },
   ) {
     const client = await this.prisma.client.findUnique({
@@ -151,7 +152,7 @@ export class CrmService {
       throw new NotFoundException(`Cliente com ID ${id} não encontrado`)
     }
 
-    const now = new Date()
+    const now = dto.closedAt ? new Date(dto.closedAt) : new Date()
 
     // 1. Update client: PROSPECT → ACTIVE, leadStage → FECHADO
     const updated = await this.prisma.client.update({

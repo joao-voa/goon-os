@@ -62,6 +62,7 @@ function CloseDealModal({
     paymentDay?: number
     wasAdvanced?: boolean
     advanceValue?: number
+    closedAt?: string
   }) => Promise<void>
 }) {
   const [productId, setProductId] = useState(products[0]?.id ?? '')
@@ -72,6 +73,7 @@ function CloseDealModal({
   const [paymentDay, setPaymentDay] = useState(String(new Date().getDate()))
   const [wasAdvanced, setWasAdvanced] = useState(false)
   const [advanceValue, setAdvanceValue] = useState('')
+  const [closedAt, setClosedAt] = useState(new Date().toISOString().split('T')[0])
   const [submitting, setSubmitting] = useState(false)
 
   const value = parseFloat(saleValue) || 0
@@ -98,6 +100,7 @@ function CloseDealModal({
         paymentDay: parseInt(paymentDay) || undefined,
         wasAdvanced: wasAdvanced || undefined,
         advanceValue: wasAdvanced && parseFloat(advanceValue) > 0 ? parseFloat(advanceValue) : undefined,
+        closedAt: closedAt || undefined,
       })
     } finally {
       setSubmitting(false)
@@ -157,6 +160,10 @@ function CloseDealModal({
               <label style={labelStyle}>Valor Entrada (R$)</label>
               <input type="number" step="0.01" placeholder="0" value={entryValue} onChange={e => setEntryValue(e.target.value)} style={inputStyle} />
             </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Data de Fechamento</label>
+            <input type="date" value={closedAt} onChange={e => setClosedAt(e.target.value)} style={inputStyle} />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
             <div>
