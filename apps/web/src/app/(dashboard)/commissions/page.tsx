@@ -207,7 +207,7 @@ export default function CommissionsPage() {
     }
   })
 
-  const [mentorsList, setMentorsList] = useState<Array<{ id: string; mentorName: string; value: number; notes: string | null; client: string; product: string; productName: string; planValue: number }>>([])
+  const [mentorsList, setMentorsList] = useState<Array<{ id: string; mentorName: string; value: number; notes: string | null; client: string; product: string; productName: string; planValue: number; monthlyBreakdown: Record<string, number> }>>([])
 
   useEffect(() => { loadData() }, [loadData])
 
@@ -215,7 +215,7 @@ export default function CommissionsPage() {
     apiFetch<{ data: Client[] }>('/api/clients?limit=200')
       .then(res => setClients(res.data || []))
       .catch(() => {})
-    apiFetch<Array<{ id: string; mentorName: string; value: number; notes: string | null; client: string; product: string; productName: string; planValue: number }>>('/api/mentors')
+    apiFetch<Array<{ id: string; mentorName: string; value: number; notes: string | null; client: string; product: string; productName: string; planValue: number; monthlyBreakdown: Record<string, number> }>>('/api/mentors')
       .then(setMentorsList)
       .catch(() => {})
   }, [])
@@ -436,6 +436,71 @@ export default function CommissionsPage() {
                     )
                   })}
                 </div>
+
+                {/* Monthly View */}
+                {(() => {
+                  // Aggregate all mentors by month
+                  const monthlyAll: Record<string, Record<string, number>> = {}
+                  const monthTotals: Record<string, number> = {}
+                  for (const m of mentorsList) {
+                    for (const [month, val] of Object.entries(m.monthlyBreakdown)) {
+                      if (!monthlyAll[month]) monthlyAll[month] = {}
+                      monthlyAll[month][m.mentorName] = (monthlyAll[month][m.mentorName] ?? 0) + val
+                      monthTotals[month] = (monthTotals[month] ?? 0) + val
+                    }
+                  }
+                  const months = Object.keys(monthlyAll).sort()
+                  const allMentorNames = [...new Set(mentorsList.map(m => m.mentorName))]
+
+                  if (months.length === 0) return null
+
+                  const fmtMonth = (m: string) => {
+                    const [y, mo] = m.split('-')
+                    return new Date(parseInt(y), parseInt(mo) - 1).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
+                  }
+
+                  return (
+                    <div style={{ marginBottom: 24 }}>
+                      <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 12, marginBottom: 10 }}>VISAO MENSAL</div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                          <thead>
+                            <tr style={{ background: 'black', color: 'white', textTransform: 'uppercase' }}>
+                              <th style={{ padding: '8px 12px', textAlign: 'left' }}>Mentor</th>
+                              {months.map(m => (
+                                <th key={m} style={{ padding: '8px 12px', textAlign: 'right' }}>{fmtMonth(m)}</th>
+                              ))}
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {allMentorNames.map(name => {
+                              const mentorTotal = mentorsList.filter(m => m.mentorName === name).reduce((s, m) => s + m.value, 0)
+                              return (
+                                <tr key={name} style={{ borderBottom: '1px solid #ddd' }}>
+                                  <td style={{ padding: '8px 12px', fontWeight: 700 }}>{name}</td>
+                                  {months.map(m => (
+                                    <td key={m} style={{ padding: '8px 12px', textAlign: 'right' }}>
+                                      {monthlyAll[m][name] ? fmt(monthlyAll[m][name]) : '-'}
+                                    </td>
+                                  ))}
+                                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700 }}>{fmt(mentorTotal)}</td>
+                                </tr>
+                              )
+                            })}
+                            <tr style={{ background: '#f0f0f0', fontWeight: 700 }}>
+                              <td style={{ padding: '8px 12px' }}>TOTAL</td>
+                              {months.map(m => (
+                                <td key={m} style={{ padding: '8px 12px', textAlign: 'right' }}>{fmt(monthTotals[m])}</td>
+                              ))}
+                              <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmt(totalMentorias)}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )
+                })()}
 
                 {/* Group by client */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

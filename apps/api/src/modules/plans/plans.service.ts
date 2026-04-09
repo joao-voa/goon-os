@@ -195,23 +195,41 @@ export class PlansService {
           include: {
             client: { select: { id: true, companyName: true } },
             product: { select: { code: true, name: true } },
+            payments: { orderBy: { dueDate: 'asc' }, select: { dueDate: true, value: true, status: true } },
           },
         },
       },
       orderBy: { createdAt: 'desc' },
     })
-    return mentors.map(m => ({
-      id: m.id,
-      mentorName: m.mentorName,
-      value: Number(m.value),
-      notes: m.notes,
-      createdAt: m.createdAt,
-      client: m.plan.client.companyName,
-      clientId: m.plan.client.id,
-      product: m.plan.product.code,
-      productName: m.plan.product.name,
-      planValue: Number(m.plan.value),
-    }))
+
+    return mentors.map(m => {
+      const planValue = Number(m.plan.value)
+      const totalPayments = m.plan.payments.reduce((s, p) => s + Number(p.value), 0)
+      const mentorValue = Number(m.value)
+
+      // Calculate monthly breakdown based on payment schedule
+      const monthlyBreakdown: Record<string, number> = {}
+      for (const pay of m.plan.payments) {
+        const proportion = totalPayments > 0 ? Number(pay.value) / totalPayments : 0
+        const mentorInstallment = Math.round(mentorValue * proportion * 100) / 100
+        const monthKey = `${pay.dueDate.getFullYear()}-${String(pay.dueDate.getMonth() + 1).padStart(2, '0')}`
+        monthlyBreakdown[monthKey] = (monthlyBreakdown[monthKey] ?? 0) + mentorInstallment
+      }
+
+      return {
+        id: m.id,
+        mentorName: m.mentorName,
+        value: mentorValue,
+        notes: m.notes,
+        createdAt: m.createdAt,
+        client: m.plan.client.companyName,
+        clientId: m.plan.client.id,
+        product: m.plan.product.code,
+        productName: m.plan.product.name,
+        planValue,
+        monthlyBreakdown,
+      }
+    })
   }
 
   async getMentors(planId: string) {
