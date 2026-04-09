@@ -151,6 +151,7 @@ export default function CommissionsPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [clients, setClients] = useState<Client[]>([])
+  const [activeTab, setActiveTab] = useState<'comissoes' | 'mentorias'>('comissoes')
   const now = new Date()
   const [month, setMonth] = useState<number | null>(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
@@ -240,12 +241,33 @@ export default function CommissionsPage() {
   return (
     <div style={{ padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-        <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 20, margin: 0 }}>COMISSOES</h1>
-        <button onClick={() => setShowCreateModal(true)} style={{ padding: '8px 16px', border: '2px solid black', background: '#e6a800', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0px 0px #000' }}>
-          + CRIAR COMISSAO
-        </button>
+        <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 20, margin: 0 }}>COMISSOES & MENTORIAS</h1>
+        {activeTab === 'comissoes' && (
+          <button onClick={() => setShowCreateModal(true)} style={{ padding: '8px 16px', border: '2px solid black', background: '#e6a800', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0px 0px #000' }}>
+            + CRIAR COMISSAO
+          </button>
+        )}
       </div>
 
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 0, marginBottom: 20 }}>
+        {(['comissoes', 'mentorias'] as const).map(tab => (
+          <button key={tab} onClick={() => setActiveTab(tab)} style={{
+            padding: '10px 24px', border: '2px solid black',
+            borderBottom: activeTab === tab ? 'none' : '2px solid black',
+            background: activeTab === tab ? 'white' : '#f0f0f0',
+            fontFamily: 'var(--font-pixel)', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+            textTransform: 'uppercase', position: 'relative',
+            marginBottom: activeTab === tab ? -2 : 0, zIndex: activeTab === tab ? 1 : 0,
+            color: activeTab === tab ? 'black' : '#888',
+          }}>
+            {tab === 'comissoes' ? 'COMISSOES' : `MENTORIAS (${mentorsList.length})`}
+          </button>
+        ))}
+        <div style={{ flex: 1, borderBottom: '2px solid black' }} />
+      </div>
+
+      {activeTab === 'comissoes' && <>
       {/* KPI Strip */}
       {summary && (
         <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
@@ -286,43 +308,6 @@ export default function CommissionsPage() {
           </div>
           <div style={{ background: '#fff5f5', padding: '12px 20px', border: '2px solid #cc0000', fontFamily: 'var(--font-mono)', fontSize: 10, flex: '1 1 200px', display: 'flex', alignItems: 'center' }}>
             <span style={{ color: '#cc0000' }}>Atencao: se um cliente der churn, as comissoes pendentes dele sao automaticamente canceladas e saem do fechamento.</span>
-          </div>
-        </div>
-      )}
-
-      {/* Mentors Section */}
-      {mentorsList.length > 0 && (
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, marginBottom: 10 }}>MENTORIAS</div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-              <thead>
-                <tr style={{ background: '#4A78FF', color: 'white', textTransform: 'uppercase' }}>
-                  <th style={{ padding: '8px 12px', textAlign: 'left' }}>Mentor</th>
-                  <th style={{ padding: '8px 12px', textAlign: 'left' }}>Cliente</th>
-                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>Programa</th>
-                  <th style={{ padding: '8px 12px', textAlign: 'right' }}>Valor Plano</th>
-                  <th style={{ padding: '8px 12px', textAlign: 'right' }}>Valor Mentor</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mentorsList.map(m => (
-                  <tr key={m.id} style={{ borderBottom: '1px solid #ccc' }}>
-                    <td style={{ padding: '8px 12px', fontWeight: 700 }}>{m.mentorName}</td>
-                    <td style={{ padding: '8px 12px' }}>{m.client}</td>
-                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                      <span style={{ background: '#4A78FF', color: 'white', padding: '2px 8px', fontSize: 10, fontWeight: 700 }}>{m.product}</span>
-                    </td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmt(m.planValue)}</td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700 }}>{fmt(m.value)}</td>
-                  </tr>
-                ))}
-                <tr style={{ background: '#f0f0f0', fontWeight: 700 }}>
-                  <td colSpan={4} style={{ padding: '8px 12px', textAlign: 'right' }}>TOTAL MENTORIAS</td>
-                  <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmt(mentorsList.reduce((s, m) => s + m.value, 0))}</td>
-                </tr>
-              </tbody>
-            </table>
           </div>
         </div>
       )}
@@ -420,6 +405,86 @@ export default function CommissionsPage() {
           <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>Anterior</button>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, padding: '4px 8px' }}>{page} / {Math.ceil(total / 20)}</span>
           <button disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>Proximo</button>
+        </div>
+      )}
+      </>}
+
+      {/* ---- MENTORIAS TAB ---- */}
+      {activeTab === 'mentorias' && (
+        <div>
+          {/* KPI Cards */}
+          {(() => {
+            const totalMentorias = mentorsList.reduce((s, m) => s + m.value, 0)
+            const mentorNames = [...new Set(mentorsList.map(m => m.mentorName))]
+            return (
+              <>
+                <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+                  <div style={{ background: '#4A78FF', color: 'white', padding: '12px 20px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                    <div style={{ fontSize: 10, textTransform: 'uppercase' }}>Total Mentorias</div>
+                    <div style={{ fontSize: 18 }}>{fmt(totalMentorias)}</div>
+                    <div style={{ fontSize: 10 }}>{mentorsList.length} atribuicoes</div>
+                  </div>
+                  {mentorNames.map(name => {
+                    const mentorTotal = mentorsList.filter(m => m.mentorName === name).reduce((s, m) => s + m.value, 0)
+                    const mentorClients = [...new Set(mentorsList.filter(m => m.mentorName === name).map(m => m.client))]
+                    return (
+                      <div key={name} style={{ background: 'white', padding: '12px 20px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                        <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#4A78FF' }}>{name}</div>
+                        <div style={{ fontSize: 18 }}>{fmt(mentorTotal)}</div>
+                        <div style={{ fontSize: 10, color: '#666' }}>{mentorClients.length} cliente{mentorClients.length !== 1 ? 's' : ''}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Group by client */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {[...new Set(mentorsList.map(m => m.client))].map(clientName => {
+                    const clientMentors = mentorsList.filter(m => m.client === clientName)
+                    const clientTotal = clientMentors.reduce((s, m) => s + m.value, 0)
+                    const planValue = clientMentors[0]?.planValue ?? 0
+                    const product = clientMentors[0]?.product ?? ''
+                    const productName = clientMentors[0]?.productName ?? ''
+                    return (
+                      <div key={clientName} style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white' }}>
+                        <div style={{ background: 'black', color: 'white', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 11 }}>{clientName}</span>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, marginLeft: 10, opacity: 0.7 }}>{productName}</span>
+                          </div>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>
+                            Plano: {fmt(planValue)}
+                          </span>
+                        </div>
+                        <div style={{ padding: 16 }}>
+                          {clientMentors.map(m => (
+                            <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                              <span style={{ fontWeight: 700 }}>{m.mentorName}</span>
+                              <span>{fmt(m.value)}</span>
+                              <span style={{ fontSize: 10, color: '#666' }}>{planValue > 0 ? Math.round(m.value / planValue * 100) : 0}% do plano</span>
+                            </div>
+                          ))}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0 0', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, borderTop: '2px solid black', marginTop: 8 }}>
+                            <span>TOTAL MENTORIA</span>
+                            <span>{fmt(clientTotal)}</span>
+                            <span style={{ color: planValue - clientTotal >= 0 ? '#006600' : '#cc0000', fontSize: 10 }}>
+                              Saldo: {fmt(planValue - clientTotal)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {mentorsList.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: 40, fontFamily: 'var(--font-mono)', color: '#888' }}>
+                    Nenhuma mentoria atribuida. Atribua mentores nos planos dos clientes fechados.
+                  </div>
+                )}
+              </>
+            )
+          })()}
         </div>
       )}
 
