@@ -31,6 +31,11 @@ export class CrmController {
     return this.service.getMetrics()
   }
 
+  @Get('suggestions')
+  getSuggestions() {
+    return this.service.getSuggestions()
+  }
+
   @Post('sync-sheets')
   @HttpCode(HttpStatus.OK)
   syncFromSheets() {

@@ -50,10 +50,12 @@ function CreateCommissionModal({
   onClose,
   onConfirm,
   clients,
+  salesRepSuggestions,
 }: {
   onClose: () => void
   onConfirm: () => void
   clients: Client[]
+  salesRepSuggestions: string[]
 }) {
   const [clientId, setClientId] = useState('')
   const [salesRep, setSalesRep] = useState('')
@@ -109,7 +111,10 @@ function CreateCommissionModal({
           </div>
           <div>
             <label style={labelStyle}>Vendedor *</label>
-            <input value={salesRep} onChange={e => setSalesRep(e.target.value)} style={inputStyle} required />
+            <input list="comm-salesrep-list" value={salesRep} onChange={e => setSalesRep(e.target.value)} style={inputStyle} required />
+            <datalist id="comm-salesrep-list">
+              {salesRepSuggestions.map(s => <option key={s} value={s} />)}
+            </datalist>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
             <div>
@@ -151,6 +156,7 @@ export default function CommissionsPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [clients, setClients] = useState<Client[]>([])
+  const [salesRepSuggestions, setSalesRepSuggestions] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<'comissoes' | 'mentorias'>('comissoes')
   const [mentorFilter, setMentorFilter] = useState('')
   const now = new Date()
@@ -215,6 +221,9 @@ export default function CommissionsPage() {
   useEffect(() => {
     apiFetch<{ data: Client[] }>('/api/clients?limit=200')
       .then(res => setClients(res.data || []))
+      .catch(() => {})
+    apiFetch<{ salesReps: string[] }>('/api/crm/suggestions')
+      .then(res => setSalesRepSuggestions(res.salesReps || []))
       .catch(() => {})
     apiFetch<Array<{ id: string; mentorName: string; value: number; notes: string | null; client: string; product: string; productName: string; planValue: number; monthlyBreakdown: Record<string, number> }>>('/api/mentors')
       .then(setMentorsList)
@@ -558,6 +567,7 @@ export default function CommissionsPage() {
       {showCreateModal && (
         <CreateCommissionModal
           clients={clients}
+          salesRepSuggestions={salesRepSuggestions}
           onClose={() => setShowCreateModal(false)}
           onConfirm={() => { setShowCreateModal(false); loadData() }}
         />

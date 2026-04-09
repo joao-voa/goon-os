@@ -672,6 +672,25 @@ export class CrmService {
     return false
   }
 
+  async getSuggestions() {
+    const [salesReps, mentors] = await Promise.all([
+      this.prisma.client.findMany({
+        where: { salesRep: { not: null } },
+        select: { salesRep: true },
+        distinct: ['salesRep'],
+      }),
+      this.prisma.planMentor.findMany({
+        select: { mentorName: true },
+        distinct: ['mentorName'],
+      }),
+    ])
+
+    return {
+      salesReps: salesReps.map(s => s.salesRep).filter(Boolean),
+      mentors: mentors.map(m => m.mentorName),
+    }
+  }
+
   async createLead(dto: {
     companyName: string
     responsible: string

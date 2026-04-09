@@ -263,6 +263,7 @@ function NewLeadModal({
   onClose,
   onConfirm,
   products,
+  salesRepSuggestions,
 }: {
   onClose: () => void
   onConfirm: (data: {
@@ -278,6 +279,7 @@ function NewLeadModal({
     productInterest?: string
   }) => Promise<void>
   products: Array<{ id: string; code: string; name: string }>
+  salesRepSuggestions?: string[]
 }) {
   const [companyName, setCompanyName] = useState('')
   const [responsible, setResponsible] = useState('')
@@ -398,7 +400,10 @@ function NewLeadModal({
             </div>
             <div>
               <label style={labelStyle}>Vendedor</label>
-              <input value={salesRep} onChange={e => setSalesRep(e.target.value)} style={inputStyle} />
+              <input list="salesrep-list" value={salesRep} onChange={e => setSalesRep(e.target.value)} style={inputStyle} />
+              <datalist id="salesrep-list">
+                {(salesRepSuggestions ?? []).map(s => <option key={s} value={s} />)}
+              </datalist>
             </div>
           </div>
           {/* Programa de interesse */}
@@ -490,12 +495,14 @@ function LeadDetailModal({
   onCloseDeal,
   onDelete,
   onUpdated,
+  suggestions,
 }: {
   lead: LeadItem
   onClose: () => void
   onCloseDeal: () => void
   onDelete: () => void
   onUpdated: () => void
+  suggestions?: { salesReps: string[]; mentors: string[] }
 }) {
   const [interactions, setInteractions] = useState<Interaction[]>([])
   const [commissions, setCommissions] = useState<CommissionItem[]>([])
@@ -637,7 +644,10 @@ function LeadDetailModal({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 <div>
                   <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>VENDEDOR</label>
-                  <input value={editSalesRep} onChange={e => setEditSalesRep(e.target.value)} style={inputStyle} />
+                  <input list="edit-salesrep-list" value={editSalesRep} onChange={e => setEditSalesRep(e.target.value)} style={inputStyle} />
+                  <datalist id="edit-salesrep-list">
+                    {(suggestions?.salesReps ?? []).map(s => <option key={s} value={s} />)}
+                  </datalist>
                 </div>
                 <div>
                   <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>PAGAMENTO</label>
@@ -820,7 +830,10 @@ function LeadDetailModal({
                         )}
                         {addingMentor === p.id ? (
                           <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                            <input placeholder="Nome" value={newMentorName} onChange={e => setNewMentorName(e.target.value)} style={{ ...inputStyle, flex: '1 1 100px', fontSize: 10, padding: '4px 6px' }} />
+                            <input list="mentor-list" placeholder="Nome" value={newMentorName} onChange={e => setNewMentorName(e.target.value)} style={{ ...inputStyle, flex: '1 1 100px', fontSize: 10, padding: '4px 6px' }} />
+                            <datalist id="mentor-list">
+                              {(suggestions?.mentors ?? []).map(s => <option key={s} value={s} />)}
+                            </datalist>
                             <input type="number" placeholder="Valor" step="0.01" value={newMentorValue} onChange={e => setNewMentorValue(e.target.value)} style={{ ...inputStyle, width: 80, fontSize: 10, padding: '4px 6px' }} />
                             <button disabled={savingMentor} onClick={async () => {
                               if (!newMentorName.trim() || !parseFloat(newMentorValue)) return
@@ -900,6 +913,7 @@ export default function CrmPage() {
   const [showNewLead, setShowNewLead] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [metrics, setMetrics] = useState<CrmMetrics | null>(null)
+  const [suggestions, setSuggestions] = useState<{ salesReps: string[]; mentors: string[] }>({ salesReps: [], mentors: [] })
   const isMobile = useIsMobile()
 
   const PIPELINE_STAGES = LEAD_STAGES.filter(s => s !== 'PERDIDO')
@@ -927,6 +941,9 @@ export default function CrmPage() {
     fetchMetrics()
     apiFetch<Array<{ id: string; code: string; name: string }>>('/api/products')
       .then(setProducts)
+      .catch(() => {})
+    apiFetch<{ salesReps: string[]; mentors: string[] }>('/api/crm/suggestions')
+      .then(setSuggestions)
       .catch(() => {})
   }, [fetchLeads, fetchMetrics])
 
@@ -1129,6 +1146,7 @@ export default function CrmPage() {
             fetchLeads()
             fetchMetrics()
           }}
+          suggestions={suggestions}
         />
       )}
       {closingLead && (
@@ -1144,6 +1162,7 @@ export default function CrmPage() {
           onClose={() => setShowNewLead(false)}
           onConfirm={handleCreateLead}
           products={products}
+          salesRepSuggestions={suggestions.salesReps}
         />
       )}
     </div>
