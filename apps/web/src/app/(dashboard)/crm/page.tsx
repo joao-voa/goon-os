@@ -193,23 +193,30 @@ function CloseDealModal({
             </div>
           </div>
           {/* Adiantamento */}
-          <div style={{ border: '1px solid #ddd', padding: 12, background: '#fafafa' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>
-              <input type="checkbox" checked={wasAdvanced} onChange={e => setWasAdvanced(e.target.checked)} style={{ accentColor: '#4A78FF' }} />
-              Valor adiantado (app financeiro)
-            </label>
-            {wasAdvanced && (
-              <div style={{ marginTop: 8 }}>
-                <label style={labelStyle}>Valor Recebido no Adiantamento (R$)</label>
-                <input type="number" step="0.01" placeholder="0.00" value={advanceValue} onChange={e => setAdvanceValue(e.target.value)} style={inputStyle} />
-                {parseFloat(advanceValue) > 0 && value > 0 && (
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#cc0000', marginTop: 4 }}>
-                    Taxa adiantamento: R$ {(value - parseFloat(advanceValue)).toFixed(2)} ({((1 - parseFloat(advanceValue) / value) * 100).toFixed(1)}%)
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          {paymentMethod === 'CARTAO' && (
+            <div style={{ border: '2px solid #4A78FF', padding: 12, background: '#f0f5ff' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>
+                <input type="checkbox" checked={wasAdvanced} onChange={e => setWasAdvanced(e.target.checked)} style={{ accentColor: '#4A78FF' }} />
+                Valor adiantado (app financeiro)
+              </label>
+              {wasAdvanced && (
+                <div style={{ marginTop: 8 }}>
+                  <label style={labelStyle}>Valor Recebido no Adiantamento (R$)</label>
+                  <input type="number" step="0.01" placeholder="0.00" value={advanceValue} onChange={e => setAdvanceValue(e.target.value)} style={inputStyle} />
+                  {parseFloat(advanceValue) > 0 && value > 0 && (
+                    <>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#cc0000', marginTop: 4 }}>
+                        Taxa adiantamento: R$ {(value - parseFloat(advanceValue)).toFixed(2)} ({((1 - parseFloat(advanceValue) / value) * 100).toFixed(1)}%)
+                      </div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#e6a800', marginTop: 2 }}>
+                        Comissao: {commissionPercentage}% sobre adiantado = R$ {(parseFloat(advanceValue) * parseFloat(commissionPercentage) / 100).toFixed(2)} (parcela unica)
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           {installments > 0 && value > 0 && (
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, background: '#f0f0f0', padding: '8px 12px', border: '1px solid #ccc' }}>
               {entry > 0 && <div>Entrada: R$ {entry.toFixed(2)}</div>}
@@ -218,8 +225,11 @@ function CloseDealModal({
               {wasAdvanced && parseFloat(advanceValue) > 0 && (
                 <div style={{ fontSize: 10, color: '#4A78FF', marginTop: 2 }}>Adiantado: R$ {parseFloat(advanceValue).toFixed(2)}</div>
               )}
-              {parseFloat(commissionPercentage) > 0 && (
+              {parseFloat(commissionPercentage) > 0 && !wasAdvanced && (
                 <div style={{ fontSize: 10, color: '#e6a800', marginTop: 2 }}>Comissao: {commissionPercentage}% = R$ {(installmentVal * parseFloat(commissionPercentage) / 100).toFixed(2)}/parcela</div>
+              )}
+              {wasAdvanced && parseFloat(advanceValue) > 0 && parseFloat(commissionPercentage) > 0 && (
+                <div style={{ fontSize: 10, color: '#e6a800', marginTop: 2 }}>Comissao: {commissionPercentage}% sobre adiantado = R$ {(parseFloat(advanceValue) * parseFloat(commissionPercentage) / 100).toFixed(2)} (parcela unica)</div>
               )}
             </div>
           )}

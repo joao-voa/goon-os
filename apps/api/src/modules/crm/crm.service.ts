@@ -210,36 +210,62 @@ export class CrmService {
     const salesRep = client.salesRep
     if (salesRep) {
       const percentage = dto.commissionPercentage ?? 10
-      const commissions = await this.commissionsService.createForPayments(
-        id,
-        salesRep,
-        percentage,
-        payments.map(p => ({
-          id: p.id,
-          installment: p.installment,
-          totalInstallments: p.totalInstallments,
-          value: typeof p.value === 'number' ? p.value : Number(p.value),
-        })),
-      )
-      commissionsCreated = commissions.length
+
+      if (dto.wasAdvanced && dto.advanceValue) {
+        // Cartão adiantado: comissão sobre o valor adiantado, tudo de uma vez
+        const commissionValue = Math.round(dto.advanceValue * percentage) / 100
+        await this.commissionsService.createForPayments(
+          id,
+          salesRep,
+          percentage,
+          [{
+            id: payments[0].id,
+            installment: 1,
+            totalInstallments: 1,
+            value: dto.advanceValue,
+          }],
+        )
+        commissionsCreated = 1
+      } else {
+        // Normal: comissão por parcela
+        const commissions = await this.commissionsService.createForPayments(
+          id,
+          salesRep,
+          percentage,
+          payments.map(p => ({
+            id: p.id,
+            installment: p.installment,
+            totalInstallments: p.totalInstallments,
+            value: typeof p.value === 'number' ? p.value : Number(p.value),
+          })),
+        )
+        commissionsCreated = commissions.length
+      }
     }
 
     // 6. Auto-create expense for commissions (if any)
     if (commissionsCreated > 0 && salesRep) {
-      const totalCommissionValue = payments.reduce((sum, p) => {
-        const val = typeof p.value === 'number' ? p.value : Number(p.value)
-        return sum + Math.round(val * (dto.commissionPercentage ?? 10)) / 100
-      }, 0)
+      const percentage = dto.commissionPercentage ?? 10
+      let totalCommissionValue: number
+
+      if (dto.wasAdvanced && dto.advanceValue) {
+        totalCommissionValue = Math.round(dto.advanceValue * percentage) / 100
+      } else {
+        totalCommissionValue = payments.reduce((sum, p) => {
+          const val = typeof p.value === 'number' ? p.value : Number(p.value)
+          return sum + Math.round(val * percentage) / 100
+        }, 0)
+      }
 
       const commPayDate = getNextCommissionPaymentDate(now)
 
       await this.expensesService.create({
-        description: `Comissao ${salesRep} — ${client.companyName}`,
+        description: `Comissao ${salesRep} — ${client.companyName}${dto.wasAdvanced ? ' (adiantado)' : ''}`,
         category: 'PESSOAS',
         value: Math.round(totalCommissionValue * 100) / 100,
         recurrence: 'UNICA',
         dueDate: commPayDate,
-        notes: `Auto-gerada ao fechar venda. ${commissionsCreated} parcelas.`,
+        notes: `Auto-gerada ao fechar venda. ${dto.wasAdvanced ? 'Valor adiantado: R$' + dto.advanceValue : commissionsCreated + ' parcelas'}.`,
       })
     }
 
