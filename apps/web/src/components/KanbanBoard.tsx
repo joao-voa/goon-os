@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/core'
 import { useDroppable } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
-import { ONBOARDING_STAGES, STAGE_LABELS, STAGE_COLORS, PRODUCT_COLORS } from '@/lib/constants'
+import { ONBOARDING_STAGES, STAGE_LABELS, STAGE_COLORS, PRODUCT_COLORS as PROD_COLORS } from '@/lib/constants'
 
 export interface OnboardingItem {
   id: string
@@ -66,12 +66,7 @@ function DraggableCard({
 
 // ---- Card Content (shared between draggable and overlay) ----
 function CardContent({ item }: { item: OnboardingItem }) {
-  const codeColors: Record<string, string> = {
-    GE: 'var(--retro-blue)',
-    GI: 'var(--success)',
-    GS: 'var(--warning)',
-  }
-  const productColor = item.productCode ? (codeColors[item.productCode] ?? '#888') : null
+  const productColor = item.productCode ? (PROD_COLORS[item.productCode] ?? '#888') : null
   const daysWarning = item.daysInStage > 14
 
   return (

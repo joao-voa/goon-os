@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/core'
 import { useDroppable } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
-import { LEAD_STAGE_LABELS, LEAD_STAGE_COLORS, LEAD_SOURCE_LABELS } from '@/lib/constants'
+import { LEAD_STAGE_LABELS, LEAD_STAGE_COLORS, LEAD_SOURCE_LABELS, PRODUCT_COLORS } from '@/lib/constants'
 
 interface LeadItem {
   id: string
@@ -89,6 +89,15 @@ function DraggableCard({ item, onClick }: { item: LeadItem; onClick: (item: Lead
             padding: '2px 6px', border: '1px solid #86efac', fontWeight: 700,
           }}>
             R$ {item.saleValue.toLocaleString('pt-BR')}
+          </span>
+        )}
+        {item.productCode && (
+          <span style={{
+            fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700,
+            background: PRODUCT_COLORS[item.productCode] ?? '#888',
+            color: 'white', padding: '2px 6px', border: '1px solid black',
+          }}>
+            {item.productCode}
           </span>
         )}
       </div>
