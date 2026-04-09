@@ -618,6 +618,17 @@ export default function ContractsPage() {
   const [filterRenewal, setFilterRenewal] = useState(() => searchParams.get('renewal') === 'true')
   const [filterPendingSig, setFilterPendingSig] = useState(false)
   const [selected, setSelected] = useState<Contract | null>(null)
+  const [sortField, setSortField] = useState<string>('')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+
+  const toggleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortField(field)
+      setSortDir('asc')
+    }
+  }
 
   const limit = 20
 
@@ -690,6 +701,49 @@ export default function ContractsPage() {
     displayedContracts = displayedContracts.filter(c => !c.isSigned && c.status !== 'CANCELLED')
   }
 
+  // Client-side sorting
+  if (sortField) {
+    displayedContracts = [...displayedContracts].sort((a, b) => {
+      let va: string | number = ''
+      let vb: string | number = ''
+      switch (sortField) {
+        case 'cliente':
+          va = a.client.companyName.toLowerCase()
+          vb = b.client.companyName.toLowerCase()
+          break
+        case 'produto':
+          va = a.templateType.toLowerCase()
+          vb = b.templateType.toLowerCase()
+          break
+        case 'valor':
+          va = a.clientPlan?.value ?? 0
+          vb = b.clientPlan?.value ?? 0
+          break
+        case 'vigencia':
+          va = a.clientPlan?.startDate ?? ''
+          vb = b.clientPlan?.startDate ?? ''
+          break
+        case 'status':
+          va = a.status
+          vb = b.status
+          break
+        case 'assinado':
+          va = a.isSigned ? 1 : 0
+          vb = b.isSigned ? 1 : 0
+          break
+        case 'versao':
+          va = a.version
+          vb = b.version
+          break
+        default:
+          return 0
+      }
+      if (va < vb) return sortDir === 'asc' ? -1 : 1
+      if (va > vb) return sortDir === 'asc' ? 1 : -1
+      return 0
+    })
+  }
+
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* Page Header */}
@@ -703,71 +757,103 @@ export default function ContractsPage() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           {/* Toggle: Somente Renovação */}
-          <button
-            onClick={() => setFilterRenewal(v => !v)}
-            style={{
-              padding: '6px 12px',
-              border: '2px solid black',
-              background: filterRenewal ? '#f59e0b' : 'white',
-              color: filterRenewal ? 'black' : '#555',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              fontWeight: 700,
-              boxShadow: filterRenewal ? '2px 2px 0 black' : '1px 1px 0 black',
-            }}
-          >
-            &#8635; Renovação
-          </button>
+          <div>
+            <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Renovação</label>
+            <button
+              onClick={() => setFilterRenewal(v => !v)}
+              style={{
+                padding: '6px 12px',
+                border: '2px solid black',
+                background: filterRenewal ? '#f59e0b' : 'white',
+                color: filterRenewal ? 'black' : '#555',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                fontWeight: 700,
+                boxShadow: filterRenewal ? '2px 2px 0 black' : '1px 1px 0 black',
+              }}
+            >
+              &#8635; Renovação
+            </button>
+          </div>
 
           {/* Toggle: Assinatura Pendente */}
-          <button
-            onClick={() => setFilterPendingSig(v => !v)}
-            style={{
-              padding: '6px 12px',
-              border: '2px solid black',
-              background: filterPendingSig ? 'var(--danger)' : 'white',
-              color: filterPendingSig ? 'white' : '#555',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              fontWeight: 700,
-              boxShadow: filterPendingSig ? '2px 2px 0 black' : '1px 1px 0 black',
-            }}
-          >
-            ✗ Assinatura Pendente
-          </button>
+          <div>
+            <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Assinatura</label>
+            <button
+              onClick={() => setFilterPendingSig(v => !v)}
+              style={{
+                padding: '6px 12px',
+                border: '2px solid black',
+                background: filterPendingSig ? 'var(--danger)' : 'white',
+                color: filterPendingSig ? 'white' : '#555',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                fontWeight: 700,
+                boxShadow: filterPendingSig ? '2px 2px 0 black' : '1px 1px 0 black',
+              }}
+            >
+              ✗ Assinatura Pendente
+            </button>
+          </div>
 
           {/* Status filter */}
-          <select
-            className="goon-select"
-            value={statusFilter}
-            onChange={e => { setStatusFilter(e.target.value); setPage(1) }}
-            style={{ width: 'auto', minWidth: 180 }}
-          >
-            <option value="">Todos os status</option>
-            <option value="DRAFT">Rascunho</option>
-            <option value="SENT">Enviado</option>
-            <option value="SIGNED">Assinado</option>
-            <option value="CANCELLED">Cancelado</option>
-          </select>
+          <div>
+            <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Status</label>
+            <select
+              className="goon-select"
+              value={statusFilter}
+              onChange={e => { setStatusFilter(e.target.value); setPage(1) }}
+              style={{ width: 'auto', minWidth: 180 }}
+            >
+              <option value="">Todos os status</option>
+              <option value="DRAFT">Rascunho</option>
+              <option value="SENT">Enviado</option>
+              <option value="SIGNED">Assinado</option>
+              <option value="CANCELLED">Cancelado</option>
+            </select>
+          </div>
+
+          {/* Aplicar button */}
+          <div>
+            <button
+              onClick={() => { setPage(1); handleRefresh() }}
+              style={{
+                padding: '6px 12px',
+                background: 'black',
+                color: 'white',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                fontWeight: 700,
+                border: '2px solid black',
+                boxShadow: '3px 3px 0 black',
+                cursor: 'pointer',
+                textTransform: 'uppercase',
+              }}
+            >
+              Aplicar
+            </button>
+          </div>
 
           {/* Generate contract link */}
-          <a
-            href="/contracts/generate"
-            className="goon-btn-primary"
-            style={{
-              textDecoration: 'none',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            + GERAR CONTRATO
-          </a>
+          <div>
+            <a
+              href="/contracts/generate"
+              className="goon-btn-primary"
+              style={{
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              + GERAR CONTRATO
+            </a>
+          </div>
         </div>
       </div>
 
@@ -847,8 +933,24 @@ export default function ContractsPage() {
             <table className="goon-table">
               <thead>
                 <tr>
-                  {['Cliente', 'Produto', 'Valor', 'Vigência', 'Status', 'Assinado', 'Versão', ''].map(h => (
-                    <th key={h}>{h}</th>
+                  {[
+                    { label: 'Cliente', field: 'cliente' },
+                    { label: 'Produto', field: 'produto' },
+                    { label: 'Valor', field: 'valor' },
+                    { label: 'Vigência', field: 'vigencia' },
+                    { label: 'Status', field: 'status' },
+                    { label: 'Assinado', field: 'assinado' },
+                    { label: 'Versão', field: 'versao' },
+                    { label: '', field: '' },
+                  ].map(h => (
+                    <th
+                      key={h.label + h.field}
+                      onClick={h.field ? () => toggleSort(h.field) : undefined}
+                      style={h.field ? { cursor: 'pointer', userSelect: 'none' } : undefined}
+                    >
+                      {h.label}
+                      {h.field && sortField === h.field ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
+                    </th>
                   ))}
                 </tr>
               </thead>

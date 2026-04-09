@@ -152,8 +152,19 @@ export default function CommissionsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [clients, setClients] = useState<Client[]>([])
   const now = new Date()
-  const [month, setMonth] = useState(now.getMonth() + 1)
+  const [month, setMonth] = useState<number | null>(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
+  const [sortField, setSortField] = useState<string>('dueDate')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+
+  function toggleSort(field: string) {
+    if (sortField === field) {
+      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDir('asc')
+    }
+  }
 
   const loadData = useCallback(async () => {
     try {
@@ -165,9 +176,13 @@ export default function CommissionsPage() {
       params.set('page', String(page))
       params.set('limit', '20')
 
+      const summaryParams = new URLSearchParams()
+      if (month) summaryParams.set('month', String(month))
+      summaryParams.set('year', String(year))
+
       const [list, sum] = await Promise.all([
         apiFetch<{ data: Commission[]; total: number }>(`/api/commissions?${params}`),
-        apiFetch<Summary>(`/api/commissions/summary?month=${month}&year=${year}`),
+        apiFetch<Summary>(`/api/commissions/summary?${summaryParams}`),
       ])
 
       setCommissions(list.data)
@@ -175,6 +190,21 @@ export default function CommissionsPage() {
       setSummary(sum)
     } catch { toast.error('Erro ao carregar comissoes') }
   }, [salesRepFilter, statusFilter, month, year, page])
+
+  const sortedCommissions = [...commissions].sort((a, b) => {
+    const dir = sortDir === 'asc' ? 1 : -1
+    switch (sortField) {
+      case 'client': return dir * a.client.companyName.localeCompare(b.client.companyName)
+      case 'salesRep': return dir * a.salesRep.localeCompare(b.salesRep)
+      case 'installment': return dir * (a.installment - b.installment)
+      case 'baseValue': return dir * (a.baseValue - b.baseValue)
+      case 'percentage': return dir * (a.percentage - b.percentage)
+      case 'value': return dir * (a.value - b.value)
+      case 'dueDate': return dir * (new Date(a.payment.dueDate).getTime() - new Date(b.payment.dueDate).getTime())
+      case 'status': return dir * a.status.localeCompare(b.status)
+      default: return 0
+    }
+  })
 
   useEffect(() => { loadData() }, [loadData])
 
@@ -256,20 +286,36 @@ export default function CommissionsPage() {
       )}
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        <input placeholder="Vendedor" value={salesRepFilter} onChange={e => setSalesRepFilter(e.target.value)} style={{ padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }} />
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-          <option value="">Todos</option>
-          <option value="PENDING">Pendente</option>
-          <option value="PAID">Pago</option>
-          <option value="CANCELLED">Cancelado</option>
-        </select>
-        <select value={month} onChange={e => setMonth(parseInt(e.target.value))} style={{ padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-          {Array.from({ length: 12 }, (_, i) => (
-            <option key={i + 1} value={i + 1}>{new Date(2000, i).toLocaleString('pt-BR', { month: 'long' })}</option>
-          ))}
-        </select>
-        <input type="number" value={year} onChange={e => setYear(parseInt(e.target.value))} style={{ width: 80, padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }} />
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div>
+          <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Vendedor</label>
+          <input placeholder="Todos" value={salesRepFilter} onChange={e => setSalesRepFilter(e.target.value)} style={{ padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12, width: 140 }} />
+        </div>
+        <div>
+          <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Status</label>
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+            <option value="">Todos</option>
+            <option value="PENDING">Pendente</option>
+            <option value="PAID">Pago</option>
+            <option value="CANCELLED">Cancelado</option>
+          </select>
+        </div>
+        <div>
+          <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Mes</label>
+          <select value={month ?? ''} onChange={e => setMonth(e.target.value ? parseInt(e.target.value) : null)} style={{ padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+            <option value="">Todos</option>
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i + 1} value={i + 1}>{new Date(2000, i).toLocaleString('pt-BR', { month: 'long' })}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Ano</label>
+          <input type="number" value={year} onChange={e => setYear(parseInt(e.target.value))} style={{ width: 80, padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }} />
+        </div>
+        <button onClick={() => { setPage(1); loadData() }} style={{ padding: '6px 16px', border: '2px solid black', background: 'black', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0 black', height: 32 }}>
+          APLICAR
+        </button>
       </div>
 
       {/* Table */}
@@ -277,19 +323,25 @@ export default function CommissionsPage() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
           <thead>
             <tr style={{ background: 'black', color: 'white', textTransform: 'uppercase' }}>
-              <th style={{ padding: '8px 12px', textAlign: 'left' }}>Cliente</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left' }}>Vendedor</th>
-              <th style={{ padding: '8px 12px', textAlign: 'center' }}>Parcela</th>
-              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Base</th>
-              <th style={{ padding: '8px 12px', textAlign: 'center' }}>%</th>
-              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Comissao</th>
-              <th style={{ padding: '8px 12px', textAlign: 'center' }}>Vencimento</th>
-              <th style={{ padding: '8px 12px', textAlign: 'center' }}>Status</th>
+              {([
+                { key: 'client', label: 'Cliente', align: 'left' },
+                { key: 'salesRep', label: 'Vendedor', align: 'left' },
+                { key: 'installment', label: 'Parcela', align: 'center' },
+                { key: 'baseValue', label: 'Base', align: 'right' },
+                { key: 'percentage', label: '%', align: 'center' },
+                { key: 'value', label: 'Comissao', align: 'right' },
+                { key: 'dueDate', label: 'Vencimento', align: 'center' },
+                { key: 'status', label: 'Status', align: 'center' },
+              ] as const).map(col => (
+                <th key={col.key} onClick={() => toggleSort(col.key)} style={{ padding: '8px 12px', textAlign: col.align as 'left'|'right'|'center', cursor: 'pointer', userSelect: 'none' }}>
+                  {col.label} {sortField === col.key ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                </th>
+              ))}
               <th style={{ padding: '8px 12px', textAlign: 'center' }}>Acoes</th>
             </tr>
           </thead>
           <tbody>
-            {commissions.map(c => (
+            {sortedCommissions.map(c => (
               <tr key={c.id} style={{ borderBottom: '1px solid #ccc' }}>
                 <td style={{ padding: '8px 12px' }}>{c.client.companyName}</td>
                 <td style={{ padding: '8px 12px' }}>{c.salesRep}</td>

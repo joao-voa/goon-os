@@ -42,6 +42,17 @@ export default function ExpensesPage() {
   const [showModal, setShowModal] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
+  const [sortField, setSortField] = useState<keyof Expense | ''>('')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+
+  const toggleSort = (field: keyof Expense) => {
+    if (sortField === field) {
+      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortField(field)
+      setSortDir('asc')
+    }
+  }
 
   const loadData = useCallback(async () => {
     try {
@@ -108,6 +119,19 @@ export default function ExpensesPage() {
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
   const inputStyle: React.CSSProperties = { width: '100%', padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }
+  const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }
+
+  const sortedExpenses = [...expenses].sort((a, b) => {
+    if (!sortField) return 0
+    const aVal = a[sortField]
+    const bVal = b[sortField]
+    if (aVal == null && bVal == null) return 0
+    if (aVal == null) return 1
+    if (bVal == null) return -1
+    if (typeof aVal === 'number' && typeof bVal === 'number') return sortDir === 'asc' ? aVal - bVal : bVal - aVal
+    const cmp = String(aVal).localeCompare(String(bVal), 'pt-BR')
+    return sortDir === 'asc' ? cmp : -cmp
+  })
 
   return (
     <div style={{ padding: 24 }}>
@@ -137,22 +161,35 @@ export default function ExpensesPage() {
       )}
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-          <option value="">Todas categorias</option>
-          {CATEGORIES.map(c => <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>)}
-        </select>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-          <option value="">Todos status</option>
-          <option value="PREVISTO">Previsto</option>
-          <option value="PAGO">Pago</option>
-        </select>
-        <select value={month} onChange={e => setMonth(parseInt(e.target.value))} style={{ padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-          {Array.from({ length: 12 }, (_, i) => (
-            <option key={i + 1} value={i + 1}>{new Date(2000, i).toLocaleString('pt-BR', { month: 'long' })}</option>
-          ))}
-        </select>
-        <input type="number" value={year} onChange={e => setYear(parseInt(e.target.value))} style={{ width: 80, padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }} />
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div>
+          <label style={labelStyle}>Categoria</label>
+          <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+            <option value="">Todas categorias</option>
+            {CATEGORIES.map(c => <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>Status</label>
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+            <option value="">Todos status</option>
+            <option value="PREVISTO">Previsto</option>
+            <option value="PAGO">Pago</option>
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>Mes</label>
+          <select value={month} onChange={e => setMonth(parseInt(e.target.value))} style={{ padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i + 1} value={i + 1}>{new Date(2000, i).toLocaleString('pt-BR', { month: 'long' })}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>Ano</label>
+          <input type="number" value={year} onChange={e => setYear(parseInt(e.target.value))} style={{ width: 80, padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }} />
+        </div>
+        <button onClick={() => loadData()} style={{ background: 'black', color: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black', padding: '8px 16px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>APLICAR</button>
       </div>
 
       {/* Table */}
@@ -160,17 +197,17 @@ export default function ExpensesPage() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
           <thead>
             <tr style={{ background: 'black', color: 'white', textTransform: 'uppercase' }}>
-              <th style={{ padding: '8px 12px', textAlign: 'left' }}>Descricao</th>
-              <th style={{ padding: '8px 12px', textAlign: 'center' }}>Categoria</th>
-              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Valor</th>
-              <th style={{ padding: '8px 12px', textAlign: 'center' }}>Recorrencia</th>
-              <th style={{ padding: '8px 12px', textAlign: 'center' }}>Vencimento</th>
-              <th style={{ padding: '8px 12px', textAlign: 'center' }}>Status</th>
+              <th onClick={() => toggleSort('description')} style={{ padding: '8px 12px', textAlign: 'left', cursor: 'pointer' }}>Descricao{sortField === 'description' ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>
+              <th onClick={() => toggleSort('category')} style={{ padding: '8px 12px', textAlign: 'center', cursor: 'pointer' }}>Categoria{sortField === 'category' ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>
+              <th onClick={() => toggleSort('value')} style={{ padding: '8px 12px', textAlign: 'right', cursor: 'pointer' }}>Valor{sortField === 'value' ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>
+              <th onClick={() => toggleSort('recurrence')} style={{ padding: '8px 12px', textAlign: 'center', cursor: 'pointer' }}>Recorrencia{sortField === 'recurrence' ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>
+              <th onClick={() => toggleSort('dueDate')} style={{ padding: '8px 12px', textAlign: 'center', cursor: 'pointer' }}>Vencimento{sortField === 'dueDate' ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>
+              <th onClick={() => toggleSort('status')} style={{ padding: '8px 12px', textAlign: 'center', cursor: 'pointer' }}>Status{sortField === 'status' ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>
               <th style={{ padding: '8px 12px', textAlign: 'center' }}>Acoes</th>
             </tr>
           </thead>
           <tbody>
-            {expenses.map(e => (
+            {sortedExpenses.map(e => (
               <tr key={e.id} style={{ borderBottom: '1px solid #ccc' }}>
                 <td style={{ padding: '8px 12px' }}>{e.description}</td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>{CATEGORY_LABELS[e.category] ?? e.category}</td>

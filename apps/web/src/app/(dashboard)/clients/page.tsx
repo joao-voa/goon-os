@@ -409,6 +409,45 @@ export default function ClientsPage() {
   const [segmentFilter, setSegmentFilter] = useState('')
   const [sort, setSort] = useState('companyName')
 
+  const [sortField, setSortField] = useState<string>('')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+
+  const toggleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDir(prev => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortField(field)
+      setSortDir('asc')
+    }
+  }
+
+  const filterLabelStyle: React.CSSProperties = {
+    fontFamily: 'var(--font-mono)',
+    fontSize: 9,
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    display: 'block',
+    marginBottom: 4,
+  }
+
+  const sortedClients = [...clients].sort((a, b) => {
+    if (!sortField) return 0
+    let aVal: string | number | boolean = ''
+    let bVal: string | number | boolean = ''
+    switch (sortField) {
+      case 'companyName': aVal = a.companyName.toLowerCase(); bVal = b.companyName.toLowerCase(); break
+      case 'responsible': aVal = a.responsible.toLowerCase(); bVal = b.responsible.toLowerCase(); break
+      case 'hasContract': aVal = a.hasContract ? 1 : 0; bVal = b.hasContract ? 1 : 0; break
+      case 'hasBilling': aVal = a.hasBilling ? 1 : 0; bVal = b.hasBilling ? 1 : 0; break
+      case 'isClientActive': aVal = a.isClientActive ? 1 : 0; bVal = b.isClientActive ? 1 : 0; break
+      case 'status': aVal = a.status; bVal = b.status; break
+      default: return 0
+    }
+    if (aVal < bVal) return sortDir === 'asc' ? -1 : 1
+    if (aVal > bVal) return sortDir === 'asc' ? 1 : -1
+    return 0
+  })
+
   const limit = 20
   const totalPages = Math.ceil(total / limit)
 
@@ -478,14 +517,18 @@ export default function ClientsPage() {
         gap: 10,
         marginBottom: statusFilter ? 8 : 20,
         flexWrap: 'wrap',
+        alignItems: 'flex-end',
       }}>
-        <input
-          className="goon-input"
-          style={isMobile ? { width: '100%' } : { maxWidth: 280 }}
-          placeholder="Buscar empresa, responsável..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <div>
+          <label style={filterLabelStyle}>Busca</label>
+          <input
+            className="goon-input"
+            style={isMobile ? { width: '100%' } : { maxWidth: 280 }}
+            placeholder="Buscar empresa, responsável..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
         {/* Filter chips row — horizontally scrollable on mobile */}
         <div style={isMobile ? {
           display: 'flex',
@@ -497,35 +540,62 @@ export default function ClientsPage() {
           display: 'flex',
           gap: 10,
           flexWrap: 'wrap',
+          alignItems: 'flex-end',
         }}>
-          <select
-            className="goon-select"
-            style={isMobile ? { minWidth: 150, flexShrink: 0 } : { maxWidth: 180 }}
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-          >
-            <option value="">Todos os status</option>
-            <option value="ACTIVE">Ativo</option>
-            <option value="PROSPECT">Prospect</option>
-            <option value="INACTIVE">Inativo</option>
-          </select>
-          <input
-            className="goon-input"
-            style={isMobile ? { minWidth: 150, flexShrink: 0 } : { maxWidth: 180 }}
-            placeholder="Filtrar segmento..."
-            value={segmentFilter}
-            onChange={e => setSegmentFilter(e.target.value)}
-          />
-          <select
-            className="goon-select"
-            style={isMobile ? { minWidth: 180, flexShrink: 0 } : { maxWidth: 200 }}
-            value={sort}
-            onChange={e => setSort(e.target.value)}
-          >
-            <option value="companyName">Ordenar: Empresa</option>
-            <option value="createdAt">Ordenar: Mais recentes</option>
-          </select>
+          <div>
+            <label style={filterLabelStyle}>Status</label>
+            <select
+              className="goon-select"
+              style={isMobile ? { minWidth: 150, flexShrink: 0 } : { maxWidth: 180 }}
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
+            >
+              <option value="">Todos os status</option>
+              <option value="ACTIVE">Ativo</option>
+              <option value="PROSPECT">Prospect</option>
+              <option value="INACTIVE">Inativo</option>
+            </select>
+          </div>
+          <div>
+            <label style={filterLabelStyle}>Segmento</label>
+            <input
+              className="goon-input"
+              style={isMobile ? { minWidth: 150, flexShrink: 0 } : { maxWidth: 180 }}
+              placeholder="Filtrar segmento..."
+              value={segmentFilter}
+              onChange={e => setSegmentFilter(e.target.value)}
+            />
+          </div>
+          <div>
+            <label style={filterLabelStyle}>Ordenar</label>
+            <select
+              className="goon-select"
+              style={isMobile ? { minWidth: 180, flexShrink: 0 } : { maxWidth: 200 }}
+              value={sort}
+              onChange={e => setSort(e.target.value)}
+            >
+              <option value="companyName">Ordenar: Empresa</option>
+              <option value="createdAt">Ordenar: Mais recentes</option>
+            </select>
+          </div>
         </div>
+        <button
+          onClick={fetchClients}
+          style={{
+            background: 'black',
+            color: 'white',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+            fontWeight: 700,
+            border: '2px solid black',
+            boxShadow: '3px 3px 0 black',
+            padding: '6px 16px',
+            cursor: 'pointer',
+            textTransform: 'uppercase',
+          }}
+        >
+          Aplicar
+        </button>
       </div>
 
       {/* Active filter indicator */}
@@ -582,18 +652,18 @@ export default function ClientsPage() {
           <table className="goon-table">
             <thead>
               <tr>
-                <th>Empresa</th>
-                <th>Responsável</th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('companyName')}>Empresa {sortField === 'companyName' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('responsible')}>Responsável {sortField === 'responsible' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th>Produto</th>
-                <th style={{ textAlign: 'center', width: 70 }}>Contrato</th>
-                <th style={{ textAlign: 'center', width: 70 }}>Boleto</th>
-                <th style={{ textAlign: 'center', width: 60 }}>Ativo</th>
-                <th>Status</th>
+                <th style={{ textAlign: 'center', width: 70, cursor: 'pointer' }} onClick={() => toggleSort('hasContract')}>Contrato {sortField === 'hasContract' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th style={{ textAlign: 'center', width: 70, cursor: 'pointer' }} onClick={() => toggleSort('hasBilling')}>Boleto {sortField === 'hasBilling' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th style={{ textAlign: 'center', width: 60, cursor: 'pointer' }} onClick={() => toggleSort('isClientActive')}>Ativo {sortField === 'isClientActive' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('status')}>Status {sortField === 'status' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th style={{ width: 80 }}>Ações</th>
               </tr>
             </thead>
             <tbody>
-              {clients.map(client => (
+              {sortedClients.map(client => (
                 <tr
                   key={client.id}
                   style={{ cursor: 'pointer' }}

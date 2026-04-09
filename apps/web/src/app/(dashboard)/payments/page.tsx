@@ -410,6 +410,18 @@ export default function PaymentsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const [sortField, setSortField] = useState<string>('')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+
+  const toggleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortField(field)
+      setSortDir('asc')
+    }
+  }
+
   const limit = 20
   const totalPages = Math.ceil(total / limit)
 
@@ -562,26 +574,54 @@ export default function PaymentsPage() {
       </div>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-        <input
-          className="goon-input"
-          style={{ maxWidth: 280 }}
-          placeholder="Buscar cliente..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-        <select
-          className="goon-select"
-          style={{ maxWidth: 200 }}
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div>
+          <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, display: 'block', marginBottom: 4 }}>
+            Buscar
+          </label>
+          <input
+            className="goon-input"
+            style={{ maxWidth: 280 }}
+            placeholder="Buscar cliente..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+        <div>
+          <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, display: 'block', marginBottom: 4 }}>
+            Status
+          </label>
+          <select
+            className="goon-select"
+            style={{ maxWidth: 200 }}
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+          >
+            <option value="">Todos os status</option>
+            <option value="PENDING">Pendente</option>
+            <option value="PAID">Pago</option>
+            <option value="OVERDUE">Vencido</option>
+            <option value="SCHEDULED">Agendado</option>
+          </select>
+        </div>
+        <button
+          className="goon-btn-accent"
+          style={{
+            background: 'black',
+            color: 'white',
+            border: '2px solid black',
+            boxShadow: '2px 2px 0 black',
+            padding: '8px 16px',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+            fontWeight: 700,
+            textTransform: 'uppercase' as const,
+            cursor: 'pointer',
+          }}
+          onClick={() => fetchPayments()}
         >
-          <option value="">Todos os status</option>
-          <option value="PENDING">Pendente</option>
-          <option value="PAID">Pago</option>
-          <option value="OVERDUE">Vencido</option>
-          <option value="SCHEDULED">Agendado</option>
-        </select>
+          Aplicar
+        </button>
       </div>
 
       {/* Loading */}
@@ -612,22 +652,42 @@ export default function PaymentsPage() {
       )}
 
       {/* Desktop Table */}
-      {!loading && payments.length > 0 && !isMobile && (
+      {!loading && payments.length > 0 && !isMobile && (() => {
+        const sortedPayments = [...payments].sort((a, b) => {
+          if (!sortField) return 0
+          let av: string | number = ''
+          let bv: string | number = ''
+          switch (sortField) {
+            case 'client': av = a.client.companyName.toLowerCase(); bv = b.client.companyName.toLowerCase(); break
+            case 'program': av = (a.programName ?? '').toLowerCase(); bv = (b.programName ?? '').toLowerCase(); break
+            case 'installment': av = a.installmentNumber; bv = b.installmentNumber; break
+            case 'dueDate': av = a.dueDate; bv = b.dueDate; break
+            case 'value': av = a.value; bv = b.value; break
+            case 'status': av = a.status; bv = b.status; break
+            default: return 0
+          }
+          if (av < bv) return sortDir === 'asc' ? -1 : 1
+          if (av > bv) return sortDir === 'asc' ? 1 : -1
+          return 0
+        })
+        const thStyle: React.CSSProperties = { cursor: 'pointer', userSelect: 'none' }
+        const sortIndicator = (field: string) => sortField === field ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''
+        return (
         <div style={{ overflow: 'auto', border: '2px solid black', boxShadow: '6px 6px 0px 0px #000' }}>
           <table className="goon-table">
             <thead>
               <tr>
-                <th>Aluno / Empresa</th>
-                <th>Programa</th>
-                <th>Parcela</th>
-                <th>Vencimento</th>
-                <th>Valor</th>
-                <th>Status</th>
+                <th style={thStyle} onClick={() => toggleSort('client')}>Aluno / Empresa{sortIndicator('client')}</th>
+                <th style={thStyle} onClick={() => toggleSort('program')}>Programa{sortIndicator('program')}</th>
+                <th style={thStyle} onClick={() => toggleSort('installment')}>Parcela{sortIndicator('installment')}</th>
+                <th style={thStyle} onClick={() => toggleSort('dueDate')}>Vencimento{sortIndicator('dueDate')}</th>
+                <th style={thStyle} onClick={() => toggleSort('value')}>Valor{sortIndicator('value')}</th>
+                <th style={thStyle} onClick={() => toggleSort('status')}>Status{sortIndicator('status')}</th>
                 <th>Ações</th>
               </tr>
             </thead>
             <tbody>
-              {payments.map(payment => {
+              {sortedPayments.map(payment => {
                 const bg = rowBackground(payment)
                 return (
                   <tr key={payment.id} style={bg ? { background: bg } : {}}>
@@ -701,7 +761,8 @@ export default function PaymentsPage() {
             </tbody>
           </table>
         </div>
-      )}
+        )
+      })()}
 
       {/* Mobile Cards */}
       {!loading && payments.length > 0 && isMobile && (
