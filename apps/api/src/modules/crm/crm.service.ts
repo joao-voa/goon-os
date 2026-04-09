@@ -140,6 +140,7 @@ export class CrmService {
       wasAdvanced?: boolean
       advanceValue?: number
       closedAt?: string
+      entryValue?: number
     },
   ) {
     const client = await this.prisma.client.findUnique({
@@ -196,7 +197,25 @@ export class CrmService {
       })
     }
 
-    // 4. Auto-create payment installments
+    // 4. Create entry payment (if exists)
+    let entryPayment: { id: string; value: number } | null = null
+    if (dto.entryValue && dto.entryValue > 0) {
+      const created = await this.prisma.payment.create({
+        data: {
+          clientId: id,
+          clientPlanId: plan.id,
+          installment: 0,
+          totalInstallments: dto.saleInstallments + 1,
+          dueDate: now,
+          value: dto.entryValue,
+          status: 'PAID',
+          paidAt: now,
+        },
+      })
+      entryPayment = { id: created.id, value: dto.entryValue }
+    }
+
+    // 5. Auto-create payment installments
     const paymentDay = dto.paymentDay ?? now.getDate()
     const payments = await this.paymentsService.createBulk(id, plan.id, {
       totalInstallments: dto.saleInstallments,
@@ -205,7 +224,7 @@ export class CrmService {
       paymentDay,
     })
 
-    // 5. Auto-create commissions (if salesRep exists)
+    // 6. Auto-create commissions (if salesRep exists)
     let commissionsCreated = 0
     const salesRep = client.salesRep
     if (salesRep) {
@@ -213,7 +232,6 @@ export class CrmService {
 
       if (dto.wasAdvanced && dto.advanceValue) {
         // Cartão adiantado: comissão sobre o valor adiantado, tudo de uma vez
-        const commissionValue = Math.round(dto.advanceValue * percentage) / 100
         await this.commissionsService.createForPayments(
           id,
           salesRep,
@@ -227,23 +245,39 @@ export class CrmService {
         )
         commissionsCreated = 1
       } else {
-        // Normal: comissão por parcela
+        // Build commission list: entry + installments
+        const commissionItems: Array<{ id: string; installment: number; totalInstallments: number; value: number }> = []
+        const totalParts = (entryPayment ? 1 : 0) + payments.length
+
+        if (entryPayment) {
+          commissionItems.push({
+            id: entryPayment.id,
+            installment: 1,
+            totalInstallments: totalParts,
+            value: entryPayment.value,
+          })
+        }
+
+        for (const p of payments) {
+          commissionItems.push({
+            id: p.id,
+            installment: (entryPayment ? 1 : 0) + p.installment,
+            totalInstallments: totalParts,
+            value: typeof p.value === 'number' ? p.value : Number(p.value),
+          })
+        }
+
         const commissions = await this.commissionsService.createForPayments(
           id,
           salesRep,
           percentage,
-          payments.map(p => ({
-            id: p.id,
-            installment: p.installment,
-            totalInstallments: p.totalInstallments,
-            value: typeof p.value === 'number' ? p.value : Number(p.value),
-          })),
+          commissionItems,
         )
         commissionsCreated = commissions.length
       }
     }
 
-    // 6. Auto-create expense for commissions (if any)
+    // 7. Auto-create expense for commissions (if any)
     if (commissionsCreated > 0 && salesRep) {
       const percentage = dto.commissionPercentage ?? 10
       let totalCommissionValue: number
@@ -251,10 +285,11 @@ export class CrmService {
       if (dto.wasAdvanced && dto.advanceValue) {
         totalCommissionValue = Math.round(dto.advanceValue * percentage) / 100
       } else {
-        totalCommissionValue = payments.reduce((sum, p) => {
-          const val = typeof p.value === 'number' ? p.value : Number(p.value)
-          return sum + Math.round(val * percentage) / 100
-        }, 0)
+        const allValues = [
+          ...(entryPayment ? [entryPayment.value] : []),
+          ...payments.map(p => typeof p.value === 'number' ? p.value : Number(p.value)),
+        ]
+        totalCommissionValue = allValues.reduce((sum, val) => sum + Math.round(val * percentage) / 100, 0)
       }
 
       const commPayDate = getNextCommissionPaymentDate(now)
@@ -265,7 +300,7 @@ export class CrmService {
         value: Math.round(totalCommissionValue * 100) / 100,
         recurrence: 'UNICA',
         dueDate: commPayDate,
-        notes: `Auto-gerada ao fechar venda. ${dto.wasAdvanced ? 'Valor adiantado: R$' + dto.advanceValue : commissionsCreated + ' parcelas'}.`,
+        notes: `Auto-gerada ao fechar venda. ${dto.wasAdvanced ? 'Valor adiantado: R$' + dto.advanceValue : commissionsCreated + ' parcelas' + (entryPayment ? ' (inclui entrada)' : '')}.`,
       })
     }
 
@@ -290,10 +325,10 @@ export class CrmService {
       action: 'DEAL_CLOSED',
       fromValue: client.leadStage ?? undefined,
       toValue: 'FECHADO',
-      description: `Lead ${client.companyName} fechado — ${product.name} R$${dto.saleValue} | ${payments.length} parcelas + ${commissionsCreated} comissoes criadas`,
+      description: `Lead ${client.companyName} fechado — ${product.name} R$${dto.saleValue}${entryPayment ? ' (entrada R$' + dto.entryValue + ')' : ''} | ${payments.length} parcelas + ${commissionsCreated} comissoes criadas`,
     })
 
-    return { client: updated, plan, paymentsCreated: payments.length, commissionsCreated }
+    return { client: updated, plan, paymentsCreated: payments.length + (entryPayment ? 1 : 0), commissionsCreated }
   }
 
   async getInteractions(clientId: string) {
