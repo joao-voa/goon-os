@@ -227,7 +227,7 @@ export class PlansService {
   async addMentor(planId: string, dto: { mentorName: string; value: number; notes?: string }) {
     const plan = await this.prisma.clientPlan.findUnique({
       where: { id: planId },
-      include: { client: { select: { companyName: true } }, product: { select: { name: true } } },
+      include: { client: { select: { id: true, companyName: true } }, product: { select: { name: true } } },
     })
     if (!plan) throw new NotFoundException(`Plano ${planId} nao encontrado`)
 
@@ -235,22 +235,46 @@ export class PlansService {
       data: { planId, mentorName: dto.mentorName, value: dto.value, notes: dto.notes },
     })
 
-    // Auto-create expense
-    await this.expensesService.create({
-      description: `Mentoria ${dto.mentorName} — ${plan.client.companyName} (${plan.product.name})`,
-      category: 'PESSOAS',
-      value: dto.value,
-      recurrence: 'UNICA',
-      dueDate: new Date(),
-      notes: dto.notes || `Mentoria atribuida ao plano ${plan.product.name}`,
+    // Get all payments for this plan to distribute mentor value proportionally
+    const payments = await this.prisma.payment.findMany({
+      where: { clientPlanId: planId },
+      orderBy: { installment: 'asc' },
     })
 
+    if (payments.length > 0) {
+      const totalPayments = payments.reduce((s, p) => s + Number(p.value), 0)
+
+      for (const payment of payments) {
+        const proportion = Number(payment.value) / totalPayments
+        const mentorInstallmentValue = Math.round(dto.value * proportion * 100) / 100
+
+        await this.expensesService.create({
+          description: `Mentoria ${dto.mentorName} — ${plan.client.companyName} (${plan.product.name}) parcela ${payment.installment}`,
+          category: 'PESSOAS',
+          value: mentorInstallmentValue,
+          recurrence: 'UNICA',
+          dueDate: payment.dueDate,
+          notes: `${dto.mentorName} | Parcela ${payment.installment}/${payments.length} | Proporcional ao pagamento`,
+        })
+      }
+    } else {
+      // Fallback: single expense if no payments exist
+      await this.expensesService.create({
+        description: `Mentoria ${dto.mentorName} — ${plan.client.companyName} (${plan.product.name})`,
+        category: 'PESSOAS',
+        value: dto.value,
+        recurrence: 'UNICA',
+        dueDate: new Date(),
+        notes: dto.notes || `Mentoria atribuida ao plano ${plan.product.name}`,
+      })
+    }
+
     await this.activityLog.log({
-      clientId: plan.clientId,
+      clientId: plan.client.id,
       entityType: 'PLAN',
       entityId: planId,
       action: 'MENTOR_ASSIGNED',
-      description: `Mentor ${dto.mentorName} atribuido — R$${dto.value} (${plan.product.name})`,
+      description: `Mentor ${dto.mentorName} atribuido — R$${dto.value} em ${payments.length} parcelas (${plan.product.name})`,
     })
 
     return { ...mentor, value: Number(mentor.value) }
