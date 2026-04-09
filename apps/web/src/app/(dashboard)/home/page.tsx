@@ -12,13 +12,13 @@ import {
 } from 'lucide-react'
 
 const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', description: 'Visao geral e KPIs', href: '/dashboard' },
-  { icon: Users, label: 'CRM', description: 'Pipeline de vendas e leads', href: '/crm' },
-  { icon: Package, label: 'Programas', description: 'Produtos e programas', href: '/products' },
-  { icon: GitBranch, label: 'Acompanhamento CX', description: 'Acompanhamento e cadencia de clientes', href: '/onboarding' },
-  { icon: DollarSign, label: 'Financeiro', description: 'Pagamentos, despesas e fluxo', href: '/payments' },
-  { icon: FileText, label: 'Contratos', description: 'Gestao de contratos', href: '/contracts' },
-  { icon: Settings, label: 'Admin', description: 'Usuarios e configuracoes', href: '/admin' },
+  { icon: LayoutDashboard, label: 'Dashboard', description: 'Visao geral e KPIs', href: '/dashboard', color: 'var(--retro-blue)' },
+  { icon: Users, label: 'CRM', description: 'Pipeline de vendas e leads', href: '/crm', color: '#4A78FF' },
+  { icon: Package, label: 'Programas', description: 'Produtos e programas', href: '/products', color: 'var(--success)' },
+  { icon: GitBranch, label: 'Acompanhamento CX', description: 'Acompanhamento e cadencia de clientes', href: '/onboarding', color: 'var(--warning)' },
+  { icon: DollarSign, label: 'Financeiro', description: 'Pagamentos, despesas e fluxo', href: '/payments', color: '#22c55e' },
+  { icon: FileText, label: 'Contratos', description: 'Gestao de contratos', href: '/contracts', color: '#e6a800' },
+  { icon: Settings, label: 'Admin', description: 'Usuarios e configuracoes', href: '/admin', color: 'var(--retro-blue)' },
 ]
 
 export default function HomePage() {
@@ -47,24 +47,27 @@ export default function HomePage() {
               <div
                 style={{
                   background: 'white', border: '2px solid black',
+                  borderLeft: `4px solid ${item.color}`,
                   boxShadow: '4px 4px 0 black', padding: '16px 14px',
                   cursor: 'pointer', transition: 'transform 0.1s, box-shadow 0.1s',
                   display: 'flex', flexDirection: 'column', gap: 6,
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translate(-2px, -2px)'
-                  e.currentTarget.style.boxShadow = '6px 6px 0 black'
-                  e.currentTarget.style.background = 'black'
+                  e.currentTarget.style.boxShadow = `6px 6px 0 black`
+                  e.currentTarget.style.background = item.color
                   e.currentTarget.style.color = 'white'
+                  e.currentTarget.style.borderColor = item.color
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translate(0, 0)'
                   e.currentTarget.style.boxShadow = '4px 4px 0 black'
                   e.currentTarget.style.background = 'white'
                   e.currentTarget.style.color = 'inherit'
+                  e.currentTarget.style.borderColor = 'black'
                 }}
               >
-                <Icon size={20} strokeWidth={2.2} />
+                <Icon size={20} color={item.color} strokeWidth={2.2} />
                 <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }}>
                   {item.label}
                 </span>
