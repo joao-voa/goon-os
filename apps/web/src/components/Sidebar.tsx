@@ -26,13 +26,9 @@ interface SidebarProps {
 export const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard',   label: 'Dashboard',   icon: LayoutDashboard },
   { href: '/crm',         label: 'CRM',         icon: Users },
-  { href: '/clients',     label: 'Clientes',    icon: Building2 },
   { href: '/products',    label: 'Programas',   icon: Package },
   { href: '/onboarding',  label: 'Onboarding',  icon: GitBranch },
   { href: '/payments',    label: 'Financeiro',  icon: DollarSign },
-  { href: '/commissions', label: 'Comissoes',   icon: Percent },
-  { href: '/expenses',    label: 'Despesas',    icon: Receipt },
-  { href: '/cashflow',    label: 'Fluxo Caixa', icon: ArrowLeftRight },
   { href: '/pendencies',  label: 'Pendencias',  icon: AlertTriangle },
   { href: '/contracts',   label: 'Contratos',   icon: FileText },
   { href: '/admin',       label: 'Admin',       icon: Settings },
