@@ -136,6 +136,7 @@ export class CrmService {
       installmentValue: number
       productId: string
       paymentDay?: number
+      firstInstallmentDate?: string
       commissionPercentage?: number
       wasAdvanced?: boolean
       advanceValue?: number
@@ -216,11 +217,12 @@ export class CrmService {
     }
 
     // 5. Auto-create payment installments
-    const paymentDay = dto.paymentDay ?? now.getDate()
+    const firstDate = dto.firstInstallmentDate ? new Date(dto.firstInstallmentDate) : (() => { const d = new Date(now); d.setDate(d.getDate() + 30); return d })()
+    const paymentDay = dto.paymentDay ?? firstDate.getDate()
     const payments = await this.paymentsService.createBulk(id, plan.id, {
       totalInstallments: dto.saleInstallments,
       value: dto.installmentValue,
-      startDate: now,
+      startDate: firstDate,
       paymentDay,
     })
 

@@ -59,7 +59,7 @@ function CloseDealModal({
     installmentValue: number
     productId: string
     entryValue?: number
-    paymentDay?: number
+    firstInstallmentDate?: string
     wasAdvanced?: boolean
     advanceValue?: number
     closedAt?: string
@@ -76,6 +76,9 @@ function CloseDealModal({
   const [advanceValue, setAdvanceValue] = useState('')
   const [closedAt, setClosedAt] = useState(new Date().toISOString().split('T')[0])
   const [commissionPercentage, setCommissionPercentage] = useState('10')
+  const defaultFirstInstallment = new Date()
+  defaultFirstInstallment.setDate(defaultFirstInstallment.getDate() + 30)
+  const [firstInstallmentDate, setFirstInstallmentDate] = useState(defaultFirstInstallment.toISOString().split('T')[0])
   const [submitting, setSubmitting] = useState(false)
 
   const value = parseFloat(saleValue) || 0
@@ -99,7 +102,7 @@ function CloseDealModal({
         installmentValue: Math.round(installmentVal * 100) / 100,
         productId,
         entryValue: entry > 0 ? entry : undefined,
-        paymentDay: parseInt(paymentDay) || undefined,
+        firstInstallmentDate: firstInstallmentDate || undefined,
         wasAdvanced: wasAdvanced || undefined,
         advanceValue: wasAdvanced && parseFloat(advanceValue) > 0 ? parseFloat(advanceValue) : undefined,
         closedAt: closedAt || undefined,
@@ -188,8 +191,11 @@ function CloseDealModal({
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
-              <label style={labelStyle}>Dia Vencimento</label>
-              <input type="number" min="1" max="31" value={paymentDay} onChange={e => setPaymentDay(e.target.value)} style={inputStyle} />
+              <label style={labelStyle}>Data 1a Parcela</label>
+              <input type="date" value={firstInstallmentDate} onChange={e => setFirstInstallmentDate(e.target.value)} style={inputStyle} />
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#666', marginTop: 2 }}>
+                Padrao: D+30. Demais parcelas seguem mensalmente.
+              </div>
             </div>
             <div>
               <label style={labelStyle}>% Comissao</label>
@@ -225,7 +231,7 @@ function CloseDealModal({
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, background: '#f0f0f0', padding: '8px 12px', border: '1px solid #ccc' }}>
               {entry > 0 && <div>Entrada: R$ {entry.toFixed(2)}</div>}
               {installments}x de R$ {installmentVal.toFixed(2)}
-              <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>Vencimento todo dia {paymentDay}</div>
+              <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>1a parcela: {new Date(firstInstallmentDate + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
               {wasAdvanced && parseFloat(advanceValue) > 0 && (
                 <div style={{ fontSize: 10, color: '#4A78FF', marginTop: 2 }}>Adiantado: R$ {parseFloat(advanceValue).toFixed(2)}</div>
               )}
