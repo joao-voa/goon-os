@@ -619,7 +619,7 @@ export default function CrmPage() {
   const [metrics, setMetrics] = useState<CrmMetrics | null>(null)
   const isMobile = useIsMobile()
 
-  const PIPELINE_STAGES = LEAD_STAGES.filter(s => s !== 'FECHADO' && s !== 'PERDIDO')
+  const PIPELINE_STAGES = LEAD_STAGES.filter(s => s !== 'PERDIDO')
 
   const fetchLeads = useCallback(async () => {
     try {
@@ -710,7 +710,7 @@ export default function CrmPage() {
     }
   }
 
-  const activeLeads = leads.filter(l => l.leadStage !== 'FECHADO' && l.leadStage !== 'PERDIDO')
+  const activeLeads = leads.filter(l => l.leadStage !== 'PERDIDO')
 
   const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 

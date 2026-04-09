@@ -36,8 +36,7 @@ export class CrmService {
     const { salesRep, leadSource } = params
 
     const where: Record<string, unknown> = {
-      status: 'PROSPECT',
-      leadStage: { not: null },
+      leadStage: { not: null, notIn: ['PERDIDO'] },
     }
 
     if (salesRep) where.salesRep = salesRep
