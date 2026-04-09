@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
 import { ExpensesService } from '../expenses/expenses.service'
@@ -231,6 +231,17 @@ export class PlansService {
     })
     if (!plan) throw new NotFoundException(`Plano ${planId} nao encontrado`)
 
+    // Validate: total mentors cannot exceed plan value
+    const existingMentors = await this.prisma.planMentor.findMany({ where: { planId } })
+    const currentTotal = existingMentors.reduce((s, m) => s + Number(m.value), 0)
+    const available = Number(plan.value) - currentTotal
+
+    if (dto.value > available) {
+      throw new BadRequestException(
+        `Valor excede o saldo disponivel. Plano: R$${Number(plan.value)} | Ja atribuido: R$${currentTotal} | Disponivel: R$${available}`,
+      )
+    }
+
     const mentor = await this.prisma.planMentor.create({
       data: { planId, mentorName: dto.mentorName, value: dto.value, notes: dto.notes },
     })
@@ -283,6 +294,22 @@ export class PlansService {
   async updateMentor(mentorId: string, dto: { mentorName?: string; value?: number; notes?: string }) {
     const existing = await this.prisma.planMentor.findUnique({ where: { id: mentorId } })
     if (!existing) throw new NotFoundException(`Mentor ${mentorId} nao encontrado`)
+
+    // Validate value if changing
+    if (dto.value !== undefined) {
+      const plan = await this.prisma.clientPlan.findUnique({ where: { id: existing.planId } })
+      const otherMentors = await this.prisma.planMentor.findMany({
+        where: { planId: existing.planId, id: { not: mentorId } },
+      })
+      const othersTotal = otherMentors.reduce((s, m) => s + Number(m.value), 0)
+      const available = Number(plan!.value) - othersTotal
+
+      if (dto.value > available) {
+        throw new BadRequestException(
+          `Valor excede o saldo disponivel. Disponivel: R$${available}`,
+        )
+      }
+    }
 
     const data: Record<string, unknown> = {}
     if (dto.mentorName !== undefined) data.mentorName = dto.mentorName

@@ -843,7 +843,12 @@ function LeadDetailModal({
                             <button onClick={() => setAddingMentor(null)} style={{ background: 'white', border: '1px solid black', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
                           </div>
                         ) : (
-                          <button onClick={() => setAddingMentor(p.id)} style={{ background: 'white', border: '1px dashed #888', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', color: '#666', width: '100%' }}>+ ATRIBUIR MENTOR</button>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <button onClick={() => setAddingMentor(p.id)} style={{ background: 'white', border: '1px dashed #888', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', color: '#666', flex: 1 }}>+ ATRIBUIR MENTOR</button>
+                            {p.value - totalMentors > 0 && (
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#4A78FF', marginLeft: 6 }}>Disponivel: {fmt(p.value - totalMentors)}</span>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
