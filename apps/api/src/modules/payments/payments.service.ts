@@ -9,6 +9,64 @@ export class PaymentsService {
     private activityLog: ActivityLogService,
   ) {}
 
+  async getKpis() {
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+
+    const [recebidoMes, totalPendente, totalVencido, totalPago, receitaTotal, receitaPorMes] = await this.prisma.$transaction([
+      // Recebido este mês
+      this.prisma.payment.aggregate({
+        where: { status: 'PAID', paidAt: { gte: startOfMonth, lt: endOfMonth } },
+        _sum: { value: true },
+        _count: true,
+      }),
+      // Total pendente
+      this.prisma.payment.aggregate({
+        where: { status: 'PENDING' },
+        _sum: { value: true },
+        _count: true,
+      }),
+      // Total vencido
+      this.prisma.payment.aggregate({
+        where: { status: 'OVERDUE' },
+        _sum: { value: true },
+        _count: true,
+      }),
+      // Total pago (all time)
+      this.prisma.payment.aggregate({
+        where: { status: 'PAID' },
+        _sum: { value: true },
+        _count: true,
+      }),
+      // Receita total contratada (todos os planos ativos)
+      this.prisma.clientPlan.aggregate({
+        where: { status: 'ACTIVE' },
+        _sum: { value: true },
+      }),
+      // A receber este mês (pendentes com vencimento no mês)
+      this.prisma.payment.aggregate({
+        where: { status: 'PENDING', dueDate: { gte: startOfMonth, lt: endOfMonth } },
+        _sum: { value: true },
+        _count: true,
+      }),
+    ])
+
+    return {
+      recebidoMes: Number(recebidoMes._sum.value ?? 0),
+      recebidoMesCount: recebidoMes._count,
+      aReceberMes: Number(receitaPorMes._sum.value ?? 0),
+      aReceberMesCount: receitaPorMes._count,
+      totalPendente: Number(totalPendente._sum.value ?? 0),
+      totalPendenteCount: totalPendente._count,
+      totalVencido: Number(totalVencido._sum.value ?? 0),
+      totalVencidoCount: totalVencido._count,
+      totalPago: Number(totalPago._sum.value ?? 0),
+      totalPagoCount: totalPago._count,
+      receitaContratada: Number(receitaTotal._sum.value ?? 0),
+    }
+  }
+
   async findAll(params: {
     clientId?: string
     status?: string

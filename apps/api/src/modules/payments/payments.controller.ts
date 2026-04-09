@@ -17,6 +17,11 @@ import { PaymentsService } from './payments.service'
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
+  @Get('api/payments/kpis')
+  getKpis() {
+    return this.paymentsService.getKpis()
+  }
+
   @Get('api/payments')
   findAll(
     @Query('clientId') clientId?: string,

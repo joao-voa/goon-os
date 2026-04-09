@@ -403,6 +403,7 @@ export default function PaymentsPage() {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [kpis, setKpis] = useState<{ recebidoMes: number; recebidoMesCount: number; aReceberMes: number; aReceberMesCount: number; totalPendente: number; totalPendenteCount: number; totalVencido: number; totalVencidoCount: number; totalPago: number; totalPagoCount: number; receitaContratada: number } | null>(null)
 
   const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') ?? '')
   const [productFilter, setProductFilter] = useState(() => searchParams.get('product') ?? '')
@@ -454,26 +455,13 @@ export default function PaymentsPage() {
 
   useEffect(() => { setPage(1) }, [statusFilter, productFilter, debouncedSearch])
 
-  // KPIs
-  const now = new Date()
-  const thisMonth = now.getMonth()
-  const thisYear = now.getFullYear()
+  useEffect(() => {
+    apiFetch<typeof kpis>('/api/payments/kpis').then(setKpis).catch(() => {})
+  }, [])
 
-  const receitaMes = payments
-    .filter(p => {
-      if (p.status !== 'PAID') return false
-      const d = new Date(p.paidAt ?? p.dueDate)
-      return d.getMonth() === thisMonth && d.getFullYear() === thisYear
-    })
-    .reduce((s, p) => s + p.value, 0)
-
-  const totalPendente = payments
-    .filter(p => p.status === 'PENDING')
-    .reduce((s, p) => s + p.value, 0)
-
-  const totalVencido = payments
-    .filter(p => p.status === 'OVERDUE')
-    .reduce((s, p) => s + p.value, 0)
+  const receitaMes = kpis?.recebidoMes ?? 0
+  const totalPendente = kpis?.totalPendente ?? 0
+  const totalVencido = kpis?.totalVencido ?? 0
 
   const paidCount = payments.filter(p => p.status === 'PAID').length
   const overdueCount = payments.filter(p => p.status === 'OVERDUE').length
@@ -545,10 +533,12 @@ export default function PaymentsPage() {
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 20 }}>
-        <KpiCard label="Receita Mês" value={fmtBRL(receitaMes)} accent="var(--retro-green)" sub="Pagamentos recebidos" />
-        <KpiCard label="Total Pendente" value={fmtBRL(totalPendente)} accent="var(--retro-blue)" sub="Aguardando pagamento" />
-        <KpiCard label="Total Vencido" value={fmtBRL(totalVencido)} accent="var(--danger)" sub="Boletos atrasados" />
-        <KpiCard label="Adimplência" value={`${adimplencia}%`} accent="var(--success)" sub="Pago vs Vencido" />
+        <KpiCard label="Recebido no Mes" value={fmtBRL(receitaMes)} accent="var(--retro-green)" sub={`${kpis?.recebidoMesCount ?? 0} pagamentos`} />
+        <KpiCard label="A Receber no Mes" value={fmtBRL(kpis?.aReceberMes ?? 0)} accent="var(--retro-blue)" sub={`${kpis?.aReceberMesCount ?? 0} parcelas`} />
+        <KpiCard label="Total Pendente" value={fmtBRL(totalPendente)} accent="#e6a800" sub={`${kpis?.totalPendenteCount ?? 0} parcelas`} />
+        <KpiCard label="Total Vencido" value={fmtBRL(totalVencido)} accent="var(--danger)" sub={`${kpis?.totalVencidoCount ?? 0} boletos atrasados`} />
+        <KpiCard label="Total Recebido" value={fmtBRL(kpis?.totalPago ?? 0)} accent="var(--success)" sub={`${kpis?.totalPagoCount ?? 0} pagamentos`} />
+        <KpiCard label="Receita Contratada" value={fmtBRL(kpis?.receitaContratada ?? 0)} accent="black" sub="Todos os planos ativos" />
       </div>
 
       {/* Info Banner */}
