@@ -503,13 +503,19 @@ function LeadDetailModal({
   const [newDesc, setNewDesc] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  // Editable fields for closed deals
+  // Editable fields
   const [editing, setEditing] = useState(false)
+  const [editCompanyName, setEditCompanyName] = useState(lead.companyName)
+  const [editResponsible, setEditResponsible] = useState(lead.responsible)
+  const [editPhone, setEditPhone] = useState(lead.phone ?? '')
+  const [editWhatsapp, setEditWhatsapp] = useState(lead.whatsapp ?? '')
+  const [editEmail, setEditEmail] = useState(lead.email ?? '')
   const [editSaleValue, setEditSaleValue] = useState(lead.saleValue?.toString() ?? '')
   const [editInstallments, setEditInstallments] = useState(lead.saleInstallments?.toString() ?? '')
   const [editInstallmentValue, setEditInstallmentValue] = useState(lead.installmentValue?.toString() ?? '')
   const [editPaymentMethod, setEditPaymentMethod] = useState(lead.paymentMethod ?? '')
   const [editSalesRep, setEditSalesRep] = useState(lead.salesRep ?? '')
+  const [editLeadNotes, setEditLeadNotes] = useState(lead.leadNotes ?? '')
   const [saving, setSaving] = useState(false)
 
   const loadInteractions = useCallback(async () => {
@@ -595,17 +601,118 @@ function LeadDetailModal({
         </div>
 
         <div style={{ padding: 16 }}>
-          {/* Info Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16, fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-            <div><strong>Responsavel:</strong> {lead.responsible}</div>
-            <div><strong>Vendedor:</strong> {lead.salesRep ?? '-'}</div>
-            <div><strong>Telefone:</strong> {lead.phone ?? '-'}</div>
-            <div><strong>WhatsApp:</strong> {lead.whatsapp ?? '-'}</div>
-            <div><strong>Email:</strong> {lead.email ?? '-'}</div>
-            <div><strong>Origem:</strong> {lead.leadSource ? (LEAD_SOURCE_LABELS[lead.leadSource] ?? lead.leadSource) : '-'}</div>
-            {lead.saleValue && <div><strong>Valor:</strong> {fmt(lead.saleValue)}</div>}
-            <div><strong>Criado:</strong> {fmtDate(lead.createdAt)}</div>
+          {/* Info Grid - with edit button */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 10 }}>DADOS</div>
+            {!editing && (
+              <button onClick={() => setEditing(true)} style={{ background: '#4A78FF', color: 'white', border: '2px solid black', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>EDITAR</button>
+            )}
           </div>
+          {editing ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                <div>
+                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>EMPRESA</label>
+                  <input value={editCompanyName} onChange={e => setEditCompanyName(e.target.value)} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>RESPONSAVEL</label>
+                  <input value={editResponsible} onChange={e => setEditResponsible(e.target.value)} style={inputStyle} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                <div>
+                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>TELEFONE</label>
+                  <input value={editPhone} onChange={e => setEditPhone(e.target.value)} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>WHATSAPP</label>
+                  <input value={editWhatsapp} onChange={e => setEditWhatsapp(e.target.value)} style={inputStyle} />
+                </div>
+              </div>
+              <div>
+                <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>EMAIL</label>
+                <input value={editEmail} onChange={e => setEditEmail(e.target.value)} style={inputStyle} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                <div>
+                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>VENDEDOR</label>
+                  <input value={editSalesRep} onChange={e => setEditSalesRep(e.target.value)} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>PAGAMENTO</label>
+                  <select value={editPaymentMethod} onChange={e => setEditPaymentMethod(e.target.value)} style={inputStyle}>
+                    <option value="">-</option>
+                    <option value="BOLETO">Boleto</option>
+                    <option value="PIX">PIX</option>
+                    <option value="CARTAO">Cartao</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+                <div>
+                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>VALOR (R$)</label>
+                  <input type="number" step="0.01" value={editSaleValue} onChange={e => setEditSaleValue(e.target.value)} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>PARCELAS</label>
+                  <input type="number" min="1" value={editInstallments} onChange={e => setEditInstallments(e.target.value)} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>VLR PARCELA</label>
+                  <input type="number" step="0.01" value={editInstallmentValue} onChange={e => setEditInstallmentValue(e.target.value)} style={inputStyle} />
+                </div>
+              </div>
+              <div>
+                <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>OBSERVACOES</label>
+                <textarea value={editLeadNotes} onChange={e => setEditLeadNotes(e.target.value)} rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button onClick={() => setEditing(false)} style={{ flex: 1, padding: '6px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
+                <button disabled={saving} onClick={async () => {
+                  setSaving(true)
+                  try {
+                    await apiFetch(`/api/clients/${lead.id}`, {
+                      method: 'PUT',
+                      body: JSON.stringify({
+                        companyName: editCompanyName.trim() || undefined,
+                        responsible: editResponsible.trim() || undefined,
+                        phone: editPhone.trim() || null,
+                        whatsapp: editWhatsapp.trim() || null,
+                        email: editEmail.trim() || null,
+                        salesRep: editSalesRep.trim() || null,
+                        paymentMethod: editPaymentMethod || null,
+                        saleValue: parseFloat(editSaleValue) || null,
+                        saleInstallments: parseInt(editInstallments) || null,
+                        installmentValue: parseFloat(editInstallmentValue) || null,
+                        leadNotes: editLeadNotes.trim() || null,
+                      }),
+                    })
+                    toast.success('Dados atualizados')
+                    setEditing(false)
+                    onUpdated()
+                  } catch { toast.error('Erro ao salvar') }
+                  setSaving(false)
+                }} style={{ flex: 1, padding: '6px', border: '2px solid black', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', boxShadow: '3px 3px 0 black' }}>
+                  {saving ? 'SALVANDO...' : 'SALVAR'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16, fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+              <div><strong>Responsavel:</strong> {lead.responsible}</div>
+              <div><strong>Vendedor:</strong> {lead.salesRep ?? '-'}</div>
+              <div><strong>Telefone:</strong> {lead.phone ?? '-'}</div>
+              <div><strong>WhatsApp:</strong> {lead.whatsapp ?? '-'}</div>
+              <div><strong>Email:</strong> {lead.email ?? '-'}</div>
+              <div><strong>Origem:</strong> {lead.leadSource ? (LEAD_SOURCE_LABELS[lead.leadSource] ?? lead.leadSource) : '-'}</div>
+              {lead.saleValue && <div><strong>Valor:</strong> {fmt(lead.saleValue)}</div>}
+              {lead.saleInstallments && <div><strong>Parcelas:</strong> {lead.saleInstallments}x {lead.installmentValue ? fmt(lead.installmentValue) : ''}</div>}
+              {lead.paymentMethod && <div><strong>Pagamento:</strong> {lead.paymentMethod}</div>}
+              <div><strong>Criado:</strong> {fmtDate(lead.createdAt)}</div>
+              {lead.closedAt && <div><strong>Fechado:</strong> {fmtDate(lead.closedAt)}</div>}
+            </div>
+          )}
           {/* AURA Modules */}
           {lead.selectedModules && (() => {
             let mods: string[] = []
@@ -746,81 +853,7 @@ function LeadDetailModal({
             </div>
           )}
 
-          {/* Closed Deal Data - Editable */}
-          {lead.leadStage === 'FECHADO' && (
-            <div style={{ borderTop: '2px solid black', paddingTop: 12, marginTop: 8 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11 }}>DADOS DO FECHAMENTO</div>
-                {!editing && (
-                  <button onClick={() => setEditing(true)} style={{ background: '#4A78FF', color: 'white', border: '2px solid black', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>EDITAR</button>
-                )}
-              </div>
-              {editing ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                    <div>
-                      <label style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 2 }}>VALOR TOTAL (R$)</label>
-                      <input type="number" step="0.01" value={editSaleValue} onChange={e => setEditSaleValue(e.target.value)} style={inputStyle} />
-                    </div>
-                    <div>
-                      <label style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 2 }}>PARCELAS</label>
-                      <input type="number" min="1" value={editInstallments} onChange={e => setEditInstallments(e.target.value)} style={inputStyle} />
-                    </div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                    <div>
-                      <label style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 2 }}>VALOR PARCELA (R$)</label>
-                      <input type="number" step="0.01" value={editInstallmentValue} onChange={e => setEditInstallmentValue(e.target.value)} style={inputStyle} />
-                    </div>
-                    <div>
-                      <label style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 2 }}>PAGAMENTO</label>
-                      <select value={editPaymentMethod} onChange={e => setEditPaymentMethod(e.target.value)} style={inputStyle}>
-                        <option value="BOLETO">Boleto</option>
-                        <option value="PIX">PIX</option>
-                        <option value="CARTAO">Cartao</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 2 }}>VENDEDOR</label>
-                    <input value={editSalesRep} onChange={e => setEditSalesRep(e.target.value)} style={inputStyle} />
-                  </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => setEditing(false)} style={{ flex: 1, padding: '6px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
-                    <button disabled={saving} onClick={async () => {
-                      setSaving(true)
-                      try {
-                        await apiFetch(`/api/clients/${lead.id}`, {
-                          method: 'PUT',
-                          body: JSON.stringify({
-                            saleValue: parseFloat(editSaleValue) || undefined,
-                            saleInstallments: parseInt(editInstallments) || undefined,
-                            installmentValue: parseFloat(editInstallmentValue) || undefined,
-                            paymentMethod: editPaymentMethod || undefined,
-                            salesRep: editSalesRep.trim() || undefined,
-                          }),
-                        })
-                        toast.success('Dados atualizados')
-                        setEditing(false)
-                        onUpdated()
-                      } catch { toast.error('Erro ao salvar') }
-                      setSaving(false)
-                    }} style={{ flex: 1, padding: '6px', border: '2px solid black', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', boxShadow: '3px 3px 0 black' }}>
-                      {saving ? 'SALVANDO...' : 'SALVAR'}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-                  <div><strong>Valor:</strong> {lead.saleValue ? fmt(lead.saleValue) : '-'}</div>
-                  <div><strong>Parcelas:</strong> {lead.saleInstallments ?? '-'}x {lead.installmentValue ? fmt(lead.installmentValue) : ''}</div>
-                  <div><strong>Pagamento:</strong> {lead.paymentMethod ?? '-'}</div>
-                  <div><strong>Vendedor:</strong> {lead.salesRep ?? '-'}</div>
-                  {lead.closedAt && <div><strong>Fechado em:</strong> {fmtDate(lead.closedAt)}</div>}
-                </div>
-              )}
-            </div>
-          )}
+          {/* Closed Deal Data is now in the unified edit above */}
 
           {/* Commissions for closed deals */}
           {lead.leadStage === 'FECHADO' && commissions.length > 0 && (
