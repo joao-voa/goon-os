@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
+import { ExpensesService } from '../expenses/expenses.service'
 import { CreatePlanDto } from './dto/create-plan.dto'
 
 @Injectable()
@@ -8,6 +9,7 @@ export class PlansService {
   constructor(
     private prisma: PrismaService,
     private activityLog: ActivityLogService,
+    private expensesService: ExpensesService,
   ) {}
 
   async findByClient(clientId: string) {
@@ -182,5 +184,70 @@ export class PlansService {
       value: plan.value.toNumber(),
       installmentValue: plan.installmentValue ? plan.installmentValue.toNumber() : null,
     }
+  }
+
+  // ---- Mentors ----
+
+  async getMentors(planId: string) {
+    return this.prisma.planMentor.findMany({
+      where: { planId },
+      orderBy: { createdAt: 'asc' },
+    }).then(mentors => mentors.map(m => ({
+      ...m,
+      value: Number(m.value),
+    })))
+  }
+
+  async addMentor(planId: string, dto: { mentorName: string; value: number; notes?: string }) {
+    const plan = await this.prisma.clientPlan.findUnique({
+      where: { id: planId },
+      include: { client: { select: { companyName: true } }, product: { select: { name: true } } },
+    })
+    if (!plan) throw new NotFoundException(`Plano ${planId} nao encontrado`)
+
+    const mentor = await this.prisma.planMentor.create({
+      data: { planId, mentorName: dto.mentorName, value: dto.value, notes: dto.notes },
+    })
+
+    // Auto-create expense
+    await this.expensesService.create({
+      description: `Mentoria ${dto.mentorName} — ${plan.client.companyName} (${plan.product.name})`,
+      category: 'PESSOAS',
+      value: dto.value,
+      recurrence: 'UNICA',
+      dueDate: new Date(),
+      notes: dto.notes || `Mentoria atribuida ao plano ${plan.product.name}`,
+    })
+
+    await this.activityLog.log({
+      clientId: plan.clientId,
+      entityType: 'PLAN',
+      entityId: planId,
+      action: 'MENTOR_ASSIGNED',
+      description: `Mentor ${dto.mentorName} atribuido — R$${dto.value} (${plan.product.name})`,
+    })
+
+    return { ...mentor, value: Number(mentor.value) }
+  }
+
+  async updateMentor(mentorId: string, dto: { mentorName?: string; value?: number; notes?: string }) {
+    const existing = await this.prisma.planMentor.findUnique({ where: { id: mentorId } })
+    if (!existing) throw new NotFoundException(`Mentor ${mentorId} nao encontrado`)
+
+    const data: Record<string, unknown> = {}
+    if (dto.mentorName !== undefined) data.mentorName = dto.mentorName
+    if (dto.value !== undefined) data.value = dto.value
+    if (dto.notes !== undefined) data.notes = dto.notes
+
+    const updated = await this.prisma.planMentor.update({ where: { id: mentorId }, data })
+    return { ...updated, value: Number(updated.value) }
+  }
+
+  async removeMentor(mentorId: string) {
+    const existing = await this.prisma.planMentor.findUnique({ where: { id: mentorId } })
+    if (!existing) throw new NotFoundException(`Mentor ${mentorId} nao encontrado`)
+
+    await this.prisma.planMentor.delete({ where: { id: mentorId } })
+    return { deleted: true }
   }
 }

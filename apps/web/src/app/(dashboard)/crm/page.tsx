@@ -520,6 +520,12 @@ function LeadDetailModal({
   }, [lead.id])
 
   const [plans, setPlans] = useState<Array<{ id: string; value: number; installments: number; status: string; startDate: string; product: { code: string; name: string } }>>([])
+  const [mentors, setMentors] = useState<Record<string, Array<{ id: string; mentorName: string; value: number; notes: string | null }>>>({})
+  const [addingMentor, setAddingMentor] = useState<string | null>(null)
+  const [newMentorName, setNewMentorName] = useState('')
+  const [newMentorValue, setNewMentorValue] = useState('')
+  const [newMentorNotes, setNewMentorNotes] = useState('')
+  const [savingMentor, setSavingMentor] = useState(false)
 
   const loadCommissions = useCallback(async () => {
     if (lead.leadStage !== 'FECHADO') return
@@ -536,9 +542,17 @@ function LeadDetailModal({
     } catch { /* ignore */ }
   }, [lead.id])
 
+  const loadMentors = useCallback(async (planId: string) => {
+    try {
+      const data = await apiFetch<Array<{ id: string; mentorName: string; value: number; notes: string | null }>>(`/api/plans/${planId}/mentors`)
+      setMentors(prev => ({ ...prev, [planId]: data }))
+    } catch { /* ignore */ }
+  }, [])
+
   useEffect(() => { loadInteractions() }, [loadInteractions])
   useEffect(() => { loadCommissions() }, [loadCommissions])
   useEffect(() => { loadPlans() }, [loadPlans])
+  useEffect(() => { plans.forEach(p => loadMentors(p.id)) }, [plans, loadMentors])
 
   async function handleAddInteraction(e: React.FormEvent) {
     e.preventDefault()
@@ -660,20 +674,74 @@ function LeadDetailModal({
             )}
           </div>
 
-          {/* Active Plans */}
+          {/* Active Plans + Mentors */}
           {plans.length > 0 && (
             <div style={{ borderTop: '2px solid black', paddingTop: 12, marginTop: 8 }}>
               <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, marginBottom: 8 }}>PLANOS ({plans.length})</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {plans.map(p => (
-                  <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#fafafa', border: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-                    <span style={{ fontWeight: 700 }}>{p.product.code} — {p.product.name}</span>
-                    <span>{fmt(p.value)} | {p.installments ?? 1}x</span>
-                    <span style={{ background: p.status === 'ACTIVE' ? '#006600' : p.status === 'CANCELLED' ? '#cc0000' : '#888', color: 'white', padding: '1px 6px', fontSize: 9, fontWeight: 700 }}>
-                      {p.status === 'ACTIVE' ? 'ATIVO' : p.status === 'CANCELLED' ? 'CANCELADO' : p.status}
-                    </span>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {plans.map(p => {
+                  const planMentors = mentors[p.id] ?? []
+                  const totalMentors = planMentors.reduce((s, m) => s + m.value, 0)
+                  return (
+                    <div key={p.id} style={{ border: '1px solid #ddd', background: '#fafafa' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                        <span style={{ fontWeight: 700 }}>{p.product.code} — {p.product.name}</span>
+                        <span>{fmt(p.value)} | {p.installments ?? 1}x</span>
+                        <span style={{ background: p.status === 'ACTIVE' ? '#006600' : p.status === 'CANCELLED' ? '#cc0000' : '#888', color: 'white', padding: '1px 6px', fontSize: 9, fontWeight: 700 }}>
+                          {p.status === 'ACTIVE' ? 'ATIVO' : p.status === 'CANCELLED' ? 'CANCELADO' : p.status}
+                        </span>
+                      </div>
+                      {/* Mentors */}
+                      <div style={{ padding: '4px 8px 8px', borderTop: '1px solid #eee' }}>
+                        {planMentors.length > 0 && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 6 }}>
+                            {planMentors.map(m => (
+                              <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: 'var(--font-mono)', fontSize: 10 }}>
+                                <span>{m.mentorName}</span>
+                                <span style={{ fontWeight: 700 }}>{fmt(m.value)}</span>
+                                <button onClick={async () => {
+                                  if (!confirm(`Remover ${m.mentorName}?`)) return
+                                  await apiFetch(`/api/mentors/${m.id}`, { method: 'DELETE' })
+                                  loadMentors(p.id)
+                                }} style={{ background: '#cc0000', color: 'white', border: 'none', padding: '1px 6px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
+                              </div>
+                            ))}
+                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#666', textAlign: 'right' }}>
+                              Total mentoria: {fmt(totalMentors)} | Saldo: {fmt(p.value - totalMentors)}
+                            </div>
+                          </div>
+                        )}
+                        {addingMentor === p.id ? (
+                          <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                            <input placeholder="Nome" value={newMentorName} onChange={e => setNewMentorName(e.target.value)} style={{ ...inputStyle, flex: '1 1 100px', fontSize: 10, padding: '4px 6px' }} />
+                            <input type="number" placeholder="Valor" step="0.01" value={newMentorValue} onChange={e => setNewMentorValue(e.target.value)} style={{ ...inputStyle, width: 80, fontSize: 10, padding: '4px 6px' }} />
+                            <button disabled={savingMentor} onClick={async () => {
+                              if (!newMentorName.trim() || !parseFloat(newMentorValue)) return
+                              setSavingMentor(true)
+                              try {
+                                await apiFetch(`/api/plans/${p.id}/mentors`, {
+                                  method: 'POST',
+                                  body: JSON.stringify({ mentorName: newMentorName.trim(), value: parseFloat(newMentorValue), notes: newMentorNotes.trim() || undefined }),
+                                })
+                                toast.success(`${newMentorName} atribuido!`)
+                                setAddingMentor(null)
+                                setNewMentorName('')
+                                setNewMentorValue('')
+                                setNewMentorNotes('')
+                                loadMentors(p.id)
+                                onUpdated()
+                              } catch { toast.error('Erro ao atribuir mentor') }
+                              setSavingMentor(false)
+                            }} style={{ background: '#006600', color: 'white', border: '1px solid black', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>OK</button>
+                            <button onClick={() => setAddingMentor(null)} style={{ background: 'white', border: '1px solid black', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setAddingMentor(p.id)} style={{ background: 'white', border: '1px dashed #888', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', color: '#666', width: '100%' }}>+ ATRIBUIR MENTOR</button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}

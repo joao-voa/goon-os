@@ -42,4 +42,33 @@ export class PlansController {
   cancel(@Param('id') id: string) {
     return this.plansService.cancel(id)
   }
+
+  // ---- Mentors ----
+
+  @Get('plans/:planId/mentors')
+  getMentors(@Param('planId') planId: string) {
+    return this.plansService.getMentors(planId)
+  }
+
+  @Post('plans/:planId/mentors')
+  @HttpCode(HttpStatus.CREATED)
+  addMentor(
+    @Param('planId') planId: string,
+    @Body() dto: { mentorName: string; value: number; notes?: string },
+  ) {
+    return this.plansService.addMentor(planId, dto)
+  }
+
+  @Put('mentors/:mentorId')
+  updateMentor(
+    @Param('mentorId') mentorId: string,
+    @Body() dto: { mentorName?: string; value?: number; notes?: string },
+  ) {
+    return this.plansService.updateMentor(mentorId, dto)
+  }
+
+  @Delete('mentors/:mentorId')
+  removeMentor(@Param('mentorId') mentorId: string) {
+    return this.plansService.removeMentor(mentorId)
+  }
 }

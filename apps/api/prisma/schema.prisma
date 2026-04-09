@@ -128,6 +128,7 @@ model ClientPlan {
   product   Product    @relation(fields: [productId], references: [id])
   contracts Contract[]
   payments  Payment[]
+  mentors   PlanMentor[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -137,6 +138,22 @@ model ClientPlan {
   @@index([status])
   @@index([endDate])
   @@index([clientId, status])
+}
+
+model PlanMentor {
+  id          String    @id @default(cuid())
+  planId      String
+  mentorName  String
+  value       Decimal   @db.Decimal(10, 2)
+  notes       String?
+
+  plan        ClientPlan @relation(fields: [planId], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([planId])
+  @@index([mentorName])
 }
 
 model Contract {
