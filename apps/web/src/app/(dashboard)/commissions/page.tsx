@@ -41,6 +41,107 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: 'Cancelado',
 }
 
+interface Client {
+  id: string
+  companyName: string
+}
+
+function CreateCommissionModal({
+  onClose,
+  onConfirm,
+  clients,
+}: {
+  onClose: () => void
+  onConfirm: () => void
+  clients: Client[]
+}) {
+  const [clientId, setClientId] = useState('')
+  const [salesRep, setSalesRep] = useState('')
+  const [percentage, setPercentage] = useState('10')
+  const [baseValue, setBaseValue] = useState('')
+  const [installments, setInstallments] = useState('1')
+  const [submitting, setSubmitting] = useState(false)
+
+  const pct = parseFloat(percentage) || 0
+  const base = parseFloat(baseValue) || 0
+  const inst = parseInt(installments) || 1
+  const commissionPerInstallment = Math.round(base * pct) / 100
+  const totalCommission = commissionPerInstallment * inst
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!clientId || !salesRep.trim() || base <= 0) {
+      toast.error('Preencha todos os campos')
+      return
+    }
+    setSubmitting(true)
+    try {
+      await apiFetch('/api/commissions/manual', {
+        method: 'POST',
+        body: JSON.stringify({ clientId, salesRep: salesRep.trim(), percentage: pct, baseValue: base, installments: inst }),
+      })
+      toast.success(`${inst} comissao(oes) criada(s)!`)
+      onConfirm()
+    } catch {
+      toast.error('Erro ao criar comissao')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 13, background: 'white' }
+  const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4, display: 'block' }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <form onSubmit={handleSubmit} style={{ background: 'white', border: '2px solid black', boxShadow: '8px 8px 0px 0px #000', width: '100%', maxWidth: 420 }}>
+        <div style={{ background: '#e6a800', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-pixel)', fontSize: 11 }}>
+          CRIAR COMISSAO MANUAL
+        </div>
+        <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div>
+            <label style={labelStyle}>Cliente *</label>
+            <select value={clientId} onChange={e => setClientId(e.target.value)} style={inputStyle} required>
+              <option value="">Selecione...</option>
+              {clients.map(c => <option key={c.id} value={c.id}>{c.companyName}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>Vendedor *</label>
+            <input value={salesRep} onChange={e => setSalesRep(e.target.value)} style={inputStyle} required />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={labelStyle}>Valor Base (R$)</label>
+              <input type="number" step="0.01" value={baseValue} onChange={e => setBaseValue(e.target.value)} style={inputStyle} required />
+            </div>
+            <div>
+              <label style={labelStyle}>% Comissao</label>
+              <input type="number" step="0.1" value={percentage} onChange={e => setPercentage(e.target.value)} style={inputStyle} required />
+            </div>
+            <div>
+              <label style={labelStyle}>Parcelas</label>
+              <input type="number" min="1" value={installments} onChange={e => setInstallments(e.target.value)} style={inputStyle} required />
+            </div>
+          </div>
+          {base > 0 && pct > 0 && (
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, background: '#f0f0f0', padding: '8px 12px', border: '1px solid #ccc' }}>
+              {inst}x de R$ {commissionPerInstallment.toFixed(2)} = <strong>R$ {totalCommission.toFixed(2)}</strong> total
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: '10px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
+            <button type="submit" disabled={submitting} style={{ flex: 1, padding: '10px', border: '2px solid black', background: '#e6a800', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer', boxShadow: '3px 3px 0px 0px #000' }}>
+              {submitting ? 'CRIANDO...' : 'CRIAR'}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  )
+}
+
 export default function CommissionsPage() {
   const [commissions, setCommissions] = useState<Commission[]>([])
   const [summary, setSummary] = useState<Summary | null>(null)
@@ -48,6 +149,8 @@ export default function CommissionsPage() {
   const [page, setPage] = useState(1)
   const [salesRepFilter, setSalesRepFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [clients, setClients] = useState<Client[]>([])
   const now = new Date()
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
@@ -75,6 +178,12 @@ export default function CommissionsPage() {
 
   useEffect(() => { loadData() }, [loadData])
 
+  useEffect(() => {
+    apiFetch<{ data: Client[] }>('/api/clients?limit=200')
+      .then(res => setClients(res.data || []))
+      .catch(() => {})
+  }, [])
+
   const handlePay = async (id: string) => {
     try {
       await apiFetch(`/api/commissions/${id}/pay`, { method: 'PATCH' })
@@ -95,7 +204,12 @@ export default function CommissionsPage() {
 
   return (
     <div style={{ padding: 24 }}>
-      <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 20, marginBottom: 16 }}>COMISSOES</h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+        <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 20, margin: 0 }}>COMISSOES</h1>
+        <button onClick={() => setShowCreateModal(true)} style={{ padding: '8px 16px', border: '2px solid black', background: '#e6a800', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0px 0px #000' }}>
+          + CRIAR COMISSAO
+        </button>
+      </div>
 
       {/* KPI Strip */}
       {summary && (
@@ -213,6 +327,14 @@ export default function CommissionsPage() {
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, padding: '4px 8px' }}>{page} / {Math.ceil(total / 20)}</span>
           <button disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>Proximo</button>
         </div>
+      )}
+
+      {showCreateModal && (
+        <CreateCommissionModal
+          clients={clients}
+          onClose={() => setShowCreateModal(false)}
+          onConfirm={() => { setShowCreateModal(false); loadData() }}
+        />
       )}
     </div>
   )

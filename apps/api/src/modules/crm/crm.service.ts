@@ -138,6 +138,8 @@ export class CrmService {
       productId: string
       paymentDay?: number
       commissionPercentage?: number
+      wasAdvanced?: boolean
+      advanceValue?: number
     },
   ) {
     const client = await this.prisma.client.findUnique({
@@ -181,6 +183,8 @@ export class CrmService {
         installmentValue: dto.installmentValue,
         startDate: now,
         paymentDay: dto.paymentDay ?? now.getDate(),
+        wasAdvanced: dto.wasAdvanced ?? false,
+        advanceValue: dto.advanceValue ?? null,
       },
     })
 

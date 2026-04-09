@@ -117,6 +117,10 @@ model ClientPlan {
   paymentEndDate    DateTime?
   paymentDay        Int?      // day of month for installments (1-31)
 
+  // Advance (adiantamento via app financeiro)
+  wasAdvanced       Boolean   @default(false)
+  advanceValue      Decimal?  @db.Decimal(10, 2) // valor recebido no adiantamento
+
   // Renewal tracking
   renewalStatus     String?   // null, PENDING, NOTIFIED, RENEWED, DECLINED
 

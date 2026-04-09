@@ -60,6 +60,8 @@ function CloseDealModal({
     productId: string
     entryValue?: number
     paymentDay?: number
+    wasAdvanced?: boolean
+    advanceValue?: number
   }) => Promise<void>
 }) {
   const [productId, setProductId] = useState(products[0]?.id ?? '')
@@ -68,6 +70,8 @@ function CloseDealModal({
   const [saleInstallments, setSaleInstallments] = useState(lead.saleInstallments?.toString() ?? '1')
   const [entryValue, setEntryValue] = useState('')
   const [paymentDay, setPaymentDay] = useState(String(new Date().getDate()))
+  const [wasAdvanced, setWasAdvanced] = useState(false)
+  const [advanceValue, setAdvanceValue] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   const value = parseFloat(saleValue) || 0
@@ -92,6 +96,8 @@ function CloseDealModal({
         productId,
         entryValue: entry > 0 ? entry : undefined,
         paymentDay: parseInt(paymentDay) || undefined,
+        wasAdvanced: wasAdvanced || undefined,
+        advanceValue: wasAdvanced && parseFloat(advanceValue) > 0 ? parseFloat(advanceValue) : undefined,
       })
     } finally {
       setSubmitting(false)
@@ -158,6 +164,7 @@ function CloseDealModal({
               <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={inputStyle}>
                 <option value="BOLETO">Boleto</option>
                 <option value="PIX">PIX</option>
+                <option value="CARTAO">Cartao</option>
               </select>
             </div>
             <div>
@@ -169,11 +176,32 @@ function CloseDealModal({
               <input type="number" min="1" max="31" value={paymentDay} onChange={e => setPaymentDay(e.target.value)} style={inputStyle} />
             </div>
           </div>
+          {/* Adiantamento */}
+          <div style={{ border: '1px solid #ddd', padding: 12, background: '#fafafa' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>
+              <input type="checkbox" checked={wasAdvanced} onChange={e => setWasAdvanced(e.target.checked)} style={{ accentColor: '#4A78FF' }} />
+              Valor adiantado (app financeiro)
+            </label>
+            {wasAdvanced && (
+              <div style={{ marginTop: 8 }}>
+                <label style={labelStyle}>Valor Recebido no Adiantamento (R$)</label>
+                <input type="number" step="0.01" placeholder="0.00" value={advanceValue} onChange={e => setAdvanceValue(e.target.value)} style={inputStyle} />
+                {parseFloat(advanceValue) > 0 && value > 0 && (
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#cc0000', marginTop: 4 }}>
+                    Taxa adiantamento: R$ {(value - parseFloat(advanceValue)).toFixed(2)} ({((1 - parseFloat(advanceValue) / value) * 100).toFixed(1)}%)
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           {installments > 0 && value > 0 && (
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, background: '#f0f0f0', padding: '8px 12px', border: '1px solid #ccc' }}>
               {entry > 0 && <div>Entrada: R$ {entry.toFixed(2)}</div>}
               {installments}x de R$ {installmentVal.toFixed(2)}
               <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>Vencimento todo dia {paymentDay}</div>
+              {wasAdvanced && parseFloat(advanceValue) > 0 && (
+                <div style={{ fontSize: 10, color: '#4A78FF', marginTop: 2 }}>Adiantado: R$ {parseFloat(advanceValue).toFixed(2)}</div>
+              )}
             </div>
           )}
           <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
 import { getNextCommissionPaymentDate, getNextClosingCutoff } from '../../shared/constants'
@@ -140,6 +140,97 @@ export class CommissionsService {
         amount: Number(futureCommissions._sum.value ?? 0),
         count: futureCommissions._count,
       },
+    }
+  }
+
+  async createManual(dto: {
+    clientId: string
+    salesRep: string
+    percentage: number
+    baseValue: number
+    installments: number
+  }) {
+    const client = await this.prisma.client.findUnique({ where: { id: dto.clientId } })
+    if (!client) throw new NotFoundException(`Cliente ${dto.clientId} nao encontrado`)
+
+    // Find first payment for this client (or create without payment link)
+    const payments = await this.prisma.payment.findMany({
+      where: { clientId: dto.clientId, status: { in: ['PENDING', 'SCHEDULED'] } },
+      orderBy: { dueDate: 'asc' },
+      take: dto.installments,
+    })
+
+    if (payments.length === 0) {
+      throw new BadRequestException('Este cliente nao possui pagamentos. Crie pagamentos antes de atribuir comissoes.')
+    }
+
+    const results: Awaited<ReturnType<typeof this.prisma.commission.create>>[] = []
+    for (let i = 0; i < dto.installments; i++) {
+      const payment = payments[i] ?? payments[0]
+      const commissionValue = Math.round(dto.baseValue * dto.percentage) / 100
+
+      const created = await this.prisma.commission.create({
+        data: {
+          clientId: dto.clientId,
+          paymentId: payment.id,
+          salesRep: dto.salesRep,
+          percentage: dto.percentage,
+          baseValue: dto.baseValue,
+          value: commissionValue,
+          installment: i + 1,
+          totalInstallments: dto.installments,
+          status: 'PENDING',
+        },
+      })
+      results.push(created)
+    }
+
+    await this.activityLog.log({
+      clientId: dto.clientId,
+      entityType: 'COMMISSION',
+      entityId: dto.clientId,
+      action: 'MANUAL_CREATED',
+      description: `${results.length} comissoes manuais criadas para ${dto.salesRep} (${dto.percentage}%) — ${client.companyName}`,
+    })
+
+    return results.map(c => ({
+      ...c,
+      percentage: Number(c.percentage),
+      baseValue: Number(c.baseValue),
+      value: Number(c.value),
+    }))
+  }
+
+  async updateCommission(id: string, dto: {
+    salesRep?: string
+    percentage?: number
+    baseValue?: number
+    value?: number
+  }) {
+    const existing = await this.prisma.commission.findUnique({ where: { id } })
+    if (!existing) throw new NotFoundException(`Comissao ${id} nao encontrada`)
+
+    const data: Record<string, unknown> = {}
+    if (dto.salesRep !== undefined) data.salesRep = dto.salesRep
+    if (dto.percentage !== undefined) data.percentage = dto.percentage
+    if (dto.baseValue !== undefined) data.baseValue = dto.baseValue
+
+    // Recalculate value if percentage or baseValue changed
+    if (dto.value !== undefined) {
+      data.value = dto.value
+    } else if (dto.percentage !== undefined || dto.baseValue !== undefined) {
+      const pct = dto.percentage ?? Number(existing.percentage)
+      const base = dto.baseValue ?? Number(existing.baseValue)
+      data.value = Math.round(base * pct) / 100
+    }
+
+    const updated = await this.prisma.commission.update({ where: { id }, data })
+
+    return {
+      ...updated,
+      percentage: Number(updated.percentage),
+      baseValue: Number(updated.baseValue),
+      value: Number(updated.value),
     }
   }
 

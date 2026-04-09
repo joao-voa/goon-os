@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Query } from '@nestjs/common'
+import { Controller, Get, Post, Put, Patch, Param, Query, Body, HttpCode } from '@nestjs/common'
 import { CommissionsService } from './commissions.service'
 
 @Controller('api/commissions')
@@ -33,6 +33,33 @@ export class CommissionsController {
       month: month ? parseInt(month) : undefined,
       year: year ? parseInt(year) : undefined,
     })
+  }
+
+  @Post('manual')
+  @HttpCode(201)
+  createManual(
+    @Body() dto: {
+      clientId: string
+      salesRep: string
+      percentage: number
+      baseValue: number
+      installments: number
+    },
+  ) {
+    return this.service.createManual(dto)
+  }
+
+  @Put(':id')
+  updateCommission(
+    @Param('id') id: string,
+    @Body() dto: {
+      salesRep?: string
+      percentage?: number
+      baseValue?: number
+      value?: number
+    },
+  ) {
+    return this.service.updateCommission(id, dto)
   }
 
   @Patch(':id/pay')
