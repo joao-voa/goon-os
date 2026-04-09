@@ -245,35 +245,50 @@ export class CrmService {
         )
         commissionsCreated = 1
       } else {
-        // Build commission list: entry + installments
-        const commissionItems: Array<{ id: string; installment: number; totalInstallments: number; value: number }> = []
-        const totalParts = (entryPayment ? 1 : 0) + payments.length
-
+        // Entry commission: paid D+5
         if (entryPayment) {
-          commissionItems.push({
-            id: entryPayment.id,
-            installment: 1,
-            totalInstallments: totalParts,
-            value: entryPayment.value,
+          const entryCommissionValue = Math.round(entryPayment.value * percentage) / 100
+          const d5 = new Date(now)
+          d5.setDate(d5.getDate() + 5)
+
+          await this.prisma.commission.create({
+            data: {
+              clientId: id,
+              paymentId: entryPayment.id,
+              salesRep,
+              percentage,
+              baseValue: entryPayment.value,
+              value: entryCommissionValue,
+              installment: 0,
+              totalInstallments: payments.length + 1,
+              status: 'PENDING',
+            },
           })
+
+          await this.expensesService.create({
+            description: `Comissao entrada ${salesRep} — ${client.companyName} (D+5)`,
+            category: 'PESSOAS',
+            value: entryCommissionValue,
+            recurrence: 'UNICA',
+            dueDate: d5,
+            notes: `Comissao sobre entrada R$${entryPayment.value}. Repasse D+5.`,
+          })
+          commissionsCreated++
         }
 
-        for (const p of payments) {
-          commissionItems.push({
-            id: p.id,
-            installment: (entryPayment ? 1 : 0) + p.installment,
-            totalInstallments: totalParts,
-            value: typeof p.value === 'number' ? p.value : Number(p.value),
-          })
-        }
-
+        // Installment commissions
         const commissions = await this.commissionsService.createForPayments(
           id,
           salesRep,
           percentage,
-          commissionItems,
+          payments.map(p => ({
+            id: p.id,
+            installment: (entryPayment ? 1 : 0) + p.installment,
+            totalInstallments: (entryPayment ? 1 : 0) + payments.length,
+            value: typeof p.value === 'number' ? p.value : Number(p.value),
+          })),
         )
-        commissionsCreated = commissions.length
+        commissionsCreated += commissions.length
       }
     }
 
