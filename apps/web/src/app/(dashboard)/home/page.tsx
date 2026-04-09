@@ -71,8 +71,8 @@ export default function HomePage() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '40px 20px',
-        minHeight: 'calc(100vh - 80px)',
+        padding: '20px 0',
+        minHeight: 'calc(100vh - 140px)',
       }}
     >
       <h1
