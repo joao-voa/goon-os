@@ -140,6 +140,7 @@ export const LEAD_SOURCE_LABELS: Record<string, string> = {
   evento: 'Evento',
   site: 'Site',
   facebook: 'Facebook',
+  base_clientes: 'Base de Clientes',
   outro: 'Outro',
 }
 

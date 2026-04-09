@@ -392,6 +392,7 @@ function NewLeadModal({
                 <option value="indicacao">Indicacao</option>
                 <option value="evento">Evento</option>
                 <option value="site">Site</option>
+                <option value="base_clientes">Base de Clientes</option>
                 <option value="outro">Outro</option>
               </select>
             </div>
@@ -518,6 +519,8 @@ function LeadDetailModal({
     } catch { /* ignore */ }
   }, [lead.id])
 
+  const [plans, setPlans] = useState<Array<{ id: string; value: number; installments: number; status: string; startDate: string; product: { code: string; name: string } }>>([])
+
   const loadCommissions = useCallback(async () => {
     if (lead.leadStage !== 'FECHADO') return
     try {
@@ -526,8 +529,16 @@ function LeadDetailModal({
     } catch { /* ignore */ }
   }, [lead.id, lead.leadStage])
 
+  const loadPlans = useCallback(async () => {
+    try {
+      const data = await apiFetch<Array<{ id: string; value: number; installments: number; status: string; startDate: string; product: { code: string; name: string } }>>(`/api/clients/${lead.id}/plans`)
+      setPlans(data ?? [])
+    } catch { /* ignore */ }
+  }, [lead.id])
+
   useEffect(() => { loadInteractions() }, [loadInteractions])
   useEffect(() => { loadCommissions() }, [loadCommissions])
+  useEffect(() => { loadPlans() }, [loadPlans])
 
   async function handleAddInteraction(e: React.FormEvent) {
     e.preventDefault()
@@ -648,6 +659,24 @@ function LeadDetailModal({
               </div>
             )}
           </div>
+
+          {/* Active Plans */}
+          {plans.length > 0 && (
+            <div style={{ borderTop: '2px solid black', paddingTop: 12, marginTop: 8 }}>
+              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, marginBottom: 8 }}>PLANOS ({plans.length})</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {plans.map(p => (
+                  <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#fafafa', border: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                    <span style={{ fontWeight: 700 }}>{p.product.code} — {p.product.name}</span>
+                    <span>{fmt(p.value)} | {p.installments ?? 1}x</span>
+                    <span style={{ background: p.status === 'ACTIVE' ? '#006600' : p.status === 'CANCELLED' ? '#cc0000' : '#888', color: 'white', padding: '1px 6px', fontSize: 9, fontWeight: 700 }}>
+                      {p.status === 'ACTIVE' ? 'ATIVO' : p.status === 'CANCELLED' ? 'CANCELADO' : p.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Closed Deal Data - Editable */}
           {lead.leadStage === 'FECHADO' && (
