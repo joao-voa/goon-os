@@ -152,6 +152,7 @@ export default function CommissionsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [clients, setClients] = useState<Client[]>([])
   const [activeTab, setActiveTab] = useState<'comissoes' | 'mentorias'>('comissoes')
+  const [mentorFilter, setMentorFilter] = useState('')
   const now = new Date()
   const [month, setMonth] = useState<number | null>(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
@@ -428,8 +429,8 @@ export default function CommissionsPage() {
                     const mentorTotal = mentorsList.filter(m => m.mentorName === name).reduce((s, m) => s + m.value, 0)
                     const mentorClients = [...new Set(mentorsList.filter(m => m.mentorName === name).map(m => m.client))]
                     return (
-                      <div key={name} style={{ background: 'white', padding: '12px 20px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-                        <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#4A78FF' }}>{name}</div>
+                      <div key={name} onClick={() => setMentorFilter(mentorFilter === name ? '' : name)} style={{ background: mentorFilter === name ? '#4A78FF' : 'white', color: mentorFilter === name ? 'white' : 'inherit', padding: '12px 20px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700, cursor: 'pointer' }}>
+                        <div style={{ fontSize: 10, textTransform: 'uppercase', color: mentorFilter === name ? 'white' : '#4A78FF' }}>{name}</div>
                         <div style={{ fontSize: 18 }}>{fmt(mentorTotal)}</div>
                         <div style={{ fontSize: 10, color: '#666' }}>{mentorClients.length} cliente{mentorClients.length !== 1 ? 's' : ''}</div>
                       </div>
@@ -442,7 +443,8 @@ export default function CommissionsPage() {
                   // Aggregate all mentors by month
                   const monthlyAll: Record<string, Record<string, number>> = {}
                   const monthTotals: Record<string, number> = {}
-                  for (const m of mentorsList) {
+                  const filteredMentors = mentorFilter ? mentorsList.filter(m => m.mentorName === mentorFilter) : mentorsList
+                  for (const m of filteredMentors) {
                     for (const [month, val] of Object.entries(m.monthlyBreakdown)) {
                       if (!monthlyAll[month]) monthlyAll[month] = {}
                       monthlyAll[month][m.mentorName] = (monthlyAll[month][m.mentorName] ?? 0) + val
@@ -450,7 +452,7 @@ export default function CommissionsPage() {
                     }
                   }
                   const months = Object.keys(monthlyAll).sort()
-                  const allMentorNames = [...new Set(mentorsList.map(m => m.mentorName))]
+                  const allMentorNames = [...new Set(filteredMentors.map(m => m.mentorName))]
 
                   if (months.length === 0) return null
 
@@ -504,8 +506,8 @@ export default function CommissionsPage() {
 
                 {/* Group by client */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {[...new Set(mentorsList.map(m => m.client))].map(clientName => {
-                    const clientMentors = mentorsList.filter(m => m.client === clientName)
+                  {[...new Set((mentorFilter ? mentorsList.filter(m => m.mentorName === mentorFilter) : mentorsList).map(m => m.client))].map(clientName => {
+                    const clientMentors = (mentorFilter ? mentorsList.filter(m => m.mentorName === mentorFilter) : mentorsList).filter(m => m.client === clientName)
                     const clientTotal = clientMentors.reduce((s, m) => s + m.value, 0)
                     const planValue = clientMentors[0]?.planValue ?? 0
                     const product = clientMentors[0]?.product ?? ''
