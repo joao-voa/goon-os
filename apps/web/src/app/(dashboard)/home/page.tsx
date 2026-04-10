@@ -15,7 +15,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', description: 'Visao geral e KPIs', href: '/dashboard', color: 'var(--retro-blue)' },
   { icon: Users, label: 'CRM', description: 'Pipeline de vendas e leads', href: '/crm', color: '#4A78FF' },
   { icon: Package, label: 'Programas', description: 'Produtos e programas', href: '/products', color: 'var(--success)' },
-  { icon: GitBranch, label: 'Acompanhamento CX', description: 'Acompanhamento e cadencia de clientes', href: '/onboarding', color: 'var(--warning)' },
+  { icon: GitBranch, label: 'Customer Experience', description: 'Acompanhamento e cadencia de clientes', href: '/onboarding', color: 'var(--warning)' },
   { icon: DollarSign, label: 'Financeiro', description: 'Pagamentos, despesas e fluxo', href: '/payments', color: '#22c55e' },
   { icon: FileText, label: 'Contratos', description: 'Gestao de contratos', href: '/contracts', color: '#e6a800' },
   { icon: Settings, label: 'Admin', description: 'Usuarios e configuracoes', href: '/admin', color: 'var(--retro-blue)' },
