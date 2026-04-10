@@ -102,7 +102,13 @@ export class PaymentsService {
     ])
 
     return {
-      data: data.map(p => ({ ...p, value: p.value.toNumber() })),
+      data: data.map(p => ({
+        ...p,
+        value: p.value.toNumber(),
+        installmentNumber: p.installment,
+        programName: p.clientPlan?.product?.name ?? null,
+        productCode: p.clientPlan?.product?.code ?? null,
+      })),
       total,
       page,
       limit,
@@ -119,7 +125,13 @@ export class PaymentsService {
       },
     })
 
-    return payments.map(p => ({ ...p, value: p.value.toNumber() }))
+    return payments.map(p => ({
+      ...p,
+      value: p.value.toNumber(),
+      installmentNumber: p.installment,
+      programName: p.clientPlan?.product?.name ?? null,
+      productCode: p.clientPlan?.product?.code ?? null,
+    }))
   }
 
   async create(dto: {
