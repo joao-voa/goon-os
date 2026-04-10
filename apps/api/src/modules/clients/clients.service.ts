@@ -149,21 +149,34 @@ export class ClientsService {
       throw new NotFoundException(`Cliente com ID ${id} não encontrado`)
     }
 
+    // Check if client has real data (plans, payments)
+    const plansCount = await this.prisma.clientPlan.count({ where: { clientId: id } })
+    const paymentsCount = await this.prisma.payment.count({ where: { clientId: id } })
+
+    if (plansCount === 0 && paymentsCount === 0) {
+      // No plans/payments — hard delete
+      await this.prisma.leadInteraction.deleteMany({ where: { clientId: id } })
+      await this.prisma.activityLog.deleteMany({ where: { clientId: id } })
+      await this.prisma.pendency.deleteMany({ where: { clientId: id } })
+      await this.prisma.onboarding.deleteMany({ where: { clientId: id } })
+      await this.prisma.contract.deleteMany({ where: { clientId: id } })
+      await this.prisma.client.delete({ where: { id } })
+      return { deleted: true, companyName: existing.companyName }
+    }
+
     const oldStatus = existing.status
 
-    // Cancel active plans
+    // Has data — soft delete (inactivate)
     await this.prisma.clientPlan.updateMany({
       where: { clientId: id, status: 'ACTIVE' },
       data: { status: 'CANCELLED' },
     })
 
-    // Cancel draft contracts
     await this.prisma.contract.updateMany({
       where: { clientId: id, status: 'DRAFT' },
       data: { status: 'CANCELLED' },
     })
 
-    // Set client to INACTIVE
     const client = await this.prisma.client.update({
       where: { id },
       data: { status: 'INACTIVE' },

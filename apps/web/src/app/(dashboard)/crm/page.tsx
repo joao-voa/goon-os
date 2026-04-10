@@ -1184,9 +1184,9 @@ export default function CrmPage() {
             setDetailLead(null)
           }}
           onDelete={async () => {
-            if (!confirm(`Excluir ${detailLead.companyName}? Isso cancela pagamentos e comissoes pendentes.`)) return
+            if (!confirm(`Excluir ${detailLead.companyName}? Isso remove o lead permanentemente.`)) return
             try {
-              await apiFetch(`/api/clients/${detailLead.id}/cancel`, { method: 'PATCH' })
+              await apiFetch(`/api/clients/${detailLead.id}`, { method: 'DELETE' })
               toast.success('Cliente excluido')
               setDetailLead(null)
               fetchLeads()
