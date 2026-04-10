@@ -1,6 +1,8 @@
-import { Controller, Get, Post, Put, Patch, Delete, Param, Query, Body, HttpCode } from '@nestjs/common'
+import { Controller, Get, Post, Put, Patch, Delete, Param, Query, Body, HttpCode, UseGuards } from '@nestjs/common'
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import { ExpensesService } from './expenses.service'
 
+@UseGuards(JwtAuthGuard)
 @Controller('api/expenses')
 export class ExpensesController {
   constructor(private service: ExpensesService) {}
@@ -19,10 +21,10 @@ export class ExpensesController {
       category,
       status,
       recurrence,
-      month: month ? parseInt(month) : undefined,
-      year: year ? parseInt(year) : undefined,
-      page: page ? parseInt(page) : 1,
-      limit: limit ? parseInt(limit) : 20,
+      month: month ? parseInt(month, 10) : undefined,
+      year: year ? parseInt(year, 10) : undefined,
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 20,
     })
   }
 
@@ -32,8 +34,8 @@ export class ExpensesController {
     @Query('year') year?: string,
   ) {
     return this.service.getSummary({
-      month: month ? parseInt(month) : undefined,
-      year: year ? parseInt(year) : undefined,
+      month: month ? parseInt(month, 10) : undefined,
+      year: year ? parseInt(year, 10) : undefined,
     })
   }
 
