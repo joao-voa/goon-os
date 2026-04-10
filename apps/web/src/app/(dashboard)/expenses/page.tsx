@@ -22,9 +22,10 @@ interface Summary {
   byCategory: Array<{ category: string; total: number }>
 }
 
-const CATEGORIES = ['SISTEMAS', 'MARKETING', 'PESSOAS', 'ESTRUTURA', 'OUTRO']
+const CATEGORIES = ['MENTORIA', 'COMISSAO', 'IMPOSTOS', 'MARKETING', 'PESSOAS', 'SISTEMAS', 'ESTRUTURA', 'OUTRO']
 const RECURRENCES = ['UNICA', 'MENSAL', 'TRIMESTRAL', 'ANUAL']
-const CATEGORY_LABELS: Record<string, string> = { SISTEMAS: 'Sistemas', MARKETING: 'Marketing', PESSOAS: 'Pessoas', ESTRUTURA: 'Estrutura', OUTRO: 'Outro' }
+const CATEGORY_LABELS: Record<string, string> = { MENTORIA: 'Mentoria', COMISSAO: 'Comissao', IMPOSTOS: 'Impostos', SISTEMAS: 'Sistemas', MARKETING: 'Marketing', PESSOAS: 'Pessoas', ESTRUTURA: 'Estrutura', OUTRO: 'Outro' }
+const CATEGORY_COLORS: Record<string, string> = { MENTORIA: '#4A78FF', COMISSAO: '#e6a800', IMPOSTOS: '#cc0000', MARKETING: '#7c3aed', PESSOAS: '#059669', SISTEMAS: '#06b6d4', ESTRUTURA: '#475569', OUTRO: '#888' }
 const RECURRENCE_LABELS: Record<string, string> = { UNICA: 'Unica', MENSAL: 'Mensal', TRIMESTRAL: 'Trimestral', ANUAL: 'Anual' }
 
 const emptyForm = { description: '', category: 'SISTEMAS', value: '', recurrence: 'MENSAL', dueDate: '', notes: '' }
@@ -151,12 +152,20 @@ export default function ExpensesPage() {
             <div style={{ fontSize: 10, textTransform: 'uppercase' }}>Pago</div>
             <div style={{ fontSize: 18 }}>{fmt(summary.totalPago)}</div>
           </div>
-          {summary.byCategory.map(c => (
-            <div key={c.category} style={{ background: 'var(--retro-gray)', padding: '12px 20px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-              <div style={{ fontSize: 10, textTransform: 'uppercase' }}>{CATEGORY_LABELS[c.category] ?? c.category}</div>
-              <div style={{ fontSize: 14 }}>{fmt(c.total)}</div>
-            </div>
-          ))}
+          {summary.byCategory.map(c => {
+            const color = CATEGORY_COLORS[c.category] ?? '#888'
+            const isActive = categoryFilter === c.category
+            return (
+              <div key={c.category} onClick={() => setCategoryFilter(isActive ? '' : c.category)} style={{
+                background: isActive ? color : 'white', color: isActive ? 'white' : 'inherit',
+                borderLeft: `4px solid ${color}`, padding: '12px 20px', border: `2px solid ${isActive ? color : 'black'}`,
+                boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700, cursor: 'pointer',
+              }}>
+                <div style={{ fontSize: 10, textTransform: 'uppercase' }}>{CATEGORY_LABELS[c.category] ?? c.category}</div>
+                <div style={{ fontSize: 14 }}>{fmt(c.total)}</div>
+              </div>
+            )
+          })}
         </div>
       )}
 
