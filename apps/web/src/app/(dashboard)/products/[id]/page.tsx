@@ -72,6 +72,13 @@ interface PaymentRow {
   clientPlan?: { id: string; product: { code: string; name: string } } | null
 }
 
+interface MentorRow {
+  id: string
+  mentorName: string
+  value: number
+  notes: string | null
+}
+
 // ---- Helpers ----
 const fmtBRL = (n?: number | null) =>
   n != null
@@ -293,6 +300,14 @@ export default function ProductDetailPage() {
   const [activeTab, setActiveTab] = useState(0)
   const [showEditModal, setShowEditModal] = useState(false)
 
+  // Mentor state
+  const [mentors, setMentors] = useState<Record<string, MentorRow[]>>({})
+  const [addingMentor, setAddingMentor] = useState<string | null>(null)
+  const [newMentorName, setNewMentorName] = useState('')
+  const [newMentorValue, setNewMentorValue] = useState('')
+  const [savingMentor, setSavingMentor] = useState(false)
+  const [suggestions, setSuggestions] = useState<{ salesReps: string[]; mentors: string[] }>({ salesReps: [], mentors: [] })
+
   const fetchProduct = useCallback(async () => {
     setLoading(true)
     try {
@@ -341,6 +356,13 @@ export default function ProductDetailPage() {
     }
   }, [])
 
+  const loadMentors = useCallback(async (planId: string) => {
+    try {
+      const data = await apiFetch<MentorRow[]>(`/api/plans/${planId}/mentors`)
+      setMentors(prev => ({ ...prev, [planId]: data }))
+    } catch { /* ignore */ }
+  }, [])
+
   useEffect(() => {
     fetchProduct()
   }, [fetchProduct])
@@ -352,6 +374,21 @@ export default function ProductDetailPage() {
       fetchPayments(product.code)
     }
   }, [product, fetchClients, fetchContracts, fetchPayments])
+
+  // Load mentors for each client's plan
+  useEffect(() => {
+    clients.forEach(client => {
+      const plan = client.plans.find(p => p.product.code === product?.code)
+      if (plan) loadMentors(plan.id)
+    })
+  }, [clients, product, loadMentors])
+
+  // Load suggestions for mentor autocomplete
+  useEffect(() => {
+    apiFetch<{ salesReps: string[]; mentors: string[] }>('/api/crm/suggestions')
+      .then(setSuggestions)
+      .catch(() => {})
+  }, [])
 
   if (loading) {
     return (
@@ -527,51 +564,144 @@ export default function ProductDetailPage() {
                       {clients.map(client => {
                         const plan = client.plans.find(p => p.product.code === product.code)
                         const contract = client.contracts[0]
+                        const planMentors = plan ? (mentors[plan.id] ?? []) : []
+                        const totalMentors = planMentors.reduce((s, m) => s + m.value, 0)
                         return (
-                          <tr
-                            key={client.id}
-                            style={{ cursor: 'pointer' }}
-                            onClick={() => router.push(`/clients/${client.id}`)}
-                            onMouseEnter={e => (e.currentTarget.style.background = '#f5f5f5')}
-                            onMouseLeave={e => (e.currentTarget.style.background = '')}
-                          >
-                            <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 13 }}>
-                              {client.companyName}
-                            </td>
-                            <td>
-                              <span style={statusBadgeStyle(client.status)}>{statusLabel(client.status)}</span>
-                            </td>
-                            <td>
-                              {contract ? (
-                                <span style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  padding: '2px 8px',
-                                  background: CONTRACT_STATUS_COLORS[contract.status] ?? '#c0c0c0',
-                                  color: contract.status === 'DRAFT' || contract.status === 'CANCELLED' ? '#333' : 'white',
-                                  border: '1px solid black',
-                                  fontFamily: 'var(--font-mono)',
-                                  fontSize: 10,
-                                  fontWeight: 700,
-                                  textTransform: 'uppercase',
-                                }}>
-                                  {contractStatusLabel(contract.status)}
-                                  {contract.isSigned ? ' ✓' : ''}
+                          <tr key={client.id}>
+                            <td
+                              colSpan={5}
+                              style={{ padding: 0, border: 'none' }}
+                            >
+                              {/* Client row */}
+                              <div
+                                style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto auto', alignItems: 'center', gap: 0, cursor: 'pointer', padding: '8px 12px' }}
+                                onClick={() => router.push(`/clients/${client.id}`)}
+                                onMouseEnter={e => (e.currentTarget.style.background = '#f5f5f5')}
+                                onMouseLeave={e => (e.currentTarget.style.background = '')}
+                              >
+                                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 13 }}>
+                                  {client.companyName}
                                 </span>
-                              ) : (
-                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#aaa' }}>—</span>
-                              )}
-                            </td>
-                            <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-                              {plan ? fmtBRL(plan.value) : '—'}
-                            </td>
-                            <td>
-                              {(client._pendenciesCount ?? 0) > 0 ? (
-                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#cc0000', fontWeight: 700 }}>
-                                  {client._pendenciesCount}
+                                <span style={{ padding: '0 12px' }}>
+                                  <span style={statusBadgeStyle(client.status)}>{statusLabel(client.status)}</span>
                                 </span>
-                              ) : (
-                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#aaa' }}>—</span>
+                                <span style={{ padding: '0 12px' }}>
+                                  {contract ? (
+                                    <span style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      padding: '2px 8px',
+                                      background: CONTRACT_STATUS_COLORS[contract.status] ?? '#c0c0c0',
+                                      color: contract.status === 'DRAFT' || contract.status === 'CANCELLED' ? '#333' : 'white',
+                                      border: '1px solid black',
+                                      fontFamily: 'var(--font-mono)',
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                      textTransform: 'uppercase',
+                                    }}>
+                                      {contractStatusLabel(contract.status)}
+                                      {contract.isSigned ? ' ✓' : ''}
+                                    </span>
+                                  ) : (
+                                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#aaa' }}>—</span>
+                                  )}
+                                </span>
+                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, padding: '0 12px' }}>
+                                  {plan ? fmtBRL(plan.value) : '—'}
+                                </span>
+                                <span style={{ padding: '0 12px' }}>
+                                  {(client._pendenciesCount ?? 0) > 0 ? (
+                                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#cc0000', fontWeight: 700 }}>
+                                      {client._pendenciesCount}
+                                    </span>
+                                  ) : (
+                                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#aaa' }}>—</span>
+                                  )}
+                                </span>
+                              </div>
+
+                              {/* Mentors section */}
+                              {plan && (
+                                <div style={{ padding: '4px 12px 10px', borderTop: '1px solid #eee', background: '#fafafa' }}>
+                                  {planMentors.length > 0 && (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 6 }}>
+                                      {planMentors.map(m => (
+                                        <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: 'var(--font-mono)', fontSize: 10 }}>
+                                          <span>{m.mentorName}</span>
+                                          <span style={{ fontWeight: 700 }}>{fmtBRL(m.value)}</span>
+                                          <button onClick={async (e) => {
+                                            e.stopPropagation()
+                                            if (!confirm(`Remover ${m.mentorName}?`)) return
+                                            await apiFetch(`/api/mentors/${m.id}`, { method: 'DELETE' })
+                                            loadMentors(plan.id)
+                                          }} style={{ background: '#cc0000', color: 'white', border: 'none', padding: '1px 6px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
+                                        </div>
+                                      ))}
+                                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#666', textAlign: 'right' }}>
+                                        Total mentoria: {fmtBRL(totalMentors)} | Saldo: {fmtBRL(plan.value - totalMentors)}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {addingMentor === plan.id ? (
+                                    <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                                      <input
+                                        list="product-mentor-list"
+                                        placeholder="Nome"
+                                        value={newMentorName}
+                                        onChange={e => setNewMentorName(e.target.value)}
+                                        onClick={e => e.stopPropagation()}
+                                        style={{ flex: '1 1 100px', fontSize: 10, padding: '4px 6px', border: '2px solid black', fontFamily: 'var(--font-mono)', background: 'white' }}
+                                      />
+                                      <datalist id="product-mentor-list">
+                                        {(suggestions?.mentors ?? []).map(s => <option key={s} value={s} />)}
+                                      </datalist>
+                                      <input
+                                        type="number"
+                                        placeholder="Valor"
+                                        step="0.01"
+                                        value={newMentorValue}
+                                        onChange={e => setNewMentorValue(e.target.value)}
+                                        onClick={e => e.stopPropagation()}
+                                        style={{ width: 80, fontSize: 10, padding: '4px 6px', border: '2px solid black', fontFamily: 'var(--font-mono)', background: 'white' }}
+                                      />
+                                      <button
+                                        disabled={savingMentor}
+                                        onClick={async (e) => {
+                                          e.stopPropagation()
+                                          if (!newMentorName.trim() || !parseFloat(newMentorValue)) return
+                                          setSavingMentor(true)
+                                          try {
+                                            await apiFetch(`/api/plans/${plan.id}/mentors`, {
+                                              method: 'POST',
+                                              body: JSON.stringify({ mentorName: newMentorName.trim(), value: parseFloat(newMentorValue) }),
+                                            })
+                                            toast.success(`${newMentorName} atribuido!`)
+                                            setAddingMentor(null)
+                                            setNewMentorName('')
+                                            setNewMentorValue('')
+                                            loadMentors(plan.id)
+                                          } catch { toast.error('Erro ao atribuir mentor') }
+                                          setSavingMentor(false)
+                                        }}
+                                        style={{ background: '#006600', color: 'white', border: '2px solid black', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}
+                                      >OK</button>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); setAddingMentor(null) }}
+                                        style={{ background: 'white', border: '2px solid black', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
+                                      >X</button>
+                                    </div>
+                                  ) : (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); setAddingMentor(plan.id) }}
+                                        style={{ background: 'white', border: '1px dashed #888', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', color: '#666', flex: 1 }}
+                                      >+ ATRIBUIR MENTOR</button>
+                                      {plan.value - totalMentors > 0 && (
+                                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#4A78FF', marginLeft: 6 }}>Disponivel: {fmtBRL(plan.value - totalMentors)}</span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </td>
                           </tr>

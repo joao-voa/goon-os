@@ -748,6 +748,15 @@ export default function ClientDetailPage() {
   const [showAddPlan, setShowAddPlan] = useState(false)
   const [showCreateContract, setShowCreateContract] = useState(false)
 
+  // Mentors
+  const [mentors, setMentors] = useState<Record<string, Array<{ id: string; mentorName: string; value: number; notes: string | null }>>>({})
+  const [addingMentor, setAddingMentor] = useState<string | null>(null)
+  const [newMentorName, setNewMentorName] = useState('')
+  const [newMentorValue, setNewMentorValue] = useState('')
+  const [newMentorNotes, setNewMentorNotes] = useState('')
+  const [savingMentor, setSavingMentor] = useState(false)
+  const [mentorSuggestions, setMentorSuggestions] = useState<string[]>([])
+
   // Payments
   const [payments, setPayments] = useState<Payment[]>([])
   const [loadingPayments, setLoadingPayments] = useState(false)
@@ -803,6 +812,21 @@ export default function ClientDetailPage() {
       setPendencies(Array.isArray(data) ? data : [])
     } catch { /* silent */ } finally { setLoadingPendencies(false) }
   }, [id])
+
+  const loadMentors = useCallback(async (planId: string) => {
+    try {
+      const data = await apiFetch<Array<{ id: string; mentorName: string; value: number; notes: string | null }>>(`/api/plans/${planId}/mentors`)
+      setMentors(prev => ({ ...prev, [planId]: data }))
+    } catch { /* silent */ }
+  }, [])
+
+  useEffect(() => { plans.forEach(p => loadMentors(p.id)) }, [plans, loadMentors])
+
+  useEffect(() => {
+    apiFetch<{ salesReps: string[]; mentors: string[] }>('/api/crm/suggestions')
+      .then(data => setMentorSuggestions(data.mentors ?? []))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     fetchClient()
@@ -1241,6 +1265,73 @@ export default function ClientDetailPage() {
                               )}
                             </div>
                           )}
+
+                          {/* Mentors */}
+                          {(() => {
+                            const planMentors = mentors[plan.id] ?? []
+                            const totalMentors = planMentors.reduce((s, m) => s + m.value, 0)
+                            return (
+                              <div style={{ padding: '8px 14px', borderTop: '1px solid #ddd', background: 'white' }}>
+                                {planMentors.length > 0 && (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
+                                    {planMentors.map(m => (
+                                      <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                                        <span>{m.mentorName}</span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                          <span style={{ fontWeight: 700 }}>{fmtBRL(m.value)}</span>
+                                          <button onClick={async () => {
+                                            if (!confirm(`Remover ${m.mentorName}?`)) return
+                                            try {
+                                              await apiFetch(`/api/mentors/${m.id}`, { method: 'DELETE' })
+                                              toast.success(`${m.mentorName} removido`)
+                                              loadMentors(plan.id)
+                                            } catch { toast.error('Erro ao remover mentor') }
+                                          }} style={{ background: '#cc0000', color: 'white', border: 'none', padding: '1px 6px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#666', textAlign: 'right', marginTop: 2 }}>
+                                      Total mentoria: {fmtBRL(totalMentors)} | Saldo: {fmtBRL(plan.value - totalMentors)}
+                                    </div>
+                                  </div>
+                                )}
+                                {addingMentor === plan.id ? (
+                                  <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                                    <input list="mentor-list-client" placeholder="Nome" value={newMentorName} onChange={e => setNewMentorName(e.target.value)} style={{ flex: '1 1 100px', padding: '4px 6px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10 }} />
+                                    <datalist id="mentor-list-client">
+                                      {mentorSuggestions.map(s => <option key={s} value={s} />)}
+                                    </datalist>
+                                    <input type="number" placeholder="Valor" step="0.01" value={newMentorValue} onChange={e => setNewMentorValue(e.target.value)} style={{ width: 80, padding: '4px 6px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10 }} />
+                                    <button disabled={savingMentor} onClick={async () => {
+                                      if (!newMentorName.trim() || !parseFloat(newMentorValue)) return
+                                      setSavingMentor(true)
+                                      try {
+                                        await apiFetch(`/api/plans/${plan.id}/mentors`, {
+                                          method: 'POST',
+                                          body: JSON.stringify({ mentorName: newMentorName.trim(), value: parseFloat(newMentorValue), notes: newMentorNotes.trim() || undefined }),
+                                        })
+                                        toast.success(`${newMentorName} atribuido!`)
+                                        setAddingMentor(null)
+                                        setNewMentorName('')
+                                        setNewMentorValue('')
+                                        setNewMentorNotes('')
+                                        loadMentors(plan.id)
+                                      } catch { toast.error('Erro ao atribuir mentor') }
+                                      setSavingMentor(false)
+                                    }} style={{ background: '#006600', color: 'white', border: '2px solid black', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>OK</button>
+                                    <button onClick={() => setAddingMentor(null)} style={{ background: 'white', border: '2px solid black', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
+                                  </div>
+                                ) : (
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <button onClick={() => setAddingMentor(plan.id)} style={{ background: 'white', border: '1px dashed #888', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', color: '#666', flex: 1 }}>+ ATRIBUIR MENTOR</button>
+                                    {plan.value - totalMentors > 0 && (
+                                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#4A78FF', marginLeft: 6 }}>Disponivel: {fmtBRL(plan.value - totalMentors)}</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })()}
                         </div>
                       )
                     })}
