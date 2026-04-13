@@ -321,17 +321,20 @@ export class CrmService {
       })
     }
 
-    // 7. Auto-create expense for tax (6% of sale value)
-    const taxValue = Math.round(dto.saleValue * TAX_RATE * 100) / 100
-    if (taxValue > 0) {
-      await this.expensesService.create({
-        description: `Imposto 6% — ${client.companyName}`,
-        category: 'OUTRO',
-        value: taxValue,
-        recurrence: 'UNICA',
-        dueDate: now,
-        notes: `Imposto sobre faturamento de R$${dto.saleValue}. Auto-gerado.`,
-      })
+    // 7. Auto-create expense for tax (6% per installment)
+    const allPayments = [...(entryPayment ? [{ value: entryPayment.value, dueDate: now, installment: 0 }] : []), ...payments.map(pay => ({ value: typeof pay.value === 'number' ? pay.value : Number(pay.value), dueDate: pay.dueDate ?? now, installment: pay.installment }))]
+    for (const pay of allPayments) {
+      const taxValue = Math.round(pay.value * TAX_RATE * 100) / 100
+      if (taxValue > 0) {
+        await this.expensesService.create({
+          description: `Imposto 6% — ${client.companyName} P${pay.installment}`,
+          category: 'IMPOSTOS',
+          value: taxValue,
+          recurrence: 'UNICA',
+          dueDate: pay.dueDate,
+          notes: `Imposto sobre parcela R$${pay.value}`,
+        })
+      }
     }
 
     // 8. Log activity
