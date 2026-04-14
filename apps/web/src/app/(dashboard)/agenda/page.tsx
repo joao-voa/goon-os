@@ -23,12 +23,16 @@ interface Client {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  INDIVIDUAL: 'Individual',
-  GRUPO: 'Grupo',
+  INDIVIDUAL: 'Mentoria Individual',
+  GRUPO: 'Mentoria em Grupo',
   DIAGNOSTICO: 'Diagnostico',
   PLANO_VOO: 'Plano de Voo',
   KICKOFF: 'Kickoff',
   FOLLOW_UP: 'Follow Up',
+  RG: 'Ritual de Gestao',
+  COMERCIAL: 'Reuniao Comercial',
+  ALINHAMENTO: 'Alinhamento Interno',
+  OUTRO: 'Outro',
 }
 const TYPE_COLORS: Record<string, string> = {
   INDIVIDUAL: '#4A78FF',
@@ -37,6 +41,10 @@ const TYPE_COLORS: Record<string, string> = {
   PLANO_VOO: '#d97706',
   KICKOFF: '#dc2626',
   FOLLOW_UP: '#06b6d4',
+  RG: '#000080',
+  COMERCIAL: '#22c55e',
+  ALINHAMENTO: '#475569',
+  OUTRO: '#888',
 }
 const STATUS_LABELS: Record<string, string> = {
   SCHEDULED: 'Agendada',
@@ -123,15 +131,20 @@ export default function AgendaPage() {
   }
 
   async function handleSave() {
-    if (!formClientId || !formTitle || !formDate) {
-      toast.error('Preencha cliente, titulo e data')
+    const needsClient = !['RG', 'ALINHAMENTO'].includes(formType)
+    if (needsClient && !formClientId) {
+      toast.error('Preencha o cliente')
+      return
+    }
+    if (!formTitle || !formDate) {
+      toast.error('Preencha titulo e data')
       return
     }
     setSaving(true)
     try {
       const dateTime = new Date(`${formDate}T${formTime}:00`)
       const body = {
-        clientId: formClientId,
+        clientId: formClientId || undefined,
         title: formTitle,
         type: formType,
         date: dateTime.toISOString(),
@@ -345,17 +358,6 @@ export default function AgendaPage() {
               {selectedMeeting ? 'EDITAR REUNIAO' : 'NOVA REUNIAO'}
             </div>
             <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div>
-                <label style={labelStyle}>Cliente *</label>
-                <select value={formClientId} onChange={e => setFormClientId(e.target.value)} style={inputStyle} required>
-                  <option value="">Selecione...</option>
-                  {clients.map(c => <option key={c.id} value={c.id}>{c.companyName}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={labelStyle}>Titulo *</label>
-                <input value={formTitle} onChange={e => setFormTitle(e.target.value)} style={inputStyle} placeholder="Ex: Mentoria Individual" />
-              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <div>
                   <label style={labelStyle}>Tipo</label>
@@ -367,6 +369,19 @@ export default function AgendaPage() {
                   <label style={labelStyle}>Duracao (min)</label>
                   <input type="number" value={formDuration} onChange={e => setFormDuration(e.target.value)} style={inputStyle} />
                 </div>
+              </div>
+              {!['RG', 'ALINHAMENTO'].includes(formType) && (
+                <div>
+                  <label style={labelStyle}>Cliente *</label>
+                  <select value={formClientId} onChange={e => setFormClientId(e.target.value)} style={inputStyle}>
+                    <option value="">Selecione...</option>
+                    {clients.map(c => <option key={c.id} value={c.id}>{c.companyName}</option>)}
+                  </select>
+                </div>
+              )}
+              <div>
+                <label style={labelStyle}>Titulo *</label>
+                <input value={formTitle} onChange={e => setFormTitle(e.target.value)} style={inputStyle} placeholder="Ex: Mentoria Individual" />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <div>

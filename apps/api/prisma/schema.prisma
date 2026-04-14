@@ -88,9 +88,10 @@ model Client {
 
 model Meeting {
   id          String    @id @default(cuid())
-  clientId    String
+  clientId    String?
   title       String
-  type        String    // INDIVIDUAL, GRUPO, DIAGNOSTICO, PLANO_VOO, KICKOFF, FOLLOW_UP
+  type        String    // INDIVIDUAL, GRUPO, DIAGNOSTICO, PLANO_VOO, KICKOFF, FOLLOW_UP, RG, COMERCIAL, ALINHAMENTO
+  category    String    @default("MENTORIA") // MENTORIA, COMERCIAL, GESTAO, OUTRO
   date        DateTime
   duration    Int       @default(60) // minutes
   mentorName  String?
@@ -98,7 +99,7 @@ model Meeting {
   status      String    @default("SCHEDULED") // SCHEDULED, DONE, CANCELLED, NO_SHOW
   doneAt      DateTime?
 
-  client      Client    @relation(fields: [clientId], references: [id])
+  client      Client?   @relation(fields: [clientId], references: [id])
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

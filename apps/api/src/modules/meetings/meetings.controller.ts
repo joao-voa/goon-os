@@ -29,9 +29,19 @@ export class MeetingsController {
     return this.service.getStats()
   }
 
+  @Get('cadence')
+  getAllClientsCadence() {
+    return this.service.getAllClientsCadence()
+  }
+
   @Get('client/:clientId')
   findByClient(@Param('clientId') clientId: string) {
     return this.service.findByClient(clientId)
+  }
+
+  @Get('client/:clientId/cadence')
+  getClientCadence(@Param('clientId') clientId: string) {
+    return this.service.getClientCadence(clientId)
   }
 
   @Post()
