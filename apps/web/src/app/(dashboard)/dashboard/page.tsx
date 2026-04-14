@@ -360,8 +360,13 @@ function RenewalSection({ renewals, isMobile }: { renewals: Renewals; isMobile: 
                 {client.companyName}
               </span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555' }}>
-                Contrato vence em{' '}
-                <strong style={{ color: client.daysLeft <= 7 ? '#cc0000' : '#ff6600' }}>{client.daysLeft} dias</strong>
+                {client.daysLeft < 0 ? (
+                  <strong style={{ color: '#cc0000' }}>Contrato vencido ha {Math.abs(client.daysLeft)} dias</strong>
+                ) : client.daysLeft === 0 ? (
+                  <strong style={{ color: '#cc0000' }}>Contrato vence hoje</strong>
+                ) : (
+                  <>Contrato vence em <strong style={{ color: client.daysLeft <= 7 ? '#cc0000' : '#ff6600' }}>{client.daysLeft} dias</strong></>
+                )}
                 {' '}({fmtDate(client.contractEndDate)})
               </span>
             </div>
