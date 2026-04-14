@@ -1,6 +1,6 @@
 'use client'
 
-import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, DollarSign, AlertTriangle, LogOut, ChevronLeft, ChevronRight, Users, Percent, Receipt, ArrowLeftRight, Settings } from 'lucide-react'
+import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, DollarSign, AlertTriangle, LogOut, ChevronLeft, ChevronRight, Users, Percent, Receipt, ArrowLeftRight, Settings, Calendar } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
@@ -26,6 +26,8 @@ interface SidebarProps {
 export const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard',   label: 'Dashboard',   icon: LayoutDashboard },
   { href: '/crm',         label: 'CRM',         icon: Users },
+  { href: '/clients',     label: 'Clientes',    icon: Building2 },
+  { href: '/agenda',      label: 'Agenda',      icon: Calendar },
   { href: '/products',    label: 'Programas',   icon: Package },
   { href: '/onboarding',  label: 'Customer Experience',  icon: GitBranch },
   { href: '/payments',    label: 'Financeiro',  icon: DollarSign },

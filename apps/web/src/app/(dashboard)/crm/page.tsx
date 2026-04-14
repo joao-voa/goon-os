@@ -921,7 +921,7 @@ export default function CrmPage() {
   const [syncing, setSyncing] = useState(false)
   const [metrics, setMetrics] = useState<CrmMetrics | null>(null)
   const [suggestions, setSuggestions] = useState<{ salesReps: string[]; mentors: string[] }>({ salesReps: [], mentors: [] })
-  const [crmTab, setCrmTab] = useState<'pipeline' | 'clientes'>('pipeline')
+  // removed crmTab - clients now separate page
   const [salesRepFilter, setSalesRepFilter] = useState('')
   const isMobile = useIsMobile()
 
@@ -1033,27 +1033,7 @@ export default function CrmPage() {
 
   return (
     <div>
-      {/* CRM Tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 16 }}>
-        {(['pipeline', 'clientes'] as const).map(tab => (
-          <button key={tab} onClick={() => setCrmTab(tab)} style={{
-            padding: '10px 24px', border: '2px solid black',
-            borderBottom: crmTab === tab ? 'none' : '2px solid black',
-            background: crmTab === tab ? 'white' : '#f0f0f0',
-            fontFamily: 'var(--font-pixel)', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-            textTransform: 'uppercase', position: 'relative',
-            marginBottom: crmTab === tab ? -2 : 0, zIndex: crmTab === tab ? 1 : 0,
-            color: crmTab === tab ? 'black' : '#888',
-          }}>
-            {tab === 'pipeline' ? 'PIPELINE' : 'CLIENTES'}
-          </button>
-        ))}
-        <div style={{ flex: 1, borderBottom: '2px solid black' }} />
-      </div>
-
-      {crmTab === 'clientes' && <ClientsPage />}
-
-      {crmTab === 'pipeline' && <>
+      {<>
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         marginBottom: 20, flexWrap: 'wrap', gap: 12,

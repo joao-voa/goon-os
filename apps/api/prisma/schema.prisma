@@ -75,6 +75,7 @@ model Client {
   pendencies   Pendency[]
   commissions  Commission[]
   interactions LeadInteraction[]
+  meetings     Meeting[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -83,6 +84,29 @@ model Client {
   @@index([createdAt])
   @@index([leadStage])
   @@index([salesRep])
+}
+
+model Meeting {
+  id          String    @id @default(cuid())
+  clientId    String
+  title       String
+  type        String    // INDIVIDUAL, GRUPO, DIAGNOSTICO, PLANO_VOO, KICKOFF, FOLLOW_UP
+  date        DateTime
+  duration    Int       @default(60) // minutes
+  mentorName  String?
+  notes       String?
+  status      String    @default("SCHEDULED") // SCHEDULED, DONE, CANCELLED, NO_SHOW
+  doneAt      DateTime?
+
+  client      Client    @relation(fields: [clientId], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([date])
+  @@index([mentorName])
+  @@index([status])
 }
 
 model Product {

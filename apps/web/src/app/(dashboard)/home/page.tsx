@@ -4,6 +4,8 @@ import Link from 'next/link'
 import {
   LayoutDashboard,
   Users,
+  Building2,
+  Calendar,
   Package,
   GitBranch,
   DollarSign,
@@ -14,6 +16,8 @@ import {
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', description: 'Visao geral e KPIs', href: '/dashboard', color: 'var(--retro-blue)' },
   { icon: Users, label: 'CRM', description: 'Pipeline de vendas e leads', href: '/crm', color: '#4A78FF' },
+  { icon: Building2, label: 'Clientes', description: 'Base de clientes e cadencia', href: '/clients', color: '#000080' },
+  { icon: Calendar, label: 'Agenda', description: 'Reunioes e acompanhamento', href: '/agenda', color: '#7c3aed' },
   { icon: Package, label: 'Programas', description: 'Produtos e programas', href: '/products', color: 'var(--success)' },
   { icon: GitBranch, label: 'Customer Experience', description: 'Acompanhamento e cadencia de clientes', href: '/onboarding', color: 'var(--warning)' },
   { icon: DollarSign, label: 'Financeiro', description: 'Pagamentos, despesas e fluxo', href: '/payments', color: '#22c55e' },
