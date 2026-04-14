@@ -32,8 +32,9 @@ interface KPIs {
 }
 
 interface FinancialKPIs {
-  mrr: number
-  totalReceived: number
+  totalReceivedMonth: number
+  totalReceivedAll: number
+  toReceiveMonth: number
   totalPending: number
   totalOverdue: number
   overdueCount: number
@@ -78,11 +79,10 @@ interface ActivityEntry {
 }
 
 interface FinancialConsolidation {
-  entradas: { received: number; pending: number; overdue: number }
-  expenses: { previsto: number; pago: number }
-  commissions: { pending: number; paid: number }
-  netBalance: number
-  projectedBalance: number
+  entradas: { receivedMonth: number; receivedAll: number; toReceiveMonth: number; pending: number; overdue: number }
+  saidas: { pagoMes: number; previstoMes: number; expenses: number; commissions: number }
+  netBalanceMonth: number
+  projectedBalanceMonth: number
 }
 
 interface NegotiationLead {
@@ -618,8 +618,9 @@ function FinancialSummary({ financialKpis, isMobile }: { financialKpis: Financia
       <div className="goon-card-header">RESUMO FINANCEIRO</div>
       <div style={{ padding: '16px 20px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 12 : 0 }}>
         {[
-          { label: 'Recebido este mês', value: fmtBRL(financialKpis.totalReceived), color: '#006600', border: '4px solid #006600' },
-          { label: 'Pendente', value: fmtBRL(financialKpis.totalPending), color: '#000080', border: isMobile ? '4px solid #000080' : '4px solid transparent' },
+          { label: 'Entradas no Mes', value: fmtBRL(financialKpis.totalReceivedMonth), color: '#006600', border: '4px solid #006600' },
+          { label: 'A Receber no Mes', value: fmtBRL(financialKpis.toReceiveMonth), color: '#4A78FF', border: '4px solid #4A78FF' },
+          { label: 'Total Pendente', value: fmtBRL(financialKpis.totalPending), color: '#000080', border: isMobile ? '4px solid #000080' : '4px solid transparent' },
           { label: 'Vencido', value: fmtBRL(financialKpis.totalOverdue), color: '#cc0000', border: isMobile ? '4px solid #cc0000' : '4px solid transparent' },
         ].map((item, idx) => (
           <div
@@ -649,12 +650,12 @@ function FinancialSummary({ financialKpis, isMobile }: { financialKpis: Financia
 
 function FinancialConsolidationCard({ data, isMobile }: { data: FinancialConsolidation; isMobile: boolean }) {
   const items = [
-    { label: 'Despesas Previstas', value: fmtBRL(data.expenses.previsto), color: '#e6a800' },
-    { label: 'Despesas Pagas', value: fmtBRL(data.expenses.pago), color: '#cc0000' },
-    { label: 'Comissoes Pendentes', value: fmtBRL(data.commissions.pending), color: '#e6a800' },
-    { label: 'Comissoes Pagas', value: fmtBRL(data.commissions.paid), color: '#cc0000' },
-    { label: 'Saldo Liquido', value: fmtBRL(data.netBalance), color: data.netBalance >= 0 ? '#006600' : '#cc0000' },
-    { label: 'Saldo Projetado', value: fmtBRL(data.projectedBalance), color: data.projectedBalance >= 0 ? '#006600' : '#cc0000' },
+    { label: 'Entradas no Mes', value: fmtBRL(data.entradas.receivedMonth), color: '#006600' },
+    { label: 'Total Recebido', value: fmtBRL(data.entradas.receivedAll), color: '#006600' },
+    { label: 'Saidas no Mes', value: fmtBRL(data.saidas.pagoMes), color: '#cc0000' },
+    { label: 'Saidas Previstas', value: fmtBRL(data.saidas.previstoMes), color: '#e6a800' },
+    { label: 'Saldo do Mes', value: fmtBRL(data.netBalanceMonth), color: data.netBalanceMonth >= 0 ? '#006600' : '#cc0000' },
+    { label: 'Saldo Projetado', value: fmtBRL(data.projectedBalanceMonth), color: data.projectedBalanceMonth >= 0 ? '#006600' : '#cc0000' },
   ]
 
   return (

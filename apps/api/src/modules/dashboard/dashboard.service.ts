@@ -79,30 +79,44 @@ export class DashboardService {
     endOfMonth.setMonth(endOfMonth.getMonth() + 1)
 
     // 9. Financial KPIs (aggregate in DB)
-    const [paidAgg, pendingAgg, overdueAgg] = await this.prisma.$transaction([
+    const [paidMonthAgg, paidAllAgg, pendingAgg, overdueAgg, pendingMonthAgg] = await this.prisma.$transaction([
+      // Recebido este mês
       this.prisma.payment.aggregate({
         where: { status: 'PAID', paidAt: { gte: startOfMonth, lt: endOfMonth } },
         _sum: { value: true },
+        _count: true,
       }),
+      // Total recebido (all time)
+      this.prisma.payment.aggregate({
+        where: { status: 'PAID' },
+        _sum: { value: true },
+      }),
+      // Total pendente
       this.prisma.payment.aggregate({
         where: { status: 'PENDING' },
         _sum: { value: true },
         _count: true,
       }),
+      // Total vencido
       this.prisma.payment.aggregate({
         where: { status: 'OVERDUE' },
         _sum: { value: true },
         _count: true,
       }),
+      // A receber este mês
+      this.prisma.payment.aggregate({
+        where: { status: 'PENDING', dueDate: { gte: startOfMonth, lt: endOfMonth } },
+        _sum: { value: true },
+        _count: true,
+      }),
     ])
 
-    const totalReceived = Number(paidAgg._sum.value ?? 0)
+    const totalReceivedMonth = Number(paidMonthAgg._sum.value ?? 0)
+    const totalReceivedAll = Number(paidAllAgg._sum.value ?? 0)
     const totalPending = Number(pendingAgg._sum.value ?? 0)
     const totalOverdue = Number(overdueAgg._sum.value ?? 0)
     const overdueCount = overdueAgg._count ?? 0
-
-    // MRR: sum of active plan values (treating each as monthly)
-    const mrr = totalRevenue
+    const toReceiveMonth = Number(pendingMonthAgg._sum.value ?? 0)
 
     const averageTicket = totalActiveClients > 0 ? totalRevenue / totalActiveClients : 0
 
@@ -145,10 +159,10 @@ export class DashboardService {
     const totalExpensesPrevisto = Number(expensesPrevistoAgg._sum.value ?? 0)
     const totalExpensesPago = Number(expensesPagoAgg._sum.value ?? 0)
 
-    // 12. Commissions summary for current month
+    // 12. Commissions summary for current month (by payment dueDate)
     const [commissionsPendingAgg, commissionsPaidAgg] = await this.prisma.$transaction([
       this.prisma.commission.aggregate({
-        where: { status: 'PENDING', createdAt: { gte: startOfMonth, lt: endOfMonth } },
+        where: { status: 'PENDING', payment: { dueDate: { gte: startOfMonth, lt: endOfMonth } } },
         _sum: { value: true },
       }),
       this.prisma.commission.aggregate({
@@ -159,6 +173,10 @@ export class DashboardService {
 
     const totalCommissionsPending = Number(commissionsPendingAgg._sum.value ?? 0)
     const totalCommissionsPaid = Number(commissionsPaidAgg._sum.value ?? 0)
+
+    // Total saidas do mês (despesas + comissões)
+    const totalSaidasMes = totalExpensesPago + totalCommissionsPaid
+    const totalSaidasPrevistas = totalExpensesPrevisto + totalCommissionsPending
 
     // 13. Pipeline de negociacao (leads ativos com saleValue)
     const negotiationLeads = await this.prisma.client.findMany({
@@ -179,9 +197,9 @@ export class DashboardService {
     const negotiationTotal = negotiationLeads.reduce((sum, l) => sum + Number(l.saleValue ?? 0), 0)
     const negotiationCount = negotiationLeads.length
 
-    // 14. Net balance = entradas recebidas - despesas pagas - comissoes pagas
-    const netBalance = totalReceived - totalExpensesPago - totalCommissionsPaid
-    const projectedBalance = (totalReceived + totalPending) - (totalExpensesPrevisto + totalExpensesPago) - (totalCommissionsPending + totalCommissionsPaid)
+    // 14. Net balance
+    const netBalanceMonth = totalReceivedMonth - totalSaidasMes
+    const projectedBalanceMonth = (totalReceivedMonth + toReceiveMonth) - (totalSaidasMes + totalSaidasPrevistas)
 
     return {
       kpis: { totalActiveClients, newClientsThisMonth, totalRevenue, revenueByProduct },
@@ -195,8 +213,9 @@ export class DashboardService {
         renewalPending,
       },
       financialKpis: {
-        mrr,
-        totalReceived,
+        totalReceivedMonth,
+        totalReceivedAll,
+        toReceiveMonth,
         totalPending,
         totalOverdue,
         overdueCount,
@@ -218,11 +237,10 @@ export class DashboardService {
         })),
       },
       financialConsolidation: {
-        entradas: { received: totalReceived, pending: totalPending, overdue: totalOverdue },
-        expenses: { previsto: totalExpensesPrevisto, pago: totalExpensesPago },
-        commissions: { pending: totalCommissionsPending, paid: totalCommissionsPaid },
-        netBalance,
-        projectedBalance,
+        entradas: { receivedMonth: totalReceivedMonth, receivedAll: totalReceivedAll, toReceiveMonth, pending: totalPending, overdue: totalOverdue },
+        saidas: { pagoMes: totalSaidasMes, previstoMes: totalSaidasPrevistas, expenses: totalExpensesPago, commissions: totalCommissionsPaid },
+        netBalanceMonth,
+        projectedBalanceMonth,
       },
     }
   }
