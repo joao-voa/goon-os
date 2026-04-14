@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 
@@ -159,6 +159,7 @@ export default function CommissionsPage() {
   const [salesRepSuggestions, setSalesRepSuggestions] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<'comissoes' | 'mentorias'>('comissoes')
   const [mentorFilter, setMentorFilter] = useState('')
+  const [expandedView, setExpandedView] = useState(false)
   const now = new Date()
   const [month, setMonth] = useState<number | null>(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
@@ -470,37 +471,73 @@ export default function CommissionsPage() {
                     return new Date(parseInt(y), parseInt(mo) - 1).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
                   }
 
+                  // Build per-mentor per-client monthly data for expanded view
+                  const mentorClientMonthly: Record<string, Record<string, Record<string, number>>> = {}
+                  for (const m of filteredMentors) {
+                    if (!mentorClientMonthly[m.mentorName]) mentorClientMonthly[m.mentorName] = {}
+                    const clientKey = m.client + ' (' + m.product + ')'
+                    if (!mentorClientMonthly[m.mentorName][clientKey]) mentorClientMonthly[m.mentorName][clientKey] = {}
+                    for (const [month, val] of Object.entries(m.monthlyBreakdown)) {
+                      mentorClientMonthly[m.mentorName][clientKey][month] = (mentorClientMonthly[m.mentorName][clientKey][month] ?? 0) + val
+                    }
+                  }
+
                   return (
                     <div style={{ marginBottom: 24 }}>
-                      <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 12, marginBottom: 10 }}>VISAO MENSAL</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                        <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 12 }}>VISAO MENSAL</div>
+                        <button onClick={() => setExpandedView(!expandedView)} style={{
+                          padding: '4px 12px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+                          background: expandedView ? 'black' : 'white', color: expandedView ? 'white' : 'black',
+                        }}>
+                          {expandedView ? 'RESUMIDA' : 'COMPLETA'}
+                        </button>
+                      </div>
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
                           <thead>
                             <tr style={{ background: 'black', color: 'white', textTransform: 'uppercase' }}>
-                              <th style={{ padding: '8px 12px', textAlign: 'left' }}>Mentor</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'left', position: 'sticky', left: 0, background: 'black', zIndex: 2, minWidth: 180 }}>{expandedView ? 'Mentor / Cliente' : 'Mentor'}</th>
                               {months.map(m => (
-                                <th key={m} style={{ padding: '8px 12px', textAlign: 'right' }}>{fmtMonth(m)}</th>
+                                <th key={m} style={{ padding: '8px 12px', textAlign: 'right', whiteSpace: 'nowrap' }}>{fmtMonth(m)}</th>
                               ))}
                               <th style={{ padding: '8px 12px', textAlign: 'right' }}>Total</th>
                             </tr>
                           </thead>
                           <tbody>
                             {allMentorNames.map(name => {
-                              const mentorTotal = mentorsList.filter(m => m.mentorName === name).reduce((s, m) => s + m.value, 0)
+                              const mentorTotal = filteredMentors.filter(m => m.mentorName === name).reduce((s, m) => s + m.value, 0)
+                              const clientsOfMentor = mentorClientMonthly[name] ?? {}
                               return (
-                                <tr key={name} style={{ borderBottom: '1px solid #ddd' }}>
-                                  <td style={{ padding: '8px 12px', fontWeight: 700 }}>{name}</td>
-                                  {months.map(m => (
-                                    <td key={m} style={{ padding: '8px 12px', textAlign: 'right' }}>
-                                      {monthlyAll[m][name] ? fmt(monthlyAll[m][name]) : '-'}
-                                    </td>
-                                  ))}
-                                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700 }}>{fmt(mentorTotal)}</td>
-                                </tr>
+                                <React.Fragment key={name}>
+                                  <tr style={{ borderBottom: expandedView ? 'none' : '1px solid #ddd', background: expandedView ? '#f5f5f5' : 'transparent' }}>
+                                    <td style={{ padding: '8px 12px', fontWeight: 700, position: 'sticky', left: 0, background: expandedView ? '#f5f5f5' : 'white', zIndex: 1 }}>{name}</td>
+                                    {months.map(m => (
+                                      <td key={m} style={{ padding: '8px 12px', textAlign: 'right', fontWeight: expandedView ? 700 : 400 }}>
+                                        {monthlyAll[m][name] ? fmt(monthlyAll[m][name]) : '-'}
+                                      </td>
+                                    ))}
+                                    <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700 }}>{fmt(mentorTotal)}</td>
+                                  </tr>
+                                  {expandedView && Object.entries(clientsOfMentor).map(([clientKey, clientMonths]) => {
+                                    const clientTotal = Object.values(clientMonths).reduce((s, v) => s + v, 0)
+                                    return (
+                                      <tr key={clientKey} style={{ borderBottom: '1px solid #eee' }}>
+                                        <td style={{ padding: '4px 12px 4px 28px', fontSize: 10, color: '#555', position: 'sticky', left: 0, background: 'white', zIndex: 1 }}>{clientKey}</td>
+                                        {months.map(m => (
+                                          <td key={m} style={{ padding: '4px 12px', textAlign: 'right', fontSize: 10, color: '#555' }}>
+                                            {clientMonths[m] ? fmt(clientMonths[m]) : '-'}
+                                          </td>
+                                        ))}
+                                        <td style={{ padding: '4px 12px', textAlign: 'right', fontSize: 10, fontWeight: 700, color: '#555' }}>{fmt(clientTotal)}</td>
+                                      </tr>
+                                    )
+                                  })}
+                                </React.Fragment>
                               )
                             })}
                             <tr style={{ background: '#f0f0f0', fontWeight: 700 }}>
-                              <td style={{ padding: '8px 12px' }}>TOTAL</td>
+                              <td style={{ padding: '8px 12px', position: 'sticky', left: 0, background: '#f0f0f0', zIndex: 1 }}>TOTAL</td>
                               {months.map(m => (
                                 <td key={m} style={{ padding: '8px 12px', textAlign: 'right' }}>{fmt(monthTotals[m])}</td>
                               ))}
