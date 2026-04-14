@@ -127,7 +127,7 @@ export class DashboardService {
     const renewalPlans = await this.prisma.clientPlan.findMany({
       where: {
         status: 'ACTIVE',
-        endDate: { gte: today, lte: renewalThreshold },
+        endDate: { lte: renewalThreshold },
       },
       select: {
         id: true,
@@ -137,12 +137,16 @@ export class DashboardService {
       orderBy: { endDate: 'asc' },
     })
 
-    const renewalClients = renewalPlans.map(plan => ({
-      id: plan.client.id,
-      companyName: plan.client.companyName,
-      contractEndDate: plan.endDate,
-      daysLeft: plan.endDate ? daysUntil(plan.endDate) : null,
-    }))
+    const renewalClients = renewalPlans.map(plan => {
+      const days = plan.endDate ? daysUntil(plan.endDate) : null
+      return {
+        id: plan.client.id,
+        companyName: plan.client.companyName,
+        contractEndDate: plan.endDate,
+        daysLeft: days,
+        expired: days !== null && days < 0,
+      }
+    })
 
     // 11. Expenses summary for current month
     const [expensesPrevistoAgg, expensesPagoAgg] = await this.prisma.$transaction([
