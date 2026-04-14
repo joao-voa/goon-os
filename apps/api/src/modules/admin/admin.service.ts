@@ -44,14 +44,15 @@ export class AdminService {
   async createUser(dto: {
     name: string
     email: string
-    password: string
+    password?: string
     role: string
     allowedModules?: string
   }) {
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } })
     if (existing) throw new BadRequestException('Email ja cadastrado')
 
-    const hashed = await bcrypt.hash(dto.password, 10)
+    const defaultPassword = 'aura360'
+    const hashed = await bcrypt.hash(dto.password || defaultPassword, 10)
 
     return this.prisma.user.create({
       data: {
@@ -60,6 +61,7 @@ export class AdminService {
         password: hashed,
         role: dto.role,
         allowedModules: dto.allowedModules,
+        mustChangePassword: true,
       },
       select: {
         id: true,
