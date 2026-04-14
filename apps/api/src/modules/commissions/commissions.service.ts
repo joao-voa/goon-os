@@ -163,7 +163,8 @@ export class CommissionsService {
     const results: Awaited<ReturnType<typeof this.prisma.commission.create>>[] = []
     for (let i = 0; i < dto.installments; i++) {
       const payment = payments[i] ?? payments[0]
-      const commissionValue = Math.round(dto.baseValue * dto.percentage) / 100
+      const liquidValue = dto.baseValue * (1 - 0.06)
+      const commissionValue = Math.round(liquidValue * dto.percentage) / 100
 
       const created = await this.prisma.commission.create({
         data: {
@@ -309,17 +310,20 @@ export class CommissionsService {
     percentage: number,
     payments: Array<{ id: string; installment: number; totalInstallments: number; value: number }>,
   ) {
-    const commissions = payments.map(p => ({
+    const TAX = 0.06
+    const commissions = payments.map(p => {
+      const liquidValue = p.value * (1 - TAX)
+      return {
       clientId,
       paymentId: p.id,
       salesRep,
       percentage,
       baseValue: p.value,
-      value: Math.round(p.value * percentage) / 100,
+      value: Math.round(liquidValue * percentage) / 100,
       installment: p.installment,
       totalInstallments: p.totalInstallments,
       status: 'PENDING',
-    }))
+    }})
 
     const created = await this.prisma.$transaction(
       commissions.map(c => this.prisma.commission.create({ data: c })),

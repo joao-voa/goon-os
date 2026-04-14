@@ -249,7 +249,8 @@ export class CrmService {
       } else {
         // Entry commission: paid D+5
         if (entryPayment) {
-          const entryCommissionValue = Math.round(entryPayment.value * percentage) / 100
+          const entryLiquid = entryPayment.value * (1 - TAX_RATE)
+          const entryCommissionValue = Math.round(entryLiquid * percentage) / 100
           const d5 = new Date(now)
           d5.setDate(d5.getDate() + 5)
 
@@ -300,13 +301,13 @@ export class CrmService {
       let totalCommissionValue: number
 
       if (dto.wasAdvanced && dto.advanceValue) {
-        totalCommissionValue = Math.round(dto.advanceValue * percentage) / 100
+        totalCommissionValue = Math.round(dto.advanceValue * (1 - TAX_RATE) * percentage) / 100
       } else {
         const allValues = [
           ...(entryPayment ? [entryPayment.value] : []),
           ...payments.map(p => typeof p.value === 'number' ? p.value : Number(p.value)),
         ]
-        totalCommissionValue = allValues.reduce((sum, val) => sum + Math.round(val * percentage) / 100, 0)
+        totalCommissionValue = allValues.reduce((sum, val) => sum + Math.round(val * (1 - TAX_RATE) * percentage) / 100, 0)
       }
 
       const commPayDate = getNextCommissionPaymentDate(now)
