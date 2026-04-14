@@ -937,7 +937,19 @@ export default function ClientDetailPage() {
     gap: isMobile ? 12 : 20,
   }
 
-  const TABS = ['DADOS', 'CONTRATO', 'FINANCEIRO', 'PENDÊNCIAS']
+  const TABS = ['CADENCIA', 'DADOS', 'CONTRATO', 'FINANCEIRO', 'PENDÊNCIAS']
+
+  // Meetings / Cadence
+  const [clientMeetings, setClientMeetings] = useState<Array<{ id: string; title: string; type: string; date: string; duration: number; mentorName: string | null; notes: string | null; status: string }>>([])
+  const [cadence, setCadence] = useState<{ lastMeeting: { date: string; type: string; title: string } | null; nextMeeting: { date: string; type: string; title: string } | null; daysSinceLastMeeting: number | null; totalDone: number; totalScheduled: number; totalNoShow: number; health: string } | null>(null)
+
+  useEffect(() => {
+    if (!id) return
+    apiFetch<typeof clientMeetings>(`/api/meetings/client/${id}`)
+      .then(setClientMeetings).catch(() => {})
+    apiFetch<typeof cadence>(`/api/meetings/client/${id}/cadence`)
+      .then(setCadence).catch(() => {})
+  }, [id])
 
   return (
     <div style={{ maxWidth: 960, margin: '0 auto' }}>
@@ -1060,8 +1072,118 @@ export default function ClientDetailPage() {
 
         <div style={{ background: 'white', padding: 28 }}>
 
-          {/* ---- TAB 0: DADOS ---- */}
+          {/* ---- TAB 0: CADENCIA ---- */}
           {activeTab === 0 && (
+            <div>
+              {/* Health + Summary Cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12, marginBottom: 20 }}>
+                <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px', background: cadence?.health === 'green' ? '#f0fdf4' : cadence?.health === 'yellow' ? '#fffbeb' : '#fef2f2' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666', marginBottom: 4 }}>Saude</div>
+                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 18, color: cadence?.health === 'green' ? '#006600' : cadence?.health === 'yellow' ? '#e6a800' : '#cc0000' }}>
+                    {cadence?.health === 'green' ? 'BOA' : cadence?.health === 'yellow' ? 'ATENCAO' : 'CRITICA'}
+                  </div>
+                </div>
+                <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666', marginBottom: 4 }}>Ultima Reuniao</div>
+                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14 }}>
+                    {cadence?.daysSinceLastMeeting !== null ? `${cadence?.daysSinceLastMeeting}d atras` : 'Nenhuma'}
+                  </div>
+                  {cadence?.lastMeeting && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 2 }}>{new Date(cadence.lastMeeting.date).toLocaleDateString('pt-BR')}</div>}
+                </div>
+                <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666', marginBottom: 4 }}>Proxima Reuniao</div>
+                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14 }}>
+                    {cadence?.nextMeeting ? new Date(cadence.nextMeeting.date).toLocaleDateString('pt-BR') : 'Nao agendada'}
+                  </div>
+                  {cadence?.nextMeeting && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 2 }}>{cadence.nextMeeting.title}</div>}
+                </div>
+                <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666', marginBottom: 4 }}>Reunioes</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                    <span style={{ color: '#006600', fontWeight: 700 }}>{cadence?.totalDone ?? 0}</span> feitas
+                    {' '}<span style={{ color: '#4A78FF', fontWeight: 700 }}>{cadence?.totalScheduled ?? 0}</span> agendadas
+                    {(cadence?.totalNoShow ?? 0) > 0 && <>{' '}<span style={{ color: '#cc0000', fontWeight: 700 }}>{cadence?.totalNoShow}</span> faltas</>}
+                  </div>
+                </div>
+                {/* Contract info */}
+                {plans.length > 0 && plans[0].endDate && (
+                  <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666', marginBottom: 4 }}>Contrato</div>
+                    {(() => {
+                      const end = new Date(plans[0].endDate!)
+                      const days = Math.ceil((end.getTime() - Date.now()) / (1000*60*60*24))
+                      return (
+                        <>
+                          <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, color: days < 0 ? '#cc0000' : days <= 30 ? '#e6a800' : '#006600' }}>
+                            {days < 0 ? 'VENCIDO' : `${days}d restantes`}
+                          </div>
+                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 2 }}>Ate {end.toLocaleDateString('pt-BR')}</div>
+                        </>
+                      )
+                    })()}
+                  </div>
+                )}
+              </div>
+
+              {/* Timeline */}
+              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 12, marginBottom: 12 }}>HISTORICO DE REUNIOES</div>
+              {clientMeetings.length === 0 ? (
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', padding: 20, textAlign: 'center', border: '1px dashed #ccc' }}>
+                  Nenhuma reuniao registrada. Agende a primeira na tela de Agenda.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                  {clientMeetings.map((m, i) => {
+                    const d = new Date(m.date)
+                    const isPast = d < new Date()
+                    const typeColors: Record<string, string> = { INDIVIDUAL: '#4A78FF', GRUPO: '#7c3aed', DIAGNOSTICO: '#059669', PLANO_VOO: '#d97706', KICKOFF: '#dc2626', FOLLOW_UP: '#06b6d4', RG: '#000080', COMERCIAL: '#22c55e' }
+                    const typeLabels: Record<string, string> = { INDIVIDUAL: 'Individual', GRUPO: 'Grupo', DIAGNOSTICO: 'Diagnostico', PLANO_VOO: 'Plano de Voo', KICKOFF: 'Kickoff', FOLLOW_UP: 'Follow Up' }
+                    const statusLabels: Record<string, string> = { SCHEDULED: 'Agendada', DONE: 'Realizada', CANCELLED: 'Cancelada', NO_SHOW: 'Faltou' }
+                    const statusColors: Record<string, string> = { SCHEDULED: '#4A78FF', DONE: '#006600', CANCELLED: '#888', NO_SHOW: '#cc0000' }
+
+                    return (
+                      <div key={m.id} style={{ display: 'flex', gap: 12, paddingBottom: 16, position: 'relative' }}>
+                        {/* Timeline line */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 20, flexShrink: 0 }}>
+                          <div style={{ width: 12, height: 12, borderRadius: '50%', background: statusColors[m.status] ?? '#888', border: '2px solid black', flexShrink: 0, zIndex: 1 }} />
+                          {i < clientMeetings.length - 1 && <div style={{ width: 2, flex: 1, background: '#ddd' }} />}
+                        </div>
+                        {/* Content */}
+                        <div style={{ flex: 1, paddingBottom: 8, borderBottom: i < clientMeetings.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                            <div>
+                              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4 }}>
+                                <span style={{ background: typeColors[m.type] ?? '#888', color: 'white', padding: '1px 6px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{typeLabels[m.type] ?? m.type}</span>
+                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>{m.title}</span>
+                              </div>
+                              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555' }}>
+                                {d.toLocaleDateString('pt-BR')} {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {m.duration}min
+                                {m.mentorName && <> • {m.mentorName}</>}
+                              </div>
+                              {m.notes && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#888', marginTop: 4 }}>{m.notes}</div>}
+                            </div>
+                            <span style={{ background: statusColors[m.status] ?? '#888', color: 'white', padding: '2px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
+                              {statusLabels[m.status] ?? m.status}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Quick add meeting button */}
+              <div style={{ marginTop: 16 }}>
+                <a href="/agenda" style={{ display: 'inline-block', padding: '8px 16px', border: '2px solid black', background: '#4A78FF', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', boxShadow: '3px 3px 0 black' }}>
+                  AGENDAR REUNIAO
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* ---- TAB 1: DADOS ---- */}
+          {activeTab === 1 && (
             <div>
               {/* General Info */}
               <div style={{ marginBottom: 24 }}>
@@ -1185,8 +1307,8 @@ export default function ClientDetailPage() {
             </div>
           )}
 
-          {/* ---- TAB 1: CONTRATO ---- */}
-          {activeTab === 1 && (
+          {/* ---- TAB 2: CONTRATO ---- */}
+          {activeTab === 2 && (
             <div>
               {/* Plans */}
               <div style={{ marginBottom: 24 }}>
@@ -1396,8 +1518,8 @@ export default function ClientDetailPage() {
             </div>
           )}
 
-          {/* ---- TAB 2: FINANCEIRO ---- */}
-          {activeTab === 2 && (
+          {/* ---- TAB 3: FINANCEIRO ---- */}
+          {activeTab === 3 && (
             <div>
               {/* Period card if plans exist */}
               {plans.length > 0 && activePlan && (
@@ -1507,8 +1629,8 @@ export default function ClientDetailPage() {
             </div>
           )}
 
-          {/* ---- TAB 3: PENDÊNCIAS ---- */}
-          {activeTab === 3 && (
+          {/* ---- TAB 4: PENDÊNCIAS ---- */}
+          {activeTab === 4 && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
