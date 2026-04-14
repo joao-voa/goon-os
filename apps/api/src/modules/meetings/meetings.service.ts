@@ -145,8 +145,12 @@ export class MeetingsService {
 
   async getAllClientsCadence() {
     const now = new Date()
+    // Only clients with individual mentoring programs (GE, TTS, AURA) — GI is group only
     const clients = await this.prisma.client.findMany({
-      where: { status: 'ACTIVE' },
+      where: {
+        status: 'ACTIVE',
+        plans: { some: { status: 'ACTIVE', product: { code: { in: ['GE', 'TTS', 'AURA'] } } } },
+      },
       select: { id: true, companyName: true },
     })
 
