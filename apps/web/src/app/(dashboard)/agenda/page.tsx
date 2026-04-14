@@ -84,7 +84,7 @@ export default function AgendaPage() {
   const [saving, setSaving] = useState(false)
   const [cadenceData, setCadenceData] = useState<Array<{ clientId: string; lastMeetingDate: string | null; nextMeetingDate: string | null; daysSinceLastMeeting: number | null; health: string }>>([])
   const [stats, setStats] = useState<{ todayCount: number; weekCount: number; totalDone: number; totalScheduled: number } | null>(null)
-  const [viewMode, setViewMode] = useState<'calendario' | 'painel'>('painel')
+  const [viewMode, setViewMode] = useState<'calendario' | 'painel'>('calendario')
 
   const loadMeetings = useCallback(async () => {
     try {
