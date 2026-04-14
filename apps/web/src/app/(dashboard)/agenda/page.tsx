@@ -82,6 +82,9 @@ export default function AgendaPage() {
   const [formMentor, setFormMentor] = useState('')
   const [formNotes, setFormNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  const [cadenceData, setCadenceData] = useState<Array<{ clientId: string; lastMeetingDate: string | null; nextMeetingDate: string | null; daysSinceLastMeeting: number | null; health: string }>>([])
+  const [stats, setStats] = useState<{ todayCount: number; weekCount: number; totalDone: number; totalScheduled: number } | null>(null)
+  const [viewMode, setViewMode] = useState<'calendario' | 'painel'>('painel')
 
   const loadMeetings = useCallback(async () => {
     try {
@@ -99,6 +102,10 @@ export default function AgendaPage() {
     apiFetch<{ data: Client[] }>('/api/clients?limit=200')
       .then(res => setClients(res.data || []))
       .catch(() => {})
+    apiFetch<typeof cadenceData>('/api/meetings/cadence')
+      .then(setCadenceData).catch(() => {})
+    apiFetch<typeof stats>('/api/meetings/stats')
+      .then(setStats).catch(() => {})
   }, [])
 
   const mentors = [...new Set(meetings.map(m => m.mentorName).filter(Boolean))] as string[]
@@ -208,6 +215,14 @@ export default function AgendaPage() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 20, margin: 0 }}>AGENDA</h1>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {(['painel', 'calendario'] as const).map(v => (
+            <button key={v} onClick={() => setViewMode(v)} style={{
+              padding: '6px 14px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+              background: viewMode === v ? 'black' : 'white', color: viewMode === v ? 'white' : 'black',
+            }}>{v === 'painel' ? 'PAINEL' : 'CALENDARIO'}</button>
+          ))}
+        </div>
         <button onClick={() => openNewMeeting(new Date().toISOString().split('T')[0])} style={{
           padding: '8px 16px', border: '2px solid black', background: '#4A78FF', color: 'white',
           fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0 black',
@@ -231,6 +246,103 @@ export default function AgendaPage() {
         </div>
       )}
 
+      {/* ---- PAINEL VIEW ---- */}
+      {viewMode === 'painel' && (
+        <div>
+          {/* KPI Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
+            <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px', background: '#f0f5ff' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666' }}>Hoje</div>
+              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 22, color: '#4A78FF' }}>{stats?.todayCount ?? 0}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>reunioes</div>
+            </div>
+            <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666' }}>Esta Semana</div>
+              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 22 }}>{stats?.weekCount ?? 0}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>agendadas</div>
+            </div>
+            <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666' }}>Realizadas</div>
+              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 22, color: '#006600' }}>{stats?.totalDone ?? 0}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>total</div>
+            </div>
+            <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px', background: (() => { const c = cadenceData.filter(d => d.health === 'red').length; return c > 0 ? '#fef2f2' : 'white' })() }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666' }}>Saude Critica</div>
+              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 22, color: '#cc0000' }}>{cadenceData.filter(d => d.health === 'red').length}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>clientes</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            {/* Proximas reunioes */}
+            <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white' }}>
+              <div style={{ background: 'black', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-pixel)', fontSize: 10 }}>PROXIMAS REUNIOES</div>
+              <div style={{ padding: 12, maxHeight: 300, overflowY: 'auto' }}>
+                {meetings.filter(m => m.status === 'SCHEDULED' && new Date(m.date) >= new Date()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(0, 10).map(m => (
+                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                    <div>
+                      <span style={{ background: TYPE_COLORS[m.type] ?? '#888', color: 'white', padding: '1px 5px', fontSize: 8, fontWeight: 700, marginRight: 6 }}>{TYPE_LABELS[m.type]?.split(' ')[0] ?? m.type}</span>
+                      <strong>{m.client?.companyName ?? m.title}</strong>
+                    </div>
+                    <span style={{ color: '#555', fontSize: 10 }}>{new Date(m.date).toLocaleDateString('pt-BR')} {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                ))}
+                {meetings.filter(m => m.status === 'SCHEDULED' && new Date(m.date) >= new Date()).length === 0 && (
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', textAlign: 'center', padding: 20 }}>Nenhuma reuniao agendada</div>
+                )}
+              </div>
+            </div>
+
+            {/* Clientes que precisam de atencao */}
+            <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white' }}>
+              <div style={{ background: '#cc0000', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-pixel)', fontSize: 10 }}>PRECISAM DE ATENCAO</div>
+              <div style={{ padding: 12, maxHeight: 300, overflowY: 'auto' }}>
+                {cadenceData.filter(d => d.health !== 'green').sort((a, b) => (b.daysSinceLastMeeting ?? 999) - (a.daysSinceLastMeeting ?? 999)).map(d => {
+                  const client = clients.find(c => c.id === d.clientId)
+                  if (!client) return null
+                  return (
+                    <div key={d.clientId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.health === 'red' ? '#cc0000' : '#e6a800', flexShrink: 0 }} />
+                        <strong>{client.companyName}</strong>
+                      </div>
+                      <span style={{ color: d.health === 'red' ? '#cc0000' : '#e6a800', fontSize: 10, fontWeight: 700 }}>
+                        {d.daysSinceLastMeeting !== null ? d.daysSinceLastMeeting + 'd sem reuniao' : 'Nunca reuniu'}
+                      </span>
+                    </div>
+                  )
+                })}
+                {cadenceData.filter(d => d.health !== 'green').length === 0 && (
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#006600', textAlign: 'center', padding: 20 }}>Todos os clientes em dia!</div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Reunioes recentes */}
+          <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white', marginTop: 16 }}>
+            <div style={{ background: '#006600', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-pixel)', fontSize: 10 }}>ULTIMAS REUNIOES REALIZADAS</div>
+            <div style={{ padding: 12 }}>
+              {meetings.filter(m => m.status === 'DONE').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8).map(m => (
+                <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                  <div>
+                    <span style={{ background: TYPE_COLORS[m.type] ?? '#888', color: 'white', padding: '1px 5px', fontSize: 8, fontWeight: 700, marginRight: 6 }}>{TYPE_LABELS[m.type]?.split(' ')[0] ?? m.type}</span>
+                    <strong>{m.client?.companyName ?? m.title}</strong>
+                    {m.mentorName && <span style={{ color: '#888', marginLeft: 6 }}>• {m.mentorName}</span>}
+                  </div>
+                  <span style={{ color: '#555', fontSize: 10 }}>{new Date(m.date).toLocaleDateString('pt-BR')}</span>
+                </div>
+              ))}
+              {meetings.filter(m => m.status === 'DONE').length === 0 && (
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', textAlign: 'center', padding: 20 }}>Nenhuma reuniao realizada ainda</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---- CALENDARIO VIEW ---- */}
+      {viewMode === 'calendario' && <>
       {/* Month navigation */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 16 }}>
         <button onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1) }} style={{
@@ -348,6 +460,8 @@ export default function AgendaPage() {
           </div>
         </div>
       )}
+
+      </>}
 
       {/* Create/Edit Modal */}
       {showModal && (
