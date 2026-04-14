@@ -1082,8 +1082,8 @@ export default function ClientDetailPage() {
                 </div>
               </div>
 
-              {/* AURA 360 Modules */}
-              <div style={{ marginBottom: 24 }}>
+              {/* AURA 360 Modules — only show if client has active AURA plan */}
+              {plans.some(pl => pl.status === 'ACTIVE' && pl.product?.code === 'AURA') && <div style={{ marginBottom: 24 }}>
                 <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 9, color: '#D4A017', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, paddingBottom: 8, borderBottom: '2px solid #D4A017' }}>
                   Modulos AURA 360
                 </div>
@@ -1104,7 +1104,7 @@ export default function ClientDetailPage() {
                     )
                   })}
                 </div>
-              </div>
+              </div>}
 
               {/* Address */}
               <div style={{ marginBottom: 24 }}>
