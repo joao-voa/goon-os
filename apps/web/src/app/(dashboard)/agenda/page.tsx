@@ -403,7 +403,7 @@ export default function AgendaPage() {
                     opacity: m.status === 'CANCELLED' || m.status === 'NO_SHOW' ? 0.5 : 1,
                     textDecoration: m.status === 'CANCELLED' ? 'line-through' : 'none',
                   }}>
-                    {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} {m.client.companyName}
+                    {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} {m.client?.companyName ?? m.title}
                   </div>
                 ))}
                 {dayMeetings.length > 3 && (
@@ -439,7 +439,7 @@ export default function AgendaPage() {
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700 }}>{m.title}</span>
                     </div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555' }}>
-                      {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {m.duration}min • {m.client.companyName}
+                      {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {m.duration}min • {m.client?.companyName ?? m.title}
                       {m.mentorName && <> • {m.mentorName}</>}
                     </div>
                     {m.notes && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#888', marginTop: 4 }}>{m.notes}</div>}
