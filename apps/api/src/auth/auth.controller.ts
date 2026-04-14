@@ -25,4 +25,10 @@ export class AuthController {
   getProfile(@Request() req: any) {
     return this.authService.getProfile(req.user.id)
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  changePassword(@Request() req: any, @Body() dto: { newPassword: string }) {
+    return this.authService.changePassword(req.user.id, dto.newPassword)
+  }
 }

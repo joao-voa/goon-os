@@ -21,9 +21,10 @@ export default function LoginPage() {
     fetch(`${API_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then(res => {
+      .then(async res => {
         if (res.ok) {
-          window.location.replace('/home')
+          const user = await res.json()
+          window.location.replace(user.mustChangePassword ? '/change-password' : '/home')
         } else {
           localStorage.removeItem('access_token')
           localStorage.removeItem('refresh_token')
@@ -75,7 +76,11 @@ export default function LoginPage() {
 
       localStorage.setItem('access_token', data.access_token)
       localStorage.setItem('refresh_token', data.refresh_token)
-      window.location.href = '/home'
+      if (data.user?.mustChangePassword) {
+        window.location.href = '/change-password'
+      } else {
+        window.location.href = '/home'
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erro ao fazer login')
     } finally {
