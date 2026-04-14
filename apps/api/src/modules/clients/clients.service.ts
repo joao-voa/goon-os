@@ -68,9 +68,7 @@ export class ClientsService {
           plans: {
             where: { status: 'ACTIVE' },
             take: 1,
-            include: {
-              product: { select: { id: true, code: true, name: true } },
-            },
+            select: { id: true, status: true, endDate: true, product: { select: { id: true, code: true, name: true } } },
           },
         },
       }),

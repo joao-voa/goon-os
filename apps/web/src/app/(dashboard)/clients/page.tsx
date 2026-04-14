@@ -17,6 +17,7 @@ interface Product {
 interface ClientPlan {
   id: string
   status: string
+  endDate?: string | null
   product: Product
 }
 
@@ -655,6 +656,7 @@ export default function ClientsPage() {
                 <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('companyName')}>Empresa {sortField === 'companyName' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('responsible')}>Responsável {sortField === 'responsible' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th>Produto</th>
+                <th style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>Vencimento</th>
                 <th style={{ textAlign: 'center', width: 70, cursor: 'pointer' }} onClick={() => toggleSort('hasContract')}>Contrato {sortField === 'hasContract' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th style={{ textAlign: 'center', width: 70, cursor: 'pointer' }} onClick={() => toggleSort('hasBilling')}>Boleto {sortField === 'hasBilling' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th style={{ textAlign: 'center', width: 60, cursor: 'pointer' }} onClick={() => toggleSort('isClientActive')}>Ativo {sortField === 'isClientActive' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
@@ -674,6 +676,16 @@ export default function ClientsPage() {
                   </td>
                   <td onClick={() => router.push(`/clients/${client.id}`)}>{client.responsible}</td>
                   <td onClick={() => router.push(`/clients/${client.id}`)}>{productBadge(client.plans)}</td>
+                  <td style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 10 }}>
+                    {(() => {
+                      const plan = client.plans.find(p => p.status === 'ACTIVE')
+                      if (!plan?.endDate) return '-'
+                      const end = new Date(plan.endDate)
+                      const days = Math.ceil((end.getTime() - Date.now()) / (1000*60*60*24))
+                      const color = days < 0 ? '#cc0000' : days <= 30 ? '#ff6600' : '#006600'
+                      return <span style={{ color, fontWeight: 700 }}>{days < 0 ? 'Vencido' : end.toLocaleDateString('pt-BR')}</span>
+                    })()}
+                  </td>
                   <td style={{ textAlign: 'center' }}>
                     <input type="checkbox" checked={client.hasContract} onChange={async () => {
                       try {
