@@ -89,20 +89,20 @@ export default function CashflowPage() {
       {/* Grafico de barras simples */}
       <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black', marginBottom: 24 }}>
         <div className="goon-card-header">COMPARATIVO MENSAL</div>
-        <div style={{ padding: '16px 20px', display: 'flex', gap: 8, alignItems: 'flex-end', height: 180, overflowX: 'auto' }}>
+        <div style={{ padding: '16px 20px', display: 'flex', gap: 8, alignItems: 'flex-end', minHeight: 250, overflowX: 'auto' }}>
           {data.months.map(m => {
-            const entH = barMax > 0 ? (m.entradas.total / barMax) * 140 : 0
-            const saiH = barMax > 0 ? ((m.saidas.total + m.comissoes.total) / barMax) * 140 : 0
+            const entH = barMax > 0 ? (m.entradas.total / barMax) * 160 : 0
+            const saiH = barMax > 0 ? ((m.saidas.total + m.comissoes.total) / barMax) * 160 : 0
             return (
-              <div key={m.month} style={{ flex: 1, minWidth: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                <div style={{ display: 'flex', gap: 2, alignItems: 'flex-end', height: 140, position: 'relative' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, color: '#006600', fontWeight: 700, whiteSpace: 'nowrap' }}>{m.entradas.total > 0 ? fmt(m.entradas.total) : ''}</span>
-                    <div style={{ width: 18, height: Math.max(entH, 2), background: '#006600', border: '1px solid #004400' }} />
+              <div key={m.month} style={{ flex: 1, minWidth: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 180 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, color: '#006600', fontWeight: 700, whiteSpace: 'nowrap', writingMode: 'vertical-lr', transform: 'rotate(180deg)', maxHeight: 50 }}>{m.entradas.total > 0 ? fmt(m.entradas.total) : ''}</span>
+                    <div style={{ width: 20, height: Math.max(entH, 2), background: '#006600', border: '1px solid #004400' }} />
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, color: '#cc0000', fontWeight: 700, whiteSpace: 'nowrap' }}>{(m.saidas.total + m.comissoes.total) > 0 ? fmt(m.saidas.total + m.comissoes.total) : ''}</span>
-                    <div style={{ width: 18, height: Math.max(saiH, 2), background: '#cc0000', border: '1px solid #990000' }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, color: '#cc0000', fontWeight: 700, whiteSpace: 'nowrap', writingMode: 'vertical-lr', transform: 'rotate(180deg)', maxHeight: 50 }}>{(m.saidas.total + m.comissoes.total) > 0 ? fmt(m.saidas.total + m.comissoes.total) : ''}</span>
+                    <div style={{ width: 20, height: Math.max(saiH, 2), background: '#cc0000', border: '1px solid #990000' }} />
                   </div>
                 </div>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' }}>{MONTH_NAMES[m.month - 1]}</span>
