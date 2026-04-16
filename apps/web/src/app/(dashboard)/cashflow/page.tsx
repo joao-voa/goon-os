@@ -145,9 +145,9 @@ export default function CashflowPage() {
               >
                 <span>{MONTH_NAMES[m.month - 1]} {m.year}</span>
                 <div style={{ display: 'flex', gap: 16, fontSize: 11 }}>
-                  <span style={{ color: isExpanded ? '#66ff66' : '#006600' }}>+{fmt(m.entradas.total)}</span>
+                  <span style={{ color: isExpanded ? '#22c55e' : '#006600' }}>+{fmt(m.entradas.total)}</span>
                   <span style={{ color: isExpanded ? '#ff6666' : '#cc0000' }}>-{fmt(m.saidas.total + m.comissoes.total)}</span>
-                  <span style={{ color: m.saldoProjetado >= 0 ? (isExpanded ? '#66ff66' : '#006600') : (isExpanded ? '#ff6666' : '#cc0000'), fontWeight: 900 }}>
+                  <span style={{ color: m.saldoProjetado >= 0 ? (isExpanded ? '#22c55e' : '#006600') : (isExpanded ? '#ff6666' : '#cc0000'), fontWeight: 900 }}>
                     = {fmt(m.saldoProjetado)}
                   </span>
                 </div>
