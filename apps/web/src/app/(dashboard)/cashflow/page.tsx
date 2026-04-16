@@ -8,7 +8,7 @@ interface MonthData {
   year: number
   label: string
   entradas: { received: number; pending: number; overdue: number; total: number }
-  saidas: { previsto: number; pago: number; total: number }
+  saidas: { previsto: number; pago: number; total: number; byCategory?: Record<string, number> }
   comissoes: { pending: number; paid: number; total: number }
   saldo: number
   saldoProjetado: number
@@ -70,20 +70,19 @@ export default function CashflowPage() {
       {/* Totais do Ano */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 24 }}>
         <div style={{ background: '#006600', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-          <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Entradas Recebidas</div>
-          <div style={{ fontSize: 18 }}>{fmt(data.totals.entradasReceived)}</div>
+          <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Entradas Previstas</div>
+          <div style={{ fontSize: 18 }}>{fmt(data.totals.entradas)}</div>
+          <div style={{ fontSize: 9, opacity: 0.7 }}>Recebido: {fmt(data.totals.entradasReceived)}</div>
         </div>
         <div style={{ background: '#cc0000', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-          <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Saidas Pagas</div>
-          <div style={{ fontSize: 18 }}>{fmt(data.totals.saidasPago)}</div>
+          <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Saidas Previstas</div>
+          <div style={{ fontSize: 18 }}>{fmt(data.totals.saidas + data.totals.comissoes)}</div>
+          <div style={{ fontSize: 9, opacity: 0.7 }}>Pago: {fmt(data.totals.saidasPago + data.totals.comissoesPaid)}</div>
         </div>
-        <div style={{ background: '#e6a800', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-          <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Comissoes Pagas</div>
-          <div style={{ fontSize: 18 }}>{fmt(data.totals.comissoesPaid)}</div>
-        </div>
-        <div style={{ background: data.totals.saldo >= 0 ? '#006600' : '#cc0000', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-          <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Saldo Real</div>
-          <div style={{ fontSize: 18 }}>{fmt(data.totals.saldo)}</div>
+        <div style={{ background: data.totals.saldoProjetado >= 0 ? '#006600' : '#cc0000', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+          <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Saldo Projetado</div>
+          <div style={{ fontSize: 18 }}>{fmt(data.totals.saldoProjetado)}</div>
+          <div style={{ fontSize: 9, opacity: 0.7 }}>Real: {fmt(data.totals.saldo)}</div>
         </div>
       </div>
 
@@ -142,8 +141,8 @@ export default function CashflowPage() {
                 <div style={{ display: 'flex', gap: 16, fontSize: 11 }}>
                   <span style={{ color: isExpanded ? '#66ff66' : '#006600' }}>+{fmt(m.entradas.total)}</span>
                   <span style={{ color: isExpanded ? '#ff6666' : '#cc0000' }}>-{fmt(m.saidas.total + m.comissoes.total)}</span>
-                  <span style={{ color: m.saldo >= 0 ? (isExpanded ? '#66ff66' : '#006600') : (isExpanded ? '#ff6666' : '#cc0000'), fontWeight: 900 }}>
-                    = {fmt(m.saldo)}
+                  <span style={{ color: m.saldoProjetado >= 0 ? (isExpanded ? '#66ff66' : '#006600') : (isExpanded ? '#ff6666' : '#cc0000'), fontWeight: 900 }}>
+                    = {fmt(m.saldoProjetado)}
                   </span>
                 </div>
               </button>
@@ -181,6 +180,17 @@ export default function CashflowPage() {
                         <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(m.saidas.previsto)}</td>
                         <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(m.saidas.total)}</td>
                       </tr>
+                      {m.saidas.byCategory && Object.entries(m.saidas.byCategory).sort((a, b) => b[1] - a[1]).map(([cat, val]) => {
+                        const catLabels: Record<string, string> = { PESSOAL: 'Pessoal Giu', MENTORIA: 'Mentorias', COMISSAO: 'Comissao Vendas', IMPOSTOS: 'Impostos', MARKETING: 'Marketing', PESSOAS: 'Pessoas', SISTEMAS: 'Sistemas', ESTRUTURA: 'Estrutura', OUTRO: 'Outro' }
+                        const catColors: Record<string, string> = { PESSOAL: '#000080', MENTORIA: '#4A78FF', COMISSAO: '#e6a800', IMPOSTOS: '#cc0000', MARKETING: '#7c3aed', PESSOAS: '#059669', SISTEMAS: '#06b6d4', ESTRUTURA: '#475569', OUTRO: '#888' }
+                        return (
+                          <tr key={cat} style={{ borderBottom: '1px solid #eee' }}>
+                            <td style={{ padding: '4px 8px 4px 24px', fontSize: 10, color: catColors[cat] ?? '#888' }}>↳ {catLabels[cat] ?? cat}</td>
+                            <td colSpan={2} />
+                            <td style={{ padding: '4px 8px', textAlign: 'right', fontSize: 10, color: '#555' }}>{fmt(val)}</td>
+                          </tr>
+                        )
+                      })}
                       <tr style={{ borderBottom: '1px solid #ddd', background: '#fffff0' }}>
                         <td style={{ padding: '6px 8px', fontWeight: 700, color: '#e6a800' }}>Comissoes</td>
                         <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(m.comissoes.paid)}</td>
@@ -188,14 +198,14 @@ export default function CashflowPage() {
                         <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(m.comissoes.total)}</td>
                       </tr>
                       <tr style={{ borderTop: '3px solid black', fontWeight: 900 }}>
-                        <td style={{ padding: '8px 8px' }}>SALDO REAL</td>
+                        <td style={{ padding: '8px 8px' }}>SALDO PROJETADO</td>
                         <td colSpan={2} />
-                        <td style={{ padding: '8px 8px', textAlign: 'right', color: m.saldo >= 0 ? '#006600' : '#cc0000', fontSize: 14 }}>{fmt(m.saldo)}</td>
+                        <td style={{ padding: '8px 8px', textAlign: 'right', color: m.saldoProjetado >= 0 ? '#006600' : '#cc0000', fontSize: 14 }}>{fmt(m.saldoProjetado)}</td>
                       </tr>
                       <tr style={{ color: '#666' }}>
-                        <td style={{ padding: '4px 8px', fontSize: 10 }}>Saldo Projetado (inclui pendentes)</td>
+                        <td style={{ padding: '4px 8px', fontSize: 10 }}>Saldo Realizado (somente efetivado)</td>
                         <td colSpan={2} />
-                        <td style={{ padding: '4px 8px', textAlign: 'right', fontSize: 10 }}>{fmt(m.saldoProjetado)}</td>
+                        <td style={{ padding: '4px 8px', textAlign: 'right', fontSize: 10 }}>{fmt(m.saldo)}</td>
                       </tr>
                     </tbody>
                   </table>

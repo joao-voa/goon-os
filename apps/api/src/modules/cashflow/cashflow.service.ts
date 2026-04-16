@@ -20,7 +20,7 @@ export class CashflowService {
           dueDate: { gte: yearStart, lt: yearEnd },
           NOT: { AND: [{ category: 'MENTORIA' }, { description: { contains: 'Giulliano' } }] },
         },
-        select: { dueDate: true, value: true, status: true },
+        select: { dueDate: true, value: true, status: true, category: true },
       }),
       this.prisma.commission.findMany({
         where: {
@@ -39,7 +39,7 @@ export class CashflowService {
       year,
       label: new Date(year, m, 1).toLocaleString('pt-BR', { month: 'long' }),
       entradas: { received: 0, pending: 0, overdue: 0, total: 0 },
-      saidas: { previsto: 0, pago: 0, total: 0 },
+      saidas: { previsto: 0, pago: 0, total: 0, byCategory: {} as Record<string, number> },
       comissoes: { pending: 0, paid: 0, total: 0 },
       saldo: 0,
       saldoProjetado: 0,
@@ -54,12 +54,14 @@ export class CashflowService {
       else if (p.status === 'OVERDUE') months[m].entradas.overdue += val
     }
 
-    // Distribute expenses into months
+    // Distribute expenses into months (with category breakdown)
     for (const e of expenses) {
       const m = new Date(e.dueDate).getMonth()
       const val = Number(e.value)
+      const cat = (e as any).category ?? 'OUTRO'
       if (e.status === 'PAGO') months[m].saidas.pago += val
       else if (e.status === 'PREVISTO') months[m].saidas.previsto += val
+      months[m].saidas.byCategory[cat] = (months[m].saidas.byCategory[cat] ?? 0) + val
     }
 
     // Distribute commissions into months (by createdAt for pending, paidAt for paid)
