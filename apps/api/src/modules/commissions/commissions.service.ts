@@ -26,15 +26,21 @@ export class CommissionsService {
     if (status) where.status = status
     if (clientId) where.clientId = clientId
 
-    // Filter by payment dueDate (not commission createdAt)
+    // Filter by paidAt for paid commissions, payment.dueDate for pending
     if (month && year) {
       const start = new Date(year, month - 1, 1)
       const end = new Date(year, month, 1)
-      where.payment = { dueDate: { gte: start, lt: end } }
+      where.OR = [
+        { status: 'PAID', paidAt: { gte: start, lt: end } },
+        { status: { not: 'PAID' }, payment: { dueDate: { gte: start, lt: end } } },
+      ]
     } else if (year) {
       const start = new Date(year, 0, 1)
       const end = new Date(year + 1, 0, 1)
-      where.payment = { dueDate: { gte: start, lt: end } }
+      where.OR = [
+        { status: 'PAID', paidAt: { gte: start, lt: end } },
+        { status: { not: 'PAID' }, payment: { dueDate: { gte: start, lt: end } } },
+      ]
     }
 
     const skip = (page - 1) * limit
