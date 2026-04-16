@@ -22,10 +22,10 @@ interface Summary {
   byCategory: Array<{ category: string; total: number }>
 }
 
-const CATEGORIES = ['MENTORIA', 'COMISSAO', 'IMPOSTOS', 'MARKETING', 'PESSOAS', 'SISTEMAS', 'ESTRUTURA', 'OUTRO']
+const CATEGORIES = ['PESSOAL', 'MENTORIA', 'COMISSAO', 'IMPOSTOS', 'MARKETING', 'PESSOAS', 'SISTEMAS', 'ESTRUTURA', 'OUTRO']
 const RECURRENCES = ['UNICA', 'MENSAL', 'TRIMESTRAL', 'ANUAL']
-const CATEGORY_LABELS: Record<string, string> = { MENTORIA: 'Mentoria', COMISSAO: 'Comissao', IMPOSTOS: 'Impostos', SISTEMAS: 'Sistemas', MARKETING: 'Marketing', PESSOAS: 'Pessoas', ESTRUTURA: 'Estrutura', OUTRO: 'Outro' }
-const CATEGORY_COLORS: Record<string, string> = { MENTORIA: '#4A78FF', COMISSAO: '#e6a800', IMPOSTOS: '#cc0000', MARKETING: '#7c3aed', PESSOAS: '#059669', SISTEMAS: '#06b6d4', ESTRUTURA: '#475569', OUTRO: '#888' }
+const CATEGORY_LABELS: Record<string, string> = { PESSOAL: 'Pessoal Giu', MENTORIA: 'Mentoria', COMISSAO: 'Comissao', IMPOSTOS: 'Impostos', SISTEMAS: 'Sistemas', MARKETING: 'Marketing', PESSOAS: 'Pessoas', ESTRUTURA: 'Estrutura', OUTRO: 'Outro' }
+const CATEGORY_COLORS: Record<string, string> = { PESSOAL: '#000080', MENTORIA: '#4A78FF', COMISSAO: '#e6a800', IMPOSTOS: '#cc0000', MARKETING: '#7c3aed', PESSOAS: '#059669', SISTEMAS: '#06b6d4', ESTRUTURA: '#475569', OUTRO: '#888' }
 const RECURRENCE_LABELS: Record<string, string> = { UNICA: 'Unica', MENSAL: 'Mensal', TRIMESTRAL: 'Trimestral', ANUAL: 'Anual' }
 
 const emptyForm = { description: '', category: 'SISTEMAS', value: '', recurrence: 'MENSAL', dueDate: '', notes: '' }
