@@ -76,6 +76,8 @@ function ProgramSelector({ active, onChange }: { active: string; onChange: (v: s
     { code: 'GE', label: 'GE' },
     { code: 'GI', label: 'GI' },
     { code: 'GS', label: 'GS' },
+    { code: 'TTS', label: 'TTS' },
+    { code: 'AURA', label: 'AURA' },
   ]
   return (
     <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
