@@ -16,7 +16,10 @@ export class CashflowService {
         select: { dueDate: true, value: true, status: true },
       }),
       this.prisma.expense.findMany({
-        where: { dueDate: { gte: yearStart, lt: yearEnd } },
+        where: {
+          dueDate: { gte: yearStart, lt: yearEnd },
+          NOT: { AND: [{ category: 'MENTORIA' }, { description: { contains: 'Giulliano' } }] },
+        },
         select: { dueDate: true, value: true, status: true },
       }),
       this.prisma.commission.findMany({

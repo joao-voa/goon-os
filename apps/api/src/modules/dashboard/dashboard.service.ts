@@ -148,14 +148,15 @@ export class DashboardService {
       }
     })
 
-    // 11. Expenses summary for current month
+    // 11. Expenses summary for current month (excluding Giulliano mentoring = his revenue, not a cost)
+    const giuMentorFilter = { NOT: { AND: [{ category: 'MENTORIA' }, { description: { contains: 'Giulliano' } }] } }
     const [expensesPrevistoAgg, expensesPagoAgg] = await this.prisma.$transaction([
       this.prisma.expense.aggregate({
-        where: { status: 'PREVISTO', dueDate: { gte: startOfMonth, lt: endOfMonth } },
+        where: { status: 'PREVISTO', dueDate: { gte: startOfMonth, lt: endOfMonth }, ...giuMentorFilter },
         _sum: { value: true },
       }),
       this.prisma.expense.aggregate({
-        where: { status: 'PAGO', dueDate: { gte: startOfMonth, lt: endOfMonth } },
+        where: { status: 'PAGO', dueDate: { gte: startOfMonth, lt: endOfMonth }, ...giuMentorFilter },
         _sum: { value: true },
       }),
     ])
