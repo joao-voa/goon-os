@@ -94,10 +94,16 @@ export default function CashflowPage() {
             const entH = barMax > 0 ? (m.entradas.total / barMax) * 140 : 0
             const saiH = barMax > 0 ? ((m.saidas.total + m.comissoes.total) / barMax) * 140 : 0
             return (
-              <div key={m.month} style={{ flex: 1, minWidth: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <div style={{ display: 'flex', gap: 2, alignItems: 'flex-end', height: 140 }}>
-                  <div style={{ width: 14, height: Math.max(entH, 2), background: '#006600', border: '1px solid #004400' }} title={`Entradas: ${fmt(m.entradas.total)}`} />
-                  <div style={{ width: 14, height: Math.max(saiH, 2), background: '#cc0000', border: '1px solid #990000' }} title={`Saidas+Comissoes: ${fmt(m.saidas.total + m.comissoes.total)}`} />
+              <div key={m.month} style={{ flex: 1, minWidth: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <div style={{ display: 'flex', gap: 2, alignItems: 'flex-end', height: 140, position: 'relative' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, color: '#006600', fontWeight: 700, whiteSpace: 'nowrap' }}>{m.entradas.total > 0 ? fmt(m.entradas.total) : ''}</span>
+                    <div style={{ width: 18, height: Math.max(entH, 2), background: '#006600', border: '1px solid #004400' }} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, color: '#cc0000', fontWeight: 700, whiteSpace: 'nowrap' }}>{(m.saidas.total + m.comissoes.total) > 0 ? fmt(m.saidas.total + m.comissoes.total) : ''}</span>
+                    <div style={{ width: 18, height: Math.max(saiH, 2), background: '#cc0000', border: '1px solid #990000' }} />
+                  </div>
                 </div>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' }}>{MONTH_NAMES[m.month - 1]}</span>
               </div>
