@@ -533,7 +533,7 @@ export default function PaymentsPage() {
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 20 }}>
-        <KpiCard label="Recebido no Mes" value={fmtBRL(receitaMes)} accent="var(--retro-green)" sub={`${kpis?.recebidoMesCount ?? 0} pagamentos`} />
+        <KpiCard label="Recebido no Mes" value={fmtBRL(receitaMes)} accent="#006600" sub={`${kpis?.recebidoMesCount ?? 0} pagamentos`} />
         <KpiCard label="A Receber no Mes" value={fmtBRL(kpis?.aReceberMes ?? 0)} accent="var(--retro-blue)" sub={`${kpis?.aReceberMesCount ?? 0} parcelas`} />
         <KpiCard label="Total Pendente" value={fmtBRL(totalPendente)} accent="#e6a800" sub={`${kpis?.totalPendenteCount ?? 0} parcelas`} />
         <KpiCard label="Total Vencido" value={fmtBRL(totalVencido)} accent="var(--danger)" sub={`${kpis?.totalVencidoCount ?? 0} boletos atrasados`} />
