@@ -7,7 +7,7 @@ interface MonthData {
   month: number
   year: number
   label: string
-  entradas: { received: number; pending: number; overdue: number; total: number }
+  entradas: { received: number; pending: number; overdue: number; total: number; overdueClients?: Array<{ id: string; companyName: string; value: number }> }
   saidas: { previsto: number; pago: number; total: number; byCategory?: Record<string, number> }
   comissoes: { pending: number; paid: number; total: number }
   saldo: number
@@ -173,12 +173,21 @@ export default function CashflowPage() {
                         <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(m.entradas.total)}</td>
                       </tr>
                       {m.entradas.overdue > 0 && (
-                        <tr style={{ borderBottom: '1px solid #ddd', background: '#fff0f0' }}>
-                          <td style={{ padding: '6px 8px', paddingLeft: 24, fontSize: 10, color: '#cc0000' }}>↳ Inadimplente</td>
-                          <td style={{ padding: '6px 8px', textAlign: 'right', color: '#cc0000' }}>{fmt(m.entradas.overdue)}</td>
-                          <td style={{ padding: '6px 8px' }} />
-                          <td style={{ padding: '6px 8px' }} />
-                        </tr>
+                        <>
+                          <tr style={{ borderBottom: '1px solid #ddd', background: '#fff0f0' }}>
+                            <td style={{ padding: '6px 8px', paddingLeft: 24, fontSize: 10, color: '#cc0000', fontWeight: 700 }}>↳ Inadimplente</td>
+                            <td style={{ padding: '6px 8px', textAlign: 'right', color: '#cc0000' }}>{fmt(m.entradas.overdue)}</td>
+                            <td style={{ padding: '6px 8px' }} />
+                            <td style={{ padding: '6px 8px' }} />
+                          </tr>
+                          {m.entradas.overdueClients?.map(c => (
+                            <tr key={c.id} style={{ borderBottom: '1px solid #f5f5f5' }}>
+                              <td style={{ padding: '3px 8px 3px 40px', fontSize: 9, color: '#cc0000' }}>• {c.companyName}</td>
+                              <td style={{ padding: '3px 8px', textAlign: 'right', fontSize: 9, color: '#cc0000' }}>{fmt(c.value)}</td>
+                              <td colSpan={2} />
+                            </tr>
+                          ))}
+                        </>
                       )}
                       <tr style={{ borderBottom: '1px solid #ddd', background: '#fff5f5' }}>
                         <td style={{ padding: '6px 8px', fontWeight: 700, color: '#cc0000' }}>Despesas</td>

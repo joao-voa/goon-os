@@ -13,7 +13,7 @@ export class CashflowService {
     const [payments, expenses, commissions] = await this.prisma.$transaction([
       this.prisma.payment.findMany({
         where: { dueDate: { gte: yearStart, lt: yearEnd } },
-        select: { dueDate: true, value: true, status: true },
+        select: { dueDate: true, value: true, status: true, client: { select: { id: true, companyName: true } } },
       }),
       this.prisma.expense.findMany({
         where: {
@@ -38,7 +38,7 @@ export class CashflowService {
       month: m + 1,
       year,
       label: new Date(year, m, 1).toLocaleString('pt-BR', { month: 'long' }),
-      entradas: { received: 0, pending: 0, overdue: 0, total: 0 },
+      entradas: { received: 0, pending: 0, overdue: 0, total: 0, overdueClients: [] as Array<{ id: string; companyName: string; value: number }> },
       saidas: { previsto: 0, pago: 0, total: 0, byCategory: {} as Record<string, number> },
       comissoes: { pending: 0, paid: 0, total: 0 },
       saldo: 0,
@@ -46,12 +46,18 @@ export class CashflowService {
     }))
 
     // Distribute payments into months
-    for (const p of payments) {
-      const m = new Date(p.dueDate).getMonth()
-      const val = Number(p.value)
-      if (p.status === 'PAID') months[m].entradas.received += val
-      else if (p.status === 'PENDING') months[m].entradas.pending += val
-      else if (p.status === 'OVERDUE') months[m].entradas.overdue += val
+    for (const pay of payments) {
+      const m = new Date(pay.dueDate).getMonth()
+      const val = Number(pay.value)
+      if (pay.status === 'PAID') months[m].entradas.received += val
+      else if (pay.status === 'PENDING') months[m].entradas.pending += val
+      else if (pay.status === 'OVERDUE') {
+        months[m].entradas.overdue += val
+        const client = (pay as any).client
+        if (client) {
+          months[m].entradas.overdueClients.push({ id: client.id, companyName: client.companyName, value: val })
+        }
+      }
     }
 
     // Distribute expenses into months (with category breakdown)

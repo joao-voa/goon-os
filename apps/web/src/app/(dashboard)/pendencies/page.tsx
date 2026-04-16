@@ -450,6 +450,9 @@ export default function PendenciesPage() {
   const isMobile = useIsMobile()
   const searchParams = useSearchParams()
 
+  const [pendTab, setPendTab] = useState<'inadimplentes' | 'contratos' | 'todas'>('inadimplentes')
+  const [overduePayments, setOverduePayments] = useState<Array<{ id: string; value: number; dueDate: string; installment: number; client: { id: string; companyName: string } }>>([])
+  const [expiringPlans, setExpiringPlans] = useState<Array<{ id: string; companyName: string; contractEndDate: string; daysLeft: number; expired: boolean }>>([])
   const [pendencies, setPendencies] = useState<Pendency[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -487,6 +490,17 @@ export default function PendenciesPage() {
   }, [])
 
   useEffect(() => { fetchPendencies() }, [fetchPendencies])
+
+  useEffect(() => {
+    // Load overdue payments
+    apiFetch<{ data: Array<{ id: string; value: number; dueDate: string; installment: number; client: { id: string; companyName: string } }> }>('/api/payments?status=OVERDUE&limit=100')
+      .then(res => setOverduePayments(res.data ?? []))
+      .catch(() => {})
+    // Load expiring/expired contracts
+    apiFetch<{ renewals: { clients: Array<{ id: string; companyName: string; contractEndDate: string; daysLeft: number; expired: boolean }> } }>('/api/dashboard')
+      .then(res => setExpiringPlans(res.renewals?.clients ?? []))
+      .catch(() => {})
+  }, [])
 
   const handleChangeStatus = async (id: string, status: string) => {
     try {
@@ -545,8 +559,112 @@ export default function PendenciesPage() {
       })
     : []
 
+  const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
   return (
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 0, marginBottom: 16 }}>
+        {([
+          { key: 'inadimplentes' as const, label: `INADIMPLENTES (${overduePayments.length})` },
+          { key: 'contratos' as const, label: `FIM DE CONTRATO (${expiringPlans.length})` },
+          { key: 'todas' as const, label: 'TODAS PENDENCIAS' },
+        ]).map(tab => (
+          <button key={tab.key} onClick={() => setPendTab(tab.key)} style={{
+            padding: '10px 20px', border: '2px solid black',
+            borderBottom: pendTab === tab.key ? 'none' : '2px solid black',
+            background: pendTab === tab.key ? 'white' : '#f0f0f0',
+            fontFamily: 'var(--font-pixel)', fontSize: 9, fontWeight: 700, cursor: 'pointer',
+            textTransform: 'uppercase', position: 'relative',
+            marginBottom: pendTab === tab.key ? -2 : 0, zIndex: pendTab === tab.key ? 1 : 0,
+            color: pendTab === tab.key ? 'black' : '#888', whiteSpace: 'nowrap',
+          }}>{tab.label}</button>
+        ))}
+        <div style={{ flex: 1, borderBottom: '2px solid black' }} />
+      </div>
+
+      {/* INADIMPLENTES TAB */}
+      {pendTab === 'inadimplentes' && (
+        <div>
+          <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, marginBottom: 16 }}>CLIENTES INADIMPLENTES</div>
+          {overduePayments.length === 0 ? (
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#006600', padding: 24, textAlign: 'center', border: '1px dashed #006600' }}>Nenhum inadimplente!</div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: '#cc0000', color: 'white', textTransform: 'uppercase' }}>
+                    <th style={{ padding: '8px 12px', textAlign: 'left' }}>Cliente</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'center' }}>Parcela</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'right' }}>Valor</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'center' }}>Vencimento</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'center' }}>Dias Atraso</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {overduePayments.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).map(pay => {
+                    const days = Math.floor((Date.now() - new Date(pay.dueDate).getTime()) / (1000*60*60*24))
+                    return (
+                      <tr key={pay.id} style={{ borderBottom: '1px solid #ddd' }}>
+                        <td style={{ padding: '8px 12px', fontWeight: 700 }}>{pay.client.companyName}</td>
+                        <td style={{ padding: '8px 12px', textAlign: 'center' }}>{pay.installment}</td>
+                        <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmtBRL(pay.value)}</td>
+                        <td style={{ padding: '8px 12px', textAlign: 'center' }}>{new Date(pay.dueDate).toLocaleDateString('pt-BR')}</td>
+                        <td style={{ padding: '8px 12px', textAlign: 'center', color: '#cc0000', fontWeight: 700 }}>{days}d</td>
+                      </tr>
+                    )
+                  })}
+                  <tr style={{ background: '#f0f0f0', fontWeight: 700 }}>
+                    <td colSpan={2} style={{ padding: '8px 12px' }}>TOTAL</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmtBRL(overduePayments.reduce((s, p) => s + p.value, 0))}</td>
+                    <td colSpan={2} />
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* FIM DE CONTRATO TAB */}
+      {pendTab === 'contratos' && (
+        <div>
+          <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, marginBottom: 16 }}>CONTRATOS VENCIDOS E A VENCER</div>
+          {expiringPlans.length === 0 ? (
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#006600', padding: 24, textAlign: 'center', border: '1px dashed #006600' }}>Todos os contratos em dia!</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {expiringPlans.sort((a, b) => a.daysLeft - b.daysLeft).map(plan => (
+                <div key={plan.id} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '12px 16px', border: '2px solid black',
+                  background: plan.expired ? '#fef2f2' : plan.daysLeft <= 30 ? '#fffbeb' : 'white',
+                  boxShadow: '3px 3px 0 black',
+                }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 13 }}>{plan.companyName}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555', marginTop: 2 }}>
+                      {plan.expired
+                        ? <span style={{ color: '#cc0000', fontWeight: 700 }}>Vencido ha {Math.abs(plan.daysLeft)} dias ({new Date(plan.contractEndDate).toLocaleDateString('pt-BR')})</span>
+                        : <span style={{ color: plan.daysLeft <= 30 ? '#e6a800' : '#006600' }}>Vence em {plan.daysLeft} dias ({new Date(plan.contractEndDate).toLocaleDateString('pt-BR')})</span>
+                      }
+                    </div>
+                  </div>
+                  <span style={{
+                    padding: '4px 12px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700,
+                    background: plan.expired ? '#cc0000' : plan.daysLeft <= 30 ? '#e6a800' : '#006600', color: 'white',
+                  }}>
+                    {plan.expired ? 'VENCIDO' : plan.daysLeft <= 30 ? 'URGENTE' : 'ATENCAO'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TODAS PENDENCIAS TAB */}
+      {pendTab === 'todas' && <>
       {/* Header */}
       <div
         style={{
@@ -745,6 +863,7 @@ export default function PendenciesPage() {
           onCreated={fetchPendencies}
         />
       )}
+      </>}
     </div>
   )
 }
