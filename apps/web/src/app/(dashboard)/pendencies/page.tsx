@@ -599,6 +599,7 @@ export default function PendenciesPage() {
                     <th style={{ padding: '8px 12px', textAlign: 'right' }}>Valor</th>
                     <th style={{ padding: '8px 12px', textAlign: 'center' }}>Vencimento</th>
                     <th style={{ padding: '8px 12px', textAlign: 'center' }}>Dias Atraso</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'center' }}>Acoes</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -606,18 +607,31 @@ export default function PendenciesPage() {
                     const days = Math.floor((Date.now() - new Date(pay.dueDate).getTime()) / (1000*60*60*24))
                     return (
                       <tr key={pay.id} style={{ borderBottom: '1px solid #ddd' }}>
-                        <td style={{ padding: '8px 12px', fontWeight: 700 }}>{pay.client.companyName}</td>
+                        <td style={{ padding: '8px 12px', fontWeight: 700, cursor: 'pointer' }} onClick={() => window.location.href = `/clients/${pay.client.id}`}>{pay.client.companyName}</td>
                         <td style={{ padding: '8px 12px', textAlign: 'center' }}>{pay.installment}</td>
                         <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmtBRL(pay.value)}</td>
                         <td style={{ padding: '8px 12px', textAlign: 'center' }}>{new Date(pay.dueDate).toLocaleDateString('pt-BR')}</td>
                         <td style={{ padding: '8px 12px', textAlign: 'center', color: '#cc0000', fontWeight: 700 }}>{days}d</td>
+                        <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                            <button onClick={async () => {
+                              if (!confirm(`Dar baixa no pagamento de ${pay.client.companyName} P${pay.installment} - ${fmtBRL(pay.value)}?`)) return
+                              try {
+                                await apiFetch(`/api/payments/${pay.id}/pay`, { method: 'PATCH' })
+                                toast.success('Pagamento confirmado!')
+                                setOverduePayments(prev => prev.filter(p => p.id !== pay.id))
+                              } catch { toast.error('Erro ao dar baixa') }
+                            }} style={{ background: '#006600', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>PAGAR</button>
+                            <button onClick={() => window.location.href = `/clients/${pay.client.id}`} style={{ background: '#4A78FF', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>VER</button>
+                          </div>
+                        </td>
                       </tr>
                     )
                   })}
                   <tr style={{ background: '#f0f0f0', fontWeight: 700 }}>
                     <td colSpan={2} style={{ padding: '8px 12px' }}>TOTAL</td>
                     <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmtBRL(overduePayments.reduce((s, p) => s + p.value, 0))}</td>
-                    <td colSpan={2} />
+                    <td colSpan={3} />
                   </tr>
                 </tbody>
               </table>
