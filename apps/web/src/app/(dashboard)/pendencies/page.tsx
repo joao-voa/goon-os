@@ -9,6 +9,7 @@ import {
   PENDENCY_TYPE_COLORS,
   PENDENCY_TYPE_LABELS,
   PENDENCY_TYPE_ICONS,
+  PRODUCT_COLORS,
 } from '@/lib/constants'
 
 // ---- Types ----
@@ -451,8 +452,9 @@ export default function PendenciesPage() {
   const searchParams = useSearchParams()
 
   const [pendTab, setPendTab] = useState<'inadimplentes' | 'contratos' | 'todas'>('inadimplentes')
-  const [overduePayments, setOverduePayments] = useState<Array<{ id: string; value: number; dueDate: string; installment: number; client: { id: string; companyName: string } }>>([])
-  const [expiringPlans, setExpiringPlans] = useState<Array<{ id: string; companyName: string; contractEndDate: string; daysLeft: number; expired: boolean }>>([])
+  const [overduePayments, setOverduePayments] = useState<Array<{ id: string; value: number; dueDate: string; installment: number; client: { id: string; companyName: string }; productCode?: string }>>([])
+  const [expiringPlans, setExpiringPlans] = useState<Array<{ id: string; companyName: string; contractEndDate: string; daysLeft: number; expired: boolean; productCode?: string }>>([])
+  const [productFilter, setProductFilter] = useState('')
   const [pendencies, setPendencies] = useState<Pendency[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -492,12 +494,12 @@ export default function PendenciesPage() {
   useEffect(() => { fetchPendencies() }, [fetchPendencies])
 
   useEffect(() => {
-    // Load overdue payments
-    apiFetch<{ data: Array<{ id: string; value: number; dueDate: string; installment: number; client: { id: string; companyName: string } }> }>('/api/payments?status=OVERDUE&limit=100')
-      .then(res => setOverduePayments(res.data ?? []))
+    // Load overdue payments with product info
+    apiFetch<{ data: Array<{ id: string; value: number; dueDate: string; installment: number; installmentNumber?: number; productCode?: string; client: { id: string; companyName: string }; clientPlan?: { product?: { code: string } } }> }>('/api/payments?status=OVERDUE&limit=100')
+      .then(res => setOverduePayments((res.data ?? []).map(p => ({ ...p, productCode: p.productCode ?? p.clientPlan?.product?.code ?? '' }))))
       .catch(() => {})
-    // Load expiring/expired contracts
-    apiFetch<{ renewals: { clients: Array<{ id: string; companyName: string; contractEndDate: string; daysLeft: number; expired: boolean }> } }>('/api/dashboard')
+    // Load expiring/expired contracts with product info
+    apiFetch<{ renewals: { clients: Array<{ id: string; companyName: string; contractEndDate: string; daysLeft: number; expired: boolean; productCode?: string }> } }>('/api/dashboard')
       .then(res => setExpiringPlans(res.renewals?.clients ?? []))
       .catch(() => {})
   }, [])
@@ -583,11 +585,27 @@ export default function PendenciesPage() {
         <div style={{ flex: 1, borderBottom: '2px solid black' }} />
       </div>
 
+      {/* Product filter chips */}
+      {(pendTab === 'inadimplentes' || pendTab === 'contratos') && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Programa:</span>
+          {['', 'GE', 'GI', 'TTS', 'AURA'].map(code => (
+            <button key={code} onClick={() => setProductFilter(productFilter === code ? '' : code)} style={{
+              padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+              background: productFilter === code ? (code ? (PRODUCT_COLORS[code] ?? 'black') : 'black') : 'white',
+              color: productFilter === code ? 'white' : 'black',
+            }}>{code || 'TODOS'}</button>
+          ))}
+        </div>
+      )}
+
       {/* INADIMPLENTES TAB */}
-      {pendTab === 'inadimplentes' && (
+      {pendTab === 'inadimplentes' && (() => {
+        const filtered = productFilter ? overduePayments.filter(p => p.productCode === productFilter) : overduePayments
+        return (
         <div>
           <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, marginBottom: 16 }}>CLIENTES INADIMPLENTES</div>
-          {overduePayments.length === 0 ? (
+          {filtered.length === 0 ? (
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#006600', padding: 24, textAlign: 'center', border: '1px dashed #006600' }}>Nenhum inadimplente!</div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
@@ -595,6 +613,7 @@ export default function PendenciesPage() {
                 <thead>
                   <tr style={{ background: '#cc0000', color: 'white', textTransform: 'uppercase' }}>
                     <th style={{ padding: '8px 12px', textAlign: 'left' }}>Cliente</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'center' }}>Programa</th>
                     <th style={{ padding: '8px 12px', textAlign: 'center' }}>Parcela</th>
                     <th style={{ padding: '8px 12px', textAlign: 'right' }}>Valor</th>
                     <th style={{ padding: '8px 12px', textAlign: 'center' }}>Vencimento</th>
@@ -603,11 +622,14 @@ export default function PendenciesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {overduePayments.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).map(pay => {
+                  {filtered.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).map(pay => {
                     const days = Math.floor((Date.now() - new Date(pay.dueDate).getTime()) / (1000*60*60*24))
                     return (
                       <tr key={pay.id} style={{ borderBottom: '1px solid #ddd' }}>
                         <td style={{ padding: '8px 12px', fontWeight: 700, cursor: 'pointer' }} onClick={() => window.location.href = `/clients/${pay.client.id}`}>{pay.client.companyName}</td>
+                        <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                          {pay.productCode && <span style={{ background: PRODUCT_COLORS[pay.productCode] ?? '#888', color: 'white', padding: '2px 6px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{pay.productCode}</span>}
+                        </td>
                         <td style={{ padding: '8px 12px', textAlign: 'center' }}>{pay.installment}</td>
                         <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmtBRL(pay.value)}</td>
                         <td style={{ padding: '8px 12px', textAlign: 'center' }}>{new Date(pay.dueDate).toLocaleDateString('pt-BR')}</td>
@@ -629,8 +651,8 @@ export default function PendenciesPage() {
                     )
                   })}
                   <tr style={{ background: '#f0f0f0', fontWeight: 700 }}>
-                    <td colSpan={2} style={{ padding: '8px 12px' }}>TOTAL</td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmtBRL(overduePayments.reduce((s, p) => s + p.value, 0))}</td>
+                    <td colSpan={3} style={{ padding: '8px 12px' }}>TOTAL</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmtBRL(filtered.reduce((s, p) => s + p.value, 0))}</td>
                     <td colSpan={3} />
                   </tr>
                 </tbody>
@@ -638,17 +660,19 @@ export default function PendenciesPage() {
             </div>
           )}
         </div>
-      )}
+        )})()}
 
       {/* FIM DE CONTRATO TAB */}
-      {pendTab === 'contratos' && (
+      {pendTab === 'contratos' && (() => {
+        const filteredPlans = productFilter ? expiringPlans.filter(p => p.productCode === productFilter) : expiringPlans
+        return (
         <div>
           <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, marginBottom: 16 }}>CONTRATOS VENCIDOS E A VENCER</div>
-          {expiringPlans.length === 0 ? (
+          {filteredPlans.length === 0 ? (
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#006600', padding: 24, textAlign: 'center', border: '1px dashed #006600' }}>Todos os contratos em dia!</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {expiringPlans.sort((a, b) => a.daysLeft - b.daysLeft).map(plan => (
+              {filteredPlans.sort((a, b) => a.daysLeft - b.daysLeft).map(plan => (
                 <div key={plan.id} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   padding: '12px 16px', border: '2px solid black',
@@ -656,7 +680,10 @@ export default function PendenciesPage() {
                   boxShadow: '3px 3px 0 black',
                 }}>
                   <div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 13 }}>{plan.companyName}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {plan.companyName}
+                      {plan.productCode && <span style={{ background: PRODUCT_COLORS[plan.productCode] ?? '#888', color: 'white', padding: '1px 6px', fontSize: 9, fontWeight: 700 }}>{plan.productCode}</span>}
+                    </div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555', marginTop: 2 }}>
                       {plan.expired
                         ? <span style={{ color: '#cc0000', fontWeight: 700 }}>Vencido ha {Math.abs(plan.daysLeft)} dias ({new Date(plan.contractEndDate).toLocaleDateString('pt-BR')})</span>
@@ -675,7 +702,7 @@ export default function PendenciesPage() {
             </div>
           )}
         </div>
-      )}
+        )})()}
 
       {/* TODAS PENDENCIAS TAB */}
       {pendTab === 'todas' && <>

@@ -133,6 +133,7 @@ export class DashboardService {
         id: true,
         endDate: true,
         client: { select: { id: true, companyName: true } },
+        product: { select: { code: true } },
       },
       orderBy: { endDate: 'asc' },
     })
@@ -145,6 +146,7 @@ export class DashboardService {
         contractEndDate: plan.endDate,
         daysLeft: days,
         expired: days !== null && days < 0,
+        productCode: plan.product.code,
       }
     })
 
