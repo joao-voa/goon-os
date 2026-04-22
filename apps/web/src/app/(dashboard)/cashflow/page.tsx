@@ -39,6 +39,7 @@ export default function CashflowPage() {
   const [data, setData] = useState<CashflowData | null>(null)
   const [year, setYear] = useState(new Date().getFullYear())
   const [expandedMonth, setExpandedMonth] = useState<number | null>(new Date().getMonth() + 1)
+  const [fullscreen, setFullscreen] = useState(false)
 
   const loadData = useCallback(async () => {
     const result = await apiFetch<CashflowData>(`/api/cashflow?year=${year}`)
@@ -56,11 +57,17 @@ export default function CashflowPage() {
   const barMax = Math.max(...data.months.map(m => Math.max(m.entradas.total, m.saidas.total + m.comissoes.total)), 1)
 
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{
+      padding: fullscreen ? 24 : 0,
+      ...(fullscreen ? { position: 'fixed', inset: 0, zIndex: 100, background: 'white', overflow: 'auto' } : {}),
+    }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 20 }}>FLUXO DE CAIXA</h1>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button onClick={() => setFullscreen(!fullscreen)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: fullscreen ? 'black' : 'white', color: fullscreen ? 'white' : 'black' }}>
+            {fullscreen ? 'MINIMIZAR' : 'MAXIMIZAR'}
+          </button>
           <button onClick={() => setYear(y => y - 1)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>◀</button>
           <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, minWidth: 60, textAlign: 'center' }}>{year}</span>
           <button onClick={() => setYear(y => y + 1)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>▶</button>
@@ -97,12 +104,12 @@ export default function CashflowPage() {
               <div key={m.month} style={{ flex: 1, minWidth: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                 <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 180 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, color: '#006600', fontWeight: 700, whiteSpace: 'nowrap', writingMode: 'vertical-lr', transform: 'rotate(180deg)', maxHeight: 50 }}>{m.entradas.total > 0 ? fmt(m.entradas.total) : ''}</span>
-                    <div style={{ width: 20, height: Math.max(entH, 2), background: '#006600', border: '1px solid #004400' }} />
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: '#006600', fontWeight: 700, whiteSpace: 'nowrap', writingMode: 'vertical-lr', transform: 'rotate(180deg)', maxHeight: 55, letterSpacing: 0.5 }}>{m.entradas.total > 0 ? fmt(m.entradas.total) : ''}</span>
+                    <div style={{ width: 22, height: Math.max(entH, 2), background: '#006600', border: '1px solid #004400', borderRadius: 2 }} />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, color: '#cc0000', fontWeight: 700, whiteSpace: 'nowrap', writingMode: 'vertical-lr', transform: 'rotate(180deg)', maxHeight: 50 }}>{(m.saidas.total + m.comissoes.total) > 0 ? fmt(m.saidas.total + m.comissoes.total) : ''}</span>
-                    <div style={{ width: 20, height: Math.max(saiH, 2), background: '#cc0000', border: '1px solid #990000' }} />
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: '#cc0000', fontWeight: 700, whiteSpace: 'nowrap', writingMode: 'vertical-lr', transform: 'rotate(180deg)', maxHeight: 55, letterSpacing: 0.5 }}>{(m.saidas.total + m.comissoes.total) > 0 ? fmt(m.saidas.total + m.comissoes.total) : ''}</span>
+                    <div style={{ width: 22, height: Math.max(saiH, 2), background: '#cc0000', border: '1px solid #990000', borderRadius: 2 }} />
                   </div>
                 </div>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' }}>{MONTH_NAMES[m.month - 1]}</span>
