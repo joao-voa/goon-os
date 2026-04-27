@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { apiFetch } from '@/lib/api'
 
 interface MonthData {
@@ -40,6 +40,57 @@ export default function CashflowPage() {
   const [year, setYear] = useState(new Date().getFullYear())
   const [expandedMonth, setExpandedMonth] = useState<number | null>(new Date().getMonth() + 1)
   const [fullscreen, setFullscreen] = useState(false)
+  const [viewMode, setViewMode] = useState<'mensal' | 'diario'>('mensal')
+  const [dailyMonth, setDailyMonth] = useState(new Date().getMonth())
+  const [dailyData, setDailyData] = useState<Array<{ day: number; entradas: number; saidas: number; saldo: number; items: Array<{ type: 'entrada' | 'saida'; description: string; value: number }> }>>([])
+
+  useEffect(() => {
+    if (viewMode !== 'diario' || !data) return
+    const m = data.months[dailyMonth]
+    if (!m) return
+
+    // Build daily breakdown from payments and expenses
+    async function loadDaily() {
+      try {
+        const params = new URLSearchParams()
+        params.set('month', String(dailyMonth + 1))
+        params.set('year', String(year))
+
+        const [payments, expenses] = await Promise.all([
+          apiFetch<{ data: Array<{ id: string; dueDate: string; value: number; status: string; client: { companyName: string }; installmentNumber?: number }> }>('/api/payments?' + params.toString() + '&limit=200'),
+          apiFetch<Array<{ id: string; dueDate: string; value: number; status: string; description: string; category: string }>>('/api/expenses?month=' + (dailyMonth + 1) + '&year=' + year + '&limit=200'),
+        ])
+
+        const daysInMonth = new Date(year, dailyMonth + 1, 0).getDate()
+        const days: typeof dailyData = []
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dayItems: typeof dailyData[0]['items'] = []
+          let entradas = 0, saidas = 0
+
+          // Payments for this day
+          const dayPayments = (payments.data ?? []).filter(p => new Date(p.dueDate).getDate() === d)
+          for (const p of dayPayments) {
+            entradas += p.value
+            dayItems.push({ type: 'entrada', description: p.client?.companyName + ' P' + (p.installmentNumber ?? ''), value: p.value })
+          }
+
+          // Expenses for this day (exclude Giulliano mentoring)
+          const expArray = Array.isArray(expenses) ? expenses : (expenses as any).data ?? []
+          const dayExpenses = expArray.filter((e: any) => new Date(e.dueDate).getDate() === d && !(e.category === 'MENTORIA' && e.description?.includes('Giulliano')))
+          for (const e of dayExpenses) {
+            saidas += e.value
+            dayItems.push({ type: 'saida', description: e.description, value: e.value })
+          }
+
+          days.push({ day: d, entradas, saidas, saldo: entradas - saidas, items: dayItems })
+        }
+
+        setDailyData(days)
+      } catch { /* ignore */ }
+    }
+    loadDaily()
+  }, [viewMode, dailyMonth, year, data])
 
   const loadData = useCallback(async () => {
     const result = await apiFetch<CashflowData>(`/api/cashflow?year=${year}`)
@@ -65,6 +116,12 @@ export default function CashflowPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 20 }}>FLUXO DE CAIXA</h1>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {(['mensal', 'diario'] as const).map(v => (
+            <button key={v} onClick={() => setViewMode(v)} style={{
+              padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11,
+              background: viewMode === v ? 'black' : 'white', color: viewMode === v ? 'white' : 'black',
+            }}>{v === 'mensal' ? 'MENSAL' : 'DIARIO'}</button>
+          ))}
           <button onClick={() => setFullscreen(!fullscreen)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: fullscreen ? 'black' : 'white', color: fullscreen ? 'white' : 'black' }}>
             {fullscreen ? 'MINIMIZAR' : 'MAXIMIZAR'}
           </button>
@@ -74,6 +131,83 @@ export default function CashflowPage() {
         </div>
       </div>
 
+      {/* DAILY VIEW */}
+      {viewMode === 'diario' && (
+        <div>
+          {/* Month selector */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 20 }}>
+            <button onClick={() => setDailyMonth(m => m > 0 ? m - 1 : 11)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>◀</button>
+            <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, textTransform: 'uppercase', minWidth: 120, textAlign: 'center' }}>{MONTH_NAMES[dailyMonth]} {year}</span>
+            <button onClick={() => setDailyMonth(m => m < 11 ? m + 1 : 0)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>▶</button>
+          </div>
+
+          {/* KPIs do mês */}
+          {data && data.months[dailyMonth] && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 20 }}>
+              <div style={{ background: '#006600', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '3px 3px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Entradas</div>
+                <div style={{ fontSize: 16 }}>{fmt(data.months[dailyMonth].entradas.total)}</div>
+              </div>
+              <div style={{ background: '#cc0000', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '3px 3px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Saidas</div>
+                <div style={{ fontSize: 16 }}>{fmt(data.months[dailyMonth].saidas.total + data.months[dailyMonth].comissoes.total)}</div>
+              </div>
+              <div style={{ background: data.months[dailyMonth].saldoProjetado >= 0 ? '#006600' : '#cc0000', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '3px 3px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Saldo</div>
+                <div style={{ fontSize: 16 }}>{fmt(data.months[dailyMonth].saldoProjetado)}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Daily table */}
+          <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+              <thead>
+                <tr style={{ background: 'black', color: 'white', textTransform: 'uppercase' }}>
+                  <th style={{ padding: '8px 12px', textAlign: 'center', width: 50 }}>Dia</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'right' }}>Entradas</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'right' }}>Saidas</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'right' }}>Saldo Dia</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dailyData.map(d => {
+                  const hasData = d.entradas > 0 || d.saidas > 0
+                  const isToday = d.day === new Date().getDate() && dailyMonth === new Date().getMonth() && year === new Date().getFullYear()
+                  return (
+                    <React.Fragment key={d.day}>
+                      <tr style={{ borderBottom: '1px solid #eee', background: isToday ? '#fffff0' : hasData ? 'white' : '#fafafa', cursor: hasData ? 'pointer' : 'default' }}
+                        onClick={() => setExpandedMonth(expandedMonth === d.day + 100 ? null : d.day + 100)}>
+                        <td style={{ padding: '6px 12px', textAlign: 'center', fontWeight: isToday ? 900 : hasData ? 700 : 400, color: isToday ? '#4A78FF' : hasData ? 'black' : '#ccc' }}>{d.day}</td>
+                        <td style={{ padding: '6px 12px', textAlign: 'right', color: d.entradas > 0 ? '#006600' : '#ccc' }}>{d.entradas > 0 ? fmt(d.entradas) : '-'}</td>
+                        <td style={{ padding: '6px 12px', textAlign: 'right', color: d.saidas > 0 ? '#cc0000' : '#ccc' }}>{d.saidas > 0 ? fmt(d.saidas) : '-'}</td>
+                        <td style={{ padding: '6px 12px', textAlign: 'right', fontWeight: 700, color: d.saldo > 0 ? '#006600' : d.saldo < 0 ? '#cc0000' : '#ccc' }}>{hasData ? fmt(d.saldo) : '-'}</td>
+                      </tr>
+                      {expandedMonth === d.day + 100 && d.items.length > 0 && d.items.map((item, i) => (
+                        <tr key={i} style={{ background: '#f9f9f9', borderBottom: '1px solid #f0f0f0' }}>
+                          <td />
+                          <td colSpan={2} style={{ padding: '3px 12px 3px 20px', fontSize: 10, color: item.type === 'entrada' ? '#006600' : '#cc0000' }}>
+                            {item.type === 'entrada' ? '↑' : '↓'} {item.description}
+                          </td>
+                          <td style={{ padding: '3px 12px', textAlign: 'right', fontSize: 10, color: item.type === 'entrada' ? '#006600' : '#cc0000' }}>{fmt(item.value)}</td>
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  )
+                })}
+                <tr style={{ background: '#f0f0f0', fontWeight: 700 }}>
+                  <td style={{ padding: '8px 12px' }}>TOTAL</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'right', color: '#006600' }}>{fmt(dailyData.reduce((s, d) => s + d.entradas, 0))}</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'right', color: '#cc0000' }}>{fmt(dailyData.reduce((s, d) => s + d.saidas, 0))}</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmt(dailyData.reduce((s, d) => s + d.saldo, 0))}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {viewMode === 'mensal' && <>
       {/* Totais do Ano */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 24 }}>
         <div style={{ background: '#006600', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
@@ -237,6 +371,7 @@ export default function CashflowPage() {
           )
         })}
       </div>
+      </>}
     </div>
   )
 }
