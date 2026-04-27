@@ -481,6 +481,15 @@ export default function PaymentsPage() {
     }
   }
 
+  const handleUnpay = async (id: string) => {
+    if (!confirm('Reverter pagamento para PENDENTE?')) return
+    try {
+      await apiFetch(`/api/payments/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'PENDING', paidAt: null }) })
+      toast.success('Pagamento revertido')
+      fetchPayments()
+    } catch { toast.error('Erro ao reverter') }
+  }
+
   const handleCheckOverdue = async () => {
     try {
       const result = await apiFetch<{ count?: number; updated?: number }>('/api/payments/check-overdue', { method: 'POST' })
@@ -743,6 +752,14 @@ export default function PaymentsPage() {
                             onClick={() => toast.info('[INFO] Funcionalidade em breve')}
                           >
                             Env. Cobrança
+                          </button>
+                        )}
+                        {payment.status === 'PAID' && (
+                          <button
+                            style={{ fontSize: 8, padding: '5px 8px', whiteSpace: 'nowrap', background: '#e6a800', color: 'white', border: '2px solid black', fontFamily: 'var(--font-mono)', fontWeight: 700, cursor: 'pointer' }}
+                            onClick={() => handleUnpay(payment.id)}
+                          >
+                            Reverter
                           </button>
                         )}
                       </div>

@@ -556,7 +556,7 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
   const selectedPlan = plans.find(p => p.id === selectedPlanId)
 
   useEffect(() => {
-    if (selectedPlan) setTemplateType(selectedPlan.product.code.toLowerCase())
+    if (selectedPlan?.product) setTemplateType(selectedPlan.product.code.toLowerCase())
   }, [selectedPlan])
 
   const previewFields = selectedPlan
@@ -605,7 +605,7 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
             ) : (
               <select className="goon-select" value={selectedPlanId} onChange={e => setSelectedPlanId(e.target.value)} style={{ width: '100%' }}>
                 <option value="">Sem plano vinculado</option>
-                {plans.map(p => (<option key={p.id} value={p.id}>{p.product.code} — {p.product.name}</option>))}
+                {plans.map(p => (<option key={p.id} value={p.id}>{p.product?.code ?? '?'} — {p.product?.name ?? '?'}</option>))}
               </select>
             )}
           </div>
@@ -1324,7 +1324,7 @@ export default function ClientDetailPage() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {plans.map(plan => {
-                      const color = PRODUCT_COLORS[plan.product.code] ?? 'black'
+                      const color = PRODUCT_COLORS[plan.product?.code ?? ''] ?? 'black'
                       const now = new Date()
                       const endDate = plan.endDate ? new Date(plan.endDate) : null
                       const daysToEnd = endDate ? (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) : null
@@ -1336,7 +1336,7 @@ export default function ClientDetailPage() {
                           <div style={{ padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                               <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, background: color, color: 'white', border: '2px solid black', fontFamily: 'var(--font-pixel)', fontSize: 10, fontWeight: 800, flexShrink: 0 }}>
-                                {plan.product.code}
+                                {plan.product?.code ?? '?'}
                               </span>
                               <div>
                                 <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'black', fontSize: 13, textTransform: 'uppercase' }}>
