@@ -68,8 +68,11 @@ export default function CashflowPage() {
           const dayItems: typeof dailyData[0]['items'] = []
           let entradas = 0, saidas = 0
 
-          // Payments for this day
-          const dayPayments = (payments.data ?? []).filter(p => new Date(p.dueDate).getDate() === d)
+          // Payments for this day (filter by full date, not just day number)
+          const dayPayments = (payments.data ?? []).filter(p => {
+            const pd = new Date(p.dueDate)
+            return pd.getDate() === d && pd.getMonth() === dailyMonth && pd.getFullYear() === year
+          })
           for (const p of dayPayments) {
             entradas += p.value
             dayItems.push({ type: 'entrada', description: p.client?.companyName + ' P' + (p.installmentNumber ?? ''), value: p.value })
@@ -77,7 +80,10 @@ export default function CashflowPage() {
 
           // Expenses for this day (exclude Giulliano mentoring)
           const expArray = Array.isArray(expenses) ? expenses : (expenses as any).data ?? []
-          const dayExpenses = expArray.filter((e: any) => new Date(e.dueDate).getDate() === d && !(e.category === 'MENTORIA' && e.description?.includes('Giulliano')))
+          const dayExpenses = expArray.filter((e: any) => {
+            const ed = new Date(e.dueDate)
+            return ed.getDate() === d && ed.getMonth() === dailyMonth && ed.getFullYear() === year && !(e.category === 'MENTORIA' && e.description?.includes('Giulliano'))
+          })
           for (const e of dayExpenses) {
             saidas += e.value
             dayItems.push({ type: 'saida', description: e.description, value: e.value })
