@@ -13,7 +13,7 @@ export class CashflowService {
     const [payments, expenses, commissions] = await this.prisma.$transaction([
       this.prisma.payment.findMany({
         where: { dueDate: { gte: yearStart, lt: yearEnd } },
-        select: { dueDate: true, value: true, status: true, client: { select: { id: true, companyName: true } } },
+        select: { dueDate: true, paidAt: true, value: true, status: true, client: { select: { id: true, companyName: true } } },
       }),
       this.prisma.expense.findMany({
         where: {

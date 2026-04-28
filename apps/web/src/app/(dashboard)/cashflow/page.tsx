@@ -57,7 +57,7 @@ export default function CashflowPage() {
         params.set('year', String(year))
 
         const [payments, expenses] = await Promise.all([
-          apiFetch<{ data: Array<{ id: string; dueDate: string; value: number; status: string; client: { companyName: string }; installmentNumber?: number }> }>('/api/payments?' + params.toString() + '&limit=200'),
+          apiFetch<{ data: Array<{ id: string; dueDate: string; paidAt?: string | null; value: number; status: string; client: { companyName: string }; installmentNumber?: number }> }>('/api/payments?' + params.toString() + '&limit=200'),
           apiFetch<Array<{ id: string; dueDate: string; value: number; status: string; description: string; category: string }>>('/api/expenses?month=' + (dailyMonth + 1) + '&year=' + year + '&limit=200'),
         ])
 
@@ -68,9 +68,10 @@ export default function CashflowPage() {
           const dayItems: typeof dailyData[0]['items'] = []
           let entradas = 0, saidas = 0
 
-          // Payments for this day (filter by full date, not just day number)
+          // Payments for this day — use paidAt for paid (real date), dueDate for pending (projected)
           const dayPayments = (payments.data ?? []).filter(p => {
-            const pd = new Date(p.dueDate)
+            const dateToUse = p.status === 'PAID' && p.paidAt ? p.paidAt : p.dueDate
+            const pd = new Date(dateToUse)
             return pd.getDate() === d && pd.getMonth() === dailyMonth && pd.getFullYear() === year
           })
           for (const p of dayPayments) {

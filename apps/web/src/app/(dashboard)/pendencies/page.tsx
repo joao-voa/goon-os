@@ -637,10 +637,15 @@ export default function PendenciesPage() {
                         <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                             <button onClick={async () => {
-                              if (!confirm(`Dar baixa no pagamento de ${pay.client.companyName} P${pay.installment} - ${fmtBRL(pay.value)}?`)) return
+                              const dateStr = prompt('Data do pagamento (DD/MM/AAAA):', new Date().toLocaleDateString('pt-BR'))
+                              if (!dateStr) return
+                              const parts = dateStr.split('/')
+                              if (parts.length !== 3) { toast.error('Data invalida'); return }
+                              const paidDate = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10), 12)
+                              if (isNaN(paidDate.getTime())) { toast.error('Data invalida'); return }
                               try {
-                                await apiFetch(`/api/payments/${pay.id}/pay`, { method: 'PATCH' })
-                                toast.success('Pagamento confirmado!')
+                                await apiFetch(`/api/payments/${pay.id}`, { method: 'PUT', body: JSON.stringify({ status: 'PAID', paidAt: paidDate.toISOString() }) })
+                                toast.success('Pagamento confirmado em ' + dateStr)
                                 setOverduePayments(prev => prev.filter(p => p.id !== pay.id))
                               } catch { toast.error('Erro ao dar baixa') }
                             }} style={{ background: '#006600', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>PAGAR</button>

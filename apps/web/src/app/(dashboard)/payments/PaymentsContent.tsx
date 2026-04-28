@@ -472,9 +472,15 @@ export default function PaymentsPage() {
     : 100
 
   const handlePay = async (id: string) => {
+    const dateStr = prompt('Data do pagamento (DD/MM/AAAA):', new Date().toLocaleDateString('pt-BR'))
+    if (!dateStr) return
+    const parts = dateStr.split('/')
+    if (parts.length !== 3) { toast.error('Data invalida. Use DD/MM/AAAA'); return }
+    const paidDate = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10), 12)
+    if (isNaN(paidDate.getTime())) { toast.error('Data invalida'); return }
     try {
-      await apiFetch(`/api/payments/${id}/pay`, { method: 'PATCH' })
-      toast.success('[OK] Pagamento confirmado')
+      await apiFetch(`/api/payments/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'PAID', paidAt: paidDate.toISOString() }) })
+      toast.success('[OK] Pagamento confirmado em ' + dateStr)
       fetchPayments()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Falha ao confirmar pagamento')
