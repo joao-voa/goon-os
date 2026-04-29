@@ -999,7 +999,7 @@ export default function CrmPage() {
   const [salesRepFilter, setSalesRepFilter] = useState('')
   const isMobile = useIsMobile()
 
-  const PIPELINE_STAGES = LEAD_STAGES.filter(s => s !== 'PERDIDO')
+  const PIPELINE_STAGES = LEAD_STAGES
 
   const fetchLeads = useCallback(async () => {
     try {
@@ -1093,7 +1093,7 @@ export default function CrmPage() {
     }
   }
 
-  const activeLeads = leads.filter(l => l.leadStage !== 'PERDIDO' && (!salesRepFilter || l.salesRep === salesRepFilter))
+  const activeLeads = leads.filter(l => !salesRepFilter || l.salesRep === salesRepFilter)
 
   const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 
