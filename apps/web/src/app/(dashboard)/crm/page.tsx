@@ -1323,14 +1323,41 @@ export default function CrmPage() {
                   {dayMeetings.length === 0 ? (
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', textAlign: 'center', padding: 16 }}>Sem reunioes comerciais</div>
                   ) : dayMeetings.map(m => (
-                    <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #eee' }}>
-                      <div>
+                    <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #eee', gap: 8 }}>
+                      <div style={{ flex: 1 }}>
                         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>{m.client?.companyName ?? m.title}</div>
                         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555' }}>
                           {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {m.duration}min{m.mentorName && <> • {m.mentorName}</>}
                         </div>
+                        {m.notes && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 2 }}>{m.notes}</div>}
                       </div>
-                      <span style={{ background: m.status === 'DONE' ? '#006600' : '#22c55e', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{m.status === 'DONE' ? 'FEITA' : 'AGENDADA'}</span>
+                      <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                        {m.status === 'SCHEDULED' && (
+                          <>
+                            <button onClick={async () => {
+                              try { await apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ status: 'DONE' }) }); toast.success('Marcada como feita'); loadCommercialMeetings() } catch { toast.error('Erro') }
+                            }} style={{ background: '#006600', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FEITA</button>
+                            <button onClick={async () => {
+                              try { await apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ status: 'NO_SHOW' }) }); toast.success('Marcada como no-show'); loadCommercialMeetings() } catch { toast.error('Erro') }
+                            }} style={{ background: '#e6a800', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FALTOU</button>
+                            <button onClick={() => {
+                              const newDate = prompt('Nova data (DD/MM/AAAA):', new Date(m.date).toLocaleDateString('pt-BR'))
+                              if (!newDate) return
+                              const parts = newDate.split('/')
+                              if (parts.length !== 3) { toast.error('Data invalida'); return }
+                              const newTime = prompt('Horario (HH:MM):', new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))
+                              if (!newTime) return
+                              const dt = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10), parseInt(newTime.split(':')[0], 10), parseInt(newTime.split(':')[1], 10))
+                              apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ date: dt.toISOString() }) })
+                                .then(() => { toast.success('Reagendada para ' + newDate + ' ' + newTime); loadCommercialMeetings() })
+                                .catch(() => toast.error('Erro ao reagendar'))
+                            }} style={{ background: '#4A78FF', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>REAGENDAR</button>
+                          </>
+                        )}
+                        {m.status === 'DONE' && <span style={{ background: '#006600', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>FEITA</span>}
+                        {m.status === 'NO_SHOW' && <span style={{ background: '#cc0000', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>FALTOU</span>}
+                        {m.status === 'CANCELLED' && <span style={{ background: '#888', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>CANCELADA</span>}
+                      </div>
                     </div>
                   ))}
                 </div>
