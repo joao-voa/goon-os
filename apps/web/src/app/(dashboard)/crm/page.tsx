@@ -921,7 +921,16 @@ export default function CrmPage() {
   const [syncing, setSyncing] = useState(false)
   const [metrics, setMetrics] = useState<CrmMetrics | null>(null)
   const [suggestions, setSuggestions] = useState<{ salesReps: string[]; mentors: string[] }>({ salesReps: [], mentors: [] })
-  // removed crmTab - clients now separate page
+  const [crmTab, setCrmTab] = useState<'pipeline' | 'agenda'>('pipeline')
+  const [commercialMeetings, setCommercialMeetings] = useState<Array<{ id: string; title: string; type: string; category?: string; date: string; duration: number; mentorName: string | null; notes: string | null; status: string; client?: { id: string; companyName: string } | null }>>([])
+
+  useEffect(() => {
+    if (crmTab !== 'agenda') return
+    const now = new Date()
+    apiFetch<Array<typeof commercialMeetings[0]>>(`/api/meetings?year=${now.getFullYear()}&month=${now.getMonth() + 1}`)
+      .then(data => setCommercialMeetings(data.filter(m => m.type === 'COMERCIAL' || m.category === 'COMERCIAL')))
+      .catch(() => {})
+  }, [crmTab])
   const [salesRepFilter, setSalesRepFilter] = useState('')
   const isMobile = useIsMobile()
 
@@ -1033,7 +1042,86 @@ export default function CrmPage() {
 
   return (
     <div>
-      {<>
+      {/* CRM Tabs */}
+      <div style={{ display: 'flex', gap: 0, marginBottom: 16 }}>
+        {(['pipeline', 'agenda'] as const).map(tab => (
+          <button key={tab} onClick={() => setCrmTab(tab)} style={{
+            padding: '10px 24px', border: '2px solid black',
+            borderBottom: crmTab === tab ? 'none' : '2px solid black',
+            background: crmTab === tab ? 'white' : '#f0f0f0',
+            fontFamily: 'var(--font-pixel)', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+            textTransform: 'uppercase', position: 'relative',
+            marginBottom: crmTab === tab ? -2 : 0, zIndex: crmTab === tab ? 1 : 0,
+            color: crmTab === tab ? 'black' : '#888',
+          }}>
+            {tab === 'pipeline' ? 'PIPELINE' : 'AGENDA COMERCIAL'}
+          </button>
+        ))}
+        <div style={{ flex: 1, borderBottom: '2px solid black' }} />
+      </div>
+
+      {/* AGENDA COMERCIAL */}
+      {crmTab === 'agenda' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h2 style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, margin: 0 }}>AGENDA COMERCIAL</h2>
+            <a href="/agenda" style={{ padding: '6px 14px', border: '2px solid black', background: '#4A78FF', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', boxShadow: '3px 3px 0 black' }}>
+              + AGENDAR REUNIAO
+            </a>
+          </div>
+
+          {/* Upcoming commercial meetings */}
+          <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, marginBottom: 10 }}>PROXIMAS REUNIOES</div>
+          {(() => {
+            const upcoming = commercialMeetings.filter(m => m.status === 'SCHEDULED' && new Date(m.date) >= new Date()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            return upcoming.length === 0 ? (
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', padding: 20, textAlign: 'center', border: '1px dashed #ccc', marginBottom: 16 }}>Nenhuma reuniao comercial agendada</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+                {upcoming.map(m => (
+                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', border: '2px solid black', boxShadow: '3px 3px 0 black', background: 'white' }}>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>{m.client?.companyName ?? m.title}</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555', marginTop: 2 }}>
+                        {new Date(m.date).toLocaleDateString('pt-BR')} {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {m.duration}min
+                        {m.mentorName && <> • {m.mentorName}</>}
+                      </div>
+                      {m.notes && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#888', marginTop: 2 }}>{m.notes}</div>}
+                    </div>
+                    <span style={{ background: '#22c55e', color: 'white', padding: '4px 10px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>AGENDADA</span>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
+
+          {/* Recent commercial meetings */}
+          <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, marginBottom: 10 }}>REALIZADAS</div>
+          {(() => {
+            const done = commercialMeetings.filter(m => m.status === 'DONE').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            return done.length === 0 ? (
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', padding: 20, textAlign: 'center', border: '1px dashed #ccc' }}>Nenhuma reuniao comercial realizada</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {done.map(m => (
+                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', border: '1px solid #ddd', background: '#fafafa' }}>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>{m.client?.companyName ?? m.title}</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555' }}>
+                        {new Date(m.date).toLocaleDateString('pt-BR')} • {m.mentorName ?? ''}
+                      </div>
+                    </div>
+                    <span style={{ background: '#006600', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>FEITA</span>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
+        </div>
+      )}
+
+      {/* PIPELINE */}
+      {crmTab === 'pipeline' && <>
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         marginBottom: 20, flexWrap: 'wrap', gap: 12,
