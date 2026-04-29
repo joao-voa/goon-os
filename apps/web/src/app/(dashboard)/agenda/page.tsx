@@ -9,6 +9,7 @@ interface Meeting {
   clientId: string
   title: string
   type: string
+  category?: string
   date: string
   duration: number
   mentorName: string | null
@@ -71,6 +72,7 @@ export default function AgendaPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null)
   const [mentorFilter, setMentorFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
 
   // Form state
   const [formClientId, setFormClientId] = useState('')
@@ -196,8 +198,9 @@ export default function AgendaPage() {
   const firstDay = getFirstDayOfWeek(year, month)
   const monthName = new Date(year, month).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
 
+  const filteredMeetings = categoryFilter ? meetings.filter(m => m.category === categoryFilter) : meetings
   const meetingsByDay: Record<number, Meeting[]> = {}
-  meetings.forEach(m => {
+  filteredMeetings.forEach(m => {
     const d = new Date(m.date)
     if (d.getMonth() === month && d.getFullYear() === year) {
       const day = d.getDate()
@@ -227,6 +230,17 @@ export default function AgendaPage() {
           padding: '8px 16px', border: '2px solid black', background: '#4A78FF', color: 'white',
           fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0 black',
         }}>+ NOVA REUNIAO</button>
+      </div>
+
+      {/* Category filter */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Categoria:</span>
+        {['', 'MENTORIA', 'COMERCIAL', 'GESTAO'].map(cat => (
+          <button key={cat} onClick={() => setCategoryFilter(categoryFilter === cat ? '' : cat)} style={{
+            padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+            background: categoryFilter === cat ? 'black' : 'white', color: categoryFilter === cat ? 'white' : 'black',
+          }}>{cat || 'TODAS'}</button>
+        ))}
       </div>
 
       {/* Mentor filter */}

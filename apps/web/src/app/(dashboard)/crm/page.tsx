@@ -923,14 +923,19 @@ export default function CrmPage() {
   const [suggestions, setSuggestions] = useState<{ salesReps: string[]; mentors: string[] }>({ salesReps: [], mentors: [] })
   const [crmTab, setCrmTab] = useState<'pipeline' | 'agenda'>('pipeline')
   const [commercialMeetings, setCommercialMeetings] = useState<Array<{ id: string; title: string; type: string; category?: string; date: string; duration: number; mentorName: string | null; notes: string | null; status: string; client?: { id: string; companyName: string } | null }>>([])
+  const [comMonth, setComMonth] = useState(new Date().getMonth())
+  const [comYear, setComYear] = useState(new Date().getFullYear())
+  const [comSelectedDate, setComSelectedDate] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadCommercialMeetings = useCallback(async () => {
     if (crmTab !== 'agenda') return
-    const now = new Date()
-    apiFetch<Array<typeof commercialMeetings[0]>>(`/api/meetings?year=${now.getFullYear()}&month=${now.getMonth() + 1}`)
-      .then(data => setCommercialMeetings(data.filter(m => m.type === 'COMERCIAL' || m.category === 'COMERCIAL')))
-      .catch(() => {})
-  }, [crmTab])
+    try {
+      const data = await apiFetch<Array<typeof commercialMeetings[0]>>(`/api/meetings?year=${comYear}&month=${comMonth + 1}`)
+      setCommercialMeetings(data.filter(m => m.type === 'COMERCIAL' || m.category === 'COMERCIAL'))
+    } catch { /* ignore */ }
+  }, [crmTab, comMonth, comYear])
+
+  useEffect(() => { loadCommercialMeetings() }, [loadCommercialMeetings])
   const [salesRepFilter, setSalesRepFilter] = useState('')
   const isMobile = useIsMobile()
 
@@ -1061,64 +1066,98 @@ export default function CrmPage() {
       </div>
 
       {/* AGENDA COMERCIAL */}
-      {crmTab === 'agenda' && (
+      {crmTab === 'agenda' && (() => {
+        const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+        const daysInMonth = new Date(comYear, comMonth + 1, 0).getDate()
+        const firstDay = new Date(comYear, comMonth, 1).getDay()
+        const todayDay = new Date().getMonth() === comMonth && new Date().getFullYear() === comYear ? new Date().getDate() : -1
+        const meetingsByDay: Record<number, typeof commercialMeetings> = {}
+        commercialMeetings.forEach(m => {
+          const d = new Date(m.date).getDate()
+          if (!meetingsByDay[d]) meetingsByDay[d] = []
+          meetingsByDay[d].push(m)
+        })
+
+        return (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h2 style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, margin: 0 }}>AGENDA COMERCIAL</h2>
-            <a href="/agenda" style={{ padding: '6px 14px', border: '2px solid black', background: '#4A78FF', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', boxShadow: '3px 3px 0 black' }}>
+            <a href="/agenda" style={{ padding: '6px 14px', border: '2px solid black', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', boxShadow: '3px 3px 0 black' }}>
               + AGENDAR REUNIAO
             </a>
           </div>
 
-          {/* Upcoming commercial meetings */}
-          <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, marginBottom: 10 }}>PROXIMAS REUNIOES</div>
-          {(() => {
-            const upcoming = commercialMeetings.filter(m => m.status === 'SCHEDULED' && new Date(m.date) >= new Date()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-            return upcoming.length === 0 ? (
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', padding: 20, textAlign: 'center', border: '1px dashed #ccc', marginBottom: 16 }}>Nenhuma reuniao comercial agendada</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-                {upcoming.map(m => (
-                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', border: '2px solid black', boxShadow: '3px 3px 0 black', background: 'white' }}>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>{m.client?.companyName ?? m.title}</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555', marginTop: 2 }}>
-                        {new Date(m.date).toLocaleDateString('pt-BR')} {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {m.duration}min
-                        {m.mentorName && <> • {m.mentorName}</>}
-                      </div>
-                      {m.notes && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#888', marginTop: 2 }}>{m.notes}</div>}
-                    </div>
-                    <span style={{ background: '#22c55e', color: 'white', padding: '4px 10px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>AGENDADA</span>
-                  </div>
-                ))}
-              </div>
-            )
-          })()}
+          {/* Month navigation */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 12 }}>
+            <button onClick={() => { if (comMonth === 0) { setComMonth(11); setComYear(y => y - 1) } else setComMonth(m => m - 1) }} style={{ padding: '4px 12px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>◀</button>
+            <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 12, textTransform: 'uppercase', minWidth: 150, textAlign: 'center' }}>{MONTH_NAMES[comMonth]} {comYear}</span>
+            <button onClick={() => { if (comMonth === 11) { setComMonth(0); setComYear(y => y + 1) } else setComMonth(m => m + 1) }} style={{ padding: '4px 12px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>▶</button>
+          </div>
 
-          {/* Recent commercial meetings */}
-          <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, marginBottom: 10 }}>REALIZADAS</div>
-          {(() => {
-            const done = commercialMeetings.filter(m => m.status === 'DONE').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-            return done.length === 0 ? (
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', padding: 20, textAlign: 'center', border: '1px dashed #ccc' }}>Nenhuma reuniao comercial realizada</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {done.map(m => (
-                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', border: '1px solid #ddd', background: '#fafafa' }}>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>{m.client?.companyName ?? m.title}</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555' }}>
-                        {new Date(m.date).toLocaleDateString('pt-BR')} • {m.mentorName ?? ''}
-                      </div>
+          {/* Calendar */}
+          <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white', marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'black' }}>
+              {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map(d => (
+                <div key={d} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: 'var(--font-pixel)', fontSize: 8, color: 'white' }}>{d}</div>
+              ))}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+              {Array.from({ length: firstDay }, (_, i) => <div key={'e' + i} style={{ minHeight: 60, borderRight: '1px solid #eee', borderBottom: '1px solid #eee', background: '#f9f9f9' }} />)}
+              {Array.from({ length: daysInMonth }, (_, i) => {
+                const day = i + 1
+                const isToday = day === todayDay
+                const dayMeetings = meetingsByDay[day] ?? []
+                const dateStr = `${comYear}-${String(comMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                return (
+                  <div key={day} onClick={() => setComSelectedDate(comSelectedDate === dateStr ? null : dateStr)} style={{
+                    minHeight: 60, padding: 3, borderRight: '1px solid #eee', borderBottom: '1px solid #eee',
+                    cursor: 'pointer', background: isToday ? '#fffff0' : comSelectedDate === dateStr ? '#f0fff0' : 'white',
+                  }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: isToday ? 900 : 400, color: isToday ? '#22c55e' : 'black', display: 'flex', justifyContent: 'space-between' }}>
+                      <span>{day}</span>
+                      {dayMeetings.length > 0 && <span style={{ background: '#22c55e', color: 'white', borderRadius: '50%', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8 }}>{dayMeetings.length}</span>}
                     </div>
-                    <span style={{ background: '#006600', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>FEITA</span>
+                    {dayMeetings.slice(0, 2).map(m => (
+                      <div key={m.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 7, padding: '1px 3px', marginTop: 1, background: '#22c55e', color: 'white', borderRadius: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', opacity: m.status === 'DONE' ? 0.6 : 1 }}>
+                        {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} {m.client?.companyName ?? m.title}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Selected day detail */}
+          {comSelectedDate && (() => {
+            const dayNum = parseInt(comSelectedDate.split('-')[2])
+            const dayMeetings = meetingsByDay[dayNum] ?? []
+            return (
+              <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', background: 'white', marginBottom: 16 }}>
+                <div style={{ background: '#22c55e', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-pixel)', fontSize: 10 }}>
+                  {new Date(comSelectedDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                </div>
+                <div style={{ padding: 12 }}>
+                  {dayMeetings.length === 0 ? (
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', textAlign: 'center', padding: 16 }}>Sem reunioes comerciais</div>
+                  ) : dayMeetings.map(m => (
+                    <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                      <div>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>{m.client?.companyName ?? m.title}</div>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555' }}>
+                          {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {m.duration}min{m.mentorName && <> • {m.mentorName}</>}
+                        </div>
+                      </div>
+                      <span style={{ background: m.status === 'DONE' ? '#006600' : '#22c55e', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{m.status === 'DONE' ? 'FEITA' : 'AGENDADA'}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )
           })()}
         </div>
-      )}
+        )
+      })()}
 
       {/* PIPELINE */}
       {crmTab === 'pipeline' && <>
