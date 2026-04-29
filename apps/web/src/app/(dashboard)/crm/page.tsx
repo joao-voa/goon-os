@@ -980,7 +980,7 @@ export default function CrmPage() {
   const [syncing, setSyncing] = useState(false)
   const [metrics, setMetrics] = useState<CrmMetrics | null>(null)
   const [suggestions, setSuggestions] = useState<{ salesReps: string[]; mentors: string[] }>({ salesReps: [], mentors: [] })
-  const [crmTab, setCrmTab] = useState<'pipeline' | 'agenda'>('pipeline')
+  const [crmTab, setCrmTab] = useState<'pipeline' | 'agenda' | 'dashboard'>('pipeline')
   const [commercialMeetings, setCommercialMeetings] = useState<Array<{ id: string; title: string; type: string; category?: string; date: string; duration: number; mentorName: string | null; notes: string | null; status: string; client?: { id: string; companyName: string } | null }>>([])
   const [comMonth, setComMonth] = useState(new Date().getMonth())
   const [comYear, setComYear] = useState(new Date().getFullYear())
@@ -1107,8 +1107,8 @@ export default function CrmPage() {
   return (
     <div>
       {/* CRM Tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 16 }}>
-        {(['pipeline', 'agenda'] as const).map(tab => (
+      <div style={{ display: 'flex', gap: 0, marginBottom: 16, overflowX: 'auto' }}>
+        {(['dashboard', 'pipeline', 'agenda'] as const).map(tab => (
           <button key={tab} onClick={() => setCrmTab(tab)} style={{
             padding: '10px 24px', border: '2px solid black',
             borderBottom: crmTab === tab ? 'none' : '2px solid black',
@@ -1118,11 +1118,97 @@ export default function CrmPage() {
             marginBottom: crmTab === tab ? -2 : 0, zIndex: crmTab === tab ? 1 : 0,
             color: crmTab === tab ? 'black' : '#888',
           }}>
-            {tab === 'pipeline' ? 'PIPELINE' : 'AGENDA COMERCIAL'}
+            {tab === 'pipeline' ? 'PIPELINE' : tab === 'agenda' ? 'AGENDA' : 'DASHBOARD'}
           </button>
         ))}
         <div style={{ flex: 1, borderBottom: '2px solid black' }} />
       </div>
+
+      {/* CRM DASHBOARD */}
+      {crmTab === 'dashboard' && (() => {
+        const now = new Date()
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+        const totalLeads = leads.length
+        const newLeadsMonth = leads.filter(l => new Date(l.createdAt) >= startOfMonth).length
+        const inNovo = leads.filter(l => l.leadStage === 'NOVO').length
+        const inFollowUp = leads.filter(l => l.leadStage === 'FOLLOW_UP').length
+        const inNegociacao = leads.filter(l => l.leadStage === 'EM_NEGOCIACAO').length
+        const fechados = leads.filter(l => l.leadStage === 'FECHADO').length
+        const fechadosMes = leads.filter(l => l.leadStage === 'FECHADO' && l.closedAt && new Date(l.closedAt) >= startOfMonth).length
+        const valorFechadoMes = leads.filter(l => l.leadStage === 'FECHADO' && l.closedAt && new Date(l.closedAt) >= startOfMonth).reduce((s, l) => s + (l.saleValue ?? 0), 0)
+
+        const comMeetingsRealizadas = commercialMeetings.filter(m => m.status === 'DONE').length
+        const comMeetingsAgendadas = commercialMeetings.filter(m => m.status === 'SCHEDULED').length
+
+        const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+
+        return (
+          <div>
+            <h2 style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, marginBottom: 16 }}>DASHBOARD COMERCIAL</h2>
+
+            {/* KPIs */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12, marginBottom: 24 }}>
+              {[
+                { label: 'Leads Ativos', value: String(totalLeads), color: '#4A78FF' },
+                { label: 'Novos (mes)', value: String(newLeadsMonth), color: '#06b6d4' },
+                { label: 'Em Novo', value: String(inNovo), color: '#4A78FF' },
+                { label: 'Follow Up', value: String(inFollowUp), color: '#06b6d4' },
+                { label: 'Negociacao', value: String(inNegociacao), color: '#f97316' },
+                { label: 'Fechados (mes)', value: String(fechadosMes), color: '#22c55e' },
+                { label: 'Valor Fechado', value: fmtBRL(valorFechadoMes), color: '#006600' },
+                { label: 'Reunioes Feitas', value: String(comMeetingsRealizadas), color: '#006600' },
+                { label: 'Reunioes Agendadas', value: String(comMeetingsAgendadas), color: '#4A78FF' },
+              ].map(kpi => (
+                <div key={kpi.label} style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '12px 14px', background: 'white' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8, textTransform: 'uppercase', letterSpacing: 0.5, color: '#666' }}>{kpi.label}</div>
+                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 18, color: kpi.color, marginTop: 4 }}>{kpi.value}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pipeline summary */}
+            <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white', marginBottom: 20 }}>
+              <div style={{ background: 'black', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-pixel)', fontSize: 10 }}>FUNIL DE VENDAS</div>
+              <div style={{ padding: 16 }}>
+                {[
+                  { label: 'Novo', count: inNovo, color: '#4A78FF', pct: totalLeads > 0 ? Math.round(inNovo / totalLeads * 100) : 0 },
+                  { label: 'Follow Up', count: inFollowUp, color: '#06b6d4', pct: totalLeads > 0 ? Math.round(inFollowUp / totalLeads * 100) : 0 },
+                  { label: 'Em Negociacao', count: inNegociacao, color: '#f97316', pct: totalLeads > 0 ? Math.round(inNegociacao / totalLeads * 100) : 0 },
+                  { label: 'Fechado', count: fechados, color: '#22c55e', pct: totalLeads > 0 ? Math.round(fechados / totalLeads * 100) : 0 },
+                ].map(stage => (
+                  <div key={stage.label} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, width: 110 }}>{stage.label}</span>
+                    <div style={{ flex: 1, height: 20, background: '#f0f0f0', border: '1px solid #ddd', position: 'relative' }}>
+                      <div style={{ height: '100%', width: stage.pct + '%', background: stage.color, transition: 'width 0.3s' }} />
+                    </div>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, width: 50, textAlign: 'right' }}>{stage.count} ({stage.pct}%)</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Leads by seller */}
+            {(() => {
+              const bySeller: Record<string, number> = {}
+              leads.forEach(l => { const rep = l.salesRep ?? 'Sem vendedor'; bySeller[rep] = (bySeller[rep] ?? 0) + 1 })
+              return (
+                <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white' }}>
+                  <div style={{ background: 'black', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-pixel)', fontSize: 10 }}>LEADS POR VENDEDOR</div>
+                  <div style={{ padding: 16 }}>
+                    {Object.entries(bySeller).sort((a, b) => b[1] - a[1]).map(([rep, count]) => (
+                      <div key={rep} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                        <span style={{ fontWeight: 700 }}>{rep}</span>
+                        <span>{count} leads</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
+        )
+      })()}
 
       {/* AGENDA COMERCIAL */}
       {crmTab === 'agenda' && (() => {
