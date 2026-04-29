@@ -1352,6 +1352,10 @@ export default function CrmPage() {
                                 .then(() => { toast.success('Reagendada para ' + newDate + ' ' + newTime); loadCommercialMeetings() })
                                 .catch(() => toast.error('Erro ao reagendar'))
                             }} style={{ background: '#4A78FF', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>REAGENDAR</button>
+                            <button onClick={async () => {
+                              if (!confirm('Cancelar esta reuniao?')) return
+                              try { await apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ status: 'CANCELLED' }) }); toast.success('Reuniao cancelada'); loadCommercialMeetings() } catch { toast.error('Erro') }
+                            }} style={{ background: '#cc0000', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>CANCELAR</button>
                           </>
                         )}
                         {m.status === 'DONE' && <span style={{ background: '#006600', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>FEITA</span>}
