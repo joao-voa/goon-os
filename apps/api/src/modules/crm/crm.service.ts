@@ -60,6 +60,8 @@ export class CrmService {
         installmentValue: true,
         leadNotes: true,
         selectedModules: true,
+        estimatedRevenue: true,
+        segment: true,
         stageChangedAt: true,
         createdAt: true,
         closedAt: true,

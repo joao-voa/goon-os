@@ -37,6 +37,8 @@ interface LeadItem {
   installmentValue: number | null
   leadNotes: string | null
   selectedModules: string | null
+  estimatedRevenue: string | null
+  segment: string | null
   productCode: string | null
   stageChangedAt: string | null
   createdAt: string

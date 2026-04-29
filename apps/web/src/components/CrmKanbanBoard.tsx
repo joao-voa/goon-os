@@ -27,6 +27,8 @@ interface LeadItem {
   salesRep: string | null
   saleValue: number | null
   leadNotes: string | null
+  estimatedRevenue: string | null
+  segment: string | null
   productCode: string | null
   createdAt: string
 }
@@ -66,7 +68,12 @@ function DraggableCard({ item, onClick }: { item: LeadItem; onClick: (item: Lead
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', marginBottom: 2 }}>
         {item.responsible}
       </div>
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+      {item.estimatedRevenue && (
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginBottom: 2 }}>
+          Faturamento: {item.estimatedRevenue}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
         {sourceLabel && (
           <span style={{
             fontFamily: 'var(--font-mono)', fontSize: 9, background: '#e0e0e0',
