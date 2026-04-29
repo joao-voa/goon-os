@@ -134,6 +134,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const isBlocked = (() => {
     if (!user || !user.allowedModules) return false
     if (user.role === 'admin') return false
+    if (pathname === '/home') return false // home always allowed
     try {
       const mods: string[] = JSON.parse(user.allowedModules)
       if (mods.length === 0) return false
@@ -280,7 +281,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 16 }}>
             <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: '#cc0000', textTransform: 'uppercase' }}>ACESSO NEGADO</div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#666' }}>Voce nao tem permissao para acessar este modulo.</div>
-            <a href="/dashboard" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#4A78FF', textDecoration: 'underline' }}>Voltar ao Dashboard</a>
+            <a href="/home" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#4A78FF', textDecoration: 'underline' }}>Voltar ao Inicio</a>
           </div>
         ) : children}
       </main>
