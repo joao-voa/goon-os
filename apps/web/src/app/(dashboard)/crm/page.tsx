@@ -517,6 +517,37 @@ function LeadDetailModal({
   const [newDesc, setNewDesc] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  // Quick schedule meeting
+  const [showSchedule, setShowSchedule] = useState(false)
+  const [schedDate, setSchedDate] = useState(new Date().toISOString().split('T')[0])
+  const [schedTime, setSchedTime] = useState('10:00')
+  const [schedTitle, setSchedTitle] = useState('Reuniao Comercial')
+  const [schedNotes, setSchedNotes] = useState('')
+  const [scheduling, setScheduling] = useState(false)
+
+  async function handleScheduleMeeting(e: React.FormEvent) {
+    e.preventDefault()
+    if (!schedDate || !schedTitle) return
+    setScheduling(true)
+    try {
+      await apiFetch('/api/meetings', {
+        method: 'POST',
+        body: JSON.stringify({
+          clientId: lead.id,
+          title: schedTitle,
+          type: 'COMERCIAL',
+          date: new Date(schedDate + 'T' + schedTime + ':00').toISOString(),
+          duration: 30,
+          notes: schedNotes || undefined,
+        }),
+      })
+      toast.success('Reuniao agendada com ' + lead.companyName)
+      setShowSchedule(false)
+      setSchedNotes('')
+    } catch { toast.error('Erro ao agendar') }
+    setScheduling(false)
+  }
+
   // Editable fields
   const [editing, setEditing] = useState(false)
   const [editCompanyName, setEditCompanyName] = useState(lead.companyName)
@@ -761,6 +792,34 @@ function LeadDetailModal({
           )}
 
           {/* Add Interaction */}
+          {/* Quick Schedule Meeting */}
+          <div style={{ borderTop: '2px solid black', paddingTop: 12, marginBottom: 12 }}>
+            {!showSchedule ? (
+              <button onClick={() => setShowSchedule(true)} style={{
+                width: '100%', padding: '8px', border: '2px solid #22c55e', background: '#22c55e', color: 'white',
+                fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0 black',
+              }}>AGENDAR REUNIAO COMERCIAL</button>
+            ) : (
+              <form onSubmit={handleScheduleMeeting} style={{ background: '#f0fff0', border: '2px solid #22c55e', padding: 12 }}>
+                <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 10, color: '#22c55e', marginBottom: 8 }}>AGENDAR REUNIAO</div>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+                  <input value={schedTitle} onChange={e => setSchedTitle(e.target.value)} placeholder="Titulo" style={{ ...inputStyle, flex: 1, fontSize: 11, padding: '5px 8px' }} />
+                </div>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+                  <input type="date" value={schedDate} onChange={e => setSchedDate(e.target.value)} style={{ ...inputStyle, fontSize: 11, padding: '5px 8px' }} />
+                  <input type="time" value={schedTime} onChange={e => setSchedTime(e.target.value)} style={{ ...inputStyle, width: 90, fontSize: 11, padding: '5px 8px' }} />
+                </div>
+                <input value={schedNotes} onChange={e => setSchedNotes(e.target.value)} placeholder="Observacoes..." style={{ ...inputStyle, fontSize: 11, padding: '5px 8px', marginBottom: 6, width: '100%' }} />
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button type="button" onClick={() => setShowSchedule(false)} style={{ flex: 1, padding: '5px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
+                  <button type="submit" disabled={scheduling} style={{ flex: 1, padding: '5px', border: '2px solid black', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: scheduling ? 'wait' : 'pointer', boxShadow: '2px 2px 0 black' }}>
+                    {scheduling ? 'AGENDANDO...' : 'CONFIRMAR'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+
           <form onSubmit={handleAddInteraction} style={{ marginBottom: 16, borderTop: '2px solid black', paddingTop: 12 }}>
             <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, marginBottom: 8 }}>REGISTRAR INTERACAO</div>
             <div style={{ display: 'flex', gap: 6 }}>
