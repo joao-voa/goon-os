@@ -61,7 +61,7 @@ export function Sidebar({
     if (userRole === 'admin') return navItems
     // Comercial: only CRM + Dashboard
     if (userRole === 'comercial') {
-      const comercialPaths = ['/dashboard', '/crm', '/products']
+      const comercialPaths = ['/crm', '/products']
       return navItems.filter(item => comercialPaths.includes(item.href))
     }
     // Default: show all
