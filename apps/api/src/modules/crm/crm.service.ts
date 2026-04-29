@@ -62,6 +62,7 @@ export class CrmService {
         selectedModules: true,
         estimatedRevenue: true,
         segment: true,
+        suggestedProduct: true,
         stageChangedAt: true,
         createdAt: true,
         closedAt: true,
@@ -711,8 +712,14 @@ export class CrmService {
     segment?: string
     selectedModules?: string
     productInterest?: string
+    suggestedProduct?: string
   }) {
     const { productInterest, ...clientData } = dto
+    if (productInterest && !clientData.suggestedProduct) {
+      // Map productInterest (id) to product code
+      const product = await this.prisma.product.findUnique({ where: { id: productInterest } })
+      if (product) clientData.suggestedProduct = product.code
+    }
     const client = await this.prisma.client.create({
       data: {
         ...clientData,

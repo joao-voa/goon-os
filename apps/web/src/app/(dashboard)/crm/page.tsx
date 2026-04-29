@@ -39,6 +39,7 @@ interface LeadItem {
   selectedModules: string | null
   estimatedRevenue: string | null
   segment: string | null
+  suggestedProduct: string | null
   productCode: string | null
   stageChangedAt: string | null
   createdAt: string
@@ -562,6 +563,7 @@ function LeadDetailModal({
   const [editInstallmentValue, setEditInstallmentValue] = useState(lead.installmentValue?.toString() ?? '')
   const [editPaymentMethod, setEditPaymentMethod] = useState(lead.paymentMethod ?? '')
   const [editSalesRep, setEditSalesRep] = useState(lead.salesRep ?? '')
+  const [editSuggestedProduct, setEditSuggestedProduct] = useState(lead.suggestedProduct ?? '')
   const [editLeadNotes, setEditLeadNotes] = useState(lead.leadNotes ?? '')
   const [saving, setSaving] = useState(false)
 
@@ -689,6 +691,18 @@ function LeadDetailModal({
                     {(suggestions?.salesReps ?? []).map(s => <option key={s} value={s} />)}
                   </datalist>
                 </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                <div>
+                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>PROGRAMA SUGERIDO</label>
+                  <select value={editSuggestedProduct} onChange={e => setEditSuggestedProduct(e.target.value)} style={inputStyle}>
+                    <option value="">Selecione...</option>
+                    <option value="GE">GE - GOON ELITE</option>
+                    <option value="GI">GI - GOON INFINITY</option>
+                    <option value="TTS">TTS - TIKTOK SCALE</option>
+                    <option value="AURA">AURA 360</option>
+                  </select>
+                </div>
                 <div>
                   <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>PAGAMENTO</label>
                   <select value={editPaymentMethod} onChange={e => setEditPaymentMethod(e.target.value)} style={inputStyle}>
@@ -731,6 +745,7 @@ function LeadDetailModal({
                         whatsapp: editWhatsapp.trim() || null,
                         email: editEmail.trim() || null,
                         salesRep: editSalesRep.trim() || null,
+                        suggestedProduct: editSuggestedProduct || null,
                         paymentMethod: editPaymentMethod || null,
                         saleValue: parseFloat(editSaleValue) || null,
                         saleInstallments: parseInt(editInstallments) || null,
@@ -756,6 +771,8 @@ function LeadDetailModal({
               <div><strong>WhatsApp:</strong> {lead.whatsapp ?? '-'}</div>
               <div><strong>Email:</strong> {lead.email ?? '-'}</div>
               <div><strong>Origem:</strong> {lead.leadSource ? (LEAD_SOURCE_LABELS[lead.leadSource] ?? lead.leadSource) : '-'}</div>
+              <div><strong>Programa:</strong> {lead.suggestedProduct ?? lead.productCode ?? '-'}</div>
+              {lead.estimatedRevenue && <div><strong>Faturamento:</strong> {lead.estimatedRevenue}</div>}
               {lead.saleValue && <div><strong>Valor:</strong> {fmt(lead.saleValue)}</div>}
               {lead.saleInstallments && <div><strong>Parcelas:</strong> {lead.saleInstallments}x {lead.installmentValue ? fmt(lead.installmentValue) : ''}</div>}
               {lead.paymentMethod && <div><strong>Pagamento:</strong> {lead.paymentMethod}</div>}

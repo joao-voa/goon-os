@@ -29,6 +29,7 @@ interface LeadItem {
   leadNotes: string | null
   estimatedRevenue: string | null
   segment: string | null
+  suggestedProduct: string | null
   productCode: string | null
   createdAt: string
 }
@@ -105,6 +106,15 @@ function DraggableCard({ item, onClick }: { item: LeadItem; onClick: (item: Lead
             color: 'white', padding: '2px 6px', border: '1px solid black',
           }}>
             {item.productCode}
+          </span>
+        )}
+        {!item.productCode && item.suggestedProduct && (
+          <span style={{
+            fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700,
+            background: 'white', color: PRODUCT_COLORS[item.suggestedProduct] ?? '#888',
+            padding: '2px 6px', border: '1px dashed ' + (PRODUCT_COLORS[item.suggestedProduct] ?? '#888'),
+          }}>
+            {item.suggestedProduct} ?
           </span>
         )}
       </div>
