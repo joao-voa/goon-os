@@ -981,6 +981,7 @@ export default function CrmPage() {
   const [metrics, setMetrics] = useState<CrmMetrics | null>(null)
   const [suggestions, setSuggestions] = useState<{ salesReps: string[]; mentors: string[] }>({ salesReps: [], mentors: [] })
   const [crmTab, setCrmTab] = useState<'pipeline' | 'agenda' | 'dashboard'>('pipeline')
+  const [dashPeriod, setDashPeriod] = useState<'dia' | 'semana' | 'mes' | 'ano'>('mes')
   const [commercialMeetings, setCommercialMeetings] = useState<Array<{ id: string; title: string; type: string; category?: string; date: string; duration: number; mentorName: string | null; notes: string | null; status: string; client?: { id: string; companyName: string } | null }>>([])
   const [comMonth, setComMonth] = useState(new Date().getMonth())
   const [comYear, setComYear] = useState(new Date().getFullYear())
@@ -1127,36 +1128,53 @@ export default function CrmPage() {
       {/* CRM DASHBOARD */}
       {crmTab === 'dashboard' && (() => {
         const now = new Date()
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+        const periodStart = (() => {
+          const d = new Date(now)
+          if (dashPeriod === 'dia') { d.setHours(0,0,0,0); return d }
+          if (dashPeriod === 'semana') { d.setDate(d.getDate() - d.getDay()); d.setHours(0,0,0,0); return d }
+          if (dashPeriod === 'mes') { return new Date(d.getFullYear(), d.getMonth(), 1) }
+          return new Date(d.getFullYear(), 0, 1)
+        })()
+        const periodLabels: Record<string, string> = { dia: 'HOJE', semana: 'ESTA SEMANA', mes: 'ESTE MES', ano: 'ESTE ANO' }
 
         const totalLeads = leads.length
-        const newLeadsMonth = leads.filter(l => new Date(l.createdAt) >= startOfMonth).length
+        const newLeadsPeriod = leads.filter(l => new Date(l.createdAt) >= periodStart).length
         const inNovo = leads.filter(l => l.leadStage === 'NOVO').length
         const inFollowUp = leads.filter(l => l.leadStage === 'FOLLOW_UP').length
         const inNegociacao = leads.filter(l => l.leadStage === 'EM_NEGOCIACAO').length
         const fechados = leads.filter(l => l.leadStage === 'FECHADO').length
-        const fechadosMes = leads.filter(l => l.leadStage === 'FECHADO' && l.closedAt && new Date(l.closedAt) >= startOfMonth).length
-        const valorFechadoMes = leads.filter(l => l.leadStage === 'FECHADO' && l.closedAt && new Date(l.closedAt) >= startOfMonth).reduce((s, l) => s + (l.saleValue ?? 0), 0)
+        const fechadosPeriod = leads.filter(l => l.leadStage === 'FECHADO' && l.closedAt && new Date(l.closedAt) >= periodStart).length
+        const valorFechadoPeriod = leads.filter(l => l.leadStage === 'FECHADO' && l.closedAt && new Date(l.closedAt) >= periodStart).reduce((s, l) => s + (l.saleValue ?? 0), 0)
 
-        const comMeetingsRealizadas = commercialMeetings.filter(m => m.status === 'DONE').length
+        const comMeetingsRealizadas = commercialMeetings.filter(m => m.status === 'DONE' && new Date(m.date) >= periodStart).length
         const comMeetingsAgendadas = commercialMeetings.filter(m => m.status === 'SCHEDULED').length
 
         const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 
         return (
           <div>
-            <h2 style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, marginBottom: 16 }}>DASHBOARD COMERCIAL</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+              <h2 style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, margin: 0 }}>DASHBOARD COMERCIAL</h2>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {(['dia', 'semana', 'mes', 'ano'] as const).map(p => (
+                  <button key={p} onClick={() => setDashPeriod(p)} style={{
+                    padding: '5px 12px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+                    background: dashPeriod === p ? 'black' : 'white', color: dashPeriod === p ? 'white' : 'black',
+                  }}>{p.toUpperCase()}</button>
+                ))}
+              </div>
+            </div>
 
             {/* KPIs */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12, marginBottom: 24 }}>
               {[
                 { label: 'Leads Ativos', value: String(totalLeads), color: '#4A78FF' },
-                { label: 'Novos (mes)', value: String(newLeadsMonth), color: '#06b6d4' },
+                { label: 'Novos', value: String(newLeadsPeriod), color: '#06b6d4' },
                 { label: 'Em Novo', value: String(inNovo), color: '#4A78FF' },
                 { label: 'Follow Up', value: String(inFollowUp), color: '#06b6d4' },
                 { label: 'Negociacao', value: String(inNegociacao), color: '#f97316' },
-                { label: 'Fechados (mes)', value: String(fechadosMes), color: '#22c55e' },
-                { label: 'Valor Fechado', value: fmtBRL(valorFechadoMes), color: '#006600' },
+                { label: 'Fechados', value: String(fechadosPeriod), color: '#22c55e' },
+                { label: 'Valor Fechado', value: fmtBRL(valorFechadoPeriod), color: '#006600' },
                 { label: 'Reunioes Feitas', value: String(comMeetingsRealizadas), color: '#006600' },
                 { label: 'Reunioes Agendadas', value: String(comMeetingsAgendadas), color: '#4A78FF' },
               ].map(kpi => (
