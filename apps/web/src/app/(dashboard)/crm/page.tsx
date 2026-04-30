@@ -284,6 +284,7 @@ function NewLeadModal({
     email?: string
     leadSource?: string
     salesRep?: string
+    estimatedRevenue?: string
     leadNotes?: string
     selectedModules?: string
     productInterest?: string
@@ -298,6 +299,7 @@ function NewLeadModal({
   const [email, setEmail] = useState('')
   const [leadSource, setLeadSource] = useState('')
   const [salesRep, setSalesRep] = useState('')
+  const [estimatedRevenue, setEstimatedRevenue] = useState('')
   const [leadNotes, setLeadNotes] = useState('')
   const [productInterest, setProductInterest] = useState('')
   const [modules, setModules] = useState<string[]>([])
@@ -325,6 +327,7 @@ function NewLeadModal({
         email: email.trim() || undefined,
         leadSource: leadSource || undefined,
         salesRep: salesRep.trim() || undefined,
+        estimatedRevenue: estimatedRevenue.trim() || undefined,
         leadNotes: leadNotes.trim() || undefined,
         selectedModules: modules.length > 0 ? JSON.stringify(modules) : undefined,
         productInterest: productInterest || undefined,
@@ -415,6 +418,10 @@ function NewLeadModal({
                 {(salesRepSuggestions ?? []).map(s => <option key={s} value={s} />)}
               </datalist>
             </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Faturamento</label>
+            <input value={estimatedRevenue} onChange={e => setEstimatedRevenue(e.target.value)} placeholder="Ex: R$500k, 2 milhoes..." style={inputStyle} />
           </div>
           {/* Programa de interesse */}
           <div>
@@ -564,6 +571,7 @@ function LeadDetailModal({
   const [editPaymentMethod, setEditPaymentMethod] = useState(lead.paymentMethod ?? '')
   const [editSalesRep, setEditSalesRep] = useState(lead.salesRep ?? '')
   const [editSuggestedProduct, setEditSuggestedProduct] = useState(lead.suggestedProduct ?? '')
+  const [editEstimatedRevenue, setEditEstimatedRevenue] = useState(lead.estimatedRevenue ?? '')
   const [editLeadNotes, setEditLeadNotes] = useState(lead.leadNotes ?? '')
   const [saving, setSaving] = useState(false)
 
@@ -703,6 +711,12 @@ function LeadDetailModal({
                     <option value="AURA">AURA 360</option>
                   </select>
                 </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                <div>
+                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>FATURAMENTO</label>
+                  <input value={editEstimatedRevenue} onChange={e => setEditEstimatedRevenue(e.target.value)} placeholder="Ex: R$500k" style={inputStyle} />
+                </div>
                 <div>
                   <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>PAGAMENTO</label>
                   <select value={editPaymentMethod} onChange={e => setEditPaymentMethod(e.target.value)} style={inputStyle}>
@@ -746,6 +760,7 @@ function LeadDetailModal({
                         email: editEmail.trim() || null,
                         salesRep: editSalesRep.trim() || null,
                         suggestedProduct: editSuggestedProduct || null,
+                        estimatedRevenue: editEstimatedRevenue.trim() || null,
                         paymentMethod: editPaymentMethod || null,
                         saleValue: parseFloat(editSaleValue) || null,
                         saleInstallments: parseInt(editInstallments) || null,
