@@ -399,15 +399,14 @@ export default function CommissionsPage() {
                     {c.status === 'PAID' && (
                       <button onClick={() => handleRevert(c.id)} style={{ background: '#e6a800', color: 'white', border: '2px solid black', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>REVERTER</button>
                     )}
-                    {(
-                      <button onClick={async () => {
-                        if (!confirm('Excluir esta comissao permanentemente?')) return
-                        try {
-                          await apiFetch(`/api/commissions/${c.id}`, { method: 'DELETE' })
-                          toast.success('Comissao excluida')
-                          loadData()
-                        } catch { toast.error('Erro ao excluir') }
-                      }} style={{ background: '#cc0000', color: 'white', border: '2px solid black', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>EXCLUIR</button>
+                    <button onClick={async () => {
+                      if (!confirm('Excluir esta comissao permanentemente?')) return
+                      try {
+                        await apiFetch(`/api/commissions/${c.id}`, { method: 'DELETE' })
+                        toast.success('Comissao excluida')
+                        loadData()
+                      } catch { toast.error('Erro ao excluir') }
+                    }} style={{ background: '#cc0000', color: 'white', border: '2px solid black', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>EXCLUIR</button>
                   </div>
                 </td>
               </tr>
