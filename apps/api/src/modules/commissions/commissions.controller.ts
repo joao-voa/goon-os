@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Patch, Param, Query, Body, HttpCode, UseGuards } from '@nestjs/common'
+import { Controller, Get, Post, Put, Patch, Delete, Param, Query, Body, HttpCode, UseGuards } from '@nestjs/common'
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import { CommissionsService } from './commissions.service'
 
@@ -74,5 +74,10 @@ export class CommissionsController {
   @Patch(':id/revert')
   revertToPending(@Param('id') id: string) {
     return this.service.revertToPending(id)
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.service.remove(id)
   }
 }

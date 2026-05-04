@@ -291,6 +291,13 @@ export class CommissionsService {
     }
   }
 
+  async remove(id: string) {
+    const existing = await this.prisma.commission.findUnique({ where: { id } })
+    if (!existing) throw new NotFoundException(`Commission ${id} not found`)
+    await this.prisma.commission.delete({ where: { id } })
+    return { deleted: true }
+  }
+
   async cancelByClient(clientId: string) {
     const result = await this.prisma.commission.updateMany({
       where: { clientId, status: 'PENDING' },
