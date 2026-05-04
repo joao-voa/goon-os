@@ -561,7 +561,7 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
 
   const previewFields = selectedPlan
     ? {
-        Produto: selectedPlan.product.name,
+        Produto: selectedPlan.product?.name ?? '',
         Valor: fmtBRL(selectedPlan.value),
         Início: new Date(selectedPlan.startDate).toLocaleDateString('pt-BR'),
         Duração: selectedPlan.cycleDuration ? `${selectedPlan.cycleDuration} meses` : '—',
@@ -1340,7 +1340,7 @@ export default function ClientDetailPage() {
                               </span>
                               <div>
                                 <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'black', fontSize: 13, textTransform: 'uppercase' }}>
-                                  {plan.product.name}
+                                  {plan.product?.name ?? '?'}
                                 </div>
                                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', marginTop: 3, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                                   <span>{paymentTypeLabel(plan.paymentType)}</span>
