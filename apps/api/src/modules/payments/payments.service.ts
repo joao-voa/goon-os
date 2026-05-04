@@ -71,10 +71,12 @@ export class PaymentsService {
     clientId?: string
     status?: string
     product?: string
+    month?: number
+    year?: number
     page?: number
     limit?: number
   }) {
-    const { clientId, status, product, page = 1, limit = 20 } = params
+    const { clientId, status, product, month, year, page = 1, limit = 20 } = params
 
     const where: Record<string, unknown> = {}
     if (clientId) where.clientId = clientId
@@ -83,6 +85,15 @@ export class PaymentsService {
       where.clientPlan = {
         product: { code: product.toUpperCase() },
       }
+    }
+    if (month && year) {
+      const start = new Date(year, month - 1, 1)
+      const end = new Date(year, month, 1)
+      where.dueDate = { gte: start, lt: end }
+    } else if (year) {
+      const start = new Date(year, 0, 1)
+      const end = new Date(year + 1, 0, 1)
+      where.dueDate = { gte: start, lt: end }
     }
 
     const skip = (page - 1) * limit

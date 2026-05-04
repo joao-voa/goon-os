@@ -27,6 +27,8 @@ export class PaymentsController {
     @Query('clientId') clientId?: string,
     @Query('status') status?: string,
     @Query('product') product?: string,
+    @Query('month') month?: string,
+    @Query('year') year?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -34,6 +36,8 @@ export class PaymentsController {
       clientId,
       status,
       product,
+      month: month ? parseInt(month, 10) : undefined,
+      year: year ? parseInt(year, 10) : undefined,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     })

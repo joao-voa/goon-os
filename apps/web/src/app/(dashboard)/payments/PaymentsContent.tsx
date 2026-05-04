@@ -409,6 +409,9 @@ export default function PaymentsPage() {
 
   const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') ?? '')
   const [productFilter, setProductFilter] = useState(() => searchParams.get('product') ?? '')
+  const now = new Date()
+  const [monthFilter, setMonthFilter] = useState<number | null>(now.getMonth() + 1)
+  const [yearFilter, setYearFilter] = useState(now.getFullYear())
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -441,6 +444,8 @@ export default function PaymentsPage() {
       if (statusFilter) params.set('status', statusFilter)
       if (debouncedSearch) params.set('search', debouncedSearch)
       if (productFilter) params.set('product', productFilter)
+      if (monthFilter) params.set('month', String(monthFilter))
+      if (yearFilter) params.set('year', String(yearFilter))
       params.set('page', String(page))
       params.set('limit', String(limit))
       const result = await apiFetch<PaginatedPayments>(`/api/payments?${params.toString()}`)
@@ -451,7 +456,7 @@ export default function PaymentsPage() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, productFilter, debouncedSearch, page])
+  }, [statusFilter, productFilter, monthFilter, yearFilter, debouncedSearch, page])
 
   useEffect(() => { fetchPayments() }, [fetchPayments])
 
@@ -610,6 +615,23 @@ export default function PaymentsPage() {
             <option value="OVERDUE">Vencido</option>
             <option value="SCHEDULED">Agendado</option>
           </select>
+        </div>
+        <div>
+          <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, display: 'block', marginBottom: 4 }}>
+            Mes
+          </label>
+          <select className="goon-select" value={monthFilter ?? ''} onChange={e => { setMonthFilter(e.target.value ? parseInt(e.target.value, 10) : null); setPage(1) }}>
+            <option value="">Todos</option>
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i + 1} value={i + 1}>{new Date(2000, i).toLocaleString('pt-BR', { month: 'long' })}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, display: 'block', marginBottom: 4 }}>
+            Ano
+          </label>
+          <input type="number" className="goon-input" style={{ width: 80 }} value={yearFilter} onChange={e => { setYearFilter(parseInt(e.target.value, 10)); setPage(1) }} />
         </div>
         <button
           className="goon-btn-accent"
