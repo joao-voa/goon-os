@@ -232,6 +232,16 @@ export default function ExpensesPage() {
                     {e.status === 'PREVISTO' && (
                       <button onClick={() => handlePay(e.id)} style={{ background: '#006600', color: 'white', border: '2px solid black', padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>PAGAR</button>
                     )}
+                    {e.status === 'PAGO' && (
+                      <button onClick={async () => {
+                        if (!confirm('Reverter despesa para PREVISTO?')) return
+                        try {
+                          await apiFetch(`/api/expenses/${e.id}`, { method: 'PUT', body: JSON.stringify({ status: 'PREVISTO', paidAt: null }) })
+                          toast.success('Despesa revertida')
+                          loadData()
+                        } catch { toast.error('Erro ao reverter') }
+                      }} style={{ background: '#e6a800', color: 'white', border: '2px solid black', padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>REVERTER</button>
+                    )}
                     <button onClick={() => handleDelete(e.id)} style={{ background: '#cc0000', color: 'white', border: '2px solid black', padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>X</button>
                   </div>
                 </td>
