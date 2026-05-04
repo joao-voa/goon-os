@@ -769,6 +769,10 @@ export default function ClientDetailPage() {
   const [showNewPendency, setShowNewPendency] = useState(false)
   const [resolvingId, setResolvingId] = useState<string | null>(null)
 
+  // Meetings / Cadence
+  const [clientMeetings, setClientMeetings] = useState<Array<{ id: string; title: string; type: string; date: string; duration: number; mentorName: string | null; notes: string | null; status: string }>>([])
+  const [cadence, setCadence] = useState<{ lastMeeting: { date: string; type: string; title: string } | null; nextMeeting: { date: string; type: string; title: string } | null; daysSinceLastMeeting: number | null; totalDone: number; totalScheduled: number; totalNoShow: number; health: string } | null>(null)
+
   const fetchClient = useCallback(async () => {
     setLoading(true)
     try {
@@ -821,6 +825,14 @@ export default function ClientDetailPage() {
   }, [])
 
   useEffect(() => { plans.forEach(p => loadMentors(p.id)) }, [plans, loadMentors])
+
+  useEffect(() => {
+    if (!id) return
+    apiFetch<Array<{ id: string; title: string; type: string; date: string; duration: number; mentorName: string | null; notes: string | null; status: string }>>(`/api/meetings/client/${id}`)
+      .then(setClientMeetings).catch(() => {})
+    apiFetch<{ lastMeeting: { date: string; type: string; title: string } | null; nextMeeting: { date: string; type: string; title: string } | null; daysSinceLastMeeting: number | null; totalDone: number; totalScheduled: number; totalNoShow: number; health: string }>(`/api/meetings/client/${id}/cadence`)
+      .then(setCadence).catch(() => {})
+  }, [id])
 
   useEffect(() => {
     apiFetch<{ salesReps: string[]; mentors: string[] }>('/api/crm/suggestions')
@@ -938,18 +950,6 @@ export default function ClientDetailPage() {
   }
 
   const TABS = ['CADENCIA', 'DADOS', 'CONTRATO', 'FINANCEIRO', 'PENDÊNCIAS']
-
-  // Meetings / Cadence
-  const [clientMeetings, setClientMeetings] = useState<Array<{ id: string; title: string; type: string; date: string; duration: number; mentorName: string | null; notes: string | null; status: string }>>([])
-  const [cadence, setCadence] = useState<{ lastMeeting: { date: string; type: string; title: string } | null; nextMeeting: { date: string; type: string; title: string } | null; daysSinceLastMeeting: number | null; totalDone: number; totalScheduled: number; totalNoShow: number; health: string } | null>(null)
-
-  useEffect(() => {
-    if (!id) return
-    apiFetch<typeof clientMeetings>(`/api/meetings/client/${id}`)
-      .then(setClientMeetings).catch(() => {})
-    apiFetch<typeof cadence>(`/api/meetings/client/${id}/cadence`)
-      .then(setCadence).catch(() => {})
-  }, [id])
 
   return (
     <div style={{ maxWidth: 960, margin: '0 auto' }}>
