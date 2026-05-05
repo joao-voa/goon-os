@@ -29,7 +29,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/clients',     label: 'Clientes',    icon: Building2 },
   { href: '/agenda',      label: 'Agenda',      icon: Calendar },
   { href: '/products',    label: 'Programas',   icon: Package },
-  { href: '/onboarding',  label: 'Customer Experience',  icon: GitBranch },
+  { href: '/onboarding',  label: 'Onboarding',  icon: GitBranch },
   { href: '/payments',    label: 'Financeiro',  icon: DollarSign },
   { href: '/tasks',       label: 'Tarefas',      icon: CheckSquare },
   { href: '/pendencies',  label: 'Pendencias',  icon: AlertTriangle },

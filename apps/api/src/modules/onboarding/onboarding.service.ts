@@ -3,29 +3,17 @@ import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
 
 const VALID_STAGES = [
-  'STAND_BY',
   'CLIENT_CLOSED',
-  'SYSTEM_REGISTERED',
-  'INFO_COLLECTED',
-  'CONTRACT_DRAFTED',
   'CONTRACT_SENT',
-  'CONTRACT_SIGNED',
-  'INITIAL_PAYMENT',
   'BILLING_CREATED',
   'KICKOFF_SCHEDULED',
   'ONBOARDING_DONE',
 ]
 
 const STAGE_LABELS: Record<string, string> = {
-  STAND_BY: 'Stand By',
   CLIENT_CLOSED: 'Cliente Fechado',
-  SYSTEM_REGISTERED: 'Cadastro no Sistema',
-  INFO_COLLECTED: 'Coleta de Informações',
-  CONTRACT_DRAFTED: 'Elaboração do Contrato',
-  CONTRACT_SENT: 'Envio do Contrato',
-  CONTRACT_SIGNED: 'Assinatura',
-  INITIAL_PAYMENT: 'Pagamento Inicial',
-  BILLING_CREATED: 'Geração de Boletos',
+  CONTRACT_SENT: 'Enviar Contrato',
+  BILLING_CREATED: 'Geracao de Boletos',
   KICKOFF_SCHEDULED: 'Kickoff Agendado',
   ONBOARDING_DONE: 'Onboarding Finalizado',
 }

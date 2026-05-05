@@ -23,7 +23,7 @@ const menuItems = [
   { icon: Building2, label: 'Clientes', description: 'Base de clientes e cadencia', href: '/clients', color: '#000080' },
   { icon: Calendar, label: 'Agenda', description: 'Reunioes e acompanhamento', href: '/agenda', color: '#7c3aed' },
   { icon: Package, label: 'Programas', description: 'Produtos e programas', href: '/products', color: 'var(--success)' },
-  { icon: GitBranch, label: 'Customer Experience', description: 'Acompanhamento e cadencia de clientes', href: '/onboarding', color: 'var(--warning)' },
+  { icon: GitBranch, label: 'Onboarding', description: 'Fluxo de onboarding de clientes', href: '/onboarding', color: 'var(--warning)' },
   { icon: DollarSign, label: 'Financeiro', description: 'Pagamentos, despesas e fluxo', href: '/payments', color: '#22c55e' },
   { icon: CheckSquare, label: 'Tarefas', description: 'Gestao de tarefas e projetos', href: '/tasks', color: '#4A78FF' },
   { icon: AlertTriangle, label: 'Pendencias', description: 'Inadimplentes e contratos', href: '/pendencies', color: '#cc0000' },
