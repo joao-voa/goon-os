@@ -30,9 +30,9 @@ interface Task {
   createdAt: string
 }
 
-const STAGES = ['TODO', 'DOING', 'DONE'] as const
-const STAGE_LABELS: Record<string, string> = { TODO: 'A Fazer', DOING: 'Fazendo', DONE: 'Feito' }
-const STAGE_COLORS: Record<string, string> = { TODO: '#4A78FF', DOING: '#f97316', DONE: '#006600' }
+const STAGES = ['TODO', 'DOING', 'DONE', 'WIKI'] as const
+const STAGE_LABELS: Record<string, string> = { TODO: 'A Fazer', DOING: 'Fazendo', DONE: 'Feito', WIKI: 'Wiki' }
+const STAGE_COLORS: Record<string, string> = { TODO: '#4A78FF', DOING: '#f97316', DONE: '#006600', WIKI: '#7c3aed' }
 const PRIORITY_LABELS: Record<string, string> = { LOW: 'Baixa', MEDIUM: 'Media', HIGH: 'Alta', URGENT: 'Urgente' }
 const PRIORITY_COLORS: Record<string, string> = { LOW: '#888', MEDIUM: '#4A78FF', HIGH: '#f97316', URGENT: '#cc0000' }
 
@@ -204,7 +204,7 @@ export default function TasksPage() {
   }
 
   const activeTask = activeId ? tasks.find(t => t.id === activeId) : null
-  const tasksByStage: Record<string, Task[]> = { TODO: [], DOING: [], DONE: [] }
+  const tasksByStage: Record<string, Task[]> = { TODO: [], DOING: [], DONE: [], WIKI: [] }
   tasks.forEach(t => { if (tasksByStage[t.stage]) tasksByStage[t.stage].push(t) })
 
   const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }
@@ -278,6 +278,7 @@ export default function TasksPage() {
                     <option value="TODO">A Fazer</option>
                     <option value="DOING">Fazendo</option>
                     <option value="DONE">Feito</option>
+                    <option value="WIKI">Wiki</option>
                   </select>
                 </div>
               </div>
