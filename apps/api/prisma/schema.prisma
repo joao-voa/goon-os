@@ -111,6 +111,26 @@ model Meeting {
   @@index([status])
 }
 
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  stage       String    @default("TODO") // TODO, DOING, DONE
+  priority    String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  assignee    String?   // responsible person
+  dueDate     DateTime?
+  tags        String?   // JSON array of tag names e.g. ["marketing","urgente"]
+  order       Int       @default(0)
+  completedAt DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([stage])
+  @@index([assignee])
+  @@index([dueDate])
+}
+
 model Product {
   id          String   @id @default(cuid())
   code        String   @unique
