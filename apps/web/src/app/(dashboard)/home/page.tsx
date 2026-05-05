@@ -12,6 +12,7 @@ import {
   DollarSign,
   FileText,
   AlertTriangle,
+  CheckSquare,
   Settings,
 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
@@ -24,6 +25,7 @@ const menuItems = [
   { icon: Package, label: 'Programas', description: 'Produtos e programas', href: '/products', color: 'var(--success)' },
   { icon: GitBranch, label: 'Customer Experience', description: 'Acompanhamento e cadencia de clientes', href: '/onboarding', color: 'var(--warning)' },
   { icon: DollarSign, label: 'Financeiro', description: 'Pagamentos, despesas e fluxo', href: '/payments', color: '#22c55e' },
+  { icon: CheckSquare, label: 'Tarefas', description: 'Gestao de tarefas e projetos', href: '/tasks', color: '#4A78FF' },
   { icon: AlertTriangle, label: 'Pendencias', description: 'Inadimplentes e contratos', href: '/pendencies', color: '#cc0000' },
   { icon: FileText, label: 'Contratos', description: 'Gestao de contratos', href: '/contracts', color: '#e6a800' },
   { icon: Settings, label: 'Admin', description: 'Usuarios e configuracoes', href: '/admin', color: 'var(--retro-blue)' },
