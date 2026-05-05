@@ -295,6 +295,10 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedItem, setSelectedItem] = useState<OnboardingItem | null>(null)
+  const [showCreate, setShowCreate] = useState(false)
+  const [clients, setClients] = useState<Array<{ id: string; companyName: string }>>([])
+  const [newClientId, setNewClientId] = useState('')
+  const [creating, setCreating] = useState(false)
 
   const loadData = useCallback(async () => {
     try {
@@ -311,6 +315,9 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     loadData()
+    apiFetch<{ data: Array<{ id: string; companyName: string }> }>('/api/clients?limit=200')
+      .then(res => setClients(res.data ?? []))
+      .catch(() => {})
   }, [loadData])
 
   async function handleStageChange(id: string, toStage: string) {
@@ -374,7 +381,48 @@ export default function OnboardingPage() {
             {'>'} {items.length} cliente{items.length !== 1 ? 's' : ''} em processo
           </p>
         </div>
+        <button onClick={() => setShowCreate(true)} style={{
+          padding: '8px 16px', border: '2px solid black', background: '#4A78FF', color: 'white',
+          fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0 black',
+        }}>+ CRIAR</button>
       </div>
+
+      {/* Create Modal */}
+      {showCreate && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          onClick={e => { if (e.target === e.currentTarget) setShowCreate(false) }}>
+          <div style={{ background: 'white', border: '2px solid black', boxShadow: '8px 8px 0 black', width: '100%', maxWidth: 400 }}>
+            <div style={{ background: '#4A78FF', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-pixel)', fontSize: 11 }}>CRIAR ONBOARDING</div>
+            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Cliente</label>
+                <select value={newClientId} onChange={e => setNewClientId(e.target.value)} style={{ width: '100%', padding: '8px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                  <option value="">Selecione...</option>
+                  {clients.filter(c => !items.some(i => i.clientId === c.id)).map(c => (
+                    <option key={c.id} value={c.id}>{c.companyName}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => setShowCreate(false)} style={{ flex: 1, padding: '10px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
+                <button disabled={creating || !newClientId} onClick={async () => {
+                  setCreating(true)
+                  try {
+                    await apiFetch('/api/onboarding', { method: 'POST', body: JSON.stringify({ clientId: newClientId }) })
+                    toast.success('Onboarding criado!')
+                    setShowCreate(false)
+                    setNewClientId('')
+                    loadData()
+                  } catch { toast.error('Erro ao criar. Cliente ja pode ter onboarding.') }
+                  setCreating(false)
+                }} style={{ flex: 1, padding: '10px', border: '2px solid black', background: '#4A78FF', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: creating ? 'wait' : 'pointer', boxShadow: '3px 3px 0 black' }}>
+                  {creating ? 'CRIANDO...' : 'CRIAR'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Loading */}
       {loading && (
