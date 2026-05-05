@@ -21,6 +21,8 @@ const ALL_MODULES = [
   { href: '/products', label: 'Programas' },
   { href: '/contracts', label: 'Contratos' },
   { href: '/onboarding', label: 'Onboarding' },
+  { href: '/agenda', label: 'Agenda' },
+  { href: '/tasks', label: 'Tarefas' },
   { href: '/payments', label: 'Financeiro' },
   { href: '/commissions', label: 'Comissoes' },
   { href: '/expenses', label: 'Despesas' },
