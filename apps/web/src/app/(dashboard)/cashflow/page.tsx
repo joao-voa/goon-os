@@ -252,7 +252,7 @@ export default function CashflowPage() {
               <div style={{ fontSize: 9, opacity: 0.7 }}>Falta receber este mes</div>
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 12 }}>
             <div style={cardStyle('#1e293b')}>
               <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Gastos em Carteira (Ano)</div>
               <div style={{ fontSize: 18 }}>{fmt(gastosAno)}</div>
@@ -274,6 +274,38 @@ export default function CashflowPage() {
               <div style={{ fontSize: 9, opacity: 0.7 }}>Falta pagar este mes</div>
             </div>
           </div>
+          {/* Resultado */}
+          {(() => {
+            const resultadoStyle = (val: number): React.CSSProperties => ({ ...cardStyle(val >= 0 ? '#166534' : '#991b1b'), })
+            const saldoRealizadoAno = data.totals.saldo
+            const saldoProjetadoAno = data.totals.saldoProjetado
+            const saldoRealizadoMes = mesAtual ? mesAtual.saldo : 0
+            const saldoProjetadoMes = mesAtual ? mesAtual.saldoProjetado : 0
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
+                <div style={resultadoStyle(saldoRealizadoAno)}>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Resultado Realizado (Ano)</div>
+                  <div style={{ fontSize: 18 }}>{fmt(saldoRealizadoAno)}</div>
+                  <div style={{ fontSize: 9, opacity: 0.7 }}>Recebido - Pago em {year}</div>
+                </div>
+                <div style={resultadoStyle(saldoProjetadoAno)}>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Resultado Projetado (Ano)</div>
+                  <div style={{ fontSize: 18 }}>{fmt(saldoProjetadoAno)}</div>
+                  <div style={{ fontSize: 9, opacity: 0.7 }}>Entradas - Saidas {year}</div>
+                </div>
+                <div style={resultadoStyle(saldoRealizadoMes)}>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Resultado Realizado (Mes)</div>
+                  <div style={{ fontSize: 18 }}>{fmt(saldoRealizadoMes)}</div>
+                  <div style={{ fontSize: 9, opacity: 0.7 }}>Recebido - Pago no mes</div>
+                </div>
+                <div style={resultadoStyle(saldoProjetadoMes)}>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Resultado Projetado (Mes)</div>
+                  <div style={{ fontSize: 18 }}>{fmt(saldoProjetadoMes)}</div>
+                  <div style={{ fontSize: 9, opacity: 0.7 }}>Entradas - Saidas previstas</div>
+                </div>
+              </div>
+            )
+          })()}
           </>
         )
       })()}
