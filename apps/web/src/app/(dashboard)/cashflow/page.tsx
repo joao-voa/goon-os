@@ -221,10 +221,19 @@ export default function CashflowPage() {
         const mesAtual = data.months[currentMonth]
         const aReceberAno = data.totals.entradas - data.totals.entradasReceived
         const aReceberMes = mesAtual ? mesAtual.entradas.pending + mesAtual.entradas.overdue : 0
-        const gastosAno = data.totals.saidas + data.totals.comissoes
-        const gastosMes = mesAtual ? mesAtual.saidas.total + mesAtual.comissoes.total : 0
-        const aPagarAno = (data.totals.saidas - data.totals.saidasPago) + (data.totals.comissoes - data.totals.comissoesPaid)
-        const aPagarMes = mesAtual ? (mesAtual.saidas.previsto + mesAtual.comissoes.pending) : 0
+        // TEMP PRINT: excluir PESSOAL, MENTORIA, COMISSAO, PESSOAS + comissoes inteiras
+        const xCats = ['PESSOAL', 'MENTORIA', 'COMISSAO', 'PESSOAS']
+        const xCat = (m: typeof data.months[0]) => {
+          const bc = (m.saidas as any).byCategory as Record<string, number> | undefined
+          return bc ? xCats.reduce((s, c) => s + (bc[c] ?? 0), 0) : 0
+        }
+        const xAno = data.months.reduce((s, m) => s + xCat(m), 0)
+        const xMes = mesAtual ? xCat(mesAtual) : 0
+        // Gastos = despesas totais - categorias excluidas (sem comissoes)
+        const gastosAno = data.totals.saidas - xAno
+        const gastosMes = mesAtual ? mesAtual.saidas.total - xMes : 0
+        const aPagarAno = gastosAno - (data.totals.saidasPago - xAno)
+        const aPagarMes = gastosMes - (mesAtual ? mesAtual.saidas.pago - xMes : 0)
 
         const cardStyle = (bg: string): React.CSSProperties => ({ background: bg, color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 })
 
@@ -266,7 +275,7 @@ export default function CashflowPage() {
             <div style={cardStyle('#475569')}>
               <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Gastos Previstos (Mes)</div>
               <div style={{ fontSize: 18 }}>{fmt(gastosMes)}</div>
-              <div style={{ fontSize: 9, opacity: 0.7 }}>Pago: {fmt(mesAtual ? mesAtual.saidas.pago + mesAtual.comissoes.paid : 0)}</div>
+              <div style={{ fontSize: 9, opacity: 0.7 }}>Pago: {fmt(mesAtual ? mesAtual.saidas.pago - xMes : 0)}</div>
             </div>
             <div style={cardStyle('#64748b')}>
               <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Pagar (Mes)</div>
@@ -277,10 +286,11 @@ export default function CashflowPage() {
           {/* Resultado */}
           {(() => {
             const resultadoStyle = (val: number): React.CSSProperties => ({ ...cardStyle(val >= 0 ? '#166534' : '#991b1b'), })
-            const saldoRealizadoAno = data.totals.saldo
-            const saldoProjetadoAno = data.totals.saldoProjetado
-            const saldoRealizadoMes = mesAtual ? mesAtual.saldo : 0
-            const saldoProjetadoMes = mesAtual ? mesAtual.saldoProjetado : 0
+            // TEMP: resultado usando gastos sem categorias excluidas
+            const saldoRealizadoAno = data.totals.entradasReceived - (data.totals.saidasPago - xAno)
+            const saldoProjetadoAno = data.totals.entradas - gastosAno
+            const saldoRealizadoMes = mesAtual ? mesAtual.entradas.received - (mesAtual.saidas.pago - xMes) : 0
+            const saldoProjetadoMes = mesAtual ? mesAtual.entradas.total - gastosMes : 0
             return (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
                 <div style={resultadoStyle(saldoRealizadoAno)}>
