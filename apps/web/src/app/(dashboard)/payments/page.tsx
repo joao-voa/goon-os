@@ -9,16 +9,16 @@ const CommissionsPage = dynamic(() => import('../commissions/page'), { ssr: fals
 const CashflowPage = dynamic(() => import('../cashflow/page'), { ssr: false })
 
 const TABS = [
+  { key: 'fluxo', label: 'FLUXO DE CAIXA' },
   { key: 'pagamentos', label: 'PAGAMENTOS' },
   { key: 'despesas', label: 'DESPESAS' },
   { key: 'comissoes', label: 'COMISSOES' },
-  { key: 'fluxo', label: 'FLUXO DE CAIXA' },
 ] as const
 
 type TabKey = typeof TABS[number]['key']
 
 export default function FinanceiroPage() {
-  const [activeTab, setActiveTab] = useState<TabKey>('pagamentos')
+  const [activeTab, setActiveTab] = useState<TabKey>('fluxo')
 
   return (
     <div>
