@@ -458,7 +458,10 @@ export default function PaymentsPage() {
     }
   }, [statusFilter, productFilter, monthFilter, yearFilter, debouncedSearch, page])
 
-  useEffect(() => { fetchPayments() }, [fetchPayments])
+  useEffect(() => {
+    apiFetch('/api/payments/check-overdue', { method: 'POST' }).catch(() => {})
+    fetchPayments()
+  }, [fetchPayments])
 
   useEffect(() => { setPage(1) }, [statusFilter, productFilter, debouncedSearch])
 

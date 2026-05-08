@@ -494,10 +494,14 @@ export default function PendenciesPage() {
   useEffect(() => { fetchPendencies() }, [fetchPendencies])
 
   useEffect(() => {
+    // Auto-check overdue before loading
+    apiFetch('/api/payments/check-overdue', { method: 'POST' }).catch(() => {})
     // Load overdue payments with product info
-    apiFetch<{ data: Array<{ id: string; value: number; dueDate: string; installment: number; installmentNumber?: number; productCode?: string; client: { id: string; companyName: string }; clientPlan?: { product?: { code: string } } }> }>('/api/payments?status=OVERDUE&limit=100')
-      .then(res => setOverduePayments((res.data ?? []).map(p => ({ ...p, productCode: p.productCode ?? p.clientPlan?.product?.code ?? '' }))))
-      .catch(() => {})
+    setTimeout(() => {
+      apiFetch<{ data: Array<{ id: string; value: number; dueDate: string; installment: number; installmentNumber?: number; productCode?: string; client: { id: string; companyName: string }; clientPlan?: { product?: { code: string } } }> }>('/api/payments?status=OVERDUE&limit=100')
+        .then(res => setOverduePayments((res.data ?? []).map(p => ({ ...p, productCode: p.productCode ?? p.clientPlan?.product?.code ?? '' }))))
+        .catch(() => {})
+    }, 500)
     // Load expiring/expired contracts with product info
     apiFetch<{ renewals: { clients: Array<{ id: string; companyName: string; contractEndDate: string; daysLeft: number; expired: boolean; productCode?: string }> } }>('/api/dashboard')
       .then(res => setExpiringPlans(res.renewals?.clients ?? []))
