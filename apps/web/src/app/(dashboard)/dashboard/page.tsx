@@ -3,12 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  Building2,
   Users,
-  DollarSign,
   TrendingUp,
   AlertTriangle,
-  RefreshCw,
   FileText,
   AlertCircle,
 } from 'lucide-react'
@@ -97,6 +94,33 @@ interface Negotiation {
   total: number
   count: number
   leads: NegotiationLead[]
+}
+
+interface CashflowMonth {
+  month: number
+  year: number
+  entradas: { received: number; pending: number; overdue: number; total: number }
+  saidas: { previsto: number; pago: number; total: number }
+  comissoes: { pending: number; paid: number; total: number }
+  saldo: number
+  saldoProjetado: number
+}
+
+interface CashflowTotals {
+  entradas: number
+  entradasReceived: number
+  saidas: number
+  saidasPago: number
+  comissoes: number
+  comissoesPaid: number
+  saldo: number
+  saldoProjetado: number
+}
+
+interface CashflowData {
+  year: number
+  months: CashflowMonth[]
+  totals: CashflowTotals
 }
 
 interface DashboardStats {
@@ -617,76 +641,13 @@ function NegotiationCard({ data, isMobile }: { data: Negotiation; isMobile: bool
   )
 }
 
-function FinancialSummary({ financialKpis, isMobile }: { financialKpis: FinancialKPIs; isMobile: boolean }) {
-  return (
-    <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black' }}>
-      <div className="goon-card-header">RESUMO FINANCEIRO</div>
-      <div style={{ padding: '16px 20px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 12 : 0 }}>
-        {[
-          { label: 'Entradas no Mes', value: fmtBRL(financialKpis.totalReceivedMonth), color: '#006600', border: '4px solid #006600' },
-          { label: 'A Receber no Mes', value: fmtBRL(financialKpis.toReceiveMonth), color: '#4A78FF', border: '4px solid #4A78FF' },
-          { label: 'Total Pendente', value: fmtBRL(financialKpis.totalPending), color: '#000080', border: isMobile ? '4px solid #000080' : '4px solid transparent' },
-          { label: 'Vencido', value: fmtBRL(financialKpis.totalOverdue), color: '#cc0000', border: isMobile ? '4px solid #cc0000' : '4px solid transparent' },
-        ].map((item, idx) => (
-          <div
-            key={item.label}
-            style={{
-              flex: 1,
-              padding: '16px 24px',
-              borderLeft: isMobile ? 'none' : (idx > 0 ? '2px solid black' : 'none'),
-              borderTop: isMobile ? (idx > 0 ? '2px solid black' : 'none') : 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 6,
-            }}
-          >
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              {item.label}
-            </span>
-            <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 15, color: item.color, lineHeight: 1.3 }}>
-              {item.value}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function FinancialConsolidationCard({ data, isMobile }: { data: FinancialConsolidation; isMobile: boolean }) {
-  const items = [
-    { label: 'Entradas no Mes', value: fmtBRL(data.entradas.receivedMonth), color: '#006600' },
-    { label: 'Total Recebido', value: fmtBRL(data.entradas.receivedAll), color: '#006600' },
-    { label: 'Saidas no Mes', value: fmtBRL(data.saidas.pagoMes), color: '#cc0000' },
-    { label: 'Saidas Previstas', value: fmtBRL(data.saidas.previstoMes), color: '#e6a800' },
-    { label: 'Saldo do Mes', value: fmtBRL(data.netBalanceMonth), color: data.netBalanceMonth >= 0 ? '#006600' : '#cc0000' },
-    { label: 'Saldo Projetado', value: fmtBRL(data.projectedBalanceMonth), color: data.projectedBalanceMonth >= 0 ? '#006600' : '#cc0000' },
-  ]
-
-  return (
-    <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black' }}>
-      <div className="goon-card-header">BALANCO DO MES</div>
-      <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: 16 }}>
-        {items.map(item => (
-          <div key={item.label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              {item.label}
-            </span>
-            <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 15, color: item.color, lineHeight: 1.3 }}>
-              {item.value}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const isMobile = useIsMobile()
   const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [cashflow, setCashflow] = useState<CashflowData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -696,17 +657,44 @@ export default function DashboardPage() {
   const [showUnsigned, setShowUnsigned] = useState(true)
 
   const gap = isMobile ? 8 : 16
+  const currentYear = new Date().getFullYear()
 
   useEffect(() => {
-    // Silently check overdue payments before loading KPIs
     apiFetch('/api/payments/check-overdue', { method: 'POST' }).catch(() => {})
 
-    apiFetch<DashboardStats>('/api/dashboard')
-      .then(data => { setStats(data); setLoading(false) })
+    Promise.all([
+      apiFetch<DashboardStats>('/api/dashboard'),
+      apiFetch<CashflowData>(`/api/cashflow?year=${currentYear}`),
+    ])
+      .then(([dashData, cfData]) => { setStats(dashData); setCashflow(cfData); setLoading(false) })
       .catch(err => { setError(err.message ?? 'Erro ao carregar dashboard'); setLoading(false) })
-  }, [])
+  }, [currentYear])
 
   const signedContracts = stats?.contractsStatus.find(c => c.status === 'SIGNED')?.count ?? 0
+
+  // Cashflow-derived KPIs
+  const currentMonth = new Date().getMonth()
+  const mesAtual = cashflow?.months[currentMonth]
+  const aReceberAno = cashflow ? cashflow.totals.entradas - cashflow.totals.entradasReceived : 0
+  const aReceberMes = mesAtual ? mesAtual.entradas.pending + mesAtual.entradas.overdue : 0
+  const gastosAno = cashflow ? cashflow.totals.saidas + cashflow.totals.comissoes : 0
+  const aPagarAno = cashflow ? (cashflow.totals.saidas - cashflow.totals.saidasPago) + (cashflow.totals.comissoes - cashflow.totals.comissoesPaid) : 0
+  const gastosMes = mesAtual ? mesAtual.saidas.total + mesAtual.comissoes.total : 0
+  const aPagarMes = mesAtual ? mesAtual.saidas.previsto + mesAtual.comissoes.pending : 0
+
+  // Inadimplencia
+  const totalOverdue = stats?.financialKpis?.totalOverdue ?? 0
+  const overdueCount = stats?.financialKpis?.overdueCount ?? 0
+  const carteiraAno = cashflow?.totals.entradas ?? 0
+  const taxaInadimplencia = carteiraAno > 0 ? (totalOverdue / carteiraAno) * 100 : 0
+
+  // Resultado e Saldos
+  const saldoRealizadoMes = mesAtual ? mesAtual.saldo : 0
+  const saldoProjetadoMes = mesAtual ? mesAtual.saldoProjetado : 0
+  const saldoRealizadoAno = cashflow?.totals.saldo ?? 0
+  const saldoProjetadoAno = cashflow?.totals.saldoProjetado ?? 0
+
+  const cfCardStyle = (bg: string): React.CSSProperties => ({ background: bg, color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 })
 
   return (
     <div>
@@ -732,15 +720,8 @@ export default function DashboardPage() {
       ) : stats ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap }}>
 
-          {/* ══ 1. VISÃO ESTRATÉGICA — KPIs do negócio ══════════════════ */}
+          {/* ══ 1. VISÃO ESTRATÉGICA — Clientes + Ticket ══════════════════ */}
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap }}>
-            <KpiCard
-              label="Total Clientes"
-              value={stats.kpis.totalActiveClients}
-              icon={<Building2 size={16} />}
-              accentColor="black"
-              href="/clients"
-            />
             <KpiCard
               label="Clientes Ativos"
               value={
@@ -751,14 +732,7 @@ export default function DashboardPage() {
               }
               icon={<Users size={16} />}
               accentColor="#ccff00"
-              href="/clients?status=ACTIVE"
-            />
-            <KpiCard
-              label="Receita Total"
-              value={fmtBRL(stats.kpis.totalRevenue)}
-              icon={<DollarSign size={16} />}
-              accentColor="#ccff00"
-              href="/payments"
+              href="/clients"
             />
             <KpiCard
               label="Ticket Médio"
@@ -767,9 +741,125 @@ export default function DashboardPage() {
               accentColor="black"
               href="/payments"
             />
+            <KpiCard
+              label="Novos este Mês"
+              value={stats.kpis.newClientsThisMonth}
+              icon={<Users size={16} />}
+              accentColor={stats.kpis.newClientsThisMonth > 0 ? '#ccff00' : 'black'}
+              href="/clients"
+            />
+            <KpiCard
+              label="Contratos Ativos"
+              value={signedContracts}
+              icon={<FileText size={16} />}
+              accentColor="black"
+              href="/contracts"
+            />
           </div>
 
-          {/* ══ 2. RECEITA POR PROGRAMA — onde está o dinheiro ══════════ */}
+          {/* ══ 2. FATURAMENTO — 8 KPI cards (igual fluxo de caixa) ══════ */}
+          {cashflow && (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12 }}>
+                <div style={cfCardStyle('#1e293b')}>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Faturamento em Carteira (Ano)</div>
+                  <div style={{ fontSize: 18 }}>{fmtBRL(cashflow.totals.entradas)}</div>
+                  <div style={{ fontSize: 9, opacity: 0.7 }}>Todos os pagamentos {currentYear}</div>
+                </div>
+                <div style={cfCardStyle('#334155')}>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Receber (Carteira)</div>
+                  <div style={{ fontSize: 18 }}>{fmtBRL(aReceberAno)}</div>
+                  <div style={{ fontSize: 9, opacity: 0.7 }}>Pendente + Vencido no ano</div>
+                </div>
+                <div style={cfCardStyle('#475569')}>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Faturamento Previsto (Mes)</div>
+                  <div style={{ fontSize: 18 }}>{fmtBRL(mesAtual?.entradas.total ?? 0)}</div>
+                  <div style={{ fontSize: 9, opacity: 0.7 }}>Recebido: {fmtBRL(mesAtual?.entradas.received ?? 0)}</div>
+                </div>
+                <div style={cfCardStyle('#64748b')}>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Receber (Mes)</div>
+                  <div style={{ fontSize: 18 }}>{fmtBRL(aReceberMes)}</div>
+                  <div style={{ fontSize: 9, opacity: 0.7 }}>Falta receber este mes</div>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12 }}>
+                <div style={cfCardStyle('#1e293b')}>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Gastos em Carteira (Ano)</div>
+                  <div style={{ fontSize: 18 }}>{fmtBRL(gastosAno)}</div>
+                  <div style={{ fontSize: 9, opacity: 0.7 }}>Despesas + Comissoes {currentYear}</div>
+                </div>
+                <div style={cfCardStyle('#334155')}>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Pagar (Carteira)</div>
+                  <div style={{ fontSize: 18 }}>{fmtBRL(aPagarAno)}</div>
+                  <div style={{ fontSize: 9, opacity: 0.7 }}>Previsto + Pendente no ano</div>
+                </div>
+                <div style={cfCardStyle('#475569')}>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Gastos Previstos (Mes)</div>
+                  <div style={{ fontSize: 18 }}>{fmtBRL(gastosMes)}</div>
+                  <div style={{ fontSize: 9, opacity: 0.7 }}>Pago: {fmtBRL(mesAtual ? mesAtual.saidas.pago + mesAtual.comissoes.paid : 0)}</div>
+                </div>
+                <div style={cfCardStyle('#64748b')}>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Pagar (Mes)</div>
+                  <div style={{ fontSize: 18 }}>{fmtBRL(aPagarMes)}</div>
+                  <div style={{ fontSize: 9, opacity: 0.7 }}>Falta pagar este mes</div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ══ 3. INADIMPLÊNCIA ══════════════════════════════════════════ */}
+          <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black' }}>
+            <div className="goon-card-header" style={{ background: overdueCount > 0 ? '#cc0000' : 'black' }}>INADIMPLENCIA</div>
+            <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 16 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Valor Vencido</span>
+                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: totalOverdue > 0 ? '#cc0000' : '#006600' }}>{fmtBRL(totalOverdue)}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Parcelas Vencidas</span>
+                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: overdueCount > 0 ? '#cc0000' : 'black' }}>{overdueCount}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Taxa Inadimplencia</span>
+                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: taxaInadimplencia > 5 ? '#cc0000' : taxaInadimplencia > 0 ? '#e6a800' : '#006600' }}>{taxaInadimplencia.toFixed(1)}%</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>sobre carteira do ano</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Pendencias</span>
+                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: (stats.pendencies?.total ?? 0) > 0 ? '#cc0000' : 'black' }}>{stats.pendencies?.total ?? 0}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>total abertas</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ══ 4. RESULTADO E SALDOS ═════════════════════════════════════ */}
+          <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black' }}>
+            <div className="goon-card-header">RESULTADO E SALDOS</div>
+            <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 16 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Saldo Realizado (Mes)</span>
+                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: saldoRealizadoMes >= 0 ? '#006600' : '#cc0000' }}>{fmtBRL(saldoRealizadoMes)}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>recebido - pago</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Saldo Projetado (Mes)</span>
+                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: saldoProjetadoMes >= 0 ? '#006600' : '#cc0000' }}>{fmtBRL(saldoProjetadoMes)}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>entradas - saidas previstas</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Resultado Realizado (Ano)</span>
+                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: saldoRealizadoAno >= 0 ? '#006600' : '#cc0000' }}>{fmtBRL(saldoRealizadoAno)}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>acumulado {currentYear}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Resultado Projetado (Ano)</span>
+                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: saldoProjetadoAno >= 0 ? '#006600' : '#cc0000' }}>{fmtBRL(saldoProjetadoAno)}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>projecao {currentYear}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ══ 5. RECEITA POR PROGRAMA ═══════════════════════════════════ */}
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap }}>
             {(['GE', 'GI', 'GS'] as const).map(code => (
               <RevenueProductCard
@@ -780,22 +870,12 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* ══ 2b. EM NEGOCIAÇÃO — leads no pipeline com valor ═════════ */}
+          {/* ══ 6. EM NEGOCIAÇÃO ══════════════════════════════════════════ */}
           {stats.negotiation && stats.negotiation.count > 0 && (
             <NegotiationCard data={stats.negotiation} isMobile={isMobile} />
           )}
 
-          {/* ══ 3. SAÚDE FINANCEIRA — recebido / pendente / vencido ════ */}
-          {stats.financialKpis && (
-            <FinancialSummary financialKpis={stats.financialKpis} isMobile={isMobile} />
-          )}
-
-          {/* ══ 3b. BALANÇO CONSOLIDADO ════════════════════════════════ */}
-          {stats.financialConsolidation && (
-            <FinancialConsolidationCard data={stats.financialConsolidation} isMobile={isMobile} />
-          )}
-
-          {/* ══ 4. OPERAÇÃO — pipeline + contratos ═════════════════════ */}
+          {/* ══ 7. OPERAÇÃO — pipeline + contratos ════════════════════════ */}
           <div style={{ display: 'flex', gap, flexDirection: isMobile ? 'column' : 'row', alignItems: 'stretch' }}>
             <PipelineSummary data={stats.pipelineSummary} />
             <div style={isMobile ? {} : { flex: '0 0 260px' }}>
@@ -803,49 +883,17 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* ══ 5. INDICADORES OPERACIONAIS ════════════════════════════ */}
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap }}>
-            <KpiCard
-              label="Contratos Ativos"
-              value={signedContracts}
-              icon={<FileText size={16} />}
-              accentColor="black"
-              href="/contracts?status=SIGNED"
-            />
-            <KpiCard
-              label="Novos este Mês"
-              value={stats.kpis.newClientsThisMonth}
-              icon={<Users size={16} />}
-              accentColor={stats.kpis.newClientsThisMonth > 0 ? '#ccff00' : 'black'}
-              href="/clients"
-            />
-            <KpiCard
-              label="Pendências"
-              value={stats.pendencies?.total ?? 0}
-              icon={<AlertTriangle size={16} />}
-              accentColor={(stats.pendencies?.total ?? 0) > 0 ? '#cc0000' : 'black'}
-              href="/pendencies"
-            />
-            <KpiCard
-              label="Inadimplentes"
-              value={stats.financialKpis?.overdueCount ?? 0}
-              icon={<AlertCircle size={16} />}
-              accentColor={(stats.financialKpis?.overdueCount ?? 0) > 0 ? '#cc0000' : 'black'}
-              href="/payments?status=OVERDUE"
-            />
-          </div>
-
-          {/* ══ 6. ALERTAS — ações urgentes (só se houver) ════════════ */}
+          {/* ══ 8. ALERTAS — ações urgentes (só se houver) ════════════════ */}
           {(() => {
-            const overdueCount = stats.pendencies?.paymentOverdue ?? stats.financialKpis?.overdueCount ?? 0
+            const oCount = stats.pendencies?.paymentOverdue ?? stats.financialKpis?.overdueCount ?? 0
             const renewalCount = stats.renewals?.count ?? 0
             const unsignedCount = stats.pendencies?.contractUnsigned ?? 0
-            const hasAny = (overdueCount > 0 && showOverdue) || (renewalCount > 0 && showRenewal) || (unsignedCount > 0 && showUnsigned)
+            const hasAny = (oCount > 0 && showOverdue) || (renewalCount > 0 && showRenewal) || (unsignedCount > 0 && showUnsigned)
             if (!hasAny) return null
             return (
               <div style={{ display: 'flex', gap, flexWrap: 'wrap' }}>
-                {overdueCount > 0 && showOverdue && (
-                  <AlertCard icon="▲" count={overdueCount} label="boletos vencidos" bg="#cc0000" href="/payments" onDismiss={() => setShowOverdue(false)} />
+                {oCount > 0 && showOverdue && (
+                  <AlertCard icon="▲" count={oCount} label="boletos vencidos" bg="#cc0000" href="/payments" onDismiss={() => setShowOverdue(false)} />
                 )}
                 {renewalCount > 0 && showRenewal && (
                   <AlertCard icon="↺" count={renewalCount} label="em renovação" bg="#ff6600" href="/contracts?renewal=true" onDismiss={() => setShowRenewal(false)} />
@@ -857,12 +905,12 @@ export default function DashboardPage() {
             )
           })()}
 
-          {/* ══ 7. RENOVAÇÕES — se houver ═════════════════════════════ */}
+          {/* ══ 9. RENOVAÇÕES — se houver ═════════════════════════════════ */}
           {stats.renewals && stats.renewals.count > 0 && (
             <RenewalSection renewals={stats.renewals} isMobile={isMobile} />
           )}
 
-          {/* ══ 8. ATIVIDADE RECENTE — histórico ═════════════════════ */}
+          {/* ══ 10. ATIVIDADE RECENTE ═════════════════════════════════════ */}
           <RecentActivity data={stats.recentActivity} />
         </div>
       ) : null}
