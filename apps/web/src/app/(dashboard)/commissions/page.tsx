@@ -216,6 +216,14 @@ export default function CommissionsPage() {
   })
 
   const [mentorsList, setMentorsList] = useState<Array<{ id: string; mentorName: string; value: number; notes: string | null; client: string; product: string; productName: string; planValue: number; monthlyBreakdown: Record<string, number> }>>([])
+  const [mentorExpenses, setMentorExpenses] = useState<Array<{ id: string; description: string; value: number; paidValue: number; status: string; dueDate: string; category: string }>>([])
+
+  const loadMentorExpenses = useCallback(async () => {
+    try {
+      const res = await apiFetch<{ data: typeof mentorExpenses }>('/api/expenses?category=MENTORIA&limit=200')
+      setMentorExpenses(res.data || [])
+    } catch { /* */ }
+  }, [])
 
   useEffect(() => { loadData() }, [loadData])
 
@@ -229,7 +237,8 @@ export default function CommissionsPage() {
     apiFetch<Array<{ id: string; mentorName: string; value: number; notes: string | null; client: string; product: string; productName: string; planValue: number; monthlyBreakdown: Record<string, number> }>>('/api/mentors')
       .then(setMentorsList)
       .catch(() => {})
-  }, [])
+    loadMentorExpenses()
+  }, [loadMentorExpenses])
 
   const handlePay = async (id: string) => {
     try {
@@ -435,26 +444,102 @@ export default function CommissionsPage() {
           {(() => {
             const totalMentorias = mentorsList.reduce((s, m) => s + m.value, 0)
             const mentorNames = [...new Set(mentorsList.map(m => m.mentorName))]
+            // Calculate paid amounts per mentor from expenses
+            const paidByMentor: Record<string, number> = {}
+            for (const exp of mentorExpenses) {
+              // Extract mentor name from description: "Mentoria NOME — ..."
+              const match = exp.description.match(/Mentoria\s+(.+?)\s+—/)
+              if (match) {
+                const name = match[1]
+                paidByMentor[name] = (paidByMentor[name] ?? 0) + (exp.paidValue ?? 0)
+              }
+            }
+            const totalPaid = Object.values(paidByMentor).reduce((s, v) => s + v, 0)
+
+            async function handlePartialPay(expenseId: string, remaining: number, mentorName: string) {
+              const input = prompt(`Quanto pagar para ${mentorName}? (Saldo: ${fmt(remaining)})`)
+              if (!input) return
+              const amount = parseFloat(input.replace(/[^\d.,]/g, '').replace(',', '.'))
+              if (!amount || amount <= 0) { toast.error('Valor invalido'); return }
+              try {
+                await apiFetch(`/api/expenses/${expenseId}/partial-pay`, { method: 'PATCH', body: JSON.stringify({ amount }) })
+                toast.success(`${fmt(amount)} pago para ${mentorName}`)
+                loadMentorExpenses()
+              } catch { toast.error('Erro ao registrar pagamento') }
+            }
+
             return (
               <>
                 <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
                   <div style={{ background: '#4A78FF', color: 'white', padding: '12px 20px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
                     <div style={{ fontSize: 10, textTransform: 'uppercase' }}>Total Mentorias</div>
                     <div style={{ fontSize: 18 }}>{fmt(totalMentorias)}</div>
-                    <div style={{ fontSize: 10 }}>{mentorsList.length} atribuicoes</div>
+                    <div style={{ fontSize: 10 }}>Pago: {fmt(totalPaid)} | Saldo: {fmt(totalMentorias - totalPaid)}</div>
                   </div>
                   {mentorNames.map(name => {
                     const mentorTotal = mentorsList.filter(m => m.mentorName === name).reduce((s, m) => s + m.value, 0)
+                    const mentorPaid = paidByMentor[name] ?? 0
+                    const mentorSaldo = mentorTotal - mentorPaid
                     const mentorClients = [...new Set(mentorsList.filter(m => m.mentorName === name).map(m => m.client))]
                     return (
                       <div key={name} onClick={() => setMentorFilter(mentorFilter === name ? '' : name)} style={{ background: mentorFilter === name ? '#4A78FF' : 'white', color: mentorFilter === name ? 'white' : 'inherit', padding: '12px 20px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700, cursor: 'pointer' }}>
                         <div style={{ fontSize: 10, textTransform: 'uppercase', color: mentorFilter === name ? 'white' : '#4A78FF' }}>{name}</div>
                         <div style={{ fontSize: 18 }}>{fmt(mentorTotal)}</div>
-                        <div style={{ fontSize: 10, color: '#666' }}>{mentorClients.length} cliente{mentorClients.length !== 1 ? 's' : ''}</div>
+                        <div style={{ fontSize: 10, color: mentorFilter === name ? 'rgba(255,255,255,0.8)' : '#006600' }}>Pago: {fmt(mentorPaid)}</div>
+                        <div style={{ fontSize: 10, color: mentorFilter === name ? 'rgba(255,255,255,0.8)' : mentorSaldo > 0 ? '#cc0000' : '#006600', fontWeight: 700 }}>Saldo: {fmt(mentorSaldo)}</div>
                       </div>
                     )
                   })}
                 </div>
+
+                {/* Expense payment list per mentor */}
+                {mentorFilter && (() => {
+                  const mentorExps = mentorExpenses.filter(e => e.description.includes(mentorFilter)).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+                  if (mentorExps.length === 0) return null
+                  return (
+                    <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black', marginBottom: 20 }}>
+                      <div className="goon-card-header">PAGAMENTOS — {mentorFilter.toUpperCase()}</div>
+                      <div style={{ padding: '12px 16px' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid black' }}>
+                              <th style={{ padding: '6px 8px', textAlign: 'left', fontSize: 9, textTransform: 'uppercase' }}>Descricao</th>
+                              <th style={{ padding: '6px 8px', textAlign: 'right', fontSize: 9, textTransform: 'uppercase' }}>Valor</th>
+                              <th style={{ padding: '6px 8px', textAlign: 'right', fontSize: 9, textTransform: 'uppercase' }}>Pago</th>
+                              <th style={{ padding: '6px 8px', textAlign: 'right', fontSize: 9, textTransform: 'uppercase' }}>Saldo</th>
+                              <th style={{ padding: '6px 8px', textAlign: 'center', fontSize: 9, textTransform: 'uppercase' }}>Status</th>
+                              <th style={{ padding: '6px 8px', textAlign: 'center', fontSize: 9, textTransform: 'uppercase' }}>Acao</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {mentorExps.map(exp => {
+                              const remaining = exp.value - (exp.paidValue ?? 0)
+                              return (
+                                <tr key={exp.id} style={{ borderBottom: '1px solid #eee' }}>
+                                  <td style={{ padding: '6px 8px', fontSize: 10 }}>{exp.description.replace(/Mentoria .+? — /, '')}</td>
+                                  <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(exp.value)}</td>
+                                  <td style={{ padding: '6px 8px', textAlign: 'right', color: '#006600' }}>{fmt(exp.paidValue ?? 0)}</td>
+                                  <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700, color: remaining > 0 ? '#cc0000' : '#006600' }}>{fmt(remaining)}</td>
+                                  <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                                    <span style={{ background: exp.status === 'PAGO' ? '#006600' : exp.status === 'PARCIAL' ? '#e6a800' : '#888', color: 'white', padding: '2px 6px', fontSize: 9, fontWeight: 700 }}>{exp.status}</span>
+                                  </td>
+                                  <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                                    {remaining > 0 && (
+                                      <button onClick={() => handlePartialPay(exp.id, remaining, mentorFilter)} style={{ background: '#006600', color: 'white', border: '2px solid black', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>PAGAR</button>
+                                    )}
+                                    {exp.paidValue > 0 && (
+                                      <button onClick={async () => { await apiFetch(`/api/expenses/${exp.id}/revert-payment`, { method: 'PATCH' }); toast.success('Pagamento revertido'); loadMentorExpenses() }} style={{ background: '#cc0000', color: 'white', border: '2px solid black', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, marginLeft: 4 }}>ZERAR</button>
+                                    )}
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )
+                })()}
 
                 {/* Monthly View */}
                 {(() => {

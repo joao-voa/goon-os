@@ -72,6 +72,16 @@ export class ExpensesController {
     return this.service.markAsPaid(id)
   }
 
+  @Patch(':id/partial-pay')
+  partialPay(@Param('id') id: string, @Body() dto: { amount: number }) {
+    return this.service.partialPay(id, dto.amount)
+  }
+
+  @Patch(':id/revert-payment')
+  revertPayment(@Param('id') id: string) {
+    return this.service.revertPayment(id)
+  }
+
   @Delete(':id')
   delete(@Param('id') id: string) {
     return this.service.delete(id)

@@ -341,11 +341,12 @@ model Commission {
 model Expense {
   id          String    @id @default(cuid())
   description String
-  category    String    // SISTEMAS, MARKETING, PESSOAS, ESTRUTURA, OUTRO
+  category    String    // SISTEMAS, MARKETING, PESSOAS, ESTRUTURA, OUTRO, MENTORIA, PESSOAL, COMISSAO, IMPOSTOS
   value       Decimal   @db.Decimal(10, 2)
+  paidValue   Decimal   @default(0) @db.Decimal(10, 2)
   recurrence  String    @default("UNICA") // UNICA, MENSAL, TRIMESTRAL, ANUAL
   dueDate     DateTime
-  status      String    @default("PREVISTO") // PREVISTO, PAGO
+  status      String    @default("PREVISTO") // PREVISTO, PARCIAL, PAGO
   paidAt      DateTime?
   notes       String?
 

@@ -45,7 +45,7 @@ export class ExpensesService {
     ])
 
     return {
-      data: data.map(e => ({ ...e, value: Number(e.value) })),
+      data: data.map(e => ({ ...e, value: Number(e.value), paidValue: Number(e.paidValue ?? 0) })),
       total,
       page,
       limit,
@@ -145,8 +145,37 @@ export class ExpensesService {
 
     return this.prisma.expense.update({
       where: { id },
-      data: { status: 'PAGO', paidAt: new Date() },
-    }).then(e => ({ ...e, value: Number(e.value) }))
+      data: { status: 'PAGO', paidValue: existing.value, paidAt: new Date() },
+    }).then(e => ({ ...e, value: Number(e.value), paidValue: Number(e.paidValue) }))
+  }
+
+  async partialPay(id: string, amount: number) {
+    const existing = await this.prisma.expense.findUnique({ where: { id } })
+    if (!existing) throw new NotFoundException(`Expense ${id} not found`)
+
+    const currentPaid = Number(existing.paidValue ?? 0)
+    const total = Number(existing.value)
+    const newPaid = Math.min(currentPaid + amount, total)
+    const isFullyPaid = newPaid >= total
+
+    return this.prisma.expense.update({
+      where: { id },
+      data: {
+        paidValue: newPaid,
+        status: isFullyPaid ? 'PAGO' : 'PARCIAL',
+        paidAt: isFullyPaid ? new Date() : existing.paidAt,
+      },
+    }).then(e => ({ ...e, value: Number(e.value), paidValue: Number(e.paidValue) }))
+  }
+
+  async revertPayment(id: string) {
+    const existing = await this.prisma.expense.findUnique({ where: { id } })
+    if (!existing) throw new NotFoundException(`Expense ${id} not found`)
+
+    return this.prisma.expense.update({
+      where: { id },
+      data: { paidValue: 0, status: 'PREVISTO', paidAt: null },
+    }).then(e => ({ ...e, value: Number(e.value), paidValue: Number(e.paidValue) }))
   }
 
   async delete(id: string) {
