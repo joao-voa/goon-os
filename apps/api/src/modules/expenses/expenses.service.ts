@@ -15,7 +15,8 @@ export class ExpensesService {
     limit?: number
   }) {
     const { category, status, recurrence, month, year, page = 1, limit = 20 } = params
-    const where: Record<string, unknown> = {}
+    const giuFilter = { NOT: { AND: [{ category: 'MENTORIA' }, { description: { contains: 'Giulliano' } }] } }
+    const where: Record<string, unknown> = { ...giuFilter }
 
     if (category) where.category = category
     if (status) where.status = status
@@ -53,7 +54,8 @@ export class ExpensesService {
 
   async getSummary(params: { month?: number; year?: number }) {
     const { month, year } = params
-    const where: Record<string, unknown> = {}
+    const giuFilter = { NOT: { AND: [{ category: 'MENTORIA' }, { description: { contains: 'Giulliano' } }] } }
+    const where: Record<string, unknown> = { ...giuFilter }
 
     if (month && year) {
       const start = new Date(year, month - 1, 1)

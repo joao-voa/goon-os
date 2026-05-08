@@ -272,29 +272,32 @@ export class PlansService {
 
     if (payments.length > 0) {
       const totalPayments = payments.reduce((s, p) => s + Number(p.value), 0)
+      const TAX_RATE = 0.06
+      const mentorLiquid = dto.value * (1 - TAX_RATE)
 
       for (const payment of payments) {
         const proportion = Number(payment.value) / totalPayments
-        const mentorInstallmentValue = Math.round(dto.value * proportion * 100) / 100
+        const mentorInstallmentValue = Math.round(mentorLiquid * proportion * 100) / 100
 
         await this.expensesService.create({
           description: `Mentoria ${dto.mentorName} — ${plan.client.companyName} (${plan.product.name}) parcela ${payment.installment}`,
-          category: 'PESSOAS',
+          category: 'MENTORIA',
           value: mentorInstallmentValue,
           recurrence: 'UNICA',
           dueDate: payment.dueDate,
-          notes: `${dto.mentorName} | Parcela ${payment.installment}/${payments.length} | Proporcional ao pagamento`,
+          notes: `${dto.mentorName} | Parcela ${payment.installment}/${payments.length} | Valor bruto R$${dto.value} - 6% imposto = R$${mentorLiquid.toFixed(2)}`,
         })
       }
     } else {
-      // Fallback: single expense if no payments exist
+      const TAX_RATE = 0.06
+      const mentorLiquid = dto.value * (1 - TAX_RATE)
       await this.expensesService.create({
         description: `Mentoria ${dto.mentorName} — ${plan.client.companyName} (${plan.product.name})`,
-        category: 'PESSOAS',
-        value: dto.value,
+        category: 'MENTORIA',
+        value: mentorLiquid,
         recurrence: 'UNICA',
         dueDate: new Date(),
-        notes: dto.notes || `Mentoria atribuida ao plano ${plan.product.name}`,
+        notes: dto.notes || `Mentoria atribuida ao plano ${plan.product.name} | Valor bruto R$${dto.value} - 6% imposto`,
       })
     }
 
