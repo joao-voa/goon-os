@@ -202,12 +202,35 @@ export class PlansService {
       orderBy: { createdAt: 'desc' },
     })
 
-    return mentors.map(m => {
+    const result: Array<{
+      id: string; mentorName: string; value: number; notes: string | null;
+      createdAt: Date; client: string; clientId: string; product: string;
+      productName: string; planValue: number; monthlyBreakdown: Record<string, number>;
+    }> = []
+
+    // Group mentors by plan to calculate Giulliano's remaining share
+    const planMap = new Map<string, typeof mentors>()
+    for (const m of mentors) {
+      if (!planMap.has(m.planId)) planMap.set(m.planId, [])
+      planMap.get(m.planId)!.push(m)
+    }
+
+    // Also find plans with NO mentors at all (100% Giulliano)
+    const activePlans = await this.prisma.clientPlan.findMany({
+      where: { status: 'ACTIVE' },
+      include: {
+        client: { select: { id: true, companyName: true } },
+        product: { select: { code: true, name: true } },
+        payments: { orderBy: { dueDate: 'asc' }, select: { dueDate: true, value: true, status: true } },
+        mentors: true,
+      },
+    })
+
+    for (const m of mentors) {
       const planValue = Number(m.plan.value)
       const totalPayments = m.plan.payments.reduce((s, p) => s + Number(p.value), 0)
       const mentorValue = Number(m.value)
 
-      // Calculate monthly breakdown based on payment schedule
       const monthlyBreakdown: Record<string, number> = {}
       for (const pay of m.plan.payments) {
         const proportion = totalPayments > 0 ? Number(pay.value) / totalPayments : 0
@@ -216,7 +239,7 @@ export class PlansService {
         monthlyBreakdown[monthKey] = (monthlyBreakdown[monthKey] ?? 0) + mentorInstallment
       }
 
-      return {
+      result.push({
         id: m.id,
         mentorName: m.mentorName,
         value: mentorValue,
@@ -228,8 +251,41 @@ export class PlansService {
         productName: m.plan.product.name,
         planValue,
         monthlyBreakdown,
+      })
+    }
+
+    // Add virtual "Giulliano (AURA)" entries for unassigned plan value
+    for (const plan of activePlans) {
+      const planValue = Number(plan.value)
+      const assignedTotal = plan.mentors.reduce((s, m) => s + Number(m.value), 0)
+      const giullianoValue = planValue - assignedTotal
+      if (giullianoValue <= 0) continue
+
+      const totalPayments = plan.payments.reduce((s, p) => s + Number(p.value), 0)
+      const monthlyBreakdown: Record<string, number> = {}
+      for (const pay of plan.payments) {
+        const proportion = totalPayments > 0 ? Number(pay.value) / totalPayments : 0
+        const mentorInstallment = Math.round(giullianoValue * proportion * 100) / 100
+        const monthKey = `${pay.dueDate.getFullYear()}-${String(pay.dueDate.getMonth() + 1).padStart(2, '0')}`
+        monthlyBreakdown[monthKey] = (monthlyBreakdown[monthKey] ?? 0) + mentorInstallment
       }
-    })
+
+      result.push({
+        id: `giu-${plan.id}`,
+        mentorName: 'Giulliano (AURA)',
+        value: giullianoValue,
+        notes: 'Valor nao atribuido — receita Giulliano',
+        createdAt: plan.createdAt,
+        client: plan.client.companyName,
+        clientId: plan.client.id,
+        product: plan.product.code,
+        productName: plan.product.name,
+        planValue,
+        monthlyBreakdown,
+      })
+    }
+
+    return result
   }
 
   async getMentors(planId: string) {
