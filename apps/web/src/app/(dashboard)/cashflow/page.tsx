@@ -215,24 +215,38 @@ export default function CashflowPage() {
       )}
 
       {viewMode === 'mensal' && <>
-      {/* Totais do Ano */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 24 }}>
-        <div style={{ background: '#006600', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-          <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Entradas Previstas</div>
-          <div style={{ fontSize: 18 }}>{fmt(data.totals.entradas)}</div>
-          <div style={{ fontSize: 9, opacity: 0.7 }}>Recebido: {fmt(data.totals.entradasReceived)}</div>
-        </div>
-        <div style={{ background: '#cc0000', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-          <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Saidas Previstas</div>
-          <div style={{ fontSize: 18 }}>{fmt(data.totals.saidas + data.totals.comissoes)}</div>
-          <div style={{ fontSize: 9, opacity: 0.7 }}>Pago: {fmt(data.totals.saidasPago + data.totals.comissoesPaid)}</div>
-        </div>
-        <div style={{ background: data.totals.saldoProjetado >= 0 ? '#006600' : '#cc0000', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-          <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Saldo Projetado</div>
-          <div style={{ fontSize: 18 }}>{fmt(data.totals.saldoProjetado)}</div>
-          <div style={{ fontSize: 9, opacity: 0.7 }}>Real: {fmt(data.totals.saldo)}</div>
-        </div>
-      </div>
+      {/* KPIs */}
+      {(() => {
+        const currentMonth = new Date().getMonth()
+        const mesAtual = data.months[currentMonth]
+        const aReceberAno = data.totals.entradas - data.totals.entradasReceived
+        const aReceberMes = mesAtual ? mesAtual.entradas.pending + mesAtual.entradas.overdue : 0
+
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
+            <div style={{ background: '#000080', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+              <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Faturamento em Carteira (Ano)</div>
+              <div style={{ fontSize: 18 }}>{fmt(data.totals.entradas)}</div>
+              <div style={{ fontSize: 9, opacity: 0.7 }}>Todos os pagamentos {year}</div>
+            </div>
+            <div style={{ background: '#4A78FF', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+              <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Faturamento Previsto (Mes)</div>
+              <div style={{ fontSize: 18 }}>{fmt(mesAtual?.entradas.total ?? 0)}</div>
+              <div style={{ fontSize: 9, opacity: 0.7 }}>Recebido: {fmt(mesAtual?.entradas.received ?? 0)}</div>
+            </div>
+            <div style={{ background: '#006600', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+              <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Receber (Carteira)</div>
+              <div style={{ fontSize: 18 }}>{fmt(aReceberAno)}</div>
+              <div style={{ fontSize: 9, opacity: 0.7 }}>Pendente + Vencido no ano</div>
+            </div>
+            <div style={{ background: '#e6a800', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+              <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Receber (Mes)</div>
+              <div style={{ fontSize: 18 }}>{fmt(aReceberMes)}</div>
+              <div style={{ fontSize: 9, opacity: 0.7 }}>Falta receber este mes</div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Grafico de barras simples */}
       <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black', marginBottom: 24 }}>
