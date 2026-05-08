@@ -248,6 +248,41 @@ export default function CashflowPage() {
         )
       })()}
 
+      {/* KPIs Gastos */}
+      {(() => {
+        const currentMonth = new Date().getMonth()
+        const mesAtual = data.months[currentMonth]
+        const gastosAno = data.totals.saidas + data.totals.comissoes
+        const gastosMes = mesAtual ? mesAtual.saidas.total + mesAtual.comissoes.total : 0
+        const aPagarAno = (data.totals.saidas - data.totals.saidasPago) + (data.totals.comissoes - data.totals.comissoesPaid)
+        const aPagarMes = mesAtual ? (mesAtual.saidas.previsto + mesAtual.comissoes.pending) : 0
+
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
+            <div style={{ background: '#8b0000', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+              <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Gastos em Carteira (Ano)</div>
+              <div style={{ fontSize: 18 }}>{fmt(gastosAno)}</div>
+              <div style={{ fontSize: 9, opacity: 0.7 }}>Despesas + Comissoes {year}</div>
+            </div>
+            <div style={{ background: '#cc0000', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+              <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Gastos Previstos (Mes)</div>
+              <div style={{ fontSize: 18 }}>{fmt(gastosMes)}</div>
+              <div style={{ fontSize: 9, opacity: 0.7 }}>Pago: {fmt(mesAtual ? mesAtual.saidas.pago + mesAtual.comissoes.paid : 0)}</div>
+            </div>
+            <div style={{ background: '#b45309', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+              <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Pagar (Carteira)</div>
+              <div style={{ fontSize: 18 }}>{fmt(aPagarAno)}</div>
+              <div style={{ fontSize: 9, opacity: 0.7 }}>Previsto + Pendente no ano</div>
+            </div>
+            <div style={{ background: '#d97706', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+              <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Pagar (Mes)</div>
+              <div style={{ fontSize: 18 }}>{fmt(aPagarMes)}</div>
+              <div style={{ fontSize: 9, opacity: 0.7 }}>Falta pagar este mes</div>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Grafico de barras simples */}
       <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black', marginBottom: 24 }}>
         <div className="goon-card-header">COMPARATIVO MENSAL</div>
