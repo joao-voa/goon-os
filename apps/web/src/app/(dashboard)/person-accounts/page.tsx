@@ -242,6 +242,12 @@ export default function PersonAccountsPage() {
                               <span style={{ fontWeight: 700, minWidth: 90, textAlign: 'right' }}>{fmtFull(d.value)}</span>
                             </div>
                           ))}
+                          {p.balance > 0 && p.type !== 'SOCIO' && (
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: 10, paddingTop: 8, borderTop: '2px solid black' }}>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginRight: 12 }}>Saldo: {fmtFull(p.balance)}</span>
+                              <button onClick={() => handlePay(p)} style={{ background: '#006600', color: 'white', border: '2px solid black', padding: '6px 16px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, boxShadow: '2px 2px 0 black' }}>PAGAR</button>
+                            </div>
+                          )}
                         </div>
                       </td>
                     </tr>
