@@ -251,7 +251,14 @@ export default function PersonAccountsPage() {
                                 }} style={{ background: '#006600', color: 'white', border: '1px solid black', padding: '2px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, flexShrink: 0 }}>PG</button>
                               )}
                               {d.paid && (
-                                <span style={{ color: '#006600', fontWeight: 700, fontSize: 9, flexShrink: 0, minWidth: 32, textAlign: 'center' }}>PAGO</span>
+                                <button onClick={async () => {
+                                  if (!confirm('Reverter pagamento dessa parcela?')) return
+                                  try {
+                                    await apiFetch(`/api/person-accounts/${p.id}/revert-pay`, { method: 'POST', body: JSON.stringify({ notes: d.description }) })
+                                    toast.success('Pagamento revertido')
+                                    loadPersons()
+                                  } catch { toast.error('Erro ao reverter') }
+                                }} style={{ background: '#cc0000', color: 'white', border: '1px solid black', padding: '2px 6px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, flexShrink: 0 }}>PAGO ✕</button>
                               )}
                             </div>
                           ))}

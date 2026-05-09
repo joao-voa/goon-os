@@ -142,6 +142,15 @@ export class PersonAccountsService {
     return { ...tx, value: Number(tx.value) }
   }
 
+  async revertPay(personId: string, notes: string) {
+    const tx = await this.prisma.personTransaction.findFirst({
+      where: { personId, type: 'CREDIT', notes },
+    })
+    if (!tx) throw new NotFoundException('Pagamento nao encontrado')
+    await this.prisma.personTransaction.delete({ where: { id: tx.id } })
+    return { reverted: true }
+  }
+
   async deleteTransaction(txId: string) {
     const tx = await this.prisma.personTransaction.findUnique({ where: { id: txId } })
     if (!tx) throw new NotFoundException('Transacao nao encontrada')

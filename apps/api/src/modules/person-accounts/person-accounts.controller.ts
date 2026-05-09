@@ -45,6 +45,11 @@ export class PersonAccountsController {
     return this.service.pay(id, dto)
   }
 
+  @Post(':id/revert-pay')
+  revertPay(@Param('id') id: string, @Body() dto: { notes: string }) {
+    return this.service.revertPay(id, dto.notes)
+  }
+
   @Post('sync')
   sync() {
     return this.service.sync()
