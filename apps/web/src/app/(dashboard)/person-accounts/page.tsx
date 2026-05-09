@@ -4,12 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 
-interface PendingDebit {
-  date: string
-  value: number
-  description: string
-}
-
 interface PersonAccount {
   id: string
   name: string
@@ -20,7 +14,6 @@ interface PersonAccount {
   totalDebits: number
   totalCredits: number
   balance: number
-  pendingDebits: PendingDebit[]
 }
 
 interface Transaction {
@@ -194,21 +187,7 @@ export default function PersonAccountsPage() {
               {persons.map(p => (
                 <>
                   <tr key={p.id} style={{ borderBottom: expandedId === p.id ? 'none' : '1px solid #ddd' }}>
-                    <td style={{ padding: '10px 12px' }}>
-                      <div style={{ fontWeight: 700 }}>{p.name}</div>
-                      {p.pendingDebits.length > 0 && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
-                          {p.pendingDebits.slice(0, 6).map((d, i) => (
-                            <span key={i} style={{ background: '#f0f0f0', border: '1px solid #ddd', padding: '1px 6px', fontSize: 9, fontFamily: 'var(--font-mono)', color: '#555' }}>
-                              {fmtDate(d.date)} — {fmt(d.value)}
-                            </span>
-                          ))}
-                          {p.pendingDebits.length > 6 && (
-                            <span style={{ fontSize: 9, color: '#888', fontFamily: 'var(--font-mono)', padding: '1px 4px' }}>+{p.pendingDebits.length - 6}</span>
-                          )}
-                        </div>
-                      )}
-                    </td>
+                    <td style={{ padding: '10px 12px', fontWeight: 700 }}>{p.name}</td>
                     <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                       <span style={{ background: TYPE_COLORS[p.type] ?? '#888', color: 'white', padding: '2px 8px', fontSize: 9, fontWeight: 700 }}>
                         {TYPE_LABELS[p.type] ?? p.type}
