@@ -239,7 +239,16 @@ export default function PersonAccountsPage() {
                             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: i < p.debits.length - 1 ? '1px solid #eee' : 'none', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
                               <span style={{ color: '#555' }}>{fmtDate(d.date)}</span>
                               <span style={{ flex: 1, marginLeft: 12, color: '#333' }}>{d.description}</span>
-                              <span style={{ fontWeight: 700, minWidth: 90, textAlign: 'right' }}>{fmtFull(d.value)}</span>
+                              <span style={{ fontWeight: 700, minWidth: 90, textAlign: 'right', marginRight: 8 }}>{fmtFull(d.value)}</span>
+                              {p.type !== 'SOCIO' && (
+                                <button onClick={async () => {
+                                  try {
+                                    await apiFetch(`/api/person-accounts/${p.id}/pay`, { method: 'POST', body: JSON.stringify({ amount: d.value, notes: d.description }) })
+                                    toast.success(`${fmtFull(d.value)} pago — ${d.description}`)
+                                    loadPersons()
+                                  } catch { toast.error('Erro ao pagar') }
+                                }} style={{ background: '#006600', color: 'white', border: '1px solid black', padding: '2px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, flexShrink: 0 }}>PG</button>
+                              )}
                             </div>
                           ))}
                           {p.balance > 0 && p.type !== 'SOCIO' && (
