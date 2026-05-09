@@ -359,6 +359,43 @@ model Expense {
   @@index([recurrence])
 }
 
+model Person {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  type        String   // VENDEDOR, MENTOR, SOCIO
+  aliases     String?  // JSON array of alternative names for matching
+  isActive    Boolean  @default(true)
+  notes       String?
+
+  transactions PersonTransaction[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+}
+
+model PersonTransaction {
+  id          String   @id @default(cuid())
+  personId    String
+  type        String   // DEBIT (devemos), CREDIT (pagamos)
+  source      String   // COMMISSION, MENTORIA, MANUAL
+  sourceId    String?  // Commission.id ou Expense.id
+  description String
+  value       Decimal  @db.Decimal(10, 2)
+  date        DateTime
+  notes       String?
+
+  person      Person   @relation(fields: [personId], references: [id])
+
+  createdAt   DateTime @default(now())
+
+  @@index([personId])
+  @@index([personId, type])
+  @@index([source, sourceId])
+  @@index([date])
+}
+
 model LeadInteraction {
   id          String   @id @default(cuid())
   clientId    String

@@ -19,6 +19,7 @@ import { CashflowModule } from './modules/cashflow/cashflow.module'
 import { AdminModule } from './modules/admin/admin.module'
 import { MeetingsModule } from './modules/meetings/meetings.module'
 import { TasksModule } from './modules/tasks/tasks.module'
+import { PersonAccountsModule } from './modules/person-accounts/person-accounts.module'
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { TasksModule } from './modules/tasks/tasks.module'
     MeetingsModule,
     TasksModule,
     AdminModule,
+    PersonAccountsModule,
   ],
   controllers: [AppController],
 })
