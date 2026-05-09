@@ -11,7 +11,7 @@ export class PersonAccountsService {
       orderBy: { name: 'asc' },
       include: {
         transactions: {
-          select: { type: true, value: true, date: true, description: true, sourceId: true },
+          select: { type: true, value: true, date: true, description: true, sourceId: true, notes: true },
           orderBy: { date: 'asc' },
         },
       },
@@ -24,11 +24,12 @@ export class PersonAccountsService {
       const totalCredits = credits.reduce((s, t) => s + Number(t.value), 0)
 
       // Match credits to debits by sourceId or description
+      // Match credits to debits: credit.notes stores the debit description it pays for
       const paidSourceIds = new Set(credits.filter(c => c.sourceId).map(c => c.sourceId))
-      const paidDescriptions = new Set(credits.map(c => c.description.replace('Pago ', '').replace('Pagamento para ' + p.name, '')))
+      const paidNotes = new Set(credits.map(c => c.notes).filter(Boolean))
 
       const upcomingDebits = debits.map(d => {
-        const paid = (d.sourceId && paidSourceIds.has(d.sourceId)) || paidDescriptions.has(d.description)
+        const paid = (d.sourceId && paidSourceIds.has(d.sourceId)) || paidNotes.has(d.description)
         return { date: d.date, value: Number(d.value), description: d.description, paid }
       })
 
@@ -117,6 +118,14 @@ export class PersonAccountsService {
     const person = await this.prisma.person.findUnique({ where: { id: personId } })
     if (!person) throw new NotFoundException('Pessoa nao encontrada')
     if (dto.amount <= 0) throw new BadRequestException('Valor deve ser positivo')
+
+    // Prevent duplicate: if notes matches an existing credit for this person, block it
+    if (dto.notes) {
+      const existing = await this.prisma.personTransaction.findFirst({
+        where: { personId, type: 'CREDIT', notes: dto.notes },
+      })
+      if (existing) throw new BadRequestException('Essa parcela ja foi paga')
+    }
 
     const tx = await this.prisma.personTransaction.create({
       data: {
