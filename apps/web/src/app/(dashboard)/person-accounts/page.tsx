@@ -4,6 +4,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 
+interface DebitItem {
+  date: string
+  value: number
+  description: string
+}
+
 interface PersonAccount {
   id: string
   name: string
@@ -14,6 +20,7 @@ interface PersonAccount {
   totalDebits: number
   totalCredits: number
   balance: number
+  debits: DebitItem[]
 }
 
 interface Transaction {
@@ -50,6 +57,7 @@ export default function PersonAccountsPage() {
   const [persons, setPersons] = useState<PersonAccount[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [extractId, setExtractId] = useState<string | null>(null)
   const [extract, setExtract] = useState<ExtractData | null>(null)
   const [syncing, setSyncing] = useState(false)
 
@@ -70,11 +78,21 @@ export default function PersonAccountsPage() {
     } catch { toast.error('Erro ao carregar extrato') }
   }
 
-  function toggleExtract(personId: string) {
+  function toggleExpand(personId: string) {
     if (expandedId === personId) {
       setExpandedId(null)
+    } else {
+      setExpandedId(personId)
+      if (extractId !== personId) { setExtractId(null); setExtract(null) }
+    }
+  }
+
+  function toggleExtract(personId: string) {
+    if (extractId === personId) {
+      setExtractId(null)
       setExtract(null)
     } else {
+      setExtractId(personId)
       setExpandedId(personId)
       loadExtract(personId)
     }
@@ -186,8 +204,11 @@ export default function PersonAccountsPage() {
             <tbody>
               {persons.map(p => (
                 <>
-                  <tr key={p.id} style={{ borderBottom: expandedId === p.id ? 'none' : '1px solid #ddd' }}>
-                    <td style={{ padding: '10px 12px', fontWeight: 700 }}>{p.name}</td>
+                  <tr key={p.id} onClick={() => toggleExpand(p.id)} style={{ borderBottom: expandedId === p.id ? 'none' : '1px solid #ddd', cursor: 'pointer', background: expandedId === p.id ? '#f5f5f5' : 'transparent' }}>
+                    <td style={{ padding: '10px 12px', fontWeight: 700 }}>
+                      <span style={{ marginRight: 6, fontSize: 10 }}>{expandedId === p.id ? '▼' : '▶'}</span>
+                      {p.name}
+                    </td>
                     <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                       <span style={{ background: TYPE_COLORS[p.type] ?? '#888', color: 'white', padding: '2px 8px', fontSize: 9, fontWeight: 700 }}>
                         {TYPE_LABELS[p.type] ?? p.type}
@@ -198,18 +219,35 @@ export default function PersonAccountsPage() {
                     <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: p.balance > 0 ? '#cc0000' : '#006600' }}>
                       {fmtFull(p.balance)}
                     </td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                    <td style={{ padding: '10px 12px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                       <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                         {p.balance > 0 && p.type !== 'SOCIO' && (
                           <button onClick={() => handlePay(p)} style={{ background: '#006600', color: 'white', border: '2px solid black', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>PAGAR</button>
                         )}
-                        <button onClick={() => toggleExtract(p.id)} style={{ background: expandedId === p.id ? 'black' : 'var(--retro-blue)', color: 'white', border: '2px solid black', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>
-                          {expandedId === p.id ? 'FECHAR' : 'EXTRATO'}
+                        <button onClick={() => toggleExtract(p.id)} style={{ background: extractId === p.id ? 'black' : 'var(--retro-blue)', color: 'white', border: '2px solid black', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>
+                          {extractId === p.id ? 'FECHAR' : 'EXTRATO'}
                         </button>
                       </div>
                     </td>
                   </tr>
-                  {expandedId === p.id && extract && (
+                  {/* Inline debits expansion */}
+                  {expandedId === p.id && !extractId && p.debits.length > 0 && (
+                    <tr key={p.id + '-debits'}>
+                      <td colSpan={6} style={{ padding: 0, background: '#fafafa', borderBottom: '1px solid #ddd' }}>
+                        <div style={{ padding: '8px 16px 12px 36px' }}>
+                          {p.debits.map((d, i) => (
+                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: i < p.debits.length - 1 ? '1px solid #eee' : 'none', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                              <span style={{ color: '#555' }}>{fmtDate(d.date)}</span>
+                              <span style={{ flex: 1, marginLeft: 12, color: '#333' }}>{d.description}</span>
+                              <span style={{ fontWeight: 700, minWidth: 90, textAlign: 'right' }}>{fmtFull(d.value)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  {/* Full extract */}
+                  {extractId === p.id && expandedId === p.id && extract && (
                     <tr key={p.id + '-extract'}>
                       <td colSpan={6} style={{ padding: 0, background: '#f9f9f9' }}>
                         <div style={{ padding: '12px 16px' }}>
