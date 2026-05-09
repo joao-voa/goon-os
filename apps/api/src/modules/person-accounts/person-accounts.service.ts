@@ -11,14 +11,24 @@ export class PersonAccountsService {
       orderBy: { name: 'asc' },
       include: {
         transactions: {
-          select: { type: true, value: true },
+          select: { type: true, value: true, date: true, description: true },
+          orderBy: { date: 'asc' },
         },
       },
     })
 
     return persons.map(p => {
-      const debits = p.transactions.filter(t => t.type === 'DEBIT').reduce((s, t) => s + Number(t.value), 0)
-      const credits = p.transactions.filter(t => t.type === 'CREDIT').reduce((s, t) => s + Number(t.value), 0)
+      const debits = p.transactions.filter(t => t.type === 'DEBIT')
+      const credits = p.transactions.filter(t => t.type === 'CREDIT')
+      const totalDebits = debits.reduce((s, t) => s + Number(t.value), 0)
+      const totalCredits = credits.reduce((s, t) => s + Number(t.value), 0)
+
+      // Build list of pending debits (not yet fully covered by credits)
+      const creditSourceIds = new Set(credits.map(c => c.description))
+      const pendingDebits = debits
+        .filter(d => new Date(d.date) >= new Date())
+        .map(d => ({ date: d.date, value: Number(d.value), description: d.description }))
+
       return {
         id: p.id,
         name: p.name,
@@ -26,9 +36,10 @@ export class PersonAccountsService {
         aliases: p.aliases ? JSON.parse(p.aliases) : [],
         isActive: p.isActive,
         notes: p.notes,
-        totalDebits: debits,
-        totalCredits: credits,
-        balance: debits - credits,
+        totalDebits,
+        totalCredits,
+        balance: totalDebits - totalCredits,
+        pendingDebits,
       }
     })
   }
