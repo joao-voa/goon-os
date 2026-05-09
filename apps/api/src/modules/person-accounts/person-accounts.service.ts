@@ -11,7 +11,7 @@ export class PersonAccountsService {
       orderBy: { name: 'asc' },
       include: {
         transactions: {
-          select: { type: true, value: true, date: true, description: true },
+          select: { type: true, value: true, date: true, description: true, sourceId: true },
           orderBy: { date: 'asc' },
         },
       },
@@ -23,12 +23,14 @@ export class PersonAccountsService {
       const totalDebits = debits.reduce((s, t) => s + Number(t.value), 0)
       const totalCredits = credits.reduce((s, t) => s + Number(t.value), 0)
 
-      // Upcoming debits for inline expansion
-      const upcomingDebits = debits.map(d => ({
-        date: d.date,
-        value: Number(d.value),
-        description: d.description,
-      }))
+      // Match credits to debits by sourceId or description
+      const paidSourceIds = new Set(credits.filter(c => c.sourceId).map(c => c.sourceId))
+      const paidDescriptions = new Set(credits.map(c => c.description.replace('Pago ', '').replace('Pagamento para ' + p.name, '')))
+
+      const upcomingDebits = debits.map(d => {
+        const paid = (d.sourceId && paidSourceIds.has(d.sourceId)) || paidDescriptions.has(d.description)
+        return { date: d.date, value: Number(d.value), description: d.description, paid }
+      })
 
       return {
         id: p.id,
