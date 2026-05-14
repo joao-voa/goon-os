@@ -519,10 +519,11 @@ export class CrmService {
               continue
             }
 
-            // Check duplicate by email or whatsapp
-            const orConditions: Array<Record<string, string>> = []
+            // Check duplicate by email, whatsapp, or companyName
+            const orConditions: Array<Record<string, unknown>> = []
             if (lead.email) orConditions.push({ email: lead.email })
             if (lead.whatsapp) orConditions.push({ whatsapp: lead.whatsapp })
+            if (lead.companyName) orConditions.push({ companyName: lead.companyName })
 
             if (orConditions.length > 0) {
               const existing = await this.prisma.client.findFirst({
