@@ -41,6 +41,7 @@ export default function CashflowPage() {
   const [expandedMonth, setExpandedMonth] = useState<number | null>(new Date().getMonth() + 1)
   const [fullscreen, setFullscreen] = useState(false)
   const [viewMode, setViewMode] = useState<'mensal' | 'diario'>('mensal')
+  const [comCarteira, setComCarteira] = useState(true)
   const [dailyMonth, setDailyMonth] = useState(new Date().getMonth())
   const [dailyData, setDailyData] = useState<Array<{ day: number; entradas: number; saidas: number; saldo: number; items: Array<{ type: 'entrada' | 'saida'; description: string; value: number }> }>>([])
 
@@ -129,6 +130,9 @@ export default function CashflowPage() {
               background: viewMode === v ? 'black' : 'white', color: viewMode === v ? 'white' : 'black',
             }}>{v === 'mensal' ? 'MENSAL' : 'DIARIO'}</button>
           ))}
+          <button onClick={() => setComCarteira(!comCarteira)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: comCarteira ? '#006600' : '#cc0000', color: 'white' }}>
+            {comCarteira ? 'COM CARTEIRA' : 'SEM CARTEIRA'}
+          </button>
           <button onClick={() => setFullscreen(!fullscreen)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: fullscreen ? 'black' : 'white', color: fullscreen ? 'white' : 'black' }}>
             {fullscreen ? 'MINIMIZAR' : 'MAXIMIZAR'}
           </button>
@@ -219,8 +223,14 @@ export default function CashflowPage() {
       {(() => {
         const currentMonth = new Date().getMonth()
         const mesAtual = data.months[currentMonth]
-        const aReceberAno = data.totals.entradas - data.totals.entradasReceived
-        const aReceberMes = mesAtual ? mesAtual.entradas.pending + mesAtual.entradas.overdue : 0
+        // Carteira de cobranca (inadimplentes)
+        const overdueAno = data.months.reduce((s, m) => s + m.entradas.overdue, 0)
+        const overdueMes = mesAtual ? mesAtual.entradas.overdue : 0
+        // Quando SEM CARTEIRA, exclui overdue das entradas
+        const entradasAno = comCarteira ? data.totals.entradas : data.totals.entradas - overdueAno
+        const entradasMes = comCarteira ? (mesAtual?.entradas.total ?? 0) : (mesAtual ? mesAtual.entradas.received + mesAtual.entradas.pending : 0)
+        const aReceberAno = comCarteira ? data.totals.entradas - data.totals.entradasReceived : data.totals.entradas - data.totals.entradasReceived - overdueAno
+        const aReceberMes = mesAtual ? (comCarteira ? mesAtual.entradas.pending + mesAtual.entradas.overdue : mesAtual.entradas.pending) : 0
         const gastosAno = data.totals.saidas + data.totals.comissoes
         const gastosMes = mesAtual ? mesAtual.saidas.total + mesAtual.comissoes.total : 0
         const aPagarAno = (data.totals.saidas - data.totals.saidasPago) + (data.totals.comissoes - data.totals.comissoesPaid)
@@ -233,17 +243,17 @@ export default function CashflowPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 12 }}>
             <div style={cardStyle('#1e293b')}>
               <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Faturamento em Carteira (Ano)</div>
-              <div style={{ fontSize: 18 }}>{fmt(data.totals.entradas)}</div>
-              <div style={{ fontSize: 9, opacity: 0.7 }}>Todos os pagamentos {year}</div>
+              <div style={{ fontSize: 18 }}>{fmt(entradasAno)}</div>
+              <div style={{ fontSize: 9, opacity: 0.7 }}>{comCarteira ? 'Todos os pagamentos' : 'Excluindo inadimplentes'} {year}</div>
             </div>
             <div style={cardStyle('#334155')}>
               <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Receber (Carteira)</div>
               <div style={{ fontSize: 18 }}>{fmt(aReceberAno)}</div>
-              <div style={{ fontSize: 9, opacity: 0.7 }}>Pendente + Vencido no ano</div>
+              <div style={{ fontSize: 9, opacity: 0.7 }}>{comCarteira ? 'Pendente + Vencido' : 'Somente pendente'}</div>
             </div>
             <div style={cardStyle('#475569')}>
               <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Faturamento Previsto (Mes)</div>
-              <div style={{ fontSize: 18 }}>{fmt(mesAtual?.entradas.total ?? 0)}</div>
+              <div style={{ fontSize: 18 }}>{fmt(entradasMes)}</div>
               <div style={{ fontSize: 9, opacity: 0.7 }}>Recebido: {fmt(mesAtual?.entradas.received ?? 0)}</div>
             </div>
             <div style={cardStyle('#64748b')}>
@@ -251,6 +261,13 @@ export default function CashflowPage() {
               <div style={{ fontSize: 18 }}>{fmt(aReceberMes)}</div>
               <div style={{ fontSize: 9, opacity: 0.7 }}>Falta receber este mes</div>
             </div>
+            {!comCarteira && overdueAno > 0 && (
+              <div style={cardStyle('#cc0000')}>
+                <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Carteira de Cobranca</div>
+                <div style={{ fontSize: 18 }}>{fmt(overdueAno)}</div>
+                <div style={{ fontSize: 9, opacity: 0.7 }}>Inadimplentes a recuperar</div>
+              </div>
+            )}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 12 }}>
             <div style={cardStyle('#1e293b')}>
@@ -278,9 +295,9 @@ export default function CashflowPage() {
           {(() => {
             const resultadoStyle = (val: number): React.CSSProperties => ({ ...cardStyle(val >= 0 ? '#166534' : '#991b1b'), })
             const saldoRealizadoAno = data.totals.saldo
-            const saldoProjetadoAno = data.totals.saldoProjetado
+            const saldoProjetadoAno = comCarteira ? data.totals.saldoProjetado : data.totals.saldoProjetado - overdueAno
             const saldoRealizadoMes = mesAtual ? mesAtual.saldo : 0
-            const saldoProjetadoMes = mesAtual ? mesAtual.saldoProjetado : 0
+            const saldoProjetadoMes = mesAtual ? (comCarteira ? mesAtual.saldoProjetado : mesAtual.saldoProjetado - overdueMes) : 0
             return (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
                 <div style={resultadoStyle(saldoRealizadoAno)}>
