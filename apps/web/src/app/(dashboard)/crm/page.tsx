@@ -40,6 +40,7 @@ interface LeadItem {
   estimatedRevenue: string | null
   segment: string | null
   suggestedProduct: string | null
+  cardResponsible: string | null
   productCode: string | null
   stageChangedAt: string | null
   createdAt: string
@@ -571,6 +572,7 @@ function LeadDetailModal({
   const [editPaymentMethod, setEditPaymentMethod] = useState(lead.paymentMethod ?? '')
   const [editSalesRep, setEditSalesRep] = useState(lead.salesRep ?? '')
   const [editSuggestedProduct, setEditSuggestedProduct] = useState(lead.suggestedProduct ?? '')
+  const [editCardResponsible, setEditCardResponsible] = useState(lead.cardResponsible ?? '')
   const [editEstimatedRevenue, setEditEstimatedRevenue] = useState(lead.estimatedRevenue ?? '')
   const [editLeadNotes, setEditLeadNotes] = useState(lead.leadNotes ?? '')
   const [saving, setSaving] = useState(false)
@@ -711,6 +713,14 @@ function LeadDetailModal({
                     <option value="AURA">AURA 360</option>
                   </select>
                 </div>
+                <div>
+                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>RESPONSAVEL</label>
+                  <select value={editCardResponsible} onChange={e => setEditCardResponsible(e.target.value)} style={inputStyle}>
+                    <option value="">Selecione...</option>
+                    <option value="SOCIAL_SELLING">Social Selling</option>
+                    <option value="CLOSER">Closer</option>
+                  </select>
+                </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 <div>
@@ -760,6 +770,7 @@ function LeadDetailModal({
                         email: editEmail.trim() || null,
                         salesRep: editSalesRep.trim() || null,
                         suggestedProduct: editSuggestedProduct || null,
+                        cardResponsible: editCardResponsible || null,
                         estimatedRevenue: editEstimatedRevenue.trim() || null,
                         paymentMethod: editPaymentMethod || null,
                         saleValue: parseFloat(editSaleValue) || null,
@@ -1031,6 +1042,7 @@ export default function CrmPage() {
 
   useEffect(() => { loadCommercialMeetings() }, [loadCommercialMeetings])
   const [salesRepFilter, setSalesRepFilter] = useState('')
+  const [cardResponsibleFilter, setCardResponsibleFilter] = useState('')
   const isMobile = useIsMobile()
 
   const PIPELINE_STAGES = LEAD_STAGES
@@ -1127,7 +1139,7 @@ export default function CrmPage() {
     }
   }
 
-  const activeLeads = leads.filter(l => !salesRepFilter || l.salesRep === salesRepFilter)
+  const activeLeads = leads.filter(l => (!salesRepFilter || l.salesRep === salesRepFilter) && (!cardResponsibleFilter || l.cardResponsible === cardResponsibleFilter))
 
   const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 
@@ -1440,26 +1452,39 @@ export default function CrmPage() {
         </div>
       </div>
 
-      {/* Vendor Filter Chips */}
-      {(() => {
-        const reps = [...new Set(leads.map(l => l.salesRep).filter(Boolean))] as string[]
-        if (reps.length === 0) return null
-        return (
-          <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Vendedor:</span>
-            <button onClick={() => setSalesRepFilter('')} style={{
-              padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
-              background: salesRepFilter === '' ? 'black' : 'white', color: salesRepFilter === '' ? 'white' : 'black',
-            }}>TODOS</button>
-            {reps.map(rep => (
-              <button key={rep} onClick={() => setSalesRepFilter(salesRepFilter === rep ? '' : rep)} style={{
+      {/* Filter Chips */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 12, flexWrap: 'wrap' }}>
+        {/* Vendor */}
+        {(() => {
+          const reps = [...new Set(leads.map(l => l.salesRep).filter(Boolean))] as string[]
+          if (reps.length === 0) return null
+          return (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Vendedor:</span>
+              <button onClick={() => setSalesRepFilter('')} style={{
                 padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
-                background: salesRepFilter === rep ? 'black' : 'white', color: salesRepFilter === rep ? 'white' : 'black',
-              }}>{rep}</button>
-            ))}
-          </div>
-        )
-      })()}
+                background: salesRepFilter === '' ? 'black' : 'white', color: salesRepFilter === '' ? 'white' : 'black',
+              }}>TODOS</button>
+              {reps.map(rep => (
+                <button key={rep} onClick={() => setSalesRepFilter(salesRepFilter === rep ? '' : rep)} style={{
+                  padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+                  background: salesRepFilter === rep ? 'black' : 'white', color: salesRepFilter === rep ? 'white' : 'black',
+                }}>{rep}</button>
+              ))}
+            </div>
+          )
+        })()}
+        {/* Responsavel */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Responsavel:</span>
+          {['', 'SOCIAL_SELLING', 'CLOSER'].map(val => (
+            <button key={val} onClick={() => setCardResponsibleFilter(cardResponsibleFilter === val ? '' : val)} style={{
+              padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+              background: cardResponsibleFilter === val ? 'black' : 'white', color: cardResponsibleFilter === val ? 'white' : 'black',
+            }}>{val === '' ? 'TODOS' : val === 'SOCIAL_SELLING' ? 'SOCIAL SELLING' : 'CLOSER'}</button>
+          ))}
+        </div>
+      </div>
 
       {/* KPI Strip */}
       <div style={{

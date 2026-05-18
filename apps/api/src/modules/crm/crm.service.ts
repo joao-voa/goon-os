@@ -32,8 +32,8 @@ export class CrmService {
     private expensesService: ExpensesService,
   ) {}
 
-  async findPipeline(params: { salesRep?: string; leadSource?: string }) {
-    const { salesRep, leadSource } = params
+  async findPipeline(params: { salesRep?: string; leadSource?: string; cardResponsible?: string }) {
+    const { salesRep, leadSource, cardResponsible } = params
 
     const where: Record<string, unknown> = {
       leadStage: { not: null },
@@ -41,6 +41,7 @@ export class CrmService {
 
     if (salesRep) where.salesRep = salesRep
     if (leadSource) where.leadSource = leadSource
+    if (cardResponsible) where.cardResponsible = cardResponsible
 
     const leads = await this.prisma.client.findMany({
       where,
@@ -63,6 +64,7 @@ export class CrmService {
         estimatedRevenue: true,
         segment: true,
         suggestedProduct: true,
+        cardResponsible: true,
         stageChangedAt: true,
         createdAt: true,
         closedAt: true,

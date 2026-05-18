@@ -22,8 +22,9 @@ export class CrmController {
   findPipeline(
     @Query('salesRep') salesRep?: string,
     @Query('leadSource') leadSource?: string,
+    @Query('cardResponsible') cardResponsible?: string,
   ) {
-    return this.service.findPipeline({ salesRep, leadSource })
+    return this.service.findPipeline({ salesRep, leadSource, cardResponsible })
   }
 
   @Get('metrics')

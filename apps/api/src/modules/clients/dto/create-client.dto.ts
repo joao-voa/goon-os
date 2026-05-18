@@ -91,6 +91,9 @@ export class CreateClientDto {
   @IsOptional() @IsString()
   selectedModules?: string
 
+  @IsOptional() @IsString()
+  cardResponsible?: string
+
   @IsOptional() @IsBoolean()
   hasContract?: boolean
 
