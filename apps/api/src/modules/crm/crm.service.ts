@@ -717,6 +717,7 @@ export class CrmService {
     estimatedRevenue?: string
     productInterest?: string
     suggestedProduct?: string
+    cardResponsible?: string
   }) {
     const { productInterest, ...clientData } = dto
     if (productInterest && !clientData.suggestedProduct) {

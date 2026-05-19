@@ -57,6 +57,10 @@ export class CrmController {
       salesRep?: string
       leadNotes?: string
       segment?: string
+      suggestedProduct?: string
+      cardResponsible?: string
+      estimatedRevenue?: string
+      selectedModules?: string
     },
   ) {
     return this.service.createLead(dto)
