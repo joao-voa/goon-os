@@ -1126,17 +1126,7 @@ export default function CrmPage() {
     }
   }
 
-  async function handleCreateLead(data: {
-    companyName: string
-    responsible: string
-    phone?: string
-    whatsapp?: string
-    email?: string
-    leadSource?: string
-    salesRep?: string
-    leadNotes?: string
-    selectedModules?: string
-  }) {
+  async function handleCreateLead(data: Record<string, unknown>) {
     try {
       await apiFetch('/api/crm/leads', {
         method: 'POST',
