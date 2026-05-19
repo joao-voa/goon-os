@@ -92,7 +92,16 @@ export class CreateClientDto {
   selectedModules?: string
 
   @IsOptional() @IsString()
+  suggestedProduct?: string
+
+  @IsOptional() @IsString()
   cardResponsible?: string
+
+  @IsOptional() @IsString()
+  stageChangedAt?: string
+
+  @IsOptional() @IsString()
+  closedAt?: string
 
   @IsOptional() @IsBoolean()
   hasContract?: boolean
