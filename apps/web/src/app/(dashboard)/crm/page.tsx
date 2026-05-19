@@ -289,6 +289,7 @@ function NewLeadModal({
     leadNotes?: string
     selectedModules?: string
     productInterest?: string
+    cardResponsible?: string
   }) => Promise<void>
   products: Array<{ id: string; code: string; name: string }>
   salesRepSuggestions?: string[]
@@ -303,6 +304,7 @@ function NewLeadModal({
   const [estimatedRevenue, setEstimatedRevenue] = useState('')
   const [leadNotes, setLeadNotes] = useState('')
   const [productInterest, setProductInterest] = useState('')
+  const [cardResponsible, setCardResponsible] = useState('')
   const [modules, setModules] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
 
@@ -332,6 +334,7 @@ function NewLeadModal({
         leadNotes: leadNotes.trim() || undefined,
         selectedModules: modules.length > 0 ? JSON.stringify(modules) : undefined,
         productInterest: productInterest || undefined,
+        cardResponsible: cardResponsible || undefined,
       })
     } finally {
       setSubmitting(false)
@@ -419,6 +422,14 @@ function NewLeadModal({
                 {(salesRepSuggestions ?? []).map(s => <option key={s} value={s} />)}
               </datalist>
             </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Responsavel</label>
+            <select value={cardResponsible} onChange={e => setCardResponsible(e.target.value)} style={inputStyle}>
+              <option value="">Selecione...</option>
+              <option value="SOCIAL_SELLING">Social Selling</option>
+              <option value="CLOSER">Closer</option>
+            </select>
           </div>
           <div>
             <label style={labelStyle}>Faturamento</label>
