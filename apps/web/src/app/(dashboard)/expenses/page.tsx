@@ -254,6 +254,15 @@ export default function ExpensesPage() {
         </table>
       </div>
 
+      {/* Paginacao */}
+      {total > 20 && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16, fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: '6px 14px', border: '2px solid black', cursor: page <= 1 ? 'default' : 'pointer', fontWeight: 700, opacity: page <= 1 ? 0.4 : 1 }}>ANTERIOR</button>
+          <span style={{ fontWeight: 700 }}>Pagina {page} de {Math.ceil(total / 20)}</span>
+          <button disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)} style={{ padding: '6px 14px', border: '2px solid black', cursor: page >= Math.ceil(total / 20) ? 'default' : 'pointer', fontWeight: 700, opacity: page >= Math.ceil(total / 20) ? 0.4 : 1 }}>PROXIMA</button>
+        </div>
+      )}
+
       {/* Modal */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
