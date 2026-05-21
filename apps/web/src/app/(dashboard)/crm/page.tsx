@@ -1054,6 +1054,7 @@ export default function CrmPage() {
   useEffect(() => { loadCommercialMeetings() }, [loadCommercialMeetings])
   const [salesRepFilter, setSalesRepFilter] = useState('')
   const [cardResponsibleFilter, setCardResponsibleFilter] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const isMobile = useIsMobile()
 
   const PIPELINE_STAGES = LEAD_STAGES
@@ -1140,7 +1141,15 @@ export default function CrmPage() {
     }
   }
 
-  const activeLeads = leads.filter(l => (!salesRepFilter || l.salesRep === salesRepFilter) && (!cardResponsibleFilter || l.cardResponsible === cardResponsibleFilter))
+  const activeLeads = leads.filter(l => {
+    if (salesRepFilter && l.salesRep !== salesRepFilter) return false
+    if (cardResponsibleFilter && l.cardResponsible !== cardResponsibleFilter) return false
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      if (!l.companyName.toLowerCase().includes(q) && !l.responsible.toLowerCase().includes(q) && !(l.email?.toLowerCase().includes(q)) && !(l.phone?.includes(q))) return false
+    }
+    return true
+  })
 
   const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 
@@ -1451,6 +1460,16 @@ export default function CrmPage() {
             + NOVO LEAD
           </button>
         </div>
+      </div>
+
+      {/* Busca */}
+      <div style={{ marginBottom: 12 }}>
+        <input
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Buscar lead por nome, responsavel, email ou telefone..."
+          style={{ width: '100%', padding: '8px 12px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12, boxShadow: '3px 3px 0 black' }}
+        />
       </div>
 
       {/* Filter Chips */}
