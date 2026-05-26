@@ -255,7 +255,11 @@ export class PlansService {
     }
 
     // Add virtual "Giulliano (AURA)" entries for unassigned plan value
+    // Skip plans that already have a Giulliano mentor assigned
     for (const plan of activePlans) {
+      const hasGiulliano = plan.mentors.some(m => m.mentorName.toLowerCase().includes('giulliano'))
+      if (hasGiulliano) continue
+
       const planValue = Number(plan.value)
       const assignedTotal = plan.mentors.reduce((s, m) => s + Number(m.value), 0)
       const giullianoValue = planValue - assignedTotal
