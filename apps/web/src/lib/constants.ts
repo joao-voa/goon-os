@@ -102,26 +102,37 @@ export const CONTRACT_STATUS_COLORS: Record<string, string> = {
 
 export const LEAD_STAGES = [
   'NOVO',
-  'FOLLOW_UP',
+  'FUP',
+  'QUALIFICADO',
+  'REUNIAO_AGENDADA',
   'EM_NEGOCIACAO',
+  'PROPOSTA_ENVIADA',
   'FECHADO',
   'PERDIDO',
 ] as const
 
 export const LEAD_STAGE_LABELS: Record<string, string> = {
   NOVO: 'Novo',
-  FOLLOW_UP: 'Follow Up',
+  FUP: 'FUP',
+  QUALIFICADO: 'Qualificado',
+  REUNIAO_AGENDADA: 'Reuniao Agendada',
   EM_NEGOCIACAO: 'Em Negociacao',
-  FECHADO: 'Fechado',
-  PERDIDO: 'Perdido',
+  PROPOSTA_ENVIADA: 'Proposta Enviada',
+  FECHADO: 'Fechado Ganho',
+  PERDIDO: 'Fechado Perdido',
+  FOLLOW_UP: 'Follow Up',
 }
 
 export const LEAD_STAGE_COLORS: Record<string, string> = {
   NOVO: '#4A78FF',
-  FOLLOW_UP: '#06b6d4',
+  FUP: '#06b6d4',
+  QUALIFICADO: '#8b5cf6',
+  REUNIAO_AGENDADA: '#0ea5e9',
   EM_NEGOCIACAO: '#f97316',
+  PROPOSTA_ENVIADA: '#e6a800',
   FECHADO: '#22c55e',
   PERDIDO: '#cc0000',
+  FOLLOW_UP: '#06b6d4',
 }
 
 export const LEAD_SOURCE_LABELS: Record<string, string> = {

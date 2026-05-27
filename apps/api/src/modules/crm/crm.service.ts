@@ -8,8 +8,11 @@ import { TAX_RATE, getNextCommissionPaymentDate } from '../../shared/constants'
 
 const VALID_LEAD_STAGES = [
   'NOVO',
-  'FOLLOW_UP',
+  'FUP',
+  'QUALIFICADO',
+  'REUNIAO_AGENDADA',
   'EM_NEGOCIACAO',
+  'PROPOSTA_ENVIADA',
   'FECHADO',
   'PERDIDO',
 ]
