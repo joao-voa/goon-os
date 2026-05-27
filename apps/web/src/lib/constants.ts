@@ -105,19 +105,19 @@ export const LEAD_STAGES = [
   'FUP',
   'QUALIFICADO',
   'REUNIAO_AGENDADA',
-  'EM_NEGOCIACAO',
   'PROPOSTA_ENVIADA',
+  'EM_NEGOCIACAO',
   'FECHADO',
   'PERDIDO',
 ] as const
 
 export const LEAD_STAGE_LABELS: Record<string, string> = {
   NOVO: 'Novo',
-  FUP: 'FUP',
+  FUP: 'Follow Up',
   QUALIFICADO: 'Qualificado',
   REUNIAO_AGENDADA: 'Reuniao Agendada',
-  EM_NEGOCIACAO: 'Em Negociacao',
   PROPOSTA_ENVIADA: 'Proposta Enviada',
+  EM_NEGOCIACAO: 'Em Negociacao',
   FECHADO: 'Fechado Ganho',
   PERDIDO: 'Fechado Perdido',
   FOLLOW_UP: 'Follow Up',
