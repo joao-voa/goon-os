@@ -274,6 +274,7 @@ model Payment {
   value             Decimal   @db.Decimal(10, 2)
   status            String    @default("PENDING") // PENDING, PAID, OVERDUE, CANCELLED, SCHEDULED
   paidAt            DateTime? // data do pagamento
+  inCarteira        Boolean   @default(false) // carteira de cobranca
   observation       String?
 
   client      Client      @relation(fields: [clientId], references: [id])

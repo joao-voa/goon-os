@@ -452,10 +452,10 @@ export default function PendenciesPage() {
   const searchParams = useSearchParams()
 
   const [pendTab, setPendTab] = useState<'inadimplentes' | 'contratos' | 'todas'>('inadimplentes')
-  const [overduePayments, setOverduePayments] = useState<Array<{ id: string; value: number; dueDate: string; installment: number; client: { id: string; companyName: string }; productCode?: string }>>([])
+  const [overduePayments, setOverduePayments] = useState<Array<{ id: string; value: number; dueDate: string; installment: number; inCarteira?: boolean; client: { id: string; companyName: string }; productCode?: string }>>([])
   const [expiringPlans, setExpiringPlans] = useState<Array<{ id: string; companyName: string; contractEndDate: string; daysLeft: number; expired: boolean; productCode?: string }>>([])
   const [productFilter, setProductFilter] = useState('')
-  const [comCarteira, setComCarteira] = useState(true)
+  const [carteiraFilter, setCarteiraFilter] = useState<'todos' | 'carteira' | 'sem'>('todos')
   const [pendencies, setPendencies] = useState<Pendency[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -606,27 +606,23 @@ export default function PendenciesPage() {
 
       {/* INADIMPLENTES TAB */}
       {pendTab === 'inadimplentes' && (() => {
-        const CARTEIRA_DAYS = 15
         const withProduct = productFilter ? overduePayments.filter(p => p.productCode === productFilter) : overduePayments
-        const filtered = comCarteira ? withProduct : withProduct.filter(p => Math.floor((Date.now() - new Date(p.dueDate).getTime()) / (1000*60*60*24)) <= CARTEIRA_DAYS)
-        const carteiraItems = withProduct.filter(p => Math.floor((Date.now() - new Date(p.dueDate).getTime()) / (1000*60*60*24)) > CARTEIRA_DAYS)
+        const filtered = carteiraFilter === 'todos' ? withProduct : carteiraFilter === 'carteira' ? withProduct.filter(p => p.inCarteira) : withProduct.filter(p => !p.inCarteira)
+        const carteiraItems = withProduct.filter(p => p.inCarteira)
         const carteiraTotal = carteiraItems.reduce((s, p) => s + p.value, 0)
+        const semCarteiraTotal = withProduct.filter(p => !p.inCarteira).reduce((s, p) => s + p.value, 0)
         return (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
             <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14 }}>CLIENTES INADIMPLENTES</div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {!comCarteira && carteiraTotal > 0 && (
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#cc0000', fontWeight: 700 }}>
-                  Carteira: {fmtBRL(carteiraTotal)} ({carteiraItems.length})
-                </span>
-              )}
-              <button onClick={() => setComCarteira(!comCarteira)} style={{
-                padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11,
-                background: comCarteira ? '#006600' : '#cc0000', color: 'white',
-              }}>
-                {comCarteira ? 'COM CARTEIRA' : 'SEM CARTEIRA'}
-              </button>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, color: '#666' }}>FILTRO:</span>
+              {([['todos', 'TODOS', '#1e293b'], ['sem', 'SEM CARTEIRA', '#006600'], ['carteira', 'EM CARTEIRA', '#cc0000']] as const).map(([key, label, bg]) => (
+                <button key={key} onClick={() => setCarteiraFilter(carteiraFilter === key ? 'todos' : key)} style={{
+                  padding: '4px 10px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 10,
+                  background: carteiraFilter === key ? bg : 'white', color: carteiraFilter === key ? 'white' : 'black',
+                }}>{label}{key === 'carteira' && carteiraItems.length > 0 ? ' (' + fmtBRL(carteiraTotal) + ')' : ''}{key === 'sem' ? ' (' + fmtBRL(semCarteiraTotal) + ')' : ''}</button>
+              ))}
             </div>
           </div>
           {filtered.length === 0 ? (
@@ -649,8 +645,11 @@ export default function PendenciesPage() {
                   {filtered.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).map(pay => {
                     const days = Math.floor((Date.now() - new Date(pay.dueDate).getTime()) / (1000*60*60*24))
                     return (
-                      <tr key={pay.id} style={{ borderBottom: '1px solid #ddd' }}>
-                        <td style={{ padding: '8px 12px', fontWeight: 700, cursor: 'pointer' }} onClick={() => window.location.href = `/clients/${pay.client.id}`}>{pay.client.companyName}</td>
+                      <tr key={pay.id} style={{ borderBottom: '1px solid #ddd', background: pay.inCarteira ? '#fff5f5' : 'transparent' }}>
+                        <td style={{ padding: '8px 12px', fontWeight: 700, cursor: 'pointer' }} onClick={() => window.location.href = `/clients/${pay.client.id}`}>
+                          {pay.inCarteira && <span style={{ color: '#cc0000', marginRight: 4, fontSize: 10 }}>C</span>}
+                          {pay.client.companyName}
+                        </td>
                         <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                           {pay.productCode && <span style={{ background: PRODUCT_COLORS[pay.productCode] ?? '#888', color: 'white', padding: '2px 6px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{pay.productCode}</span>}
                         </td>
@@ -674,6 +673,13 @@ export default function PendenciesPage() {
                               } catch { toast.error('Erro ao dar baixa') }
                             }} style={{ background: '#006600', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>PAGAR</button>
                             <button onClick={() => window.location.href = `/clients/${pay.client.id}`} style={{ background: '#4A78FF', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>VER</button>
+                            <button onClick={async () => {
+                              try {
+                                await apiFetch(`/api/payments/${pay.id}/carteira`, { method: 'PATCH', body: JSON.stringify({ inCarteira: !pay.inCarteira }) })
+                                setOverduePayments(prev => prev.map(p => p.id === pay.id ? { ...p, inCarteira: !p.inCarteira } : p))
+                                toast.success(pay.inCarteira ? 'Removido da carteira' : 'Adicionado a carteira')
+                              } catch { toast.error('Erro') }
+                            }} style={{ background: pay.inCarteira ? '#e6a800' : '#888', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{pay.inCarteira ? 'TIRAR' : 'CARTEIRA'}</button>
                           </div>
                         </td>
                       </tr>

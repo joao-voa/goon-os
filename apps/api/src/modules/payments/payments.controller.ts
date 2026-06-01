@@ -112,6 +112,11 @@ export class PaymentsController {
     return this.paymentsService.markAsPaid(id, body?.paidAt)
   }
 
+  @Patch('api/payments/:id/carteira')
+  toggleCarteira(@Param('id') id: string, @Body() body: { inCarteira: boolean }) {
+    return this.paymentsService.toggleCarteira(id, body.inCarteira)
+  }
+
   @Post('api/payments/check-overdue')
   checkOverdue() {
     return this.paymentsService.markAsOverdue()

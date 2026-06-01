@@ -289,6 +289,13 @@ export class PaymentsService {
     return { ...payment, value: payment.value.toNumber() }
   }
 
+  async toggleCarteira(id: string, inCarteira: boolean) {
+    const existing = await this.prisma.payment.findUnique({ where: { id } })
+    if (!existing) throw new NotFoundException(`Payment ${id} not found`)
+    const payment = await this.prisma.payment.update({ where: { id }, data: { inCarteira } })
+    return { ...payment, value: payment.value.toNumber() }
+  }
+
   async markAsOverdue() {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
