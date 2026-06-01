@@ -455,6 +455,7 @@ export default function PendenciesPage() {
   const [overduePayments, setOverduePayments] = useState<Array<{ id: string; value: number; dueDate: string; installment: number; client: { id: string; companyName: string }; productCode?: string }>>([])
   const [expiringPlans, setExpiringPlans] = useState<Array<{ id: string; companyName: string; contractEndDate: string; daysLeft: number; expired: boolean; productCode?: string }>>([])
   const [productFilter, setProductFilter] = useState('')
+  const [comCarteira, setComCarteira] = useState(true)
   const [pendencies, setPendencies] = useState<Pendency[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -605,10 +606,29 @@ export default function PendenciesPage() {
 
       {/* INADIMPLENTES TAB */}
       {pendTab === 'inadimplentes' && (() => {
-        const filtered = productFilter ? overduePayments.filter(p => p.productCode === productFilter) : overduePayments
+        const CARTEIRA_DAYS = 15
+        const withProduct = productFilter ? overduePayments.filter(p => p.productCode === productFilter) : overduePayments
+        const filtered = comCarteira ? withProduct : withProduct.filter(p => Math.floor((Date.now() - new Date(p.dueDate).getTime()) / (1000*60*60*24)) <= CARTEIRA_DAYS)
+        const carteiraItems = withProduct.filter(p => Math.floor((Date.now() - new Date(p.dueDate).getTime()) / (1000*60*60*24)) > CARTEIRA_DAYS)
+        const carteiraTotal = carteiraItems.reduce((s, p) => s + p.value, 0)
         return (
         <div>
-          <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, marginBottom: 16 }}>CLIENTES INADIMPLENTES</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14 }}>CLIENTES INADIMPLENTES</div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {!comCarteira && carteiraTotal > 0 && (
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#cc0000', fontWeight: 700 }}>
+                  Carteira: {fmtBRL(carteiraTotal)} ({carteiraItems.length})
+                </span>
+              )}
+              <button onClick={() => setComCarteira(!comCarteira)} style={{
+                padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11,
+                background: comCarteira ? '#006600' : '#cc0000', color: 'white',
+              }}>
+                {comCarteira ? 'COM CARTEIRA' : 'SEM CARTEIRA'}
+              </button>
+            </div>
+          </div>
           {filtered.length === 0 ? (
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#006600', padding: 24, textAlign: 'center', border: '1px dashed #006600' }}>Nenhum inadimplente!</div>
           ) : (
