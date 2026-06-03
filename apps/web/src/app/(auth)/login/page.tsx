@@ -70,9 +70,8 @@ export default function LoginPage() {
       }}>
         {/* Header */}
         <div style={{ padding: '2.5rem 2rem 0', textAlign: 'center' }}>
-          <div style={{ marginBottom: 8 }}>
-            <span style={{ color: '#d4a017', fontWeight: 800, fontSize: 28, fontFamily: 'var(--font-sans)', letterSpacing: '-0.02em' }}>AURA360</span>
-            <span style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500, fontFamily: 'var(--font-sans)', marginLeft: 6 }}>Operacional System</span>
+          <div style={{ marginBottom: 12 }}>
+            <img src="/logo-aura360.png" alt="Aura 360" style={{ height: 48, margin: '0 auto' }} />
           </div>
           <p style={{ fontFamily: 'var(--font-sans)', color: '#94a3b8', fontSize: 13, fontWeight: 500 }}>
             Acesse sua conta
