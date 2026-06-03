@@ -129,7 +129,7 @@ export default function LoginPage() {
             color: 'white',
             textTransform: 'uppercase',
             letterSpacing: 1,
-          }}>GOON OS — LOGIN</span>
+          }}>AURA360 OS — LOGIN</span>
           <div style={{ display: 'flex', gap: 6 }}>
             <div style={{ width: 12, height: 12, background: '#cc0000', border: '1px solid black' }} />
             <div style={{ width: 12, height: 12, background: '#cc8800', border: '1px solid black' }} />
@@ -152,7 +152,7 @@ export default function LoginPage() {
                 lineHeight: 1.4,
               }}
             >
-              GOON OS
+              AURA360 OS
             </h1>
             <p
               style={{

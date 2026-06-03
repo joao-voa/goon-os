@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'GOON OS — Sistema de Gestão',
-  description: 'Sistema operacional da GOON Consultoria',
+  title: 'AURA360 OS — Sistema de Gestão',
+  description: 'Sistema operacional AURA360',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

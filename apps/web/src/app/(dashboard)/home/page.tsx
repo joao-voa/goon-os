@@ -66,7 +66,7 @@ export default function HomePage() {
     }}>
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
         <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 28, fontWeight: 700, marginBottom: 6 }}>
-          GOON OS
+          AURA360 OS
         </h1>
         {userName && (
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: '#333', marginBottom: 4 }}>

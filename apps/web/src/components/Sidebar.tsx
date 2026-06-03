@@ -137,7 +137,7 @@ export function Sidebar({
                 fontSize: 16,
                 fontFamily: 'var(--font-pixel)',
                 letterSpacing: '0.05em',
-              }}>GOON</span>
+              }}>AURA360</span>
               <span style={{
                 color: 'var(--retro-gray)',
                 fontSize: 10,
