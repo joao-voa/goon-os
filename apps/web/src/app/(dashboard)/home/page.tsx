@@ -65,17 +65,20 @@ export default function HomePage() {
       justifyContent: 'center', padding: '20px 0', minHeight: 'calc(100vh - 140px)',
     }}>
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
-        <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 700, marginBottom: 6 }}>
-          AURA360 Operacional System
-        </h1>
+        <img src="/logo-aura360.png" alt="Aura 360" style={{ height: 80, margin: '0 auto 12px' }} />
+        <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 16 }}>
+          Operacional System
+        </p>
         {userName && (
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: '#333', marginBottom: 4 }}>
-            Ola, {userName}
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 15, color: '#334155', fontWeight: 500 }}>
+            Seja bem-vindo ao Sistema Operacional da Aura360{userName ? `, ${userName}` : ''}.
           </p>
         )}
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#666', textTransform: 'uppercase', letterSpacing: 3 }}>
-          Sistema de Gestao
-        </p>
+        {!userName && (
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 15, color: '#334155', fontWeight: 500 }}>
+            Seja bem-vindo ao Sistema Operacional da Aura360.
+          </p>
+        )}
       </div>
 
       <div style={{

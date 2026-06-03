@@ -43,6 +43,7 @@ export default function CashflowPage() {
   const [viewMode, setViewMode] = useState<'mensal' | 'diario'>('mensal')
   const [comCarteira, setComCarteira] = useState(true)
   const [excluirGiu, setExcluirGiu] = useState(false)
+  const [expandedCat, setExpandedCat] = useState<string | null>(null)
   const [dailyMonth, setDailyMonth] = useState(new Date().getMonth())
   const [dailyData, setDailyData] = useState<Array<{ day: number; entradas: number; saidas: number; saldo: number; items: Array<{ type: 'entrada' | 'saida'; description: string; value: number }> }>>([])
 
@@ -466,12 +467,29 @@ export default function CashflowPage() {
                         const catLabels: Record<string, string> = { PESSOAL: 'Pessoal Giu', MENTORIA: 'Mentorias', COMISSAO: 'Comissao Vendas', IMPOSTOS: 'Impostos', MARKETING: 'Marketing', PESSOAS: 'Pessoas', SISTEMAS: 'Sistemas', ESTRUTURA: 'Estrutura', OUTRO: 'Outro' }
                         const catColors: Record<string, string> = { PESSOAL: '#000080', MENTORIA: '#4A78FF', COMISSAO: '#e6a800', IMPOSTOS: '#cc0000', MARKETING: '#7c3aed', PESSOAS: '#059669', SISTEMAS: '#06b6d4', ESTRUTURA: '#475569', OUTRO: '#888' }
                         const isExcluded = excluirGiu && cat === 'PESSOAL'
+                        const catKey = `${m.month}-${cat}`
+                        const isOpen = expandedCat === catKey
+                        const catItems = ((m.saidas as any).items as Array<{ description: string; category: string; value: number; status: string }> ?? []).filter(i => i.category === cat)
                         return (
-                          <tr key={cat} style={{ borderBottom: '1px solid #eee', opacity: isExcluded ? 0.35 : 1 }}>
-                            <td style={{ padding: '4px 8px 4px 24px', fontSize: 10, color: catColors[cat] ?? '#888', textDecoration: isExcluded ? 'line-through' : 'none' }}>↳ {catLabels[cat] ?? cat}{isExcluded ? ' (excluido)' : ''}</td>
-                            <td colSpan={2} />
-                            <td style={{ padding: '4px 8px', textAlign: 'right', fontSize: 10, color: '#555', textDecoration: isExcluded ? 'line-through' : 'none' }}>{fmt(val)}</td>
-                          </tr>
+                          <React.Fragment key={cat}>
+                            <tr style={{ borderBottom: '1px solid #eee', opacity: isExcluded ? 0.35 : 1, cursor: 'pointer' }} onClick={() => setExpandedCat(isOpen ? null : catKey)}>
+                              <td style={{ padding: '4px 8px 4px 24px', fontSize: 10, color: catColors[cat] ?? '#888', textDecoration: isExcluded ? 'line-through' : 'none' }}>
+                                <span style={{ marginRight: 4, fontSize: 8 }}>{isOpen ? '▼' : '▶'}</span>
+                                {catLabels[cat] ?? cat}{isExcluded ? ' (excluido)' : ''} ({catItems.length})
+                              </td>
+                              <td colSpan={2} />
+                              <td style={{ padding: '4px 8px', textAlign: 'right', fontSize: 10, color: '#555', textDecoration: isExcluded ? 'line-through' : 'none' }}>{fmt(val)}</td>
+                            </tr>
+                            {isOpen && catItems.sort((a, b) => a.description.localeCompare(b.description)).map((item, idx) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid #f5f5f5' }}>
+                                <td style={{ padding: '3px 8px 3px 40px', fontSize: 9, color: '#666' }}>• {item.description}</td>
+                                <td colSpan={2} style={{ padding: '3px 8px', textAlign: 'center', fontSize: 8 }}>
+                                  <span style={{ background: item.status === 'PAGO' ? '#dcfce7' : '#fef3c7', color: item.status === 'PAGO' ? '#166534' : '#92400e', padding: '1px 6px', borderRadius: 100 }}>{item.status}</span>
+                                </td>
+                                <td style={{ padding: '3px 8px', textAlign: 'right', fontSize: 9, color: '#555' }}>{fmt(item.value)}</td>
+                              </tr>
+                            ))}
+                          </React.Fragment>
                         )
                       })}
                       <tr style={{ borderBottom: '1px solid #ddd', background: '#fffff0' }}>

@@ -106,13 +106,14 @@ export function Sidebar({
           flexShrink: 0,
         }}>
           {(!collapsed || isMobile) && (
-            <a href="/home" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-              <img src="/logo-aura360.png" alt="Aura 360" style={{ height: 32, filter: 'brightness(0) invert(1)' }} />
+            <a href="/home" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, textDecoration: 'none' }}>
+              <img src="/logo-aura360.png" alt="Aura 360" style={{ height: 36, filter: 'brightness(0) invert(1)' }} />
+              <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8, fontFamily: 'var(--font-sans)', fontWeight: 500, letterSpacing: '0.1em' }}>OPERACIONAL SYSTEM</span>
             </a>
           )}
           {collapsed && !isMobile && (
             <a href="/home" style={{ textDecoration: 'none' }}>
-              <img src="/logo-aura360.png" alt="A" style={{ height: 24, filter: 'brightness(0) invert(1)' }} />
+              <img src="/logo-aura360.png" alt="A" style={{ height: 28, filter: 'brightness(0) invert(1)' }} />
             </a>
           )}
           {!isMobile && (
