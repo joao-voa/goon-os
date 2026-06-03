@@ -99,15 +99,15 @@ export function Sidebar({
       }}>
         {/* Logo */}
         <div style={{
-          height: 64, display: 'flex', alignItems: 'center',
+          minHeight: 64, display: 'flex', alignItems: 'center',
           justifyContent: collapsed && !isMobile ? 'center' : 'space-between',
-          padding: collapsed && !isMobile ? '0' : '0 16px 0 20px',
+          padding: collapsed && !isMobile ? '12px 0' : '12px 16px 12px 20px',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
           flexShrink: 0,
         }}>
           {(!collapsed || isMobile) && (
             <a href="/home" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, textDecoration: 'none' }}>
-              <img src="/logo-aura360.png" alt="Aura 360" style={{ height: 36, filter: 'brightness(0) invert(1)' }} />
+              <img src="/logo-aura360.png" alt="Aura 360" style={{ height: 108, filter: 'brightness(0) invert(1)' }} />
               <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8, fontFamily: 'var(--font-sans)', fontWeight: 500, letterSpacing: '0.1em' }}>OPERACIONAL SYSTEM</span>
             </a>
           )}

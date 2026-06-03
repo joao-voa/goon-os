@@ -65,7 +65,7 @@ export default function HomePage() {
       justifyContent: 'center', padding: '20px 0', minHeight: 'calc(100vh - 140px)',
     }}>
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
-        <img src="/logo-aura360.png" alt="Aura 360" style={{ height: 80, margin: '0 auto 12px' }} />
+        <img src="/logo-aura360.png" alt="Aura 360" style={{ height: 160, margin: '0 auto 12px' }} />
         <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 16 }}>
           Operacional System
         </p>
