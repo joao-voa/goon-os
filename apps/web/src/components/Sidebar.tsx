@@ -108,7 +108,7 @@ export function Sidebar({
           {(!collapsed || isMobile) && (
             <a href="/home" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, textDecoration: 'none' }}>
               <img src="/logo-aura360.png" alt="Aura 360" style={{ height: 108, filter: 'brightness(0) invert(1)' }} />
-              <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8, fontFamily: 'var(--font-sans)', fontWeight: 500, letterSpacing: '0.1em' }}>OPERACIONAL SYSTEM</span>
+              <span style={{ color: '#d4a017', fontSize: 9, fontFamily: 'var(--font-sans)', fontWeight: 600, letterSpacing: '0.12em' }}>OPERACIONAL SYSTEM</span>
             </a>
           )}
           {collapsed && !isMobile && (
