@@ -113,7 +113,10 @@ export default function CashflowPage() {
     )
   }
 
-  const barMax = Math.max(...data.months.map(m => Math.max(m.entradas.total, m.saidas.total + m.comissoes.total)), 1)
+  const barMax = Math.max(...data.months.map(m => {
+    const ent = comCarteira ? m.entradas.total : m.entradas.total - m.entradas.overdue
+    return Math.max(ent, m.saidas.total + m.comissoes.total)
+  }), 1)
 
   return (
     <div style={{
@@ -332,13 +335,14 @@ export default function CashflowPage() {
         <div className="goon-card-header">COMPARATIVO MENSAL</div>
         <div style={{ padding: '16px 20px', display: 'flex', gap: 8, alignItems: 'flex-end', minHeight: 250, overflowX: 'auto' }}>
           {data.months.map(m => {
-            const entH = barMax > 0 ? (m.entradas.total / barMax) * 160 : 0
+            const entValue = comCarteira ? m.entradas.total : m.entradas.total - m.entradas.overdue
+            const entH = barMax > 0 ? (entValue / barMax) * 160 : 0
             const saiH = barMax > 0 ? ((m.saidas.total + m.comissoes.total) / barMax) * 160 : 0
             return (
               <div key={m.month} style={{ flex: 1, minWidth: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                 <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 180 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: '#006600', fontWeight: 700, whiteSpace: 'nowrap', writingMode: 'vertical-lr', transform: 'rotate(180deg)', maxHeight: 55, letterSpacing: 0.5 }}>{m.entradas.total > 0 ? fmt(m.entradas.total) : ''}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: '#006600', fontWeight: 700, whiteSpace: 'nowrap', writingMode: 'vertical-lr', transform: 'rotate(180deg)', maxHeight: 55, letterSpacing: 0.5 }}>{entValue > 0 ? fmt(entValue) : ''}</span>
                     <div style={{ width: 22, height: Math.max(entH, 2), background: '#006600', border: '1px solid #004400', borderRadius: 2 }} />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
