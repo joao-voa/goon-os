@@ -55,8 +55,8 @@ function DraggableCard({ item, onClick }: { item: LeadItem; onClick: (item: Lead
       onClick={() => onClick(item)}
       style={{
         background: 'white',
-        border: '2px solid black',
-        boxShadow: isDragging ? 'none' : '3px 3px 0px 0px #000',
+        border: '1px solid #e2e8f0',
+        boxShadow: isDragging ? 'none' : '0 2px 4px rgba(0,0,0,0.05)',
         padding: '10px 12px',
         cursor: isDragging ? 'grabbing' : 'grab',
         opacity: isDragging ? 0.4 : 1,
@@ -114,7 +114,7 @@ function DraggableCard({ item, onClick }: { item: LeadItem; onClick: (item: Lead
           <span style={{
             fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700,
             background: PRODUCT_COLORS[item.productCode] ?? '#888',
-            color: 'white', padding: '2px 6px', border: '1px solid black',
+            color: 'white', padding: '2px 6px', border: '1px solid #e2e8f0',
           }}>
             {item.productCode}
           </span>
@@ -154,8 +154,8 @@ function DroppableColumn({
         maxWidth: 300,
         flex: '1 0 260px',
         background: isOver ? '#f0f7ff' : '#f5f5f5',
-        border: '2px solid black',
-        boxShadow: '4px 4px 0px 0px #000',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
         display: 'flex',
         flexDirection: 'column',
         maxHeight: 'calc(100vh - 260px)',
@@ -163,7 +163,7 @@ function DroppableColumn({
     >
       <div style={{
         background: color, color: 'white', padding: '8px 12px',
-        fontFamily: 'var(--font-pixel)', fontSize: 9, display: 'flex',
+        fontFamily: 'var(--font-sans)', fontSize: 9, display: 'flex',
         justifyContent: 'space-between', alignItems: 'center',
       }}>
         <span>{label}</span>
@@ -233,7 +233,7 @@ export default function CrmKanbanBoard({ items, stages, onStageChange, onCardCli
       <DragOverlay>
         {activeItem && (
           <div style={{
-            background: 'white', border: '2px solid black', boxShadow: '6px 6px 0px 0px #000',
+            background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.08)',
             padding: '10px 12px', transform: 'rotate(3deg)', opacity: 0.95,
           }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700 }}>

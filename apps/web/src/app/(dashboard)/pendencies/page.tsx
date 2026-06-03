@@ -66,8 +66,8 @@ function KpiStrip({ pendencies }: { pendencies: Pendency[] }) {
           key={item.label}
           style={{
             background: 'white',
-            border: '2px solid black',
-            boxShadow: '3px 3px 0px 0px #000',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
             padding: '12px 16px',
             display: 'flex',
             flexDirection: 'column',
@@ -76,7 +76,7 @@ function KpiStrip({ pendencies }: { pendencies: Pendency[] }) {
         >
           <span
             style={{
-              fontFamily: 'var(--font-pixel)',
+              fontFamily: 'var(--font-sans)',
               fontSize: 7,
               textTransform: 'uppercase',
               letterSpacing: 1,
@@ -87,7 +87,7 @@ function KpiStrip({ pendencies }: { pendencies: Pendency[] }) {
           </span>
           <span
             style={{
-              fontFamily: 'var(--font-pixel)',
+              fontFamily: 'var(--font-sans)',
               fontSize: 20,
               color: item.accent,
               letterSpacing: 1,
@@ -117,8 +117,8 @@ function PendencyCard({ pendency, onChangeStatus }: PendencyCardProps) {
     <div
       style={{
         background: isResolved ? 'rgba(255,255,255,0.5)' : 'white',
-        border: '2px solid black',
-        boxShadow: isResolved ? '2px 2px 0px 0px #ccc' : '3px 3px 0px 0px #000',
+        border: '1px solid #e2e8f0',
+        boxShadow: isResolved ? '2px 2px 0px 0px #ccc' : '0 2px 4px rgba(0,0,0,0.05)',
         marginBottom: 10,
         borderLeft: `4px solid ${typeColor}`,
         opacity: isResolved ? 0.65 : 1,
@@ -132,7 +132,7 @@ function PendencyCard({ pendency, onChangeStatus }: PendencyCardProps) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div
               style={{
-                fontFamily: 'var(--font-pixel)',
+                fontFamily: 'var(--font-sans)',
                 fontSize: 8,
                 color: typeColor,
                 textTransform: 'uppercase',
@@ -229,8 +229,8 @@ function KanbanColumn({
         display: 'flex',
         flexDirection: 'column',
         background: 'white',
-        border: '2px solid black',
-        boxShadow: '4px 4px 0px 0px #000',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
       }}
     >
       {/* Column header */}
@@ -238,7 +238,7 @@ function KanbanColumn({
         style={{
           background: 'black',
           color: 'white',
-          fontFamily: 'var(--font-pixel)',
+          fontFamily: 'var(--font-sans)',
           fontSize: 9,
           textTransform: 'uppercase',
           padding: '10px 14px',
@@ -255,7 +255,7 @@ function KanbanColumn({
           style={{
             background: accentColor,
             color: accentColor === 'var(--retro-green)' ? 'black' : 'white',
-            fontFamily: 'var(--font-pixel)',
+            fontFamily: 'var(--font-sans)',
             fontSize: 8,
             padding: '2px 7px',
             border: '1px solid rgba(255,255,255,0.4)',
@@ -358,7 +358,7 @@ function NewPendencyModal({ onClose, onCreated }: NewPendencyModalProps) {
         width: '100%',
         maxWidth: '100%',
         border: 'none',
-        borderTop: '2px solid black',
+        borderTop: '1px solid #e2e8f0',
         boxShadow: '0 -4px 0 black',
         maxHeight: '85vh',
         overflowY: 'auto',
@@ -430,7 +430,7 @@ function NewPendencyModal({ onClose, onCreated }: NewPendencyModalProps) {
               gap: 10,
               justifyContent: 'flex-end',
               paddingTop: 8,
-              borderTop: '2px solid black',
+              borderTop: '1px solid #e2e8f0',
             }}
           >
             <button type="button" className="goon-btn-secondary" onClick={onClose}>
@@ -578,16 +578,16 @@ export default function PendenciesPage() {
           { key: 'todas' as const, label: 'TODAS PENDENCIAS' },
         ]).map(tab => (
           <button key={tab.key} onClick={() => setPendTab(tab.key)} style={{
-            padding: '10px 20px', border: '2px solid black',
+            padding: '10px 20px', border: '1px solid #e2e8f0',
             borderBottom: pendTab === tab.key ? 'none' : '2px solid black',
             background: pendTab === tab.key ? 'white' : '#f0f0f0',
-            fontFamily: 'var(--font-pixel)', fontSize: 9, fontWeight: 700, cursor: 'pointer',
+            fontFamily: 'var(--font-sans)', fontSize: 9, fontWeight: 700, cursor: 'pointer',
             textTransform: 'uppercase', position: 'relative',
             marginBottom: pendTab === tab.key ? -2 : 0, zIndex: pendTab === tab.key ? 1 : 0,
             color: pendTab === tab.key ? 'black' : '#888', whiteSpace: 'nowrap',
           }}>{tab.label}</button>
         ))}
-        <div style={{ flex: 1, borderBottom: '2px solid black' }} />
+        <div style={{ flex: 1, borderBottom: '1px solid #e2e8f0' }} />
       </div>
 
       {/* Product filter chips */}
@@ -596,7 +596,7 @@ export default function PendenciesPage() {
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Programa:</span>
           {['', 'GE', 'GI', 'TTS', 'AURA'].map(code => (
             <button key={code} onClick={() => setProductFilter(productFilter === code ? '' : code)} style={{
-              padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+              padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
               background: productFilter === code ? (code ? (PRODUCT_COLORS[code] ?? 'black') : 'black') : 'white',
               color: productFilter === code ? 'white' : 'black',
             }}>{code || 'TODOS'}</button>
@@ -614,12 +614,12 @@ export default function PendenciesPage() {
         return (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-            <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14 }}>CLIENTES INADIMPLENTES</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14 }}>CLIENTES INADIMPLENTES</div>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, color: '#666' }}>FILTRO:</span>
               {([['todos', 'TODOS', '#1e293b'], ['sem', 'SEM CARTEIRA', '#006600'], ['carteira', 'EM CARTEIRA', '#cc0000']] as const).map(([key, label, bg]) => (
                 <button key={key} onClick={() => setCarteiraFilter(carteiraFilter === key ? 'todos' : key)} style={{
-                  padding: '4px 10px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 10,
+                  padding: '4px 10px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 10,
                   background: carteiraFilter === key ? bg : 'white', color: carteiraFilter === key ? 'white' : 'black',
                 }}>{label}{key === 'carteira' && carteiraItems.length > 0 ? ' (' + fmtBRL(carteiraTotal) + ')' : ''}{key === 'sem' ? ' (' + fmtBRL(semCarteiraTotal) + ')' : ''}</button>
               ))}
@@ -671,15 +671,15 @@ export default function PendenciesPage() {
                                 toast.success('Pagamento confirmado em ' + dateStr)
                                 setOverduePayments(prev => prev.filter(p => p.id !== pay.id))
                               } catch { toast.error('Erro ao dar baixa') }
-                            }} style={{ background: '#006600', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>PAGAR</button>
-                            <button onClick={() => window.location.href = `/clients/${pay.client.id}`} style={{ background: '#4A78FF', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>VER</button>
+                            }} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>PAGAR</button>
+                            <button onClick={() => window.location.href = `/clients/${pay.client.id}`} style={{ background: '#4A78FF', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>VER</button>
                             <button onClick={async () => {
                               try {
                                 await apiFetch(`/api/payments/${pay.id}/carteira`, { method: 'PATCH', body: JSON.stringify({ inCarteira: !pay.inCarteira }) })
                                 setOverduePayments(prev => prev.map(p => p.id === pay.id ? { ...p, inCarteira: !p.inCarteira } : p))
                                 toast.success(pay.inCarteira ? 'Removido da carteira' : 'Adicionado a carteira')
                               } catch { toast.error('Erro') }
-                            }} style={{ background: pay.inCarteira ? '#e6a800' : '#888', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{pay.inCarteira ? 'TIRAR' : 'CARTEIRA'}</button>
+                            }} style={{ background: pay.inCarteira ? '#e6a800' : '#888', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{pay.inCarteira ? 'TIRAR' : 'CARTEIRA'}</button>
                           </div>
                         </td>
                       </tr>
@@ -702,7 +702,7 @@ export default function PendenciesPage() {
         const filteredPlans = productFilter ? expiringPlans.filter(p => p.productCode === productFilter) : expiringPlans
         return (
         <div>
-          <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, marginBottom: 16 }}>CONTRATOS VENCIDOS E A VENCER</div>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14, marginBottom: 16 }}>CONTRATOS VENCIDOS E A VENCER</div>
           {filteredPlans.length === 0 ? (
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#006600', padding: 24, textAlign: 'center', border: '1px dashed #006600' }}>Todos os contratos em dia!</div>
           ) : (
@@ -710,9 +710,9 @@ export default function PendenciesPage() {
               {filteredPlans.sort((a, b) => a.daysLeft - b.daysLeft).map(plan => (
                 <div key={plan.id} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '12px 16px', border: '2px solid black',
+                  padding: '12px 16px', border: '1px solid #e2e8f0',
                   background: plan.expired ? '#fef2f2' : plan.daysLeft <= 30 ? '#fffbeb' : 'white',
-                  boxShadow: '3px 3px 0 black',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                 }}>
                   <div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -727,7 +727,7 @@ export default function PendenciesPage() {
                     </div>
                   </div>
                   <span style={{
-                    padding: '4px 12px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700,
+                    padding: '4px 12px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700,
                     background: plan.expired ? '#cc0000' : plan.daysLeft <= 30 ? '#e6a800' : '#006600', color: 'white',
                   }}>
                     {plan.expired ? 'VENCIDO' : plan.daysLeft <= 30 ? 'URGENTE' : 'ATENCAO'}
@@ -755,7 +755,7 @@ export default function PendenciesPage() {
         <div>
           <h1
             style={{
-              fontFamily: 'var(--font-pixel)',
+              fontFamily: 'var(--font-sans)',
               fontSize: 14,
               fontWeight: 700,
               color: 'black',
@@ -782,7 +782,7 @@ export default function PendenciesPage() {
 
       {/* Active filter indicator */}
       {clientIdFilter && (
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 16, padding: '6px 12px', background: '#ccff00', border: '2px solid black', boxShadow: '2px 2px 0 black' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 16, padding: '6px 12px', background: '#ccff00', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'black', textTransform: 'uppercase' }}>
             Filtro ativo: cliente={clientIdFilter}
           </span>
@@ -836,7 +836,7 @@ export default function PendenciesPage() {
             style={{
               width: 32,
               height: 32,
-              border: '3px solid black',
+              border: '1px solid #e2e8f0',
               borderTopColor: 'transparent',
               borderRadius: '50%',
               animation: 'spin 0.6s linear infinite',
@@ -896,7 +896,7 @@ export default function PendenciesPage() {
                   fontSize: 11,
                   fontWeight: 700,
                   padding: '6px 12px',
-                  border: '2px solid black',
+                  border: '1px solid #e2e8f0',
                   boxShadow: mobileStatusFilter === chip.key ? 'none' : '2px 2px 0px 0px #000',
                   background: mobileStatusFilter === chip.key ? 'black' : 'white',
                   color: mobileStatusFilter === chip.key ? 'white' : 'black',
@@ -916,11 +916,11 @@ export default function PendenciesPage() {
                 textAlign: 'center',
                 padding: 40,
                 background: 'white',
-                border: '2px solid black',
-                boxShadow: '4px 4px 0px 0px #000',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
               }}
             >
-              <p style={{ fontFamily: 'var(--font-pixel)', fontSize: 10, color: 'black', margin: 0 }}>
+              <p style={{ fontFamily: 'var(--font-sans)', fontSize: 10, color: 'black', margin: 0 }}>
                 Sem pendências nesta categoria
               </p>
             </div>

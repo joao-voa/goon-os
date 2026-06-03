@@ -45,7 +45,7 @@ function MobileBottomNav({ onMenuClick }: { onMenuClick: () => void }) {
       right: 0,
       height: 56,
       background: 'var(--retro-gray)',
-      borderTop: '2px solid black',
+      borderTop: '1px solid #e2e8f0',
       boxShadow: '0 -4px 0 black',
       display: 'flex',
       alignItems: 'stretch',
@@ -155,7 +155,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         gap: 16,
       }}>
         <div style={{
-          fontFamily: 'var(--font-pixel)',
+          fontFamily: 'var(--font-sans)',
           fontSize: 12,
           color: 'black',
           textTransform: 'uppercase',
@@ -197,7 +197,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
           right: 0,
           height: 48,
           background: 'black',
-          borderBottom: '2px solid black',
+          borderBottom: '1px solid #e2e8f0',
           boxShadow: '0 4px 0 black',
           display: 'flex',
           alignItems: 'center',
@@ -210,7 +210,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
               color: 'white',
               fontWeight: 900,
               fontSize: 14,
-              fontFamily: 'var(--font-pixel)',
+              fontFamily: 'var(--font-sans)',
               letterSpacing: '0.05em',
             }}>GOON</span>
             <span style={{
@@ -244,7 +244,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
           right: 0,
           height: 56,
           background: 'var(--retro-gray)',
-          borderBottom: '2px solid black',
+          borderBottom: '1px solid #e2e8f0',
           boxShadow: '0 4px 0 black',
           display: 'flex',
           alignItems: 'center',
@@ -279,7 +279,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       }}>
         {isBlocked ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 16 }}>
-            <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: '#cc0000', textTransform: 'uppercase' }}>ACESSO NEGADO</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: '#cc0000', textTransform: 'uppercase' }}>ACESSO NEGADO</div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#666' }}>Voce nao tem permissao para acessar este modulo.</div>
             <a href="/home" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#4A78FF', textDecoration: 'underline' }}>Voltar ao Inicio</a>
           </div>

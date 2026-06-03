@@ -48,8 +48,8 @@ function DraggableCard({
       onClick={() => onClick(item)}
       style={{
         background: 'white',
-        border: '2px solid black',
-        boxShadow: isDragging ? 'none' : '3px 3px 0px 0px #000',
+        border: '1px solid #e2e8f0',
+        boxShadow: isDragging ? 'none' : '0 2px 4px rgba(0,0,0,0.05)',
         padding: '10px 12px',
         cursor: isDragging ? 'grabbing' : 'grab',
         opacity: isDragging ? 0.4 : 1,
@@ -80,9 +80,9 @@ function CardContent({ item }: { item: OnboardingItem }) {
             style={{
               background: productColor,
               color: 'white',
-              border: '1px solid black',
+              border: '1px solid #e2e8f0',
               padding: '1px 5px',
-              fontFamily: 'var(--font-pixel)',
+              fontFamily: 'var(--font-sans)',
               fontSize: 8,
               fontWeight: 700,
               marginLeft: 6,
@@ -144,8 +144,8 @@ function DroppableColumn({
           padding: '8px 10px',
           marginBottom: 8,
           background: 'black',
-          border: '2px solid black',
-          boxShadow: '3px 3px 0 black',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
           backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)',
           backgroundSize: '12px 12px',
           position: 'sticky',
@@ -158,7 +158,7 @@ function DroppableColumn({
         />
         <span
           style={{
-            fontFamily: 'var(--font-pixel)',
+            fontFamily: 'var(--font-sans)',
             fontSize: 8,
             color: 'white',
             flex: 1,
@@ -293,8 +293,8 @@ export default function KanbanBoard({ items, onStageChange, onCardClick }: Kanba
             style={{
               width: 212,
               background: 'white',
-              border: '2px solid black',
-              boxShadow: '8px 8px 0px 0px #000',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
               padding: '10px 12px',
               transform: 'rotate(2deg)',
               opacity: 0.95,

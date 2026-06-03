@@ -91,14 +91,14 @@ function CreateCommissionModal({
     }
   }
 
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 13, background: 'white' }
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 13, background: 'white' }
   const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4, display: 'block' }
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <form onSubmit={handleSubmit} style={{ background: 'white', border: '2px solid black', boxShadow: '8px 8px 0px 0px #000', width: '100%', maxWidth: 420 }}>
-        <div style={{ background: '#e6a800', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-pixel)', fontSize: 11 }}>
+      <form onSubmit={handleSubmit} style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', width: '100%', maxWidth: 420 }}>
+        <div style={{ background: '#e6a800', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
           CRIAR COMISSAO MANUAL
         </div>
         <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -136,8 +136,8 @@ function CreateCommissionModal({
             </div>
           )}
           <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
-            <button type="button" onClick={onClose} style={{ flex: 1, padding: '10px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
-            <button type="submit" disabled={submitting} style={{ flex: 1, padding: '10px', border: '2px solid black', background: '#e6a800', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer', boxShadow: '3px 3px 0px 0px #000' }}>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
+            <button type="submit" disabled={submitting} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#e6a800', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
               {submitting ? 'CRIANDO...' : 'CRIAR'}
             </button>
           </div>
@@ -261,9 +261,9 @@ export default function CommissionsPage() {
   return (
     <div style={{ padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-        <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 20, margin: 0 }}>COMISSOES & MENTORIAS</h1>
+        <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 20, margin: 0 }}>COMISSOES & MENTORIAS</h1>
         {activeTab === 'comissoes' && (
-          <button onClick={() => setShowCreateModal(true)} style={{ padding: '8px 16px', border: '2px solid black', background: '#e6a800', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0px 0px #000' }}>
+          <button onClick={() => setShowCreateModal(true)} style={{ padding: '8px 16px', border: '1px solid #e2e8f0', background: '#e6a800', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
             + CRIAR COMISSAO
           </button>
         )}
@@ -273,10 +273,10 @@ export default function CommissionsPage() {
       <div style={{ display: 'flex', gap: 0, marginBottom: 20 }}>
         {(['comissoes', 'mentorias'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
-            padding: '10px 24px', border: '2px solid black',
+            padding: '10px 24px', border: '1px solid #e2e8f0',
             borderBottom: activeTab === tab ? 'none' : '2px solid black',
             background: activeTab === tab ? 'white' : '#f0f0f0',
-            fontFamily: 'var(--font-pixel)', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+            fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, cursor: 'pointer',
             textTransform: 'uppercase', position: 'relative',
             marginBottom: activeTab === tab ? -2 : 0, zIndex: activeTab === tab ? 1 : 0,
             color: activeTab === tab ? 'black' : '#888',
@@ -284,25 +284,25 @@ export default function CommissionsPage() {
             {tab === 'comissoes' ? 'COMISSOES' : `MENTORIAS (${mentorsList.length})`}
           </button>
         ))}
-        <div style={{ flex: 1, borderBottom: '2px solid black' }} />
+        <div style={{ flex: 1, borderBottom: '1px solid #e2e8f0' }} />
       </div>
 
       {activeTab === 'comissoes' && <>
       {/* KPI Strip */}
       {summary && (
         <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
-          <div style={{ background: '#e6a800', color: 'white', padding: '12px 20px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+          <div style={{ background: '#e6a800', color: 'white', padding: '12px 20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
             <div style={{ fontSize: 10, textTransform: 'uppercase' }}>Total Pendente</div>
             <div style={{ fontSize: 18 }}>{fmt(summary.totalToPay)}</div>
             <div style={{ fontSize: 10 }}>{summary.totalToPayCount} parcelas</div>
           </div>
-          <div style={{ background: '#006600', color: 'white', padding: '12px 20px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+          <div style={{ background: '#006600', color: 'white', padding: '12px 20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
             <div style={{ fontSize: 10, textTransform: 'uppercase' }}>Total Pago</div>
             <div style={{ fontSize: 18 }}>{fmt(summary.totalPaid)}</div>
             <div style={{ fontSize: 10 }}>{summary.totalPaidCount} parcelas</div>
           </div>
           {Object.entries(summary.bySalesRep).map(([rep, vals]) => (
-            <div key={rep} onClick={() => { setSalesRepFilter(salesRepFilter === rep ? '' : rep); setPage(1) }} style={{ background: salesRepFilter === rep ? '#4A78FF' : 'var(--retro-gray)', color: salesRepFilter === rep ? 'white' : 'inherit', padding: '12px 20px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700, cursor: 'pointer' }}>
+            <div key={rep} onClick={() => { setSalesRepFilter(salesRepFilter === rep ? '' : rep); setPage(1) }} style={{ background: salesRepFilter === rep ? '#4A78FF' : 'var(--retro-gray)', color: salesRepFilter === rep ? 'white' : 'inherit', padding: '12px 20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700, cursor: 'pointer' }}>
               <div style={{ fontSize: 10, textTransform: 'uppercase' }}>{rep}</div>
               <div style={{ fontSize: 14 }}>Pendente: {fmt(vals.pending)}</div>
               <div style={{ fontSize: 14 }}>Pago: {fmt(vals.paid)}</div>
@@ -314,19 +314,19 @@ export default function CommissionsPage() {
       {/* Fechamento Cards */}
       {summary?.closing && (
         <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-          <div style={{ background: 'white', padding: '12px 20px', border: '3px solid #4A78FF', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700, flex: '1 1 200px' }}>
+          <div style={{ background: 'white', padding: '12px 20px', border: '3px solid #4A78FF', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700, flex: '1 1 200px' }}>
             <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#4A78FF' }}>Proximo Fechamento</div>
             <div style={{ fontSize: 20, color: 'black', marginTop: 4 }}>{fmt(summary.closing.amount)}</div>
             <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>{summary.closing.count} comissoes</div>
             <div style={{ fontSize: 10, color: '#666' }}>Corte: {new Date(summary.closing.cutoffDate).toLocaleDateString('pt-BR')}</div>
             <div style={{ fontSize: 11, color: '#4A78FF', fontWeight: 900, marginTop: 4 }}>Pagamento: {new Date(summary.closing.paymentDate).toLocaleDateString('pt-BR')}</div>
           </div>
-          <div style={{ background: 'white', padding: '12px 20px', border: '3px solid #888', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700, flex: '1 1 200px' }}>
+          <div style={{ background: 'white', padding: '12px 20px', border: '3px solid #888', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700, flex: '1 1 200px' }}>
             <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#888' }}>A Pagar Futuro</div>
             <div style={{ fontSize: 20, color: 'black', marginTop: 4 }}>{fmt(summary.future.amount)}</div>
             <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>{summary.future.count} comissoes futuras</div>
           </div>
-          <div style={{ background: '#fff5f5', padding: '12px 20px', border: '2px solid #cc0000', fontFamily: 'var(--font-mono)', fontSize: 10, flex: '1 1 200px', display: 'flex', alignItems: 'center' }}>
+          <div style={{ background: '#fff5f5', padding: '12px 20px', border: '1px solid #fecaca', fontFamily: 'var(--font-mono)', fontSize: 10, flex: '1 1 200px', display: 'flex', alignItems: 'center' }}>
             <span style={{ color: '#cc0000' }}>Atencao: se um cliente der churn, as comissoes pendentes dele sao automaticamente canceladas e saem do fechamento.</span>
           </div>
         </div>
@@ -336,11 +336,11 @@ export default function CommissionsPage() {
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div>
           <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Vendedor</label>
-          <input placeholder="Todos" value={salesRepFilter} onChange={e => setSalesRepFilter(e.target.value)} style={{ padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12, width: 140 }} />
+          <input placeholder="Todos" value={salesRepFilter} onChange={e => setSalesRepFilter(e.target.value)} style={{ padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12, width: 140 }} />
         </div>
         <div>
           <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Status</label>
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
             <option value="">Todos</option>
             <option value="PENDING">Pendente</option>
             <option value="PAID">Pago</option>
@@ -349,7 +349,7 @@ export default function CommissionsPage() {
         </div>
         <div>
           <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Mes</label>
-          <select value={month ?? ''} onChange={e => setMonth(e.target.value ? parseInt(e.target.value) : null)} style={{ padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+          <select value={month ?? ''} onChange={e => setMonth(e.target.value ? parseInt(e.target.value) : null)} style={{ padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
             <option value="">Todos</option>
             {Array.from({ length: 12 }, (_, i) => (
               <option key={i + 1} value={i + 1}>{new Date(2000, i).toLocaleString('pt-BR', { month: 'long' })}</option>
@@ -358,9 +358,9 @@ export default function CommissionsPage() {
         </div>
         <div>
           <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Ano</label>
-          <input type="number" value={year} onChange={e => setYear(parseInt(e.target.value))} style={{ width: 80, padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }} />
+          <input type="number" value={year} onChange={e => setYear(parseInt(e.target.value))} style={{ width: 80, padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }} />
         </div>
-        <button onClick={() => { setPage(1); loadData() }} style={{ padding: '6px 16px', border: '2px solid black', background: 'black', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0 black', height: 32 }}>
+        <button onClick={() => { setPage(1); loadData() }} style={{ padding: '6px 16px', border: '1px solid #e2e8f0', background: '#0f172a', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', height: 32 }}>
           APLICAR
         </button>
       </div>
@@ -369,7 +369,7 @@ export default function CommissionsPage() {
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
           <thead>
-            <tr style={{ background: 'black', color: 'white', textTransform: 'uppercase' }}>
+            <tr style={{ background: '#0f172a', color: 'white', textTransform: 'uppercase' }}>
               {([
                 { key: 'client', label: 'Cliente', align: 'left' },
                 { key: 'salesRep', label: 'Vendedor', align: 'left' },
@@ -403,10 +403,10 @@ export default function CommissionsPage() {
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                   <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                     {c.status === 'PENDING' && (
-                      <button onClick={() => handlePay(c.id)} style={{ background: '#006600', color: 'white', border: '2px solid black', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>PAGAR</button>
+                      <button onClick={() => handlePay(c.id)} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>PAGAR</button>
                     )}
                     {c.status === 'PAID' && (
-                      <button onClick={() => handleRevert(c.id)} style={{ background: '#e6a800', color: 'white', border: '2px solid black', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>REVERTER</button>
+                      <button onClick={() => handleRevert(c.id)} style={{ background: '#e6a800', color: 'white', border: '1px solid #e2e8f0', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>REVERTER</button>
                     )}
                     <button onClick={async () => {
                       if (!confirm('Excluir esta comissao permanentemente?')) return
@@ -415,7 +415,7 @@ export default function CommissionsPage() {
                         toast.success('Comissao excluida')
                         loadData()
                       } catch { toast.error('Erro ao excluir') }
-                    }} style={{ background: '#cc0000', color: 'white', border: '2px solid black', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>EXCLUIR</button>
+                    }} style={{ background: '#cc0000', color: 'white', border: '1px solid #e2e8f0', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>EXCLUIR</button>
                   </div>
                 </td>
               </tr>
@@ -430,9 +430,9 @@ export default function CommissionsPage() {
       {/* Pagination */}
       {total > 20 && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>Anterior</button>
+          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>Anterior</button>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, padding: '4px 8px' }}>{page} / {Math.ceil(total / 20)}</span>
-          <button disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>Proximo</button>
+          <button disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>Proximo</button>
         </div>
       )}
       </>}
@@ -471,7 +471,7 @@ export default function CommissionsPage() {
             return (
               <>
                 <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-                  <div style={{ background: '#4A78FF', color: 'white', padding: '12px 20px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                  <div style={{ background: '#4A78FF', color: 'white', padding: '12px 20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
                     <div style={{ fontSize: 10, textTransform: 'uppercase' }}>Total Mentorias</div>
                     <div style={{ fontSize: 18 }}>{fmt(totalMentorias)}</div>
                     <div style={{ fontSize: 10 }}>Pago: {fmt(totalPaid)} | Saldo: {fmt(totalMentorias - totalPaid)}</div>
@@ -482,7 +482,7 @@ export default function CommissionsPage() {
                     const mentorSaldo = mentorTotal - mentorPaid
                     const mentorClients = [...new Set(mentorsList.filter(m => m.mentorName === name).map(m => m.client))]
                     return (
-                      <div key={name} onClick={() => setMentorFilter(mentorFilter === name ? '' : name)} style={{ background: mentorFilter === name ? '#4A78FF' : 'white', color: mentorFilter === name ? 'white' : 'inherit', padding: '12px 20px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700, cursor: 'pointer' }}>
+                      <div key={name} onClick={() => setMentorFilter(mentorFilter === name ? '' : name)} style={{ background: mentorFilter === name ? '#4A78FF' : 'white', color: mentorFilter === name ? 'white' : 'inherit', padding: '12px 20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700, cursor: 'pointer' }}>
                         <div style={{ fontSize: 10, textTransform: 'uppercase', color: mentorFilter === name ? 'white' : '#4A78FF' }}>{name}</div>
                         <div style={{ fontSize: 18 }}>{fmt(mentorTotal)}</div>
                         <div style={{ fontSize: 10, color: mentorFilter === name ? 'rgba(255,255,255,0.8)' : '#006600' }}>Pago: {fmt(mentorPaid)}</div>
@@ -497,12 +497,12 @@ export default function CommissionsPage() {
                   const mentorExps = mentorExpenses.filter(e => e.description.includes(mentorFilter)).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
                   if (mentorExps.length === 0) return null
                   return (
-                    <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black', marginBottom: 20 }}>
+                    <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', marginBottom: 20 }}>
                       <div className="goon-card-header">PAGAMENTOS — {mentorFilter.toUpperCase()}</div>
                       <div style={{ padding: '12px 16px' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
                           <thead>
-                            <tr style={{ borderBottom: '2px solid black' }}>
+                            <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
                               <th style={{ padding: '6px 8px', textAlign: 'left', fontSize: 9, textTransform: 'uppercase' }}>Descricao</th>
                               <th style={{ padding: '6px 8px', textAlign: 'right', fontSize: 9, textTransform: 'uppercase' }}>Valor</th>
                               <th style={{ padding: '6px 8px', textAlign: 'right', fontSize: 9, textTransform: 'uppercase' }}>Pago</th>
@@ -525,10 +525,10 @@ export default function CommissionsPage() {
                                   </td>
                                   <td style={{ padding: '6px 8px', textAlign: 'center' }}>
                                     {remaining > 0 && (
-                                      <button onClick={() => handlePartialPay(exp.id, remaining, mentorFilter)} style={{ background: '#006600', color: 'white', border: '2px solid black', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>PAGAR</button>
+                                      <button onClick={() => handlePartialPay(exp.id, remaining, mentorFilter)} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>PAGAR</button>
                                     )}
                                     {exp.paidValue > 0 && (
-                                      <button onClick={async () => { await apiFetch(`/api/expenses/${exp.id}/revert-payment`, { method: 'PATCH' }); toast.success('Pagamento revertido'); loadMentorExpenses() }} style={{ background: '#cc0000', color: 'white', border: '2px solid black', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, marginLeft: 4 }}>ZERAR</button>
+                                      <button onClick={async () => { await apiFetch(`/api/expenses/${exp.id}/revert-payment`, { method: 'PATCH' }); toast.success('Pagamento revertido'); loadMentorExpenses() }} style={{ background: '#cc0000', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, marginLeft: 4 }}>ZERAR</button>
                                     )}
                                   </td>
                                 </tr>
@@ -578,9 +578,9 @@ export default function CommissionsPage() {
                   return (
                     <div style={{ marginBottom: 24 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                        <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 12 }}>VISAO MENSAL</div>
+                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12 }}>VISAO MENSAL</div>
                         <button onClick={() => setExpandedView(!expandedView)} style={{
-                          padding: '4px 12px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+                          padding: '4px 12px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
                           background: expandedView ? 'black' : 'white', color: expandedView ? 'white' : 'black',
                         }}>
                           {expandedView ? 'RESUMIDA' : 'COMPLETA'}
@@ -589,7 +589,7 @@ export default function CommissionsPage() {
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
                           <thead>
-                            <tr style={{ background: 'black', color: 'white', textTransform: 'uppercase' }}>
+                            <tr style={{ background: '#0f172a', color: 'white', textTransform: 'uppercase' }}>
                               <th style={{ padding: '8px 12px', textAlign: 'left', position: 'sticky', left: 0, background: 'black', zIndex: 2, minWidth: 180 }}>{expandedView ? 'Mentor / Cliente' : 'Mentor'}</th>
                               {months.map(m => (
                                 <th key={m} style={{ padding: '8px 12px', textAlign: 'right', whiteSpace: 'nowrap' }}>{fmtMonth(m)}</th>
@@ -653,10 +653,10 @@ export default function CommissionsPage() {
                     const product = clientMentors[0]?.product ?? ''
                     const productName = clientMentors[0]?.productName ?? ''
                     return (
-                      <div key={clientName} style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white' }}>
-                        <div style={{ background: 'black', color: 'white', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div key={clientName} style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
+                        <div style={{ background: '#0f172a', color: 'white', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
-                            <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 11 }}>{clientName}</span>
+                            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11 }}>{clientName}</span>
                             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, marginLeft: 10, opacity: 0.7 }}>{productName}</span>
                           </div>
                           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>
@@ -671,7 +671,7 @@ export default function CommissionsPage() {
                               <span style={{ fontSize: 10, color: '#666' }}>{planValue > 0 ? Math.round(m.value / planValue * 100) : 0}% do plano</span>
                             </div>
                           ))}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0 0', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, borderTop: '2px solid black', marginTop: 8 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0 0', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, borderTop: '1px solid #e2e8f0', marginTop: 8 }}>
                             <span>TOTAL MENTORIA</span>
                             <span>{fmt(clientTotal)}</span>
                             <span style={{ color: planValue - clientTotal >= 0 ? '#006600' : '#cc0000', fontSize: 10 }}>

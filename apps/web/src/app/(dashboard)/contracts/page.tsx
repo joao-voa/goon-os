@@ -120,7 +120,7 @@ function SignatureBadge({ isSigned, signatureDate }: { isSigned?: boolean; signa
         padding: '2px 8px',
         background: 'var(--success)',
         color: 'white',
-        border: '1px solid black',
+        border: '1px solid #e2e8f0',
         fontFamily: 'var(--font-mono)',
         fontSize: 10,
         fontWeight: 700,
@@ -138,7 +138,7 @@ function SignatureBadge({ isSigned, signatureDate }: { isSigned?: boolean; signa
       padding: '2px 8px',
       background: 'var(--danger)',
       color: 'white',
-      border: '1px solid black',
+      border: '1px solid #e2e8f0',
       fontFamily: 'var(--font-mono)',
       fontSize: 10,
       fontWeight: 700,
@@ -262,7 +262,7 @@ function ContractDetailModal({ contract, onClose, onRefresh }: DetailModalProps)
           width: '100%',
           background: 'white',
           border: 'none',
-          borderTop: '2px solid black',
+          borderTop: '1px solid #e2e8f0',
           boxShadow: '0 -4px 0 black',
           maxHeight: '85vh',
           overflowY: 'auto',
@@ -270,8 +270,8 @@ function ContractDetailModal({ contract, onClose, onRefresh }: DetailModalProps)
           width: '100%',
           maxWidth: 580,
           background: 'white',
-          border: '2px solid black',
-          boxShadow: '8px 8px 0px 0px #000',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
           margin: 'auto',
         }}
       >
@@ -279,7 +279,7 @@ function ContractDetailModal({ contract, onClose, onRefresh }: DetailModalProps)
         <div style={{
           background: 'black',
           color: 'white',
-          fontFamily: 'var(--font-pixel)',
+          fontFamily: 'var(--font-sans)',
           fontSize: 10,
           textTransform: 'uppercase',
           padding: '12px 16px',
@@ -330,7 +330,7 @@ function ContractDetailModal({ contract, onClose, onRefresh }: DetailModalProps)
               marginBottom: 12,
               padding: '6px 10px',
               background: '#f5f5f5',
-              border: '1px solid black',
+              border: '1px solid #e2e8f0',
               display: 'flex',
               gap: 12,
               flexWrap: 'wrap',
@@ -343,7 +343,7 @@ function ContractDetailModal({ contract, onClose, onRefresh }: DetailModalProps)
           )}
 
           {/* Client */}
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'black', marginBottom: 16, padding: '10px 14px', background: 'var(--retro-gray)', border: '2px solid black' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'black', marginBottom: 16, padding: '10px 14px', background: 'var(--retro-gray)', border: '1px solid #e2e8f0' }}>
             <strong style={{ color: 'black', fontWeight: 700 }}>{contract.client.companyName}</strong>
             {' — '}{contract.client.responsible}
           </div>
@@ -352,12 +352,12 @@ function ContractDetailModal({ contract, onClose, onRefresh }: DetailModalProps)
           <div
             style={{
               background: 'var(--retro-gray)',
-              border: '2px solid black',
+              border: '1px solid #e2e8f0',
               padding: 16,
               marginBottom: 20,
             }}
           >
-            <p style={{ fontFamily: 'var(--font-pixel)', fontSize: 9, color: 'black', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+            <p style={{ fontFamily: 'var(--font-sans)', fontSize: 9, color: 'black', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
               Campos do Contrato
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
@@ -400,7 +400,7 @@ function ContractDetailModal({ contract, onClose, onRefresh }: DetailModalProps)
                 className="goon-btn-secondary"
                 onClick={handleMarkSigned}
                 disabled={loading}
-                style={{ background: 'var(--success)', color: 'white', border: '2px solid black' }}
+                style={{ background: 'var(--success)', color: 'white', border: '1px solid #e2e8f0' }}
               >
                 ✓ Marcar Assinado
               </button>
@@ -467,15 +467,15 @@ function RenewalSection({ contracts, onRefresh }: { contracts: Contract[]; onRef
 
   return (
     <div style={{
-      border: '2px solid black',
-      boxShadow: '6px 6px 0px 0px #000',
+      border: '1px solid #e2e8f0',
+      boxShadow: '0 10px 15px -3px rgba(0,0,0,0.08)',
       marginBottom: 24,
       overflow: 'hidden',
     }}>
       <div style={{
         background: '#f59e0b',
         color: 'black',
-        fontFamily: 'var(--font-pixel)',
+        fontFamily: 'var(--font-sans)',
         fontSize: 10,
         textTransform: 'uppercase',
         padding: '10px 16px',
@@ -556,8 +556,8 @@ function ContractCard({ contract, onClick }: { contract: Contract; onClick: () =
       onClick={onClick}
       style={{
         background: 'white',
-        border: '2px solid black',
-        boxShadow: '4px 4px 0px 0px #000',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
         padding: 14,
         marginBottom: 12,
         cursor: 'pointer',
@@ -582,15 +582,15 @@ function ContractCard({ contract, onClick }: { contract: Contract; onClick: () =
           padding: '2px 8px',
           background: color,
           color: 'white',
-          border: '1px solid black',
-          fontFamily: 'var(--font-pixel)',
+          border: '1px solid #e2e8f0',
+          fontFamily: 'var(--font-sans)',
           fontSize: 9,
           fontWeight: 700,
         }}>
           {productCode}
         </span>
         {value != null && (
-          <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 10, fontWeight: 700, color: 'black' }}>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700, color: 'black' }}>
             {fmtBRL(value)}
           </span>
         )}
@@ -749,7 +749,7 @@ export default function ContractsPage() {
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, fontWeight: 800, color: 'black', margin: 0, textTransform: 'uppercase', letterSpacing: 1 }}>
+          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 800, color: 'black', margin: 0, textTransform: 'uppercase', letterSpacing: 1 }}>
             Contratos
           </h1>
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', margin: '4px 0 0 0' }}>
@@ -765,14 +765,14 @@ export default function ContractsPage() {
               onClick={() => setFilterRenewal(v => !v)}
               style={{
                 padding: '6px 12px',
-                border: '2px solid black',
+                border: '1px solid #e2e8f0',
                 background: filterRenewal ? '#f59e0b' : 'white',
                 color: filterRenewal ? 'black' : '#555',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-mono)',
                 fontSize: 11,
                 fontWeight: 700,
-                boxShadow: filterRenewal ? '2px 2px 0 black' : '1px 1px 0 black',
+                boxShadow: filterRenewal ? '0 1px 3px rgba(0,0,0,0.05)' : 'none',
               }}
             >
               &#8635; Renovação
@@ -786,14 +786,14 @@ export default function ContractsPage() {
               onClick={() => setFilterPendingSig(v => !v)}
               style={{
                 padding: '6px 12px',
-                border: '2px solid black',
+                border: '1px solid #e2e8f0',
                 background: filterPendingSig ? 'var(--danger)' : 'white',
                 color: filterPendingSig ? 'white' : '#555',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-mono)',
                 fontSize: 11,
                 fontWeight: 700,
-                boxShadow: filterPendingSig ? '2px 2px 0 black' : '1px 1px 0 black',
+                boxShadow: filterPendingSig ? '0 1px 3px rgba(0,0,0,0.05)' : 'none',
               }}
             >
               ✗ Assinatura Pendente
@@ -828,8 +828,8 @@ export default function ContractsPage() {
                 fontFamily: 'var(--font-mono)',
                 fontSize: 11,
                 fontWeight: 700,
-                border: '2px solid black',
-                boxShadow: '3px 3px 0 black',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                 cursor: 'pointer',
                 textTransform: 'uppercase',
               }}
@@ -861,7 +861,7 @@ export default function ContractsPage() {
       {(statusFilter || filterRenewal) && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
           {statusFilter && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: '#ccff00', border: '2px solid black', boxShadow: '2px 2px 0 black' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: '#ccff00', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'black', textTransform: 'uppercase' }}>
                 Filtro ativo: status={statusFilter}
               </span>
@@ -871,7 +871,7 @@ export default function ContractsPage() {
             </div>
           )}
           {filterRenewal && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: '#ccff00', border: '2px solid black', boxShadow: '2px 2px 0 black' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: '#ccff00', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'black', textTransform: 'uppercase' }}>
                 Filtro ativo: em renovação
               </span>
@@ -891,7 +891,7 @@ export default function ContractsPage() {
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
           <div style={{
             width: 36, height: 36,
-            border: '3px solid black',
+            border: '1px solid #e2e8f0',
             borderTopColor: 'transparent',
             borderRadius: '50%',
             animation: 'spin 0.6s linear infinite',
@@ -901,12 +901,12 @@ export default function ContractsPage() {
       ) : displayedContracts.length === 0 ? (
         <div style={{
           background: 'white',
-          border: '2px solid black',
-          boxShadow: '4px 4px 0px 0px #000',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
           padding: 60,
           textAlign: 'center',
         }}>
-          <p style={{ fontFamily: 'var(--font-pixel)', color: 'black', fontSize: 11, textTransform: 'uppercase' }}>
+          <p style={{ fontFamily: 'var(--font-sans)', color: 'black', fontSize: 11, textTransform: 'uppercase' }}>
             {statusFilter || filterRenewal || filterPendingSig ? 'Nenhum contrato com estes filtros.' : 'Nenhum contrato criado ainda.'}
           </p>
           <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 12, marginTop: 12 }}>
@@ -929,7 +929,7 @@ export default function ContractsPage() {
           )}
 
           {/* Desktop Table */}
-          {!isMobile && <div style={{ overflow: 'hidden', border: '2px solid black', boxShadow: '6px 6px 0px 0px #000', overflowX: 'auto' }}>
+          {!isMobile && <div style={{ overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.08)', overflowX: 'auto' }}>
             <table className="goon-table">
               <thead>
                 <tr>
@@ -989,9 +989,9 @@ export default function ContractsPage() {
                             padding: '3px 10px',
                             background: color,
                             color: 'white',
-                            border: '1px solid black',
-                            boxShadow: '1px 1px 0 black',
-                            fontFamily: 'var(--font-pixel)',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: 'none',
+                            fontFamily: 'var(--font-sans)',
                             fontSize: 9,
                             fontWeight: 700,
                           }}
@@ -1038,7 +1038,7 @@ export default function ContractsPage() {
                           <button
                             style={{
                               padding: '3px 8px',
-                              border: '1px solid black',
+                              border: '1px solid #e2e8f0',
                               background: 'var(--success)',
                               color: 'white',
                               cursor: 'pointer',
@@ -1077,14 +1077,14 @@ export default function ContractsPage() {
                   onClick={() => setPage(p)}
                   style={{
                     padding: '6px 12px',
-                    border: '2px solid black',
+                    border: '1px solid #e2e8f0',
                     background: p === page ? 'var(--retro-blue)' : 'white',
                     color: p === page ? 'white' : 'black',
                     cursor: 'pointer',
                     fontFamily: 'var(--font-mono)',
                     fontSize: 12,
                     fontWeight: 700,
-                    boxShadow: p === page ? '2px 2px 0 black' : '1px 1px 0 black',
+                    boxShadow: p === page ? '0 1px 3px rgba(0,0,0,0.05)' : 'none',
                   }}
                 >
                   {p}

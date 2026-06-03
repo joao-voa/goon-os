@@ -11,16 +11,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [checkingAuth, setCheckingAuth] = useState(true)
 
-  // Redirect already-authenticated users to dashboard
   useEffect(() => {
     const token = localStorage.getItem('access_token')
-    if (!token) {
-      setCheckingAuth(false)
-      return
-    }
-    fetch(`${API_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    if (!token) { setCheckingAuth(false); return }
+    fetch(`${API_URL}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then(async res => {
         if (res.ok) {
           const user = await res.json()
@@ -36,22 +30,8 @@ export default function LoginPage() {
 
   if (checkingAuth) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--retro-bg)',
-      }}>
-        <div style={{
-          fontFamily: 'var(--font-pixel)',
-          fontSize: 10,
-          color: 'black',
-          textTransform: 'uppercase',
-          letterSpacing: 2,
-        }}>
-          VERIFICANDO...
-        </div>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: '#64748b', fontWeight: 500 }}>Verificando...</div>
       </div>
     )
   }
@@ -60,27 +40,17 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-
     try {
       const res = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       })
-
       const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.message ?? 'Credenciais inválidas')
-      }
-
+      if (!res.ok) throw new Error(data.message ?? 'Credenciais invalidas')
       localStorage.setItem('access_token', data.access_token)
       localStorage.setItem('refresh_token', data.refresh_token)
-      if (data.user?.mustChangePassword) {
-        window.location.href = '/change-password'
-      } else {
-        window.location.href = '/home'
-      }
+      window.location.href = data.user?.mustChangePassword ? '/change-password' : '/home'
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erro ao fazer login')
     } finally {
@@ -89,184 +59,69 @@ export default function LoginPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'var(--retro-bg)',
-        backgroundImage: `
-          repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(0,0,0,0.05) 39px, rgba(0,0,0,0.05) 40px),
-          repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(0,0,0,0.05) 39px, rgba(0,0,0,0.05) 40px)
-        `,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '420px',
-          background: 'white',
-          border: '2px solid black',
-          boxShadow: '8px 8px 0px 0px #000',
-          borderRadius: 0,
-        }}
-      >
-        {/* Window title bar */}
-        <div style={{
-          background: 'black',
-          padding: '10px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)',
-          backgroundSize: '16px 16px',
-        }}>
-          <span style={{
-            fontFamily: 'var(--font-pixel)',
-            fontSize: 10,
-            color: 'white',
-            textTransform: 'uppercase',
-            letterSpacing: 1,
-          }}>AURA360 OS — LOGIN</span>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <div style={{ width: 12, height: 12, background: '#cc0000', border: '1px solid black' }} />
-            <div style={{ width: 12, height: 12, background: '#cc8800', border: '1px solid black' }} />
-            <div style={{ width: 12, height: 12, background: '#006600', border: '1px solid black' }} />
+    <div style={{
+      minHeight: '100vh', background: '#0f172a',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+    }}>
+      <div style={{
+        width: '100%', maxWidth: 400, background: 'white',
+        borderRadius: 16, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+        overflow: 'hidden',
+      }}>
+        {/* Header */}
+        <div style={{ padding: '2.5rem 2rem 0', textAlign: 'center' }}>
+          <div style={{ marginBottom: 8 }}>
+            <span style={{ color: '#d4a017', fontWeight: 800, fontSize: 28, fontFamily: 'var(--font-sans)', letterSpacing: '-0.02em' }}>AURA360</span>
+            <span style={{ color: '#94a3b8', fontSize: 14, fontWeight: 500, fontFamily: 'var(--font-sans)', marginLeft: 6 }}>OS</span>
           </div>
+          <p style={{ fontFamily: 'var(--font-sans)', color: '#94a3b8', fontSize: 13, fontWeight: 500 }}>
+            Acesse sua conta
+          </p>
         </div>
 
-        <div style={{ padding: '2rem 2rem 1.5rem' }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <h1
-              style={{
-                fontFamily: 'var(--font-pixel)',
-                fontSize: '18px',
-                fontWeight: 900,
-                color: 'black',
-                letterSpacing: '0.05em',
-                margin: 0,
-                textTransform: 'uppercase',
-                lineHeight: 1.4,
-              }}
-            >
-              AURA360 OS
-            </h1>
-            <p
-              style={{
-                fontFamily: 'var(--font-mono)',
-                color: '#555',
-                marginTop: '0.75rem',
-                fontSize: '11px',
-                textTransform: 'uppercase',
-                letterSpacing: 2,
-              }}
-            >
-              SISTEMA DE GESTÃO
-            </p>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label
-                htmlFor="email"
-                className="goon-label"
-              >
-                E-MAIL
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
-                required
-                className="goon-input"
+        <div style={{ padding: '2rem' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <label htmlFor="email" style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>E-mail</label>
+              <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seu@email.com" required
+                style={{ width: '100%', padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: 8, fontFamily: 'var(--font-sans)', fontSize: 14, outline: 'none', transition: 'all 0.15s', color: '#0f172a' }}
+                onFocus={e => { e.currentTarget.style.borderColor = '#d4a017'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(212,160,23,0.1)' }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = 'none' }}
               />
             </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label
-                htmlFor="password"
-                className="goon-label"
-              >
-                SENHA
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="goon-input"
+            <div>
+              <label htmlFor="password" style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Senha</label>
+              <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="********" required
+                style={{ width: '100%', padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: 8, fontFamily: 'var(--font-sans)', fontSize: 14, outline: 'none', transition: 'all 0.15s', color: '#0f172a' }}
+                onFocus={e => { e.currentTarget.style.borderColor = '#d4a017'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(212,160,23,0.1)' }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = 'none' }}
               />
             </div>
 
             {error && (
-              <div
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '12px',
-                  margin: 0,
-                  padding: '8px 12px',
-                  background: '#fff0f0',
-                  border: '2px solid var(--danger)',
-                  boxShadow: '2px 2px 0 var(--danger)',
-                  color: 'var(--danger)',
-                  fontWeight: 700,
-                }}
-              >
-                [ERRO] {error}
+              <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, color: '#dc2626', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 500 }}>
+                {error}
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
+            <button type="submit" disabled={loading}
               style={{
-                background: '#ccff00',
-                color: 'black',
-                border: '2px solid black',
-                boxShadow: '4px 4px 0px black',
-                fontFamily: 'var(--font-pixel)',
-                fontSize: '11px',
-                textTransform: 'uppercase',
-                padding: '14px',
-                cursor: 'pointer',
-                transition: 'transform 0.1s, box-shadow 0.1s',
-                borderRadius: 0,
-                letterSpacing: 0.5,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                textDecoration: 'none',
-                marginTop: '0.5rem',
-                width: '100%',
-                fontWeight: 700,
+                background: '#d4a017', color: 'white', border: 'none',
+                borderRadius: 8, padding: '12px', cursor: loading ? 'wait' : 'pointer',
+                fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700,
+                transition: 'all 0.15s', marginTop: 4, width: '100%',
+                boxShadow: '0 1px 3px rgba(212,160,23,0.3)',
+                opacity: loading ? 0.7 : 1,
               }}
+              onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#b8860b' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#d4a017' }}
             >
-              {loading ? 'AGUARDE...' : 'ENTRAR NO SISTEMA'}
+              {loading ? 'Aguarde...' : 'Entrar'}
             </button>
           </form>
 
-          {/* Footer */}
-          <p
-            style={{
-              textAlign: 'center',
-              marginTop: '1.5rem',
-              fontSize: '10px',
-              fontFamily: 'var(--font-mono)',
-              color: '#888',
-              textTransform: 'uppercase',
-              letterSpacing: 1,
-            }}
-          >
-            GOON CONSULTORIA © 2026
+          <p style={{ textAlign: 'center', marginTop: 24, fontSize: 11, fontFamily: 'var(--font-sans)', color: '#cbd5e1' }}>
+            AURA360 Consultoria &copy; 2026
           </p>
         </div>
       </div>

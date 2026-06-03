@@ -12,7 +12,7 @@ export function MobileHeader({ onMenuClick, userName }: MobileHeaderProps) {
     <header style={{
       position: 'fixed', top: 0, left: 0, right: 0, height: 56,
       background: 'var(--retro-gray)',
-      borderBottom: '2px solid black',
+      borderBottom: '1px solid #e2e8f0',
       boxShadow: '0 4px 0 black',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '0 16px', zIndex: 30,
@@ -22,13 +22,13 @@ export function MobileHeader({ onMenuClick, userName }: MobileHeaderProps) {
           onClick={onMenuClick}
           style={{
             background: 'black',
-            border: '2px solid black',
+            border: '1px solid #e2e8f0',
             cursor: 'pointer',
             padding: 4,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '2px 2px 0 black',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
           }}
         >
           <Menu size={18} color="white" />
@@ -37,7 +37,7 @@ export function MobileHeader({ onMenuClick, userName }: MobileHeaderProps) {
           color: 'black',
           fontWeight: 900,
           fontSize: 14,
-          fontFamily: 'var(--font-pixel)',
+          fontFamily: 'var(--font-sans)',
           letterSpacing: '0.05em',
         }}>GOON</span>
         <span style={{

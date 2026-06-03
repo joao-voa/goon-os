@@ -93,8 +93,8 @@ function ProgramSelector({ active, onChange }: { active: string; onChange: (v: s
             style={{
               background: bg,
               color: isActive ? 'white' : 'black',
-              border: '2px solid black',
-              boxShadow: isActive ? 'none' : '2px 2px 0 black',
+              border: '1px solid #e2e8f0',
+              boxShadow: isActive ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
               padding: '8px 16px',
               fontFamily: 'var(--font-mono)',
               fontSize: 11,
@@ -135,8 +135,8 @@ function KpiCard({
     <div
       style={{
         background: 'white',
-        border: '2px solid black',
-        boxShadow: '4px 4px 0px 0px #000',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
         padding: '16px 20px',
         display: 'flex',
         flexDirection: 'column',
@@ -146,7 +146,7 @@ function KpiCard({
     >
       <span
         style={{
-          fontFamily: 'var(--font-pixel)',
+          fontFamily: 'var(--font-sans)',
           fontSize: 8,
           textTransform: 'uppercase',
           letterSpacing: 1,
@@ -157,7 +157,7 @@ function KpiCard({
       </span>
       <span
         style={{
-          fontFamily: 'var(--font-pixel)',
+          fontFamily: 'var(--font-sans)',
           fontSize: 14,
           color: accent,
           letterSpacing: 1,
@@ -241,7 +241,7 @@ function NewPaymentModal({ onClose, onCreated }: NewPaymentModalProps) {
       <div className="goon-modal" style={isMobile ? {
         width: '100%',
         maxWidth: '100%',
-        borderTop: '2px solid black',
+        borderTop: '1px solid #e2e8f0',
         border: 'none',
         boxShadow: '0 -4px 0 black',
         maxHeight: '85vh',
@@ -331,7 +331,7 @@ function NewPaymentModal({ onClose, onCreated }: NewPaymentModalProps) {
               <option value="SCHEDULED">Agendado</option>
             </select>
           </div>
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 8, borderTop: '2px solid black' }}>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid #e2e8f0' }}>
             <button type="button" className="goon-btn-secondary" onClick={onClose}>Cancelar</button>
             <button type="submit" className="goon-btn-accent" disabled={loading}>
               {loading ? 'Salvando...' : 'Criar Pagamento'}
@@ -349,8 +349,8 @@ function PaymentCard({ payment, onPay }: { payment: Payment; onPay: (id: string)
     <div
       style={{
         background: payment.status === 'OVERDUE' ? '#fff0f0' : payment.status === 'PENDING' && isDueSoon(payment.dueDate) ? '#fff8f0' : 'white',
-        border: '2px solid black',
-        boxShadow: '4px 4px 0px 0px #000',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
         padding: 16,
         marginBottom: 12,
       }}
@@ -378,7 +378,7 @@ function PaymentCard({ payment, onPay }: { payment: Payment; onPay: (id: string)
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555' }}>
           Venc: {fmtDate(payment.dueDate)}
         </span>
-        <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, color: 'black', fontWeight: 700 }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'black', fontWeight: 700 }}>
           {fmtBRL(payment.value)}
         </span>
       </div>
@@ -520,7 +520,7 @@ export default function PaymentsPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, fontWeight: 700, color: 'black', margin: 0, textTransform: 'uppercase', letterSpacing: 1 }}>
+          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700, color: 'black', margin: 0, textTransform: 'uppercase', letterSpacing: 1 }}>
             Financeiro
           </h1>
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', margin: '4px 0 0 0' }}>
@@ -544,7 +544,7 @@ export default function PaymentsPage() {
       {(statusFilter || productFilter) && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
           {statusFilter && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: '#ccff00', border: '2px solid black', boxShadow: '2px 2px 0 black' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: '#ccff00', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'black', textTransform: 'uppercase' }}>
                 Filtro ativo: status={statusFilter}
               </span>
@@ -579,7 +579,7 @@ export default function PaymentsPage() {
           gap: 10,
         }}
       >
-        <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 9, color: 'var(--warning)', whiteSpace: 'nowrap', lineHeight: 1.8 }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 9, color: 'var(--warning)', whiteSpace: 'nowrap', lineHeight: 1.8 }}>
           [ℹ ATENÇÃO]
         </span>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', lineHeight: 1.6 }}>
@@ -641,8 +641,8 @@ export default function PaymentsPage() {
           style={{
             background: 'black',
             color: 'white',
-            border: '2px solid black',
-            boxShadow: '2px 2px 0 black',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
             padding: '8px 16px',
             fontFamily: 'var(--font-mono)',
             fontSize: 11,
@@ -662,7 +662,7 @@ export default function PaymentsPage() {
           <div style={{
             width: 32,
             height: 32,
-            border: '3px solid black',
+            border: '1px solid #e2e8f0',
             borderTopColor: 'transparent',
             borderRadius: '50%',
             animation: 'spin 0.6s linear infinite',
@@ -673,8 +673,8 @@ export default function PaymentsPage() {
 
       {/* Empty */}
       {!loading && payments.length === 0 && (
-        <div style={{ textAlign: 'center', padding: 60, background: 'white', border: '2px solid black', boxShadow: '4px 4px 0px 0px #000' }}>
-          <p style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, color: 'black', margin: 0 }}>
+        <div style={{ textAlign: 'center', padding: 60, background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }}>
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'black', margin: 0 }}>
             Nenhum pagamento encontrado
           </p>
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', marginTop: 12 }}>
@@ -705,7 +705,7 @@ export default function PaymentsPage() {
         const thStyle: React.CSSProperties = { cursor: 'pointer', userSelect: 'none' }
         const sortIndicator = (field: string) => sortField === field ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''
         return (
-        <div style={{ overflow: 'auto', border: '2px solid black', boxShadow: '6px 6px 0px 0px #000' }}>
+        <div style={{ overflow: 'auto', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.08)' }}>
           <table className="goon-table">
             <thead>
               <tr>
@@ -760,7 +760,7 @@ export default function PaymentsPage() {
                       </span>
                     </td>
                     <td>
-                      <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 10, fontWeight: 700 }}>
+                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700 }}>
                         {fmtBRL(payment.value)}
                       </span>
                     </td>
@@ -787,7 +787,7 @@ export default function PaymentsPage() {
                         )}
                         {payment.status === 'PAID' && (
                           <button
-                            style={{ fontSize: 8, padding: '5px 8px', whiteSpace: 'nowrap', background: '#e6a800', color: 'white', border: '2px solid black', fontFamily: 'var(--font-mono)', fontWeight: 700, cursor: 'pointer' }}
+                            style={{ fontSize: 8, padding: '5px 8px', whiteSpace: 'nowrap', background: '#e6a800', color: 'white', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontWeight: 700, cursor: 'pointer' }}
                             onClick={() => handleUnpay(payment.id)}
                           >
                             Reverter

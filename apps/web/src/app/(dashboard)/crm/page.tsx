@@ -121,7 +121,7 @@ function CloseDealModal({
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '8px 10px',
-    border: '2px solid black',
+    border: '1px solid #e2e8f0',
     fontFamily: 'var(--font-mono)',
     fontSize: 13,
     background: 'white',
@@ -152,11 +152,11 @@ function CloseDealModal({
       <form
         onSubmit={handleSubmit}
         style={{
-          background: 'white', border: '2px solid black', boxShadow: '8px 8px 0px 0px #000',
+          background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
           width: '100%', maxWidth: 420, position: 'relative',
         }}
       >
-        <div style={{ background: '#22c55e', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-pixel)', fontSize: 11 }}>
+        <div style={{ background: '#22c55e', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
           FECHAR NEGÓCIO — {lead.companyName}
         </div>
         <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -250,15 +250,15 @@ function CloseDealModal({
           )}
           <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
             <button type="button" onClick={onClose} style={{
-              flex: 1, padding: '10px', border: '2px solid black', background: 'white',
+              flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: 'white',
               fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
             }}>
               CANCELAR
             </button>
             <button type="submit" disabled={submitting} style={{
-              flex: 1, padding: '10px', border: '2px solid black', background: '#22c55e', color: 'white',
+              flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#22c55e', color: 'white',
               fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer',
-              boxShadow: '3px 3px 0px 0px #000',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
             }}>
               {submitting ? 'FECHANDO...' : 'CONFIRMAR'}
             </button>
@@ -342,7 +342,7 @@ function NewLeadModal({
   }
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '8px 10px', border: '2px solid black',
+    width: '100%', padding: '8px 10px', border: '1px solid #e2e8f0',
     fontFamily: 'var(--font-mono)', fontSize: 13, background: 'white',
   }
   const labelStyle: React.CSSProperties = {
@@ -371,11 +371,11 @@ function NewLeadModal({
       <form
         onSubmit={handleSubmit}
         style={{
-          background: 'white', border: '2px solid black', boxShadow: '8px 8px 0px 0px #000',
+          background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
           width: '100%', maxWidth: 420, maxHeight: '90vh', overflowY: 'auto',
         }}
       >
-        <div style={{ background: '#4A78FF', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-pixel)', fontSize: 11 }}>
+        <div style={{ background: '#4A78FF', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
           NOVO LEAD
         </div>
         <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -464,15 +464,15 @@ function NewLeadModal({
           </div>
           <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
             <button type="button" onClick={onClose} style={{
-              flex: 1, padding: '10px', border: '2px solid black', background: 'white',
+              flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: 'white',
               fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
             }}>
               CANCELAR
             </button>
             <button type="submit" disabled={submitting} style={{
-              flex: 1, padding: '10px', border: '2px solid black', background: '#4A78FF', color: 'white',
+              flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#4A78FF', color: 'white',
               fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer',
-              boxShadow: '3px 3px 0px 0px #000',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
             }}>
               {submitting ? 'SALVANDO...' : 'CRIAR LEAD'}
             </button>
@@ -656,26 +656,26 @@ function LeadDetailModal({
     ? Math.floor((Date.now() - new Date(lead.stageChangedAt).getTime()) / (1000 * 60 * 60 * 24))
     : Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / (1000 * 60 * 60 * 24))
 
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }
 
   return (
     <div
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{ background: 'white', border: '2px solid black', boxShadow: '8px 8px 0 black', width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'auto' }}>
+      <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'auto' }}>
         {/* Header */}
         <div style={{ background: LEAD_STAGE_COLORS[lead.leadStage] ?? 'black', color: 'white', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 12 }}>{lead.companyName}</span>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12 }}>{lead.companyName}</span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, opacity: 0.8 }}>{LEAD_STAGE_LABELS[lead.leadStage] ?? lead.leadStage} | {daysInStage}d</span>
         </div>
 
         <div style={{ padding: 16 }}>
           {/* Info Grid - with edit button */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 10 }}>DADOS</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 10 }}>DADOS</div>
             {!editing && (
-              <button onClick={() => setEditing(true)} style={{ background: '#4A78FF', color: 'white', border: '2px solid black', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>EDITAR</button>
+              <button onClick={() => setEditing(true)} style={{ background: '#4A78FF', color: 'white', border: '1px solid #e2e8f0', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>EDITAR</button>
             )}
           </div>
           {editing ? (
@@ -767,7 +767,7 @@ function LeadDetailModal({
                 <textarea value={editLeadNotes} onChange={e => setEditLeadNotes(e.target.value)} rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
-                <button onClick={() => setEditing(false)} style={{ flex: 1, padding: '6px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
+                <button onClick={() => setEditing(false)} style={{ flex: 1, padding: '6px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
                 <button disabled={saving} onClick={async () => {
                   setSaving(true)
                   try {
@@ -795,7 +795,7 @@ function LeadDetailModal({
                     onUpdated()
                   } catch { toast.error('Erro ao salvar') }
                   setSaving(false)
-                }} style={{ flex: 1, padding: '6px', border: '2px solid black', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', boxShadow: '3px 3px 0 black' }}>
+                }} style={{ flex: 1, padding: '6px', border: '1px solid #e2e8f0', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                   {saving ? 'SALVANDO...' : 'SALVAR'}
                 </button>
               </div>
@@ -842,22 +842,22 @@ function LeadDetailModal({
           {/* WhatsApp link */}
           {lead.whatsapp && (
             <a href={`https://wa.me/55${lead.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-              style={{ display: 'inline-block', background: '#25d366', color: 'white', padding: '6px 14px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', marginBottom: 16 }}>
+              style={{ display: 'inline-block', background: '#25d366', color: 'white', padding: '6px 14px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', marginBottom: 16 }}>
               ABRIR WHATSAPP
             </a>
           )}
 
           {/* Add Interaction */}
           {/* Quick Schedule Meeting */}
-          <div style={{ borderTop: '2px solid black', paddingTop: 12, marginBottom: 12 }}>
+          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12, marginBottom: 12 }}>
             {!showSchedule ? (
               <button onClick={() => setShowSchedule(true)} style={{
                 width: '100%', padding: '8px', border: '2px solid #22c55e', background: '#22c55e', color: 'white',
-                fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0 black',
+                fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
               }}>AGENDAR REUNIAO COMERCIAL</button>
             ) : (
               <form onSubmit={handleScheduleMeeting} style={{ background: '#f0fff0', border: '2px solid #22c55e', padding: 12 }}>
-                <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 10, color: '#22c55e', marginBottom: 8 }}>AGENDAR REUNIAO</div>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: 10, color: '#22c55e', marginBottom: 8 }}>AGENDAR REUNIAO</div>
                 <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
                   <input value={schedTitle} onChange={e => setSchedTitle(e.target.value)} placeholder="Titulo" style={{ ...inputStyle, flex: 1, fontSize: 11, padding: '5px 8px' }} />
                 </div>
@@ -867,8 +867,8 @@ function LeadDetailModal({
                 </div>
                 <input value={schedNotes} onChange={e => setSchedNotes(e.target.value)} placeholder="Observacoes..." style={{ ...inputStyle, fontSize: 11, padding: '5px 8px', marginBottom: 6, width: '100%' }} />
                 <div style={{ display: 'flex', gap: 6 }}>
-                  <button type="button" onClick={() => setShowSchedule(false)} style={{ flex: 1, padding: '5px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
-                  <button type="submit" disabled={scheduling} style={{ flex: 1, padding: '5px', border: '2px solid black', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: scheduling ? 'wait' : 'pointer', boxShadow: '2px 2px 0 black' }}>
+                  <button type="button" onClick={() => setShowSchedule(false)} style={{ flex: 1, padding: '5px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
+                  <button type="submit" disabled={scheduling} style={{ flex: 1, padding: '5px', border: '1px solid #e2e8f0', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: scheduling ? 'wait' : 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                     {scheduling ? 'AGENDANDO...' : 'CONFIRMAR'}
                   </button>
                 </div>
@@ -876,8 +876,8 @@ function LeadDetailModal({
             )}
           </div>
 
-          <form onSubmit={handleAddInteraction} style={{ marginBottom: 16, borderTop: '2px solid black', paddingTop: 12 }}>
-            <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, marginBottom: 8 }}>REGISTRAR INTERACAO</div>
+          <form onSubmit={handleAddInteraction} style={{ marginBottom: 16, borderTop: '1px solid #e2e8f0', paddingTop: 12 }}>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, marginBottom: 8 }}>REGISTRAR INTERACAO</div>
             <div style={{ display: 'flex', gap: 6 }}>
               <select value={newType} onChange={e => setNewType(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
                 {Object.entries(INTERACTION_TYPES).map(([k, v]) => (
@@ -885,13 +885,13 @@ function LeadDetailModal({
                 ))}
               </select>
               <input placeholder="Descreva..." value={newDesc} onChange={e => setNewDesc(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-              <button type="submit" disabled={submitting} style={{ background: 'black', color: 'white', border: '2px solid black', padding: '6px 12px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>+</button>
+              <button type="submit" disabled={submitting} style={{ background: '#0f172a', color: 'white', border: '1px solid #e2e8f0', padding: '6px 12px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>+</button>
             </div>
           </form>
 
           {/* Timeline */}
-          <div style={{ borderTop: '2px solid black', paddingTop: 12 }}>
-            <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, marginBottom: 8 }}>TIMELINE ({interactions.length})</div>
+          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12 }}>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, marginBottom: 8 }}>TIMELINE ({interactions.length})</div>
             {interactions.length === 0 ? (
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', padding: 10 }}>Nenhuma interacao registrada</div>
             ) : (
@@ -915,8 +915,8 @@ function LeadDetailModal({
 
           {/* Active Plans + Mentors */}
           {plans.length > 0 && (
-            <div style={{ borderTop: '2px solid black', paddingTop: 12, marginTop: 8 }}>
-              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, marginBottom: 8 }}>PLANOS ({plans.length})</div>
+            <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12, marginTop: 8 }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, marginBottom: 8 }}>PLANOS ({plans.length})</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {plans.map(p => {
                   const planMentors = mentors[p.id] ?? []
@@ -974,8 +974,8 @@ function LeadDetailModal({
                                 onUpdated()
                               } catch { toast.error('Erro ao atribuir mentor') }
                               setSavingMentor(false)
-                            }} style={{ background: '#006600', color: 'white', border: '1px solid black', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>OK</button>
-                            <button onClick={() => setAddingMentor(null)} style={{ background: 'white', border: '1px solid black', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
+                            }} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>OK</button>
+                            <button onClick={() => setAddingMentor(null)} style={{ background: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
                           </div>
                         ) : (
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -997,8 +997,8 @@ function LeadDetailModal({
 
           {/* Commissions for closed deals */}
           {lead.leadStage === 'FECHADO' && commissions.length > 0 && (
-            <div style={{ borderTop: '2px solid black', paddingTop: 12, marginTop: 8 }}>
-              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, marginBottom: 8 }}>COMISSOES ({commissions.length})</div>
+            <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12, marginTop: 8 }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, marginBottom: 8 }}>COMISSOES ({commissions.length})</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {commissions.map(c => (
                   <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#fafafa', border: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
@@ -1012,12 +1012,12 @@ function LeadDetailModal({
           )}
 
           {/* Actions */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 16, borderTop: '2px solid black', paddingTop: 12 }}>
-            <button onClick={onClose} style={{ flex: 1, padding: '8px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>FECHAR</button>
+          <div style={{ display: 'flex', gap: 8, marginTop: 16, borderTop: '1px solid #e2e8f0', paddingTop: 12 }}>
+            <button onClick={onClose} style={{ flex: 1, padding: '8px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>FECHAR</button>
             {lead.leadStage !== 'FECHADO' && lead.leadStage !== 'PERDIDO' && (
-              <button onClick={onCloseDeal} style={{ flex: 1, padding: '8px', border: '2px solid black', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0 black' }}>FECHAR NEGOCIO</button>
+              <button onClick={onCloseDeal} style={{ flex: 1, padding: '8px', border: '1px solid #e2e8f0', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>FECHAR NEGOCIO</button>
             )}
-            <button onClick={onDelete} style={{ padding: '8px 12px', border: '2px solid black', background: '#cc0000', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>EXCLUIR</button>
+            <button onClick={onDelete} style={{ padding: '8px 12px', border: '1px solid #e2e8f0', background: '#cc0000', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>EXCLUIR</button>
           </div>
         </div>
       </div>
@@ -1155,7 +1155,7 @@ export default function CrmPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: 40, textAlign: 'center', fontFamily: 'var(--font-pixel)', fontSize: 12 }}>
+      <div style={{ padding: 40, textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: 12 }}>
         CARREGANDO PIPELINE...
       </div>
     )
@@ -1167,10 +1167,10 @@ export default function CrmPage() {
       <div style={{ display: 'flex', gap: 0, marginBottom: 16, overflowX: 'auto' }}>
         {(['dashboard', 'pipeline', 'agenda'] as const).map(tab => (
           <button key={tab} onClick={() => setCrmTab(tab)} style={{
-            padding: '10px 24px', border: '2px solid black',
+            padding: '10px 24px', border: '1px solid #e2e8f0',
             borderBottom: crmTab === tab ? 'none' : '2px solid black',
             background: crmTab === tab ? 'white' : '#f0f0f0',
-            fontFamily: 'var(--font-pixel)', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+            fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, cursor: 'pointer',
             textTransform: 'uppercase', position: 'relative',
             marginBottom: crmTab === tab ? -2 : 0, zIndex: crmTab === tab ? 1 : 0,
             color: crmTab === tab ? 'black' : '#888',
@@ -1178,7 +1178,7 @@ export default function CrmPage() {
             {tab === 'pipeline' ? 'PIPELINE' : tab === 'agenda' ? 'AGENDA' : 'DASHBOARD'}
           </button>
         ))}
-        <div style={{ flex: 1, borderBottom: '2px solid black' }} />
+        <div style={{ flex: 1, borderBottom: '1px solid #e2e8f0' }} />
       </div>
 
       {/* CRM DASHBOARD */}
@@ -1210,11 +1210,11 @@ export default function CrmPage() {
         return (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-              <h2 style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, margin: 0 }}>DASHBOARD COMERCIAL</h2>
+              <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: 14, margin: 0 }}>DASHBOARD COMERCIAL</h2>
               <div style={{ display: 'flex', gap: 4 }}>
                 {(['dia', 'semana', 'mes', 'ano'] as const).map(p => (
                   <button key={p} onClick={() => setDashPeriod(p)} style={{
-                    padding: '5px 12px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+                    padding: '5px 12px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
                     background: dashPeriod === p ? 'black' : 'white', color: dashPeriod === p ? 'white' : 'black',
                   }}>{p.toUpperCase()}</button>
                 ))}
@@ -1234,16 +1234,16 @@ export default function CrmPage() {
                 { label: 'Reunioes Feitas', value: String(comMeetingsRealizadas), color: '#006600' },
                 { label: 'Reunioes Agendadas', value: String(comMeetingsAgendadas), color: '#4A78FF' },
               ].map(kpi => (
-                <div key={kpi.label} style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '12px 14px', background: 'white' }}>
+                <div key={kpi.label} style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', padding: '12px 14px', background: 'white' }}>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8, textTransform: 'uppercase', letterSpacing: 0.5, color: '#666' }}>{kpi.label}</div>
-                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 18, color: kpi.color, marginTop: 4 }}>{kpi.value}</div>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 18, color: kpi.color, marginTop: 4 }}>{kpi.value}</div>
                 </div>
               ))}
             </div>
 
             {/* Pipeline summary */}
-            <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white', marginBottom: 20 }}>
-              <div style={{ background: 'black', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-pixel)', fontSize: 10 }}>FUNIL DE VENDAS</div>
+            <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white', marginBottom: 20 }}>
+              <div style={{ background: '#0f172a', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>FUNIL DE VENDAS</div>
               <div style={{ padding: 16 }}>
                 {[
                   { label: 'Novo', count: inNovo, color: '#4A78FF', pct: totalLeads > 0 ? Math.round(inNovo / totalLeads * 100) : 0 },
@@ -1267,8 +1267,8 @@ export default function CrmPage() {
               const bySeller: Record<string, number> = {}
               leads.forEach(l => { const rep = l.salesRep ?? 'Sem vendedor'; bySeller[rep] = (bySeller[rep] ?? 0) + 1 })
               return (
-                <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white' }}>
-                  <div style={{ background: 'black', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-pixel)', fontSize: 10 }}>LEADS POR VENDEDOR</div>
+                <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
+                  <div style={{ background: '#0f172a', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>LEADS POR VENDEDOR</div>
                   <div style={{ padding: 16 }}>
                     {Object.entries(bySeller).sort((a, b) => b[1] - a[1]).map(([rep, count]) => (
                       <div key={rep} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
@@ -1300,24 +1300,24 @@ export default function CrmPage() {
         return (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h2 style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, margin: 0 }}>AGENDA COMERCIAL</h2>
-            <a href="/agenda" style={{ padding: '6px 14px', border: '2px solid black', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', boxShadow: '3px 3px 0 black' }}>
+            <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: 14, margin: 0 }}>AGENDA COMERCIAL</h2>
+            <a href="/agenda" style={{ padding: '6px 14px', border: '1px solid #e2e8f0', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
               + AGENDAR REUNIAO
             </a>
           </div>
 
           {/* Month navigation */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 12 }}>
-            <button onClick={() => { if (comMonth === 0) { setComMonth(11); setComYear(y => y - 1) } else setComMonth(m => m - 1) }} style={{ padding: '4px 12px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>◀</button>
-            <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 12, textTransform: 'uppercase', minWidth: 150, textAlign: 'center' }}>{MONTH_NAMES[comMonth]} {comYear}</span>
-            <button onClick={() => { if (comMonth === 11) { setComMonth(0); setComYear(y => y + 1) } else setComMonth(m => m + 1) }} style={{ padding: '4px 12px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>▶</button>
+            <button onClick={() => { if (comMonth === 0) { setComMonth(11); setComYear(y => y - 1) } else setComMonth(m => m - 1) }} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>◀</button>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, textTransform: 'uppercase', minWidth: 150, textAlign: 'center' }}>{MONTH_NAMES[comMonth]} {comYear}</span>
+            <button onClick={() => { if (comMonth === 11) { setComMonth(0); setComYear(y => y + 1) } else setComMonth(m => m + 1) }} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>▶</button>
           </div>
 
           {/* Calendar */}
-          <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white', marginBottom: 16 }}>
+          <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white', marginBottom: 16 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'black' }}>
               {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map(d => (
-                <div key={d} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: 'var(--font-pixel)', fontSize: 8, color: 'white' }}>{d}</div>
+                <div key={d} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: 8, color: 'white' }}>{d}</div>
               ))}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
@@ -1352,8 +1352,8 @@ export default function CrmPage() {
             const dayNum = parseInt(comSelectedDate.split('-')[2])
             const dayMeetings = meetingsByDay[dayNum] ?? []
             return (
-              <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', background: 'white', marginBottom: 16 }}>
-                <div style={{ background: '#22c55e', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-pixel)', fontSize: 10 }}>
+              <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', background: 'white', marginBottom: 16 }}>
+                <div style={{ background: '#22c55e', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>
                   {new Date(comSelectedDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </div>
                 <div style={{ padding: 12 }}>
@@ -1373,10 +1373,10 @@ export default function CrmPage() {
                           <>
                             <button onClick={async () => {
                               try { await apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ status: 'DONE' }) }); toast.success('Marcada como feita'); loadCommercialMeetings() } catch { toast.error('Erro') }
-                            }} style={{ background: '#006600', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FEITA</button>
+                            }} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FEITA</button>
                             <button onClick={async () => {
                               try { await apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ status: 'NO_SHOW' }) }); toast.success('Marcada como no-show'); loadCommercialMeetings() } catch { toast.error('Erro') }
-                            }} style={{ background: '#e6a800', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FALTOU</button>
+                            }} style={{ background: '#e6a800', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FALTOU</button>
                             <button onClick={() => {
                               const newDate = prompt('Nova data (DD/MM/AAAA):', new Date(m.date).toLocaleDateString('pt-BR'))
                               if (!newDate) return
@@ -1388,11 +1388,11 @@ export default function CrmPage() {
                               apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ date: dt.toISOString() }) })
                                 .then(() => { toast.success('Reagendada para ' + newDate + ' ' + newTime); loadCommercialMeetings() })
                                 .catch(() => toast.error('Erro ao reagendar'))
-                            }} style={{ background: '#4A78FF', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>REAGENDAR</button>
+                            }} style={{ background: '#4A78FF', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>REAGENDAR</button>
                             <button onClick={async () => {
                               if (!confirm('Cancelar esta reuniao?')) return
                               try { await apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ status: 'CANCELLED' }) }); toast.success('Reuniao cancelada'); loadCommercialMeetings() } catch { toast.error('Erro') }
-                            }} style={{ background: '#cc0000', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>CANCELAR</button>
+                            }} style={{ background: '#cc0000', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>CANCELAR</button>
                           </>
                         )}
                         {m.status === 'DONE' && <span style={{ background: '#006600', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>FEITA</span>}
@@ -1415,7 +1415,7 @@ export default function CrmPage() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         marginBottom: 20, flexWrap: 'wrap', gap: 12,
       }}>
-        <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: isMobile ? 14 : 18, margin: 0 }}>
+        <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: isMobile ? 14 : 18, margin: 0 }}>
           CRM — PIPELINE
         </h1>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -1442,9 +1442,9 @@ export default function CrmPage() {
             }}
             disabled={syncing}
             style={{
-              padding: '8px 16px', border: '2px solid black', background: syncing ? '#888' : '#22c55e', color: 'white',
+              padding: '8px 16px', border: '1px solid #e2e8f0', background: syncing ? '#888' : '#22c55e', color: 'white',
               fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: syncing ? 'wait' : 'pointer',
-              boxShadow: '3px 3px 0px 0px #000',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
             }}
           >
             {syncing ? 'SINCRONIZANDO...' : 'SINCRONIZAR LEADS'}
@@ -1452,9 +1452,9 @@ export default function CrmPage() {
           <button
             onClick={() => setShowNewLead(true)}
             style={{
-              padding: '8px 16px', border: '2px solid black', background: '#4A78FF', color: 'white',
+              padding: '8px 16px', border: '1px solid #e2e8f0', background: '#4A78FF', color: 'white',
               fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-              boxShadow: '3px 3px 0px 0px #000',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
             }}
           >
             + NOVO LEAD
@@ -1468,7 +1468,7 @@ export default function CrmPage() {
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           placeholder="Buscar lead por nome, responsavel, email ou telefone..."
-          style={{ width: '100%', padding: '8px 12px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12, boxShadow: '3px 3px 0 black' }}
+          style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
         />
       </div>
 
@@ -1482,12 +1482,12 @@ export default function CrmPage() {
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Vendedor:</span>
               <button onClick={() => setSalesRepFilter('')} style={{
-                padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+                padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
                 background: salesRepFilter === '' ? 'black' : 'white', color: salesRepFilter === '' ? 'white' : 'black',
               }}>TODOS</button>
               {reps.map(rep => (
                 <button key={rep} onClick={() => setSalesRepFilter(salesRepFilter === rep ? '' : rep)} style={{
-                  padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+                  padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
                   background: salesRepFilter === rep ? 'black' : 'white', color: salesRepFilter === rep ? 'white' : 'black',
                 }}>{rep}</button>
               ))}
@@ -1499,7 +1499,7 @@ export default function CrmPage() {
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Responsavel:</span>
           {['', 'SOCIAL_SELLING', 'CLOSER'].map(val => (
             <button key={val} onClick={() => setCardResponsibleFilter(cardResponsibleFilter === val ? '' : val)} style={{
-              padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+              padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
               background: cardResponsibleFilter === val ? 'black' : 'white', color: cardResponsibleFilter === val ? 'white' : 'black',
             }}>{val === '' ? 'TODOS' : val === 'SOCIAL_SELLING' ? 'SOCIAL SELLING' : 'CLOSER'}</button>
           ))}
@@ -1519,13 +1519,13 @@ export default function CrmPage() {
           { label: 'Parados >7d', value: String(metrics?.staleLeads ?? 0), color: (metrics?.staleLeads ?? 0) > 0 ? '#cc0000' : '#888' },
         ].map(kpi => (
           <div key={kpi.label} style={{
-            border: '2px solid black', boxShadow: '4px 4px 0px 0px #000',
+            border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
             padding: isMobile ? '10px 8px' : '14px 16px', background: 'white',
           }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5, color: '#666' }}>
               {kpi.label}
             </div>
-            <div style={{ fontFamily: 'var(--font-pixel)', fontSize: isMobile ? 16 : 22, color: kpi.color, marginTop: 4 }}>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: isMobile ? 16 : 22, color: kpi.color, marginTop: 4 }}>
               {kpi.value}
             </div>
           </div>
@@ -1535,11 +1535,11 @@ export default function CrmPage() {
       {/* Valor fechado + Performance vendedores */}
       {metrics && metrics.closedValueThisMonth > 0 && (
         <div style={{ marginBottom: 16, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ background: '#22c55e', color: 'white', padding: '8px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12 }}>
+          <div style={{ background: '#22c55e', color: 'white', padding: '8px 16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12 }}>
             Fechado no mes: {fmtBRL(metrics.closedValueThisMonth)}
           </div>
           {Object.entries(metrics.bySalesRep).filter(([, v]) => v.closed > 0).map(([rep, v]) => (
-            <div key={rep} style={{ background: 'var(--retro-gray)', padding: '8px 16px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11 }}>
+            <div key={rep} style={{ background: 'var(--retro-gray)', padding: '8px 16px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11 }}>
               {rep}: {v.closed} fechados ({fmtBRL(v.value)})
             </div>
           ))}

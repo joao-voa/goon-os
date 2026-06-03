@@ -157,17 +157,17 @@ export default function PersonAccountsPage() {
     <div>
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
-        <div style={{ background: '#1e293b', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+        <div style={{ background: '#1e293b', color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
           <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Total a Pagar</div>
           <div style={{ fontSize: 18 }}>{fmt(totalBalance)}</div>
           <div style={{ fontSize: 9, opacity: 0.7 }}>{personsWithBalance.length} pessoas com saldo</div>
         </div>
-        <div style={{ background: '#334155', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+        <div style={{ background: '#334155', color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
           <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Total Pago</div>
           <div style={{ fontSize: 18 }}>{fmt(totalPaid)}</div>
           <div style={{ fontSize: 9, opacity: 0.7 }}>Creditos registrados</div>
         </div>
-        <div style={{ background: '#475569', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+        <div style={{ background: '#475569', color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
           <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Pessoas Cadastradas</div>
           <div style={{ fontSize: 18 }}>{persons.length}</div>
           <div style={{ fontSize: 9, opacity: 0.7 }}>
@@ -179,7 +179,7 @@ export default function PersonAccountsPage() {
       {/* Sync button */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
         <button onClick={handleSync} disabled={syncing} style={{
-          background: 'black', color: 'white', border: '2px solid black', boxShadow: '3px 3px 0 black',
+          background: '#0f172a', color: 'white', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
           padding: '6px 16px', cursor: syncing ? 'wait' : 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
         }}>
           {syncing ? 'SINCRONIZANDO...' : 'SYNC'}
@@ -191,9 +191,9 @@ export default function PersonAccountsPage() {
         <div style={{ padding: 40, textAlign: 'center', fontFamily: 'var(--font-mono)', color: '#888' }}>Carregando...</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12, background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12, background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }}>
             <thead>
-              <tr style={{ background: 'black', color: 'white', textTransform: 'uppercase' }}>
+              <tr style={{ background: '#0f172a', color: 'white', textTransform: 'uppercase' }}>
                 <th style={{ padding: '10px 12px', textAlign: 'left' }}>Nome</th>
                 <th style={{ padding: '10px 12px', textAlign: 'center' }}>Tipo</th>
                 <th style={{ padding: '10px 12px', textAlign: 'right' }}>Total Devido</th>
@@ -223,9 +223,9 @@ export default function PersonAccountsPage() {
                     <td style={{ padding: '10px 12px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                       <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                         {p.balance > 0 && p.type !== 'SOCIO' && (
-                          <button onClick={() => handlePay(p)} style={{ background: '#006600', color: 'white', border: '2px solid black', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>PAGAR</button>
+                          <button onClick={() => handlePay(p)} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>PAGAR</button>
                         )}
-                        <button onClick={() => toggleExtract(p.id)} style={{ background: extractId === p.id ? 'black' : 'var(--retro-blue)', color: 'white', border: '2px solid black', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>
+                        <button onClick={() => toggleExtract(p.id)} style={{ background: extractId === p.id ? 'black' : 'var(--retro-blue)', color: 'white', border: '1px solid #e2e8f0', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>
                           {extractId === p.id ? 'FECHAR' : 'EXTRATO'}
                         </button>
                       </div>
@@ -248,7 +248,7 @@ export default function PersonAccountsPage() {
                                     toast.success(`${fmtFull(d.value)} pago — ${d.description}`)
                                     loadPersons()
                                   } catch { toast.error('Erro ao pagar') }
-                                }} style={{ background: '#006600', color: 'white', border: '1px solid black', padding: '2px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, flexShrink: 0 }}>PG</button>
+                                }} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '2px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, flexShrink: 0 }}>PG</button>
                               )}
                               {d.paid && (
                                 <button onClick={async () => {
@@ -258,14 +258,14 @@ export default function PersonAccountsPage() {
                                     toast.success('Pagamento revertido')
                                     loadPersons()
                                   } catch { toast.error('Erro ao reverter') }
-                                }} style={{ background: '#cc0000', color: 'white', border: '1px solid black', padding: '2px 6px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, flexShrink: 0 }}>PAGO ✕</button>
+                                }} style={{ background: '#cc0000', color: 'white', border: '1px solid #e2e8f0', padding: '2px 6px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, flexShrink: 0 }}>PAGO ✕</button>
                               )}
                             </div>
                           ))}
                           {p.balance > 0 && p.type !== 'SOCIO' && (
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: 10, paddingTop: 8, borderTop: '2px solid black' }}>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: 10, paddingTop: 8, borderTop: '1px solid #e2e8f0' }}>
                               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginRight: 12 }}>Saldo: {fmtFull(p.balance)}</span>
-                              <button onClick={() => handlePay(p)} style={{ background: '#006600', color: 'white', border: '2px solid black', padding: '6px 16px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, boxShadow: '2px 2px 0 black' }}>PAGAR</button>
+                              <button onClick={() => handlePay(p)} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '6px 16px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>PAGAR</button>
                             </div>
                           )}
                         </div>
@@ -277,12 +277,12 @@ export default function PersonAccountsPage() {
                     <tr key={p.id + '-extract'}>
                       <td colSpan={6} style={{ padding: 0, background: '#f9f9f9' }}>
                         <div style={{ padding: '12px 16px' }}>
-                          <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, marginBottom: 10 }}>
+                          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, marginBottom: 10 }}>
                             EXTRATO — {p.name.toUpperCase()}
                           </div>
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
                             <thead>
-                              <tr style={{ borderBottom: '2px solid black' }}>
+                              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
                                 <th style={{ padding: '4px 8px', textAlign: 'left', fontSize: 9, textTransform: 'uppercase' }}>Data</th>
                                 <th style={{ padding: '4px 8px', textAlign: 'left', fontSize: 9, textTransform: 'uppercase' }}>Descricao</th>
                                 <th style={{ padding: '4px 8px', textAlign: 'center', fontSize: 9, textTransform: 'uppercase' }}>Origem</th>
@@ -318,14 +318,14 @@ export default function PersonAccountsPage() {
                                       </td>
                                       <td style={{ padding: '5px 8px', textAlign: 'center' }}>
                                         {tx.source === 'MANUAL' && tx.type === 'CREDIT' && (
-                                          <button onClick={() => handleDeleteTx(tx.id)} style={{ background: '#cc0000', color: 'white', border: '1px solid black', padding: '2px 6px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700 }}>X</button>
+                                          <button onClick={() => handleDeleteTx(tx.id)} style={{ background: '#cc0000', color: 'white', border: '1px solid #e2e8f0', padding: '2px 6px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700 }}>X</button>
                                         )}
                                       </td>
                                     </tr>
                                   )
                                 })
                               })()}
-                              <tr style={{ borderTop: '2px solid black', fontWeight: 700 }}>
+                              <tr style={{ borderTop: '1px solid #e2e8f0', fontWeight: 700 }}>
                                 <td colSpan={3} style={{ padding: '8px' }}>SALDO FINAL</td>
                                 <td style={{ padding: '8px', textAlign: 'right', color: '#cc0000' }}>{fmtFull(extract.totalDebits)}</td>
                                 <td style={{ padding: '8px', textAlign: 'right', color: '#006600' }}>{fmtFull(extract.totalCredits)}</td>

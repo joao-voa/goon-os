@@ -211,24 +211,24 @@ export default function AgendaPage() {
 
   const todayDay = now.getMonth() === month && now.getFullYear() === year ? now.getDate() : -1
 
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '6px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }
   const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, display: 'block', marginBottom: 3 }
 
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-        <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 20, margin: 0 }}>AGENDA</h1>
+        <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 20, margin: 0 }}>AGENDA</h1>
         <div style={{ display: 'flex', gap: 8 }}>
           {(['painel', 'calendario'] as const).map(v => (
             <button key={v} onClick={() => setViewMode(v)} style={{
-              padding: '6px 14px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+              padding: '6px 14px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
               background: viewMode === v ? 'black' : 'white', color: viewMode === v ? 'white' : 'black',
             }}>{v === 'painel' ? 'PAINEL' : 'CALENDARIO'}</button>
           ))}
         </div>
         <button onClick={() => openNewMeeting(new Date().toISOString().split('T')[0])} style={{
-          padding: '8px 16px', border: '2px solid black', background: '#4A78FF', color: 'white',
-          fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0 black',
+          padding: '8px 16px', border: '1px solid #e2e8f0', background: '#4A78FF', color: 'white',
+          fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
         }}>+ NOVA REUNIAO</button>
       </div>
 
@@ -237,7 +237,7 @@ export default function AgendaPage() {
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Categoria:</span>
         {['', 'MENTORIA', 'COMERCIAL', 'GESTAO'].map(cat => (
           <button key={cat} onClick={() => setCategoryFilter(categoryFilter === cat ? '' : cat)} style={{
-            padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+            padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
             background: categoryFilter === cat ? 'black' : 'white', color: categoryFilter === cat ? 'white' : 'black',
           }}>{cat || 'TODAS'}</button>
         ))}
@@ -248,12 +248,12 @@ export default function AgendaPage() {
         <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Mentor:</span>
           <button onClick={() => setMentorFilter('')} style={{
-            padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+            padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
             background: !mentorFilter ? 'black' : 'white', color: !mentorFilter ? 'white' : 'black',
           }}>TODOS</button>
           {mentors.map(m => (
             <button key={m} onClick={() => setMentorFilter(mentorFilter === m ? '' : m)} style={{
-              padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+              padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
               background: mentorFilter === m ? 'black' : 'white', color: mentorFilter === m ? 'white' : 'black',
             }}>{m}</button>
           ))}
@@ -265,32 +265,32 @@ export default function AgendaPage() {
         <div>
           {/* KPI Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
-            <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px', background: '#f0f5ff' }}>
+            <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', padding: '14px 16px', background: '#f0f5ff' }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666' }}>Hoje</div>
-              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 22, color: '#4A78FF' }}>{stats?.todayCount ?? 0}</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 22, color: '#4A78FF' }}>{stats?.todayCount ?? 0}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>reunioes</div>
             </div>
-            <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px' }}>
+            <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', padding: '14px 16px' }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666' }}>Esta Semana</div>
-              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 22 }}>{stats?.weekCount ?? 0}</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 22 }}>{stats?.weekCount ?? 0}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>agendadas</div>
             </div>
-            <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px' }}>
+            <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', padding: '14px 16px' }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666' }}>Realizadas</div>
-              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 22, color: '#006600' }}>{stats?.totalDone ?? 0}</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 22, color: '#006600' }}>{stats?.totalDone ?? 0}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>total</div>
             </div>
-            <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px', background: (() => { const c = cadenceData.filter(d => d.health === 'red').length; return c > 0 ? '#fef2f2' : 'white' })() }}>
+            <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', padding: '14px 16px', background: (() => { const c = cadenceData.filter(d => d.health === 'red').length; return c > 0 ? '#fef2f2' : 'white' })() }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666' }}>Saude Critica</div>
-              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 22, color: '#cc0000' }}>{cadenceData.filter(d => d.health === 'red').length}</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 22, color: '#cc0000' }}>{cadenceData.filter(d => d.health === 'red').length}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>clientes</div>
             </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             {/* Proximas reunioes */}
-            <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white' }}>
-              <div style={{ background: 'black', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-pixel)', fontSize: 10 }}>PROXIMAS REUNIOES</div>
+            <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
+              <div style={{ background: '#0f172a', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>PROXIMAS REUNIOES</div>
               <div style={{ padding: 12, maxHeight: 300, overflowY: 'auto' }}>
                 {meetings.filter(m => m.status === 'SCHEDULED' && new Date(m.date) >= new Date()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(0, 10).map(m => (
                   <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
@@ -308,8 +308,8 @@ export default function AgendaPage() {
             </div>
 
             {/* Clientes que precisam de atencao */}
-            <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white' }}>
-              <div style={{ background: '#cc0000', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-pixel)', fontSize: 10 }}>PRECISAM DE ATENCAO</div>
+            <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
+              <div style={{ background: '#cc0000', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>PRECISAM DE ATENCAO</div>
               <div style={{ padding: 12, maxHeight: 300, overflowY: 'auto' }}>
                 {cadenceData.filter(d => d.health !== 'green').sort((a, b) => (b.daysSinceLastMeeting ?? 999) - (a.daysSinceLastMeeting ?? 999)).map(d => {
                   const client = clients.find(c => c.id === d.clientId)
@@ -334,8 +334,8 @@ export default function AgendaPage() {
           </div>
 
           {/* Reunioes recentes */}
-          <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white', marginTop: 16 }}>
-            <div style={{ background: '#006600', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-pixel)', fontSize: 10 }}>ULTIMAS REUNIOES REALIZADAS</div>
+          <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white', marginTop: 16 }}>
+            <div style={{ background: '#006600', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>ULTIMAS REUNIOES REALIZADAS</div>
             <div style={{ padding: 12 }}>
               {meetings.filter(m => m.status === 'DONE').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8).map(m => (
                 <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
@@ -360,20 +360,20 @@ export default function AgendaPage() {
       {/* Month navigation */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 16 }}>
         <button onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1) }} style={{
-          padding: '6px 14px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+          padding: '6px 14px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, cursor: 'pointer',
         }}>◀</button>
-        <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, textTransform: 'uppercase', minWidth: 200, textAlign: 'center' }}>{monthName}</span>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, textTransform: 'uppercase', minWidth: 200, textAlign: 'center' }}>{monthName}</span>
         <button onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1) }} style={{
-          padding: '6px 14px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+          padding: '6px 14px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, cursor: 'pointer',
         }}>▶</button>
       </div>
 
       {/* Calendar grid */}
-      <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white' }}>
+      <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
         {/* Weekday headers */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'black' }}>
           {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map(d => (
-            <div key={d} style={{ padding: '8px 4px', textAlign: 'center', fontFamily: 'var(--font-pixel)', fontSize: 9, color: 'white' }}>{d}</div>
+            <div key={d} style={{ padding: '8px 4px', textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: 9, color: 'white' }}>{d}</div>
           ))}
         </div>
 
@@ -431,9 +431,9 @@ export default function AgendaPage() {
 
       {/* Day detail panel */}
       {selectedDate && (
-        <div style={{ marginTop: 16, border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white' }}>
-          <div style={{ background: 'black', color: 'white', padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 11 }}>
+        <div style={{ marginTop: 16, border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
+          <div style={{ background: '#0f172a', color: 'white', padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11 }}>
               {new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </span>
             <button onClick={() => openNewMeeting(selectedDate)} style={{
@@ -461,12 +461,12 @@ export default function AgendaPage() {
                   <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                     {m.status === 'SCHEDULED' && (
                       <>
-                        <button onClick={() => handleStatusChange(m.id, 'DONE')} style={{ background: '#006600', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FEITA</button>
-                        <button onClick={() => handleStatusChange(m.id, 'NO_SHOW')} style={{ background: '#e6a800', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FALTOU</button>
+                        <button onClick={() => handleStatusChange(m.id, 'DONE')} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FEITA</button>
+                        <button onClick={() => handleStatusChange(m.id, 'NO_SHOW')} style={{ background: '#e6a800', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FALTOU</button>
                       </>
                     )}
-                    <button onClick={() => openEditMeeting(m)} style={{ background: '#4A78FF', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>EDITAR</button>
-                    <button onClick={() => handleDelete(m.id)} style={{ background: '#cc0000', color: 'white', border: '1px solid black', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>X</button>
+                    <button onClick={() => openEditMeeting(m)} style={{ background: '#4A78FF', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>EDITAR</button>
+                    <button onClick={() => handleDelete(m.id)} style={{ background: '#cc0000', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>X</button>
                   </div>
                 </div>
               ))
@@ -481,8 +481,8 @@ export default function AgendaPage() {
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
           onClick={e => { if (e.target === e.currentTarget) { if (confirm('Sair sem salvar?')) setShowModal(false) } }}>
-          <div style={{ background: 'white', border: '2px solid black', boxShadow: '8px 8px 0 black', width: '100%', maxWidth: 420, maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ background: '#4A78FF', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-pixel)', fontSize: 11 }}>
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', width: '100%', maxWidth: 420, maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ background: '#4A78FF', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
               {selectedMeeting ? 'EDITAR REUNIAO' : 'NOVA REUNIAO'}
             </div>
             <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -533,8 +533,8 @@ export default function AgendaPage() {
                 <textarea value={formNotes} onChange={e => setFormNotes(e.target.value)} rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-                <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: '10px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
-                <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '10px', border: '2px solid black', background: '#4A78FF', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', boxShadow: '3px 3px 0 black' }}>
+                <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
+                <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#4A78FF', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                   {saving ? 'SALVANDO...' : selectedMeeting ? 'ATUALIZAR' : 'AGENDAR'}
                 </button>
               </div>

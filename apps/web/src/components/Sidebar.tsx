@@ -51,21 +51,17 @@ export function Sidebar({
   const pathname = usePathname()
 
   const visibleItems = (() => {
-    // If user has allowedModules set, use that (granular control)
     if (userAllowedModules) {
       try {
         const mods: string[] = JSON.parse(userAllowedModules)
         if (mods.length > 0) return navItems.filter(item => mods.includes(item.href))
       } catch { /* fall through */ }
     }
-    // Admin sees everything
     if (userRole === 'admin') return navItems
-    // Comercial: only CRM + Dashboard
     if (userRole === 'comercial') {
       const comercialPaths = ['/crm', '/agenda', '/products']
       return navItems.filter(item => comercialPaths.includes(item.href))
     }
-    // Default: show all
     return navItems
   })()
   const [openPendenciesCount, setOpenPendenciesCount] = useState(0)
@@ -76,108 +72,61 @@ export function Sidebar({
       .catch(() => {})
   }, [])
 
-  const sidebarWidth = isMobile ? 240 : collapsed ? 56 : 240
+  const sidebarWidth = isMobile ? 260 : collapsed ? 64 : 260
   const isVisible = isMobile ? mobileOpen : true
-
-  const sidebarStyle: React.CSSProperties = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    height: '100vh',
-    width: sidebarWidth,
-    background: 'var(--retro-gray)',
-    borderRight: '2px solid black',
-    boxShadow: '4px 0 0 black',
-    display: 'flex',
-    flexDirection: 'column',
-    zIndex: 51,
-    transition: 'transform 0.2s ease, width 0.2s ease',
-    transform: isVisible ? 'translateX(0)' : 'translateX(-100%)',
-    overflow: 'hidden',
-  }
 
   return (
     <>
-      <style>{`
-        @keyframes badgePulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.7; transform: scale(1.15); }
-        }
-      `}</style>
-      {/* Mobile backdrop */}
       {isMobile && mobileOpen && (
         <div
           onClick={onCloseMobile}
           style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.6)',
+            position: 'fixed', inset: 0,
+            background: 'rgba(15,23,42,0.5)',
+            backdropFilter: 'blur(4px)',
             zIndex: 50,
           }}
         />
       )}
 
-      <nav style={sidebarStyle}>
-        {/* Logo + toggle */}
+      <nav style={{
+        position: 'fixed', top: 0, left: 0, height: '100vh', width: sidebarWidth,
+        background: '#0f172a',
+        display: 'flex', flexDirection: 'column', zIndex: 51,
+        transition: 'transform 0.25s ease, width 0.25s ease',
+        transform: isVisible ? 'translateX(0)' : 'translateX(-100%)',
+        overflow: 'hidden',
+      }}>
+        {/* Logo */}
         <div style={{
-          height: 56,
-          display: 'flex',
-          alignItems: 'center',
+          height: 64, display: 'flex', alignItems: 'center',
           justifyContent: collapsed && !isMobile ? 'center' : 'space-between',
-          padding: collapsed && !isMobile ? '0' : '0 12px 0 16px',
-          borderBottom: '2px solid black',
+          padding: collapsed && !isMobile ? '0' : '0 16px 0 20px',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
           flexShrink: 0,
-          background: 'black',
         }}>
           {(!collapsed || isMobile) && (
-            <a href="/home" style={{ display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none', cursor: 'pointer' }}>
+            <a href="/home" style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
               <span style={{
-                color: 'white',
-                fontWeight: 900,
-                fontSize: 16,
-                fontFamily: 'var(--font-pixel)',
-                letterSpacing: '0.05em',
+                color: '#d4a017', fontWeight: 800, fontSize: 18,
+                fontFamily: 'var(--font-sans)', letterSpacing: '-0.02em',
               }}>AURA360</span>
               <span style={{
-                color: 'var(--retro-gray)',
-                fontSize: 10,
-                fontWeight: 700,
-                fontFamily: 'var(--font-mono)',
-                letterSpacing: '0.05em',
+                color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 600,
+                fontFamily: 'var(--font-sans)',
               }}>OS</span>
             </a>
           )}
           {collapsed && !isMobile && (
-            <a href="/home" style={{ textDecoration: 'none', cursor: 'pointer' }}>
-              <span style={{
-                color: 'white',
-                fontWeight: 900,
-                fontSize: 14,
-                fontFamily: 'var(--font-pixel)',
-              }}>G</span>
+            <a href="/home" style={{ textDecoration: 'none' }}>
+              <span style={{ color: '#d4a017', fontWeight: 800, fontSize: 16, fontFamily: 'var(--font-sans)' }}>A</span>
             </a>
           )}
           {!isMobile && (
-            <button
-              onClick={onToggle}
-              title={collapsed ? 'Expandir' : 'Recolher'}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 4,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--retro-gray)',
-                transition: 'color 0.1s',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.color = 'white'
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.color = 'var(--retro-gray)'
-              }}
+            <button onClick={onToggle} title={collapsed ? 'Expandir' : 'Recolher'}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)', borderRadius: 6, transition: 'all 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'white'; (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.4)'; (e.currentTarget as HTMLButtonElement).style.background = 'none' }}
             >
               {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
             </button>
@@ -185,72 +134,40 @@ export function Sidebar({
         </div>
 
         {/* Nav items */}
-        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '8px 0' }}>
           {visibleItems.map(item => {
             const Icon = item.icon
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
             return (
-              <a
-                key={item.href}
-                href={item.href}
+              <a key={item.href} href={item.href}
                 title={collapsed && !isMobile ? item.label : undefined}
                 style={{
-                  position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: collapsed && !isMobile ? '12px 0' : '12px 16px',
+                  position: 'relative', display: 'flex', alignItems: 'center', gap: 12,
+                  padding: collapsed && !isMobile ? '10px 0' : '10px 16px',
                   justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
                   textDecoration: 'none',
-                  color: isActive ? 'white' : 'black',
-                  background: isActive ? 'var(--retro-blue)' : 'transparent',
-                  boxShadow: isActive ? 'inset 3px 0 0 white' : 'none',
-                  borderBottom: '1px solid rgba(0,0,0,0.15)',
-                  borderLeft: isActive ? '3px solid #ccff00' : 'none',
-                  fontFamily: 'var(--font-mono)',
-                  fontWeight: 700,
-                  fontSize: 12,
-                  textTransform: 'uppercase',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.1s',
-                  paddingLeft: isActive && !collapsed && !isMobile ? '13px' : undefined,
+                  color: isActive ? 'white' : 'rgba(255,255,255,0.5)',
+                  background: isActive ? 'rgba(212,160,23,0.15)' : 'transparent',
+                  borderRadius: 8, margin: '1px 8px',
+                  fontFamily: 'var(--font-sans)', fontWeight: isActive ? 600 : 500, fontSize: 13,
+                  whiteSpace: 'nowrap', transition: 'all 0.15s',
+                  borderLeft: isActive ? '3px solid #d4a017' : '3px solid transparent',
                 }}
-                onMouseEnter={e => {
-                  if (!isActive) {
-                    (e.currentTarget as HTMLAnchorElement).style.background = '#b0b0b0'
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!isActive) {
-                    (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'
-                  }
-                }}
+                onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.85)' } }}
+                onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'; (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.5)' } }}
               >
                 <Icon size={18} style={{ flexShrink: 0 }} />
                 {(!collapsed || isMobile) && <span>{item.label}</span>}
                 {item.href === '/pendencies' && openPendenciesCount > 0 && (
-                  <span
-                    style={{
-                      position: 'absolute',
-                      top: 6,
-                      right: collapsed && !isMobile ? 4 : 10,
-                      background: '#cc0000',
-                      color: 'white',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 9,
-                      fontWeight: 700,
-                      minWidth: 16,
-                      height: 16,
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '0 3px',
-                      border: '1px solid white',
-                      lineHeight: 1,
-                      animation: 'badgePulse 2s ease-in-out infinite',
-                    }}
-                  >
+                  <span style={{
+                    position: 'absolute', top: 4,
+                    right: collapsed && !isMobile ? 4 : 10,
+                    background: '#ef4444', color: 'white',
+                    fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700,
+                    minWidth: 18, height: 18, borderRadius: 100,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '0 4px', lineHeight: 1,
+                  }}>
                     {openPendenciesCount > 99 ? '99+' : openPendenciesCount}
                   </span>
                 )}
@@ -259,41 +176,19 @@ export function Sidebar({
           })}
         </div>
 
-        {/* Bottom actions */}
-        <div style={{
-          borderTop: '2px solid black',
-          flexShrink: 0,
-        }}>
-          {/* Logout */}
-          <button
-            onClick={onLogout}
-            title="Sair"
+        {/* Logout */}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', flexShrink: 0, padding: '8px' }}>
+          <button onClick={onLogout} title="Sair"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              width: '100%',
-              padding: collapsed && !isMobile ? '12px 0' : '12px 16px',
+              display: 'flex', alignItems: 'center', gap: 12, width: '100%',
+              padding: collapsed && !isMobile ? '10px 0' : '10px 16px',
               justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'black',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 12,
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              whiteSpace: 'nowrap',
-              transition: 'all 0.1s',
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-sans)',
+              fontSize: 13, fontWeight: 500, borderRadius: 8, transition: 'all 0.15s',
             }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.background = 'var(--danger)'
-              ;(e.currentTarget as HTMLButtonElement).style.color = 'white'
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.background = 'none'
-              ;(e.currentTarget as HTMLButtonElement).style.color = 'black'
-            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.15)'; (e.currentTarget as HTMLButtonElement).style.color = '#ef4444' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'none'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.4)' }}
           >
             <LogOut size={18} style={{ flexShrink: 0 }} />
             {(!collapsed || isMobile) && <span>Sair</span>}

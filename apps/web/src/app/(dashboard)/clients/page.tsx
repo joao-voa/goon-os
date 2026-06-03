@@ -68,14 +68,14 @@ function productBadge(plans: ClientPlan[]) {
       display: 'inline-flex',
       alignItems: 'center',
       padding: '2px 8px',
-      fontFamily: 'var(--font-pixel)',
+      fontFamily: 'var(--font-sans)',
       fontSize: 9,
       fontWeight: 700,
       letterSpacing: '0.04em',
       background: bg,
       color: 'white',
-      border: '1px solid black',
-      boxShadow: '1px 1px 0 black',
+      border: '1px solid #e2e8f0',
+      boxShadow: 'none',
       cursor: 'pointer',
     }}>
       {code}
@@ -95,8 +95,8 @@ function fitScoreBadge(score?: number) {
       height: 28,
       background: bg,
       color: 'white',
-      border: '2px solid black',
-      fontFamily: 'var(--font-pixel)',
+      border: '1px solid #e2e8f0',
+      fontFamily: 'var(--font-sans)',
       fontSize: 10,
       fontWeight: 700,
     }}>
@@ -165,15 +165,15 @@ function CreateClientModal({ onClose, onCreated }: CreateModalProps) {
       <div style={isMobile ? {
         background: 'white',
         border: 'none',
-        borderTop: '2px solid black',
+        borderTop: '1px solid #e2e8f0',
         boxShadow: '0 -4px 0 black',
         width: '100%',
         maxHeight: '85vh',
         overflowY: 'auto',
       } : {
         background: 'white',
-        border: '2px solid black',
-        boxShadow: '8px 8px 0px 0px #000',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
         width: '95%',
         maxWidth: 640,
         maxHeight: '85vh',
@@ -183,7 +183,7 @@ function CreateClientModal({ onClose, onCreated }: CreateModalProps) {
         <div style={{
           background: 'black',
           color: 'white',
-          fontFamily: 'var(--font-pixel)',
+          fontFamily: 'var(--font-sans)',
           fontSize: 10,
           textTransform: 'uppercase',
           padding: '12px 16px',
@@ -341,7 +341,7 @@ function CreateClientModal({ onClose, onCreated }: CreateModalProps) {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingTop: 8, borderTop: '2px solid black' }}>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid #e2e8f0' }}>
             <button type="button" className="goon-btn-secondary" onClick={onClose}>Cancelar</button>
             <button type="submit" className="goon-btn-primary" disabled={loading}>
               {loading ? 'Criando...' : 'Criar Cliente'}
@@ -359,8 +359,8 @@ function ClientCard({ client, onClick }: { client: Client; onClick: () => void }
     <div
       style={{
         background: 'white',
-        border: '2px solid black',
-        boxShadow: '4px 4px 0px 0px #000',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
         padding: 16,
         cursor: 'pointer',
         marginBottom: 12,
@@ -369,7 +369,7 @@ function ClientCard({ client, onClick }: { client: Client; onClick: () => void }
       onClick={onClick}
       onMouseEnter={e => {
         (e.currentTarget as HTMLDivElement).style.transform = 'translate(-2px, -2px)'
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '6px 6px 0px 0px #000'
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.08)'
       }}
       onMouseLeave={e => {
         (e.currentTarget as HTMLDivElement).style.transform = ''
@@ -495,7 +495,7 @@ export default function ClientsPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, fontWeight: 700, color: 'black', margin: 0, textTransform: 'uppercase', letterSpacing: 1 }}>
+          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700, color: 'black', margin: 0, textTransform: 'uppercase', letterSpacing: 1 }}>
             Clientes
           </h1>
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', margin: '4px 0 0 0' }}>
@@ -588,8 +588,8 @@ export default function ClientsPage() {
             fontFamily: 'var(--font-mono)',
             fontSize: 11,
             fontWeight: 700,
-            border: '2px solid black',
-            boxShadow: '3px 3px 0 black',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
             padding: '6px 16px',
             cursor: 'pointer',
             textTransform: 'uppercase',
@@ -601,7 +601,7 @@ export default function ClientsPage() {
 
       {/* Active filter indicator */}
       {statusFilter && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, padding: '6px 12px', background: '#ccff00', border: '2px solid black', boxShadow: '2px 2px 0 black', width: 'fit-content' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, padding: '6px 12px', background: '#ccff00', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', width: 'fit-content' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'black', textTransform: 'uppercase' }}>
             Filtro ativo: status={statusFilter}
           </span>
@@ -620,7 +620,7 @@ export default function ClientsPage() {
           <div style={{
             width: 32,
             height: 32,
-            border: '3px solid black',
+            border: '1px solid #e2e8f0',
             borderTopColor: 'transparent',
             borderRadius: '50%',
             animation: 'spin 0.6s linear infinite',
@@ -635,10 +635,10 @@ export default function ClientsPage() {
           textAlign: 'center',
           padding: 60,
           background: 'white',
-          border: '2px solid black',
-          boxShadow: '4px 4px 0px 0px #000',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
         }}>
-          <p style={{ fontFamily: 'var(--font-pixel)', fontSize: 12, color: 'black', margin: 0, textTransform: 'uppercase' }}>
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'black', margin: 0, textTransform: 'uppercase' }}>
             Nenhum cliente encontrado
           </p>
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, marginTop: 12, color: '#555' }}>
@@ -649,7 +649,7 @@ export default function ClientsPage() {
 
       {/* Desktop Table */}
       {!loading && clients.length > 0 && !isMobile && (
-        <div style={{ overflow: 'hidden', border: '2px solid black', boxShadow: '6px 6px 0px 0px #000' }}>
+        <div style={{ overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.08)' }}>
           <table className="goon-table">
             <thead>
               <tr>
@@ -723,7 +723,7 @@ export default function ClientsPage() {
                             fetchClients()
                           } catch { toast.error('Erro ao cancelar') }
                         }}
-                        style={{ background: '#cc0000', color: 'white', border: '2px solid black', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}
+                        style={{ background: '#cc0000', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}
                       >
                         CANCELAR
                       </button>

@@ -55,11 +55,11 @@ export default function ChangePasswordPage() {
     }}>
       <form onSubmit={handleSubmit} style={{
         width: '100%', maxWidth: 380, background: 'white',
-        border: '2px solid black', boxShadow: '8px 8px 0 black',
+        border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
       }}>
         <div style={{
-          background: 'black', color: 'white', padding: '14px 20px',
-          fontFamily: 'var(--font-pixel)', fontSize: 12,
+          background: '#0f172a', color: 'white', padding: '14px 20px',
+          fontFamily: 'var(--font-sans)', fontSize: 12,
         }}>
           PRIMEIRO ACESSO — DEFINA SUA SENHA
         </div>
@@ -80,7 +80,7 @@ export default function ChangePasswordPage() {
               required
               minLength={6}
               style={{
-                width: '100%', padding: '10px 12px', border: '2px solid black',
+                width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0',
                 fontFamily: 'var(--font-mono)', fontSize: 13,
               }}
             />
@@ -97,7 +97,7 @@ export default function ChangePasswordPage() {
               required
               minLength={6}
               style={{
-                width: '100%', padding: '10px 12px', border: '2px solid black',
+                width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0',
                 fontFamily: 'var(--font-mono)', fontSize: 13,
               }}
             />
@@ -105,7 +105,7 @@ export default function ChangePasswordPage() {
 
           {error && (
             <div style={{
-              background: '#fff0f0', border: '2px solid #cc0000', padding: '8px 12px',
+              background: '#fff0f0', border: '1px solid #fecaca', padding: '8px 12px',
               fontFamily: 'var(--font-mono)', fontSize: 11, color: '#cc0000',
             }}>
               {error}
@@ -113,8 +113,8 @@ export default function ChangePasswordPage() {
           )}
 
           <button type="submit" disabled={loading} style={{
-            width: '100%', padding: '12px', border: '2px solid black',
-            background: 'black', color: 'white', fontFamily: 'var(--font-pixel)',
+            width: '100%', padding: '12px', border: '1px solid #e2e8f0',
+            background: '#0f172a', color: 'white', fontFamily: 'var(--font-sans)',
             fontSize: 11, cursor: loading ? 'wait' : 'pointer',
             boxShadow: '4px 4px 0 #888',
           }}>

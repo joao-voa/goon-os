@@ -36,7 +36,7 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
             flexShrink: 0,
             padding: '6px 12px',
             minHeight: 44,
-            border: '2px solid black',
+            border: '1px solid #e2e8f0',
             background: activeStage === null ? 'black' : 'var(--retro-gray)',
             color: activeStage === null ? 'white' : 'black',
             fontFamily: 'var(--font-mono)',
@@ -45,16 +45,16 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
             cursor: 'pointer',
             whiteSpace: 'nowrap',
             textTransform: 'uppercase',
-            boxShadow: '2px 2px 0 black',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
             transition: 'transform 0.1s, box-shadow 0.1s',
           }}
           onMouseEnter={e => {
             (e.currentTarget as HTMLButtonElement).style.transform = 'translate(1px, 1px)'
-            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '1px 1px 0 black'
+            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = 'none'
           }}
           onMouseLeave={e => {
             (e.currentTarget as HTMLButtonElement).style.transform = ''
-            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '2px 2px 0 black'
+            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'
           }}
         >
           Todas ({items.length})
@@ -72,7 +72,7 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
                 flexShrink: 0,
                 padding: '6px 12px',
                 minHeight: 44,
-                border: '2px solid black',
+                border: '1px solid #e2e8f0',
                 background: isActive ? 'black' : 'var(--retro-gray)',
                 color: isActive ? 'white' : 'black',
                 fontFamily: 'var(--font-mono)',
@@ -81,7 +81,7 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 textTransform: 'uppercase',
-                boxShadow: '2px 2px 0 black',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
@@ -89,11 +89,11 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
               }}
               onMouseEnter={e => {
                 (e.currentTarget as HTMLButtonElement).style.transform = 'translate(1px, 1px)'
-                ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '1px 1px 0 black'
+                ;(e.currentTarget as HTMLButtonElement).style.boxShadow = 'none'
               }}
               onMouseLeave={e => {
                 (e.currentTarget as HTMLButtonElement).style.transform = ''
-                ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '2px 2px 0 black'
+                ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'
               }}
             >
               <span
@@ -162,8 +162,8 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
                   padding: '14px 12px',
                   minHeight: 44,
                   background: 'white',
-                  border: '2px solid black',
-                  boxShadow: '3px 3px 0px 0px #000',
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                   cursor: 'pointer',
                   textAlign: 'left',
                   width: '100%',
@@ -175,7 +175,7 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
                 }}
                 onMouseLeave={e => {
                   (e.currentTarget as HTMLButtonElement).style.transform = ''
-                  ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '3px 3px 0px 0px #000'
+                  ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)'
                 }}
               >
                 {/* Stage color indicator */}
@@ -210,9 +210,9 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
                         style={{
                           background: productColor,
                           color: 'white',
-                          border: '1px solid black',
+                          border: '1px solid #e2e8f0',
                           padding: '1px 6px',
-                          fontFamily: 'var(--font-pixel)',
+                          fontFamily: 'var(--font-sans)',
                           fontSize: 8,
                           fontWeight: 700,
                           flexShrink: 0,
@@ -232,7 +232,7 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
                       style={{
                         background: 'black',
                         color: 'white',
-                        border: '1px solid black',
+                        border: '1px solid #e2e8f0',
                         padding: '1px 6px',
                         fontFamily: 'var(--font-mono)',
                         fontSize: 10,

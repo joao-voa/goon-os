@@ -122,23 +122,23 @@ export default function CashflowPage() {
     }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 20 }}>FLUXO DE CAIXA</h1>
+        <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 20 }}>FLUXO DE CAIXA</h1>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {(['mensal', 'diario'] as const).map(v => (
             <button key={v} onClick={() => setViewMode(v)} style={{
-              padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11,
+              padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11,
               background: viewMode === v ? 'black' : 'white', color: viewMode === v ? 'white' : 'black',
             }}>{v === 'mensal' ? 'MENSAL' : 'DIARIO'}</button>
           ))}
-          <button onClick={() => setComCarteira(!comCarteira)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: comCarteira ? '#006600' : '#cc0000', color: 'white' }}>
+          <button onClick={() => setComCarteira(!comCarteira)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: comCarteira ? '#006600' : '#cc0000', color: 'white' }}>
             {comCarteira ? 'COM CARTEIRA' : 'SEM CARTEIRA'}
           </button>
-          <button onClick={() => setFullscreen(!fullscreen)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: fullscreen ? 'black' : 'white', color: fullscreen ? 'white' : 'black' }}>
+          <button onClick={() => setFullscreen(!fullscreen)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: fullscreen ? 'black' : 'white', color: fullscreen ? 'white' : 'black' }}>
             {fullscreen ? 'MINIMIZAR' : 'MAXIMIZAR'}
           </button>
-          <button onClick={() => setYear(y => y - 1)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>◀</button>
-          <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, minWidth: 60, textAlign: 'center' }}>{year}</span>
-          <button onClick={() => setYear(y => y + 1)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>▶</button>
+          <button onClick={() => setYear(y => y - 1)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>◀</button>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, minWidth: 60, textAlign: 'center' }}>{year}</span>
+          <button onClick={() => setYear(y => y + 1)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>▶</button>
         </div>
       </div>
 
@@ -147,23 +147,23 @@ export default function CashflowPage() {
         <div>
           {/* Month selector */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 20 }}>
-            <button onClick={() => setDailyMonth(m => m > 0 ? m - 1 : 11)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>◀</button>
-            <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, textTransform: 'uppercase', minWidth: 120, textAlign: 'center' }}>{MONTH_NAMES[dailyMonth]} {year}</span>
-            <button onClick={() => setDailyMonth(m => m < 11 ? m + 1 : 0)} style={{ padding: '4px 12px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>▶</button>
+            <button onClick={() => setDailyMonth(m => m > 0 ? m - 1 : 11)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>◀</button>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, textTransform: 'uppercase', minWidth: 120, textAlign: 'center' }}>{MONTH_NAMES[dailyMonth]} {year}</span>
+            <button onClick={() => setDailyMonth(m => m < 11 ? m + 1 : 0)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>▶</button>
           </div>
 
           {/* KPIs do mês */}
           {data && data.months[dailyMonth] && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 20 }}>
-              <div style={{ background: '#006600', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '3px 3px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+              <div style={{ background: '#006600', color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
                 <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Entradas</div>
                 <div style={{ fontSize: 16 }}>{fmt(data.months[dailyMonth].entradas.total)}</div>
               </div>
-              <div style={{ background: '#cc0000', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '3px 3px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+              <div style={{ background: '#cc0000', color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
                 <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Saidas</div>
                 <div style={{ fontSize: 16 }}>{fmt(data.months[dailyMonth].saidas.total + data.months[dailyMonth].comissoes.total)}</div>
               </div>
-              <div style={{ background: data.months[dailyMonth].saldoProjetado >= 0 ? '#006600' : '#cc0000', color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '3px 3px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+              <div style={{ background: data.months[dailyMonth].saldoProjetado >= 0 ? '#006600' : '#cc0000', color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
                 <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Saldo</div>
                 <div style={{ fontSize: 16 }}>{fmt(data.months[dailyMonth].saldoProjetado)}</div>
               </div>
@@ -171,10 +171,10 @@ export default function CashflowPage() {
           )}
 
           {/* Daily table */}
-          <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', background: 'white', overflowX: 'auto' }}>
+          <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
               <thead>
-                <tr style={{ background: 'black', color: 'white', textTransform: 'uppercase' }}>
+                <tr style={{ background: '#0f172a', color: 'white', textTransform: 'uppercase' }}>
                   <th style={{ padding: '8px 12px', textAlign: 'center', width: 50 }}>Dia</th>
                   <th style={{ padding: '8px 12px', textAlign: 'right' }}>Entradas</th>
                   <th style={{ padding: '8px 12px', textAlign: 'right' }}>Saidas</th>
@@ -236,7 +236,7 @@ export default function CashflowPage() {
         const aPagarAno = (data.totals.saidas - data.totals.saidasPago) + (data.totals.comissoes - data.totals.comissoesPaid)
         const aPagarMes = mesAtual ? (mesAtual.saidas.previsto + mesAtual.comissoes.pending) : 0
 
-        const cardStyle = (bg: string): React.CSSProperties => ({ background: bg, color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 })
+        const cardStyle = (bg: string): React.CSSProperties => ({ background: bg, color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 })
 
         return (
           <>
@@ -328,7 +328,7 @@ export default function CashflowPage() {
       })()}
 
       {/* Grafico de barras simples */}
-      <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black', marginBottom: 24 }}>
+      <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', marginBottom: 24 }}>
         <div className="goon-card-header">COMPARATIVO MENSAL</div>
         <div style={{ padding: '16px 20px', display: 'flex', gap: 8, alignItems: 'flex-end', minHeight: 250, overflowX: 'auto' }}>
           {data.months.map(m => {
@@ -364,7 +364,7 @@ export default function CashflowPage() {
           const hasData = m.entradas.total > 0 || m.saidas.total > 0 || m.comissoes.total > 0
 
           return (
-            <div key={m.month} style={{ background: 'white', border: '2px solid black', boxShadow: isExpanded ? '4px 4px 0 black' : 'none' }}>
+            <div key={m.month} style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: isExpanded ? '0 4px 6px -1px rgba(0,0,0,0.07)' : 'none' }}>
               {/* Month header - clickable */}
               <button
                 onClick={() => setExpandedMonth(isExpanded ? null : m.month)}
@@ -399,7 +399,7 @@ export default function CashflowPage() {
                 <div style={{ padding: 16 }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
                     <thead>
-                      <tr style={{ borderBottom: '2px solid black' }}>
+                      <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
                         <th style={{ padding: '4px 8px', textAlign: 'left', fontSize: 9, textTransform: 'uppercase' }}>Categoria</th>
                         <th style={{ padding: '4px 8px', textAlign: 'right', fontSize: 9, textTransform: 'uppercase' }}>Realizado</th>
                         <th style={{ padding: '4px 8px', textAlign: 'right', fontSize: 9, textTransform: 'uppercase' }}>Previsto</th>
@@ -453,7 +453,7 @@ export default function CashflowPage() {
                         <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(m.comissoes.pending)}</td>
                         <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(m.comissoes.total)}</td>
                       </tr>
-                      <tr style={{ borderTop: '3px solid black', fontWeight: 900 }}>
+                      <tr style={{ borderTop: '1px solid #e2e8f0', fontWeight: 900 }}>
                         <td style={{ padding: '8px 8px' }}>SALDO PROJETADO</td>
                         <td colSpan={2} />
                         <td style={{ padding: '8px 8px', textAlign: 'right', color: m.saldoProjetado >= 0 ? '#006600' : '#cc0000', fontSize: 14 }}>{fmt(m.saldoProjetado)}</td>

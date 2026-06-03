@@ -67,8 +67,8 @@ function DetailModal({ item, onClose, onStageChange }: DetailModalProps) {
       <div
         style={{
           background: 'white',
-          border: '2px solid black',
-          boxShadow: '8px 8px 0px 0px #000',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
           width: '100%',
           maxWidth: 480,
           position: 'relative',
@@ -78,7 +78,7 @@ function DetailModal({ item, onClose, onStageChange }: DetailModalProps) {
         <div style={{
           background: 'black',
           color: 'white',
-          fontFamily: 'var(--font-pixel)',
+          fontFamily: 'var(--font-sans)',
           fontSize: 10,
           textTransform: 'uppercase',
           padding: '12px 16px',
@@ -131,10 +131,10 @@ function DetailModal({ item, onClose, onStageChange }: DetailModalProps) {
                   style={{
                     background: productColor,
                     color: 'white',
-                    border: '1px solid black',
-                    boxShadow: '1px 1px 0 black',
+                    border: '1px solid #e2e8f0',
+                    boxShadow: 'none',
                     padding: '2px 8px',
-                    fontFamily: 'var(--font-pixel)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: 9,
                     fontWeight: 700,
                   }}
@@ -179,7 +179,7 @@ function DetailModal({ item, onClose, onStageChange }: DetailModalProps) {
                   padding: '10px 14px',
                   background: 'var(--retro-gray)',
                   border: `2px solid black`,
-                  boxShadow: '2px 2px 0 black',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                   cursor: changing ? 'not-allowed' : 'pointer',
                   color: 'black',
                   fontFamily: 'var(--font-mono)',
@@ -194,7 +194,7 @@ function DetailModal({ item, onClose, onStageChange }: DetailModalProps) {
                     width: 10,
                     height: 10,
                     background: currentColor,
-                    border: '1px solid black',
+                    border: '1px solid #e2e8f0',
                     flexShrink: 0,
                   }}
                 />
@@ -210,8 +210,8 @@ function DetailModal({ item, onClose, onStageChange }: DetailModalProps) {
                     left: 0,
                     right: 0,
                     background: 'white',
-                    border: '2px solid black',
-                    boxShadow: '4px 4px 0 black',
+                    border: '1px solid #e2e8f0',
+                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
                     zIndex: 100,
                     marginTop: 2,
                     overflow: 'hidden',
@@ -234,7 +234,7 @@ function DetailModal({ item, onClose, onStageChange }: DetailModalProps) {
                           padding: '10px 14px',
                           background: isCurrent ? (stage === 'ONBOARDING_DONE' ? '#ccff00' : 'var(--retro-blue)') : 'transparent',
                           border: 'none',
-                          borderBottom: '1px solid black',
+                          borderBottom: '1px solid #e2e8f0',
                           cursor: 'pointer',
                           color: isCurrent ? (stage === 'ONBOARDING_DONE' ? 'black' : 'white') : 'black',
                           fontFamily: 'var(--font-mono)',
@@ -266,7 +266,7 @@ function DetailModal({ item, onClose, onStageChange }: DetailModalProps) {
           </div>
 
           {/* Footer actions */}
-          <div style={{ display: 'flex', gap: 10, borderTop: '2px solid black', paddingTop: 16 }}>
+          <div style={{ display: 'flex', gap: 10, borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
             <a
               href={`/clients/${item.clientId}`}
               className="goon-btn-primary"
@@ -366,7 +366,7 @@ export default function OnboardingPage() {
         <div>
           <h1
             style={{
-              fontFamily: 'var(--font-pixel)',
+              fontFamily: 'var(--font-sans)',
               fontSize: 14,
               fontWeight: 700,
               color: 'black',
@@ -382,8 +382,8 @@ export default function OnboardingPage() {
           </p>
         </div>
         <button onClick={() => setShowCreate(true)} style={{
-          padding: '8px 16px', border: '2px solid black', background: '#4A78FF', color: 'white',
-          fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0 black',
+          padding: '8px 16px', border: '1px solid #e2e8f0', background: '#4A78FF', color: 'white',
+          fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
         }}>+ CRIAR</button>
       </div>
 
@@ -391,12 +391,12 @@ export default function OnboardingPage() {
       {showCreate && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
           onClick={e => { if (e.target === e.currentTarget) setShowCreate(false) }}>
-          <div style={{ background: 'white', border: '2px solid black', boxShadow: '8px 8px 0 black', width: '100%', maxWidth: 400 }}>
-            <div style={{ background: '#4A78FF', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-pixel)', fontSize: 11 }}>CRIAR ONBOARDING</div>
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', width: '100%', maxWidth: 400 }}>
+            <div style={{ background: '#4A78FF', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>CRIAR ONBOARDING</div>
             <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
                 <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Cliente</label>
-                <select value={newClientId} onChange={e => setNewClientId(e.target.value)} style={{ width: '100%', padding: '8px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                <select value={newClientId} onChange={e => setNewClientId(e.target.value)} style={{ width: '100%', padding: '8px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
                   <option value="">Selecione...</option>
                   {clients.filter(c => !items.some(i => i.clientId === c.id)).map(c => (
                     <option key={c.id} value={c.id}>{c.companyName}</option>
@@ -404,7 +404,7 @@ export default function OnboardingPage() {
                 </select>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => setShowCreate(false)} style={{ flex: 1, padding: '10px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
+                <button onClick={() => setShowCreate(false)} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
                 <button disabled={creating || !newClientId} onClick={async () => {
                   setCreating(true)
                   try {
@@ -415,7 +415,7 @@ export default function OnboardingPage() {
                     loadData()
                   } catch { toast.error('Erro ao criar. Cliente ja pode ter onboarding.') }
                   setCreating(false)
-                }} style={{ flex: 1, padding: '10px', border: '2px solid black', background: '#4A78FF', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: creating ? 'wait' : 'pointer', boxShadow: '3px 3px 0 black' }}>
+                }} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#4A78FF', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: creating ? 'wait' : 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                   {creating ? 'CRIANDO...' : 'CRIAR'}
                 </button>
               </div>
@@ -438,7 +438,7 @@ export default function OnboardingPage() {
           <div style={{
             width: 32,
             height: 32,
-            border: '3px solid black',
+            border: '1px solid #e2e8f0',
             borderTopColor: 'transparent',
             borderRadius: '50%',
             animation: 'spin 0.6s linear infinite',
@@ -456,7 +456,7 @@ export default function OnboardingPage() {
           style={{
             padding: 16,
             background: '#fff0f0',
-            border: '2px solid var(--danger)',
+            border: '1px solid #fecaca',
             boxShadow: '4px 4px 0 var(--danger)',
             fontFamily: 'var(--font-mono)',
             color: 'var(--danger)',

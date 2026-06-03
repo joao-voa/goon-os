@@ -201,7 +201,7 @@ function TabBar({ tabs, active, onChange }: TabBarProps) {
     <div style={{
       display: 'flex',
       gap: 0,
-      borderBottom: '2px solid black',
+      borderBottom: '1px solid #e2e8f0',
       overflowX: 'auto',
       WebkitOverflowScrolling: 'touch' as React.CSSProperties['WebkitOverflowScrolling'],
       scrollbarWidth: 'none' as React.CSSProperties['scrollbarWidth'],
@@ -214,8 +214,8 @@ function TabBar({ tabs, active, onChange }: TabBarProps) {
             padding: '10px 14px',
             background: i === active ? 'black' : '#c0c0c0',
             color: i === active ? 'white' : 'black',
-            border: '2px solid black',
-            fontFamily: 'var(--font-pixel)',
+            border: '1px solid #e2e8f0',
+            fontFamily: 'var(--font-sans)',
             fontSize: 9,
             textTransform: 'uppercase',
             letterSpacing: 0.5,
@@ -300,7 +300,7 @@ function InlineField({ label, value, field, type = 'text', options, onSave, min,
             minHeight: 34, display: 'flex', alignItems: 'center',
             transition: 'border-color 0.1s, background 0.1s',
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'black'; (e.currentTarget as HTMLDivElement).style.background = '#f5f5f5' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#e2e8f0'; (e.currentTarget as HTMLDivElement).style.background = '#f5f5f5' }}
           onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'transparent'; (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
           title="Clique para editar"
         >
@@ -359,9 +359,9 @@ function ContractActions({ contract, onRefresh }: { contract: Contract; onRefres
   }
 
   const btnS: React.CSSProperties = {
-    padding: '4px 10px', border: '2px solid black', background: 'var(--retro-gray)',
+    padding: '4px 10px', border: '1px solid #e2e8f0', background: 'var(--retro-gray)',
     color: 'black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11,
-    fontWeight: 700, textTransform: 'uppercase' as const, boxShadow: '2px 2px 0 black',
+    fontWeight: 700, textTransform: 'uppercase' as const, boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
     transition: 'transform 0.1s, box-shadow 0.1s',
   }
 
@@ -372,12 +372,12 @@ function ContractActions({ contract, onRefresh }: { contract: Contract; onRefres
         <button style={btnS} disabled={busy} onClick={() => openContractTab(`/api/contracts/${contract.id}/download`)}>Baixar</button>
       )}
       {!contract.isSigned && contract.status !== 'CANCELLED' && (
-        <button style={{ ...btnS, background: 'var(--success)', color: 'white', boxShadow: '2px 2px 0 black' }} disabled={busy} onClick={handleMarkSigned}>✓ Assinar</button>
+        <button style={{ ...btnS, background: 'var(--success)', color: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }} disabled={busy} onClick={handleMarkSigned}>✓ Assinar</button>
       )}
       {contract.status === 'DRAFT' && <button style={btnS} disabled={busy} onClick={() => handleStatus('SENT')}>Enviado</button>}
       {contract.status === 'SENT' && <button style={btnS} disabled={busy} onClick={() => handleStatus('SIGNED')}>Assinado</button>}
       {(contract.status === 'DRAFT' || contract.status === 'SENT') && (
-        <button style={{ ...btnS, background: 'var(--danger)', color: 'white', boxShadow: '2px 2px 0 black' }} disabled={busy} onClick={() => handleStatus('CANCELLED')}>Cancelar</button>
+        <button style={{ ...btnS, background: 'var(--danger)', color: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }} disabled={busy} onClick={() => handleStatus('CANCELLED')}>Cancelar</button>
       )}
     </div>
   )
@@ -451,19 +451,19 @@ function AddPlanModal({ clientId, onClose, onCreated }: AddPlanModalProps) {
   }
   const innerStyle: React.CSSProperties = {
     width: '100%', maxWidth: 480, background: 'white',
-    border: '2px solid black', boxShadow: '8px 8px 0px 0px #000', margin: 'auto',
+    border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', margin: 'auto',
   }
   const headerStyle: React.CSSProperties = {
-    background: 'black', color: 'white', fontFamily: 'var(--font-pixel)', fontSize: 10,
+    background: '#0f172a', color: 'white', fontFamily: 'var(--font-sans)', fontSize: 10,
     textTransform: 'uppercase', padding: '12px 16px', display: 'flex',
     justifyContent: 'space-between', alignItems: 'center', letterSpacing: 1,
     backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px',
   }
   const accentBtnStyle: React.CSSProperties = {
-    background: '#ccff00', color: 'black', border: '2px solid black', boxShadow: '4px 4px 0px black',
-    fontFamily: 'var(--font-pixel)', fontSize: 10, textTransform: 'uppercase',
+    background: '#ccff00', color: 'black', border: '1px solid #e2e8f0', boxShadow: '4px 4px 0px black',
+    fontFamily: 'var(--font-sans)', fontSize: 10, textTransform: 'uppercase',
     padding: '10px 20px', cursor: 'pointer', transition: 'transform 0.1s, box-shadow 0.1s',
-    borderRadius: 0, letterSpacing: 0.5, display: 'inline-flex', alignItems: 'center',
+    borderRadius: 8, letterSpacing: 0.5, display: 'inline-flex', alignItems: 'center',
     justifyContent: 'center', gap: 8, textDecoration: 'none', fontWeight: 700,
   }
 
@@ -530,7 +530,7 @@ function AddPlanModal({ clientId, onClose, onCreated }: AddPlanModalProps) {
             <label className="goon-label">Observações</label>
             <textarea className="goon-textarea" value={notes} onChange={e => setNotes(e.target.value)} rows={3} placeholder="Opcional..." />
           </div>
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '2px solid black', paddingTop: 16 }}>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
             <button type="button" className="goon-btn-secondary" onClick={onClose} disabled={saving}>Cancelar</button>
             <button type="submit" disabled={saving || loadingProducts} style={accentBtnStyle}>{saving ? 'Salvando...' : 'Adicionar Plano'}</button>
           </div>
@@ -584,16 +584,16 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
   }
 
   const accentBtnStyle: React.CSSProperties = {
-    background: '#ccff00', color: 'black', border: '2px solid black', boxShadow: '4px 4px 0px black',
-    fontFamily: 'var(--font-pixel)', fontSize: 10, textTransform: 'uppercase',
-    padding: '10px 20px', cursor: 'pointer', borderRadius: 0, letterSpacing: 0.5,
+    background: '#ccff00', color: 'black', border: '1px solid #e2e8f0', boxShadow: '4px 4px 0px black',
+    fontFamily: 'var(--font-sans)', fontSize: 10, textTransform: 'uppercase',
+    padding: '10px 20px', cursor: 'pointer', borderRadius: 8, letterSpacing: 0.5,
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontWeight: 700,
   }
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16, overflowY: 'auto' }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div style={{ width: '100%', maxWidth: 480, background: 'white', border: '2px solid black', boxShadow: '8px 8px 0px 0px #000', margin: 'auto' }}>
-        <div style={{ background: 'black', color: 'white', fontFamily: 'var(--font-pixel)', fontSize: 10, textTransform: 'uppercase', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', letterSpacing: 1, backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
+      <div style={{ width: '100%', maxWidth: 480, background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', margin: 'auto' }}>
+        <div style={{ background: '#0f172a', color: 'white', fontFamily: 'var(--font-sans)', fontSize: 10, textTransform: 'uppercase', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', letterSpacing: 1, backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
           <span>Gerar Contrato</span>
           <button onClick={onClose} style={{ background: 'var(--danger)', border: '1px solid white', color: 'white', cursor: 'pointer', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700 }}>×</button>
         </div>
@@ -619,8 +619,8 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
             </select>
           </div>
           {Object.keys(previewFields).length > 0 && (
-            <div style={{ background: 'var(--retro-gray)', border: '2px solid black', padding: 14 }}>
-              <p style={{ fontFamily: 'var(--font-pixel)', fontSize: 9, color: 'black', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Pré-visualização</p>
+            <div style={{ background: 'var(--retro-gray)', border: '1px solid #e2e8f0', padding: 14 }}>
+              <p style={{ fontFamily: 'var(--font-sans)', fontSize: 9, color: 'black', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Pré-visualização</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px' }}>
                 {Object.entries(previewFields).map(([label, val]) => (
                   <div key={label}>
@@ -631,7 +631,7 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
               </div>
             </div>
           )}
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '2px solid black', paddingTop: 16 }}>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
             <button type="button" className="goon-btn-secondary" onClick={onClose} disabled={saving}>Cancelar</button>
             <button type="submit" disabled={saving || !templateType} style={accentBtnStyle}>{saving ? 'Criando...' : 'Criar Contrato'}</button>
           </div>
@@ -670,8 +670,8 @@ function NewPendencyModal({ clientId, onClose, onCreated }: NewPendencyModalProp
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div style={{ width: '100%', maxWidth: 440, background: 'white', border: '2px solid black', boxShadow: '8px 8px 0px 0px #000' }}>
-        <div style={{ background: 'black', color: 'white', fontFamily: 'var(--font-pixel)', fontSize: 10, textTransform: 'uppercase', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', letterSpacing: 1, backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
+      <div style={{ width: '100%', maxWidth: 440, background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+        <div style={{ background: '#0f172a', color: 'white', fontFamily: 'var(--font-sans)', fontSize: 10, textTransform: 'uppercase', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', letterSpacing: 1, backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
           <span>Nova Pendência</span>
           <button onClick={onClose} style={{ background: 'var(--danger)', border: '1px solid white', color: 'white', cursor: 'pointer', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700 }}>×</button>
         </div>
@@ -686,7 +686,7 @@ function NewPendencyModal({ clientId, onClose, onCreated }: NewPendencyModalProp
             <label className="goon-label">Descrição</label>
             <textarea className="goon-textarea" value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="Opcional..." />
           </div>
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '2px solid black', paddingTop: 16 }}>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
             <button type="button" className="goon-btn-secondary" onClick={onClose} disabled={saving}>Cancelar</button>
             <button type="submit" className="goon-btn-primary" disabled={saving}>{saving ? 'Criando...' : 'Criar Pendência'}</button>
           </div>
@@ -705,7 +705,7 @@ function ContractStatusBadge({ status }: { status: string }) {
       padding: '2px 8px',
       background: CONTRACT_STATUS_COLORS[status] ?? '#c0c0c0',
       color: (status === 'DRAFT' || status === 'CANCELLED') ? '#333' : 'white',
-      border: '1px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700,
+      border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700,
       textTransform: 'uppercase',
     }}>
       {labels[status] ?? status}
@@ -716,13 +716,13 @@ function ContractStatusBadge({ status }: { status: string }) {
 function ContractSignatureBadge({ isSigned, signatureDate }: { isSigned?: boolean; signatureDate?: string | null }) {
   if (isSigned) {
     return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 7px', background: 'var(--success)', color: 'white', border: '1px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 7px', background: 'var(--success)', color: 'white', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap' }}>
         &#10003; ASSINADO{signatureDate ? ` ${fmtDate(signatureDate)}` : ''}
       </span>
     )
   }
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 7px', background: 'var(--danger)', color: 'white', border: '1px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 7px', background: 'var(--danger)', color: 'white', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>
       &#10007; PENDENTE
     </span>
   )
@@ -918,7 +918,7 @@ export default function ClientDetailPage() {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300, gap: 12 }}>
-        <div style={{ width: 32, height: 32, border: '3px solid black', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
+        <div style={{ width: 32, height: 32, border: '1px solid #e2e8f0', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     )
@@ -963,7 +963,7 @@ export default function ClientDetailPage() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: isMobile ? 12 : 16, fontWeight: 800, color: 'black', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: 1 }}>
+            <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: isMobile ? 12 : 16, fontWeight: 800, color: 'black', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: 1 }}>
               {client.companyName}
             </h1>
             {client.tradeName && (
@@ -980,8 +980,8 @@ export default function ClientDetailPage() {
             <button
               onClick={() => setShowCreateContract(true)}
               style={{
-                background: '#c0c0c0', color: 'black', border: '2px solid black',
-                boxShadow: '3px 3px 0 black', fontFamily: 'var(--font-pixel)', fontSize: 9,
+                background: '#c0c0c0', color: 'black', border: '1px solid #e2e8f0',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)', fontFamily: 'var(--font-sans)', fontSize: 9,
                 textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', letterSpacing: 0.5,
               }}
             >
@@ -998,8 +998,8 @@ export default function ClientDetailPage() {
                   } catch { toast.error('Erro ao cancelar') }
                 }}
                 style={{
-                  background: '#cc0000', color: 'white', border: '2px solid black',
-                  boxShadow: '3px 3px 0 black', fontFamily: 'var(--font-pixel)', fontSize: 9,
+                  background: '#cc0000', color: 'white', border: '1px solid #e2e8f0',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)', fontFamily: 'var(--font-sans)', fontSize: 9,
                   textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', letterSpacing: 0.5,
                 }}
               >
@@ -1016,8 +1016,8 @@ export default function ClientDetailPage() {
                   } catch { toast.error('Erro ao excluir') }
                 }}
                 style={{
-                  background: '#cc0000', color: 'white', border: '2px solid black',
-                  boxShadow: '3px 3px 0 black', fontFamily: 'var(--font-pixel)', fontSize: 9,
+                  background: '#cc0000', color: 'white', border: '1px solid #e2e8f0',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)', fontFamily: 'var(--font-sans)', fontSize: 9,
                   textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', letterSpacing: 0.5,
                 }}
               >
@@ -1027,8 +1027,8 @@ export default function ClientDetailPage() {
             <a
               href="/contracts/generate"
               style={{
-                background: 'black', color: 'white', border: '2px solid black',
-                boxShadow: '3px 3px 0 #555', fontFamily: 'var(--font-pixel)', fontSize: 9,
+                background: '#0f172a', color: 'white', border: '1px solid #e2e8f0',
+                boxShadow: '3px 3px 0 #555', fontFamily: 'var(--font-sans)', fontSize: 9,
                 textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', letterSpacing: 0.5,
                 textDecoration: 'none', display: 'inline-block',
               }}
@@ -1036,7 +1036,7 @@ export default function ClientDetailPage() {
               Gerar .docx
             </a>
             {(client.whatsapp ?? client.phone) && (
-              <a href={`https://wa.me/${(client.whatsapp ?? client.phone ?? '').replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="goon-btn-secondary" style={{ textDecoration: 'none', background: 'var(--success)', color: 'white', border: '2px solid black' }}>
+              <a href={`https://wa.me/${(client.whatsapp ?? client.phone ?? '').replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="goon-btn-secondary" style={{ textDecoration: 'none', background: 'var(--success)', color: 'white', border: '1px solid #e2e8f0' }}>
                 WhatsApp
               </a>
             )}
@@ -1051,7 +1051,7 @@ export default function ClientDetailPage() {
               onClick={() => router.push(`/products/${activePlan?.product?.id ?? ''}`)}
               style={{
                 display: 'inline-flex', alignItems: 'center', padding: '2px 10px',
-                background: productColor, color: 'white', border: '1px solid black',
+                background: productColor, color: 'white', border: '1px solid #e2e8f0',
                 fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700,
                 cursor: 'pointer', textTransform: 'uppercase',
               }}
@@ -1067,7 +1067,7 @@ export default function ClientDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', overflow: 'hidden' }}>
+      <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
         <TabBar tabs={TABS} active={activeTab} onChange={setActiveTab} />
 
         <div style={{ background: 'white', padding: 28 }}>
@@ -1077,27 +1077,27 @@ export default function ClientDetailPage() {
             <div>
               {/* Health + Summary Cards */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12, marginBottom: 20 }}>
-                <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px', background: cadence?.health === 'green' ? '#f0fdf4' : cadence?.health === 'yellow' ? '#fffbeb' : '#fef2f2' }}>
+                <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', padding: '14px 16px', background: cadence?.health === 'green' ? '#f0fdf4' : cadence?.health === 'yellow' ? '#fffbeb' : '#fef2f2' }}>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666', marginBottom: 4 }}>Saude</div>
-                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 18, color: cadence?.health === 'green' ? '#006600' : cadence?.health === 'yellow' ? '#e6a800' : '#cc0000' }}>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 18, color: cadence?.health === 'green' ? '#006600' : cadence?.health === 'yellow' ? '#e6a800' : '#cc0000' }}>
                     {cadence?.health === 'green' ? 'BOA' : cadence?.health === 'yellow' ? 'ATENCAO' : 'CRITICA'}
                   </div>
                 </div>
-                <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px' }}>
+                <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', padding: '14px 16px' }}>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666', marginBottom: 4 }}>Ultima Reuniao</div>
-                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14 }}>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14 }}>
                     {cadence?.daysSinceLastMeeting !== null ? `${cadence?.daysSinceLastMeeting}d atras` : 'Nenhuma'}
                   </div>
                   {cadence?.lastMeeting && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 2 }}>{new Date(cadence.lastMeeting.date).toLocaleDateString('pt-BR')}</div>}
                 </div>
-                <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px' }}>
+                <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', padding: '14px 16px' }}>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666', marginBottom: 4 }}>Proxima Reuniao</div>
-                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14 }}>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14 }}>
                     {cadence?.nextMeeting ? new Date(cadence.nextMeeting.date).toLocaleDateString('pt-BR') : 'Nao agendada'}
                   </div>
                   {cadence?.nextMeeting && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 2 }}>{cadence.nextMeeting.title}</div>}
                 </div>
-                <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px' }}>
+                <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', padding: '14px 16px' }}>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666', marginBottom: 4 }}>Reunioes</div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
                     <span style={{ color: '#006600', fontWeight: 700 }}>{cadence?.totalDone ?? 0}</span> feitas
@@ -1107,14 +1107,14 @@ export default function ClientDetailPage() {
                 </div>
                 {/* Contract info */}
                 {plans.length > 0 && plans[0].endDate && (
-                  <div style={{ border: '2px solid black', boxShadow: '3px 3px 0 black', padding: '14px 16px' }}>
+                  <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', padding: '14px 16px' }}>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666', marginBottom: 4 }}>Contrato</div>
                     {(() => {
                       const end = new Date(plans[0].endDate!)
                       const days = Math.ceil((end.getTime() - Date.now()) / (1000*60*60*24))
                       return (
                         <>
-                          <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, color: days < 0 ? '#cc0000' : days <= 30 ? '#e6a800' : '#006600' }}>
+                          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: days < 0 ? '#cc0000' : days <= 30 ? '#e6a800' : '#006600' }}>
                             {days < 0 ? 'VENCIDO' : `${days}d restantes`}
                           </div>
                           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 2 }}>Ate {end.toLocaleDateString('pt-BR')}</div>
@@ -1126,7 +1126,7 @@ export default function ClientDetailPage() {
               </div>
 
               {/* Timeline */}
-              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 12, marginBottom: 12 }}>HISTORICO DE REUNIOES</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, marginBottom: 12 }}>HISTORICO DE REUNIOES</div>
               {clientMeetings.length === 0 ? (
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', padding: 20, textAlign: 'center', border: '1px dashed #ccc' }}>
                   Nenhuma reuniao registrada. Agende a primeira na tela de Agenda.
@@ -1145,7 +1145,7 @@ export default function ClientDetailPage() {
                       <div key={m.id} style={{ display: 'flex', gap: 12, paddingBottom: 16, position: 'relative' }}>
                         {/* Timeline line */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 20, flexShrink: 0 }}>
-                          <div style={{ width: 12, height: 12, borderRadius: '50%', background: statusColors[m.status] ?? '#888', border: '2px solid black', flexShrink: 0, zIndex: 1 }} />
+                          <div style={{ width: 12, height: 12, borderRadius: '50%', background: statusColors[m.status] ?? '#888', border: '1px solid #e2e8f0', flexShrink: 0, zIndex: 1 }} />
                           {i < clientMeetings.length - 1 && <div style={{ width: 2, flex: 1, background: '#ddd' }} />}
                         </div>
                         {/* Content */}
@@ -1175,7 +1175,7 @@ export default function ClientDetailPage() {
 
               {/* Quick add meeting button */}
               <div style={{ marginTop: 16 }}>
-                <a href="/agenda" style={{ display: 'inline-block', padding: '8px 16px', border: '2px solid black', background: '#4A78FF', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', boxShadow: '3px 3px 0 black' }}>
+                <a href="/agenda" style={{ display: 'inline-block', padding: '8px 16px', border: '1px solid #e2e8f0', background: '#4A78FF', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                   AGENDAR REUNIAO
                 </a>
               </div>
@@ -1187,7 +1187,7 @@ export default function ClientDetailPage() {
             <div>
               {/* General Info */}
               <div style={{ marginBottom: 24 }}>
-                <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid #ddd' }}>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid #ddd' }}>
                   Informações Gerais
                 </div>
                 <div style={fieldGrid}>
@@ -1206,7 +1206,7 @@ export default function ClientDetailPage() {
 
               {/* AURA 360 Modules — only show if client has active AURA plan */}
               {plans.some(pl => pl.status === 'ACTIVE' && pl.product?.code === 'AURA') && <div style={{ marginBottom: 24 }}>
-                <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 9, color: '#D4A017', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, paddingBottom: 8, borderBottom: '2px solid #D4A017' }}>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: 9, color: '#D4A017', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, paddingBottom: 8, borderBottom: '2px solid #D4A017' }}>
                   Modulos AURA 360
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 8 }}>
@@ -1230,7 +1230,7 @@ export default function ClientDetailPage() {
 
               {/* Address */}
               <div style={{ marginBottom: 24 }}>
-                <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid #ddd' }}>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid #ddd' }}>
                   Endereço
                 </div>
                 <div style={fieldGrid}>
@@ -1245,7 +1245,7 @@ export default function ClientDetailPage() {
 
               {/* Strategic */}
               <div style={{ marginBottom: 24 }}>
-                <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid #ddd' }}>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid #ddd' }}>
                   Dados Estratégicos
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -1261,7 +1261,7 @@ export default function ClientDetailPage() {
               {/* Onboarding */}
               {client.onboarding && (
                 <div style={{ marginBottom: 24 }}>
-                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid #ddd' }}>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid #ddd' }}>
                     Onboarding
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
@@ -1269,7 +1269,7 @@ export default function ClientDetailPage() {
                       display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px',
                       background: STAGE_COLORS[client.onboarding.currentStage] ?? '#888',
                       color: client.onboarding.currentStage === 'ONBOARDING_DONE' ? 'black' : 'white',
-                      border: '1px solid black', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+                      border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
                     }}>
                       {STAGE_LABELS[client.onboarding.currentStage] ?? client.onboarding.currentStage}
                     </span>
@@ -1280,7 +1280,7 @@ export default function ClientDetailPage() {
 
               {/* Activity Log */}
               <div>
-                <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid #ddd' }}>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid #ddd' }}>
                   Histórico de Atividades
                 </div>
                 {client.activityLogs.length === 0 ? (
@@ -1313,7 +1313,7 @@ export default function ClientDetailPage() {
               {/* Plans */}
               <div style={{ marginBottom: 24 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1 }}>Planos</div>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1 }}>Planos</div>
                   <button className="goon-btn-ghost" onClick={() => setShowAddPlan(true)} style={{ fontSize: 11 }}>+ Adicionar Plano</button>
                 </div>
 
@@ -1332,10 +1332,10 @@ export default function ClientDetailPage() {
                       const payPeriodDiffers = plan.paymentStartDate && plan.paymentStartDate !== plan.startDate
 
                       return (
-                        <div key={plan.id} style={{ background: 'var(--retro-gray)', border: '2px solid black', overflow: 'hidden' }}>
+                        <div key={plan.id} style={{ background: 'var(--retro-gray)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
                           <div style={{ padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, background: color, color: 'white', border: '2px solid black', fontFamily: 'var(--font-pixel)', fontSize: 10, fontWeight: 800, flexShrink: 0 }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, background: color, color: 'white', border: '1px solid #e2e8f0', fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 800, flexShrink: 0 }}>
                                 {plan.product?.code ?? '?'}
                               </span>
                               <div>
@@ -1355,7 +1355,7 @@ export default function ClientDetailPage() {
                                   ↺ RENOVAÇÃO {Math.round(daysToEnd!)}d
                                 </span>
                               )}
-                              <span style={{ fontFamily: 'var(--font-pixel)', fontWeight: 700, color: 'black', fontSize: 12 }}>{fmtBRL(plan.value)}</span>
+                              <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, color: 'black', fontSize: 12 }}>{fmtBRL(plan.value)}</span>
                               <span className={statusClass(plan.status)}>{planStatusLabel(plan.status)}</span>
                             </div>
                           </div>
@@ -1419,11 +1419,11 @@ export default function ClientDetailPage() {
                                 )}
                                 {addingMentor === plan.id ? (
                                   <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                                    <input list="mentor-list-client" placeholder="Nome" value={newMentorName} onChange={e => setNewMentorName(e.target.value)} style={{ flex: '1 1 100px', padding: '4px 6px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10 }} />
+                                    <input list="mentor-list-client" placeholder="Nome" value={newMentorName} onChange={e => setNewMentorName(e.target.value)} style={{ flex: '1 1 100px', padding: '4px 6px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10 }} />
                                     <datalist id="mentor-list-client">
                                       {mentorSuggestions.map(s => <option key={s} value={s} />)}
                                     </datalist>
-                                    <input type="number" placeholder="Valor" step="0.01" value={newMentorValue} onChange={e => setNewMentorValue(e.target.value)} style={{ width: 80, padding: '4px 6px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10 }} />
+                                    <input type="number" placeholder="Valor" step="0.01" value={newMentorValue} onChange={e => setNewMentorValue(e.target.value)} style={{ width: 80, padding: '4px 6px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10 }} />
                                     <button disabled={savingMentor} onClick={async () => {
                                       if (!newMentorName.trim() || !parseFloat(newMentorValue)) return
                                       setSavingMentor(true)
@@ -1440,8 +1440,8 @@ export default function ClientDetailPage() {
                                         loadMentors(plan.id)
                                       } catch { toast.error('Erro ao atribuir mentor') }
                                       setSavingMentor(false)
-                                    }} style={{ background: '#006600', color: 'white', border: '2px solid black', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>OK</button>
-                                    <button onClick={() => setAddingMentor(null)} style={{ background: 'white', border: '2px solid black', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
+                                    }} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>OK</button>
+                                    <button onClick={() => setAddingMentor(null)} style={{ background: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
                                   </div>
                                 ) : (
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1464,7 +1464,7 @@ export default function ClientDetailPage() {
               {/* Contracts */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1 }}>Contratos</div>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1 }}>Contratos</div>
                   <button className="goon-btn-ghost" onClick={() => setShowCreateContract(true)} style={{ fontSize: 11 }}>+ Gerar Contrato</button>
                 </div>
 
@@ -1479,9 +1479,9 @@ export default function ClientDetailPage() {
                       const color = PRODUCT_COLORS[productCode2] ?? 'black'
                       const productName = contract.clientPlan?.product?.name ?? contract.templateType
                       return (
-                        <div key={contract.id} style={{ padding: '14px 16px', background: 'var(--retro-gray)', border: '2px solid black', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                        <div key={contract.id} style={{ padding: '14px 16px', background: 'var(--retro-gray)', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, background: color, color: 'white', border: '2px solid black', fontFamily: 'var(--font-pixel)', fontSize: 9, fontWeight: 800, flexShrink: 0 }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, background: color, color: 'white', border: '1px solid #e2e8f0', fontFamily: 'var(--font-sans)', fontSize: 9, fontWeight: 800, flexShrink: 0 }}>
                               {productCode2}
                             </span>
                             <div style={{ minWidth: 0 }}>
@@ -1523,7 +1523,7 @@ export default function ClientDetailPage() {
             <div>
               {/* Period card if plans exist */}
               {plans.length > 0 && activePlan && (
-                <div style={{ marginBottom: 20, padding: '14px 20px', background: 'var(--retro-gray)', border: '2px solid black', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '8px 20px', fontFamily: 'var(--font-mono)' }}>
+                <div style={{ marginBottom: 20, padding: '14px 20px', background: 'var(--retro-gray)', border: '1px solid #e2e8f0', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '8px 20px', fontFamily: 'var(--font-mono)' }}>
                   <span style={{ fontSize: 10, color: '#555', fontWeight: 700, textTransform: 'uppercase', alignSelf: 'center' }}>Vigência do Contrato</span>
                   <span style={{ fontSize: 12, color: 'black', fontWeight: 700 }}>
                     {fmtDate(activePlan.startDate)} → {fmtDate(activePlan.endDate)}
@@ -1577,7 +1577,7 @@ export default function ClientDetailPage() {
                                   display: 'inline-flex', alignItems: 'center', padding: '2px 8px',
                                   background: PAYMENT_STATUS_COLORS[payment.status] ?? '#c0c0c0',
                                   color: (payment.status === 'SCHEDULED' || payment.status === 'CANCELLED') ? '#333' : 'white',
-                                  border: '1px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+                                  border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
                                 }}>
                                   {PAYMENT_STATUS_LABELS[payment.status] ?? payment.status}
                                 </span>
@@ -1588,8 +1588,8 @@ export default function ClientDetailPage() {
                                     disabled={markingPaid === payment.id}
                                     onClick={() => handleMarkPaid(payment.id)}
                                     style={{
-                                      background: 'var(--success)', color: 'white', border: '2px solid black',
-                                      boxShadow: '2px 2px 0 black', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
+                                      background: 'var(--success)', color: 'white', border: '1px solid #e2e8f0',
+                                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
                                       padding: '4px 10px', cursor: 'pointer', textTransform: 'uppercase',
                                     }}
                                   >
@@ -1610,18 +1610,18 @@ export default function ClientDetailPage() {
                   </div>
 
                   {/* Summary */}
-                  <div style={{ marginTop: 20, padding: '14px 20px', background: 'var(--retro-gray)', border: '2px solid black', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                  <div style={{ marginTop: 20, padding: '14px 20px', background: 'var(--retro-gray)', border: '1px solid #e2e8f0', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
                     <div>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555', textTransform: 'uppercase', display: 'block', fontWeight: 700, marginBottom: 4 }}>Total Pago</span>
-                      <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 13, color: '#006600', fontWeight: 800 }}>{fmtBRL(totalPaid)}</span>
+                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: '#006600', fontWeight: 800 }}>{fmtBRL(totalPaid)}</span>
                     </div>
                     <div>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555', textTransform: 'uppercase', display: 'block', fontWeight: 700, marginBottom: 4 }}>Total Pendente</span>
-                      <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 13, color: '#000080', fontWeight: 800 }}>{fmtBRL(totalPending)}</span>
+                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: '#000080', fontWeight: 800 }}>{fmtBRL(totalPending)}</span>
                     </div>
                     <div>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555', textTransform: 'uppercase', display: 'block', fontWeight: 700, marginBottom: 4 }}>Total Vencido</span>
-                      <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 13, color: '#cc0000', fontWeight: 800 }}>{fmtBRL(totalOverdue)}</span>
+                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: '#cc0000', fontWeight: 800 }}>{fmtBRL(totalOverdue)}</span>
                     </div>
                   </div>
                 </>
@@ -1638,7 +1638,7 @@ export default function ClientDetailPage() {
                     onClick={() => setShowResolved(!showResolved)}
                     style={{
                       background: showResolved ? '#333' : 'var(--retro-gray)', color: showResolved ? 'white' : 'black',
-                      border: '2px solid black', boxShadow: '2px 2px 0 black', fontFamily: 'var(--font-mono)',
+                      border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', fontFamily: 'var(--font-mono)',
                       fontSize: 11, fontWeight: 700, padding: '6px 12px', cursor: 'pointer', textTransform: 'uppercase',
                     }}
                   >
@@ -1677,7 +1677,7 @@ export default function ClientDetailPage() {
                               style={{
                                 padding: '14px 16px',
                                 background: isResolved ? '#f9f9f9' : 'white',
-                                border: '2px solid black',
+                                border: '1px solid #e2e8f0',
                                 borderLeft: `4px solid ${typeColor}`,
                                 display: 'flex',
                                 justifyContent: 'space-between',
@@ -1708,8 +1708,8 @@ export default function ClientDetailPage() {
                                   disabled={resolvingId === pendency.id}
                                   onClick={() => handleResolvePendency(pendency.id)}
                                   style={{
-                                    background: 'var(--success)', color: 'white', border: '2px solid black',
-                                    boxShadow: '2px 2px 0 black', fontFamily: 'var(--font-mono)', fontSize: 11,
+                                    background: 'var(--success)', color: 'white', border: '1px solid #e2e8f0',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)', fontFamily: 'var(--font-mono)', fontSize: 11,
                                     fontWeight: 700, padding: '6px 12px', cursor: 'pointer', textTransform: 'uppercase',
                                     flexShrink: 0,
                                   }}

@@ -65,7 +65,7 @@ export default function HomePage() {
       justifyContent: 'center', padding: '20px 0', minHeight: 'calc(100vh - 140px)',
     }}>
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
-        <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 28, fontWeight: 700, marginBottom: 6 }}>
+        <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 700, marginBottom: 6 }}>
           AURA360 OS
         </h1>
         {userName && (
@@ -88,29 +88,29 @@ export default function HomePage() {
             <Link key={item.href} href={item.href} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div
                 style={{
-                  background: 'white', border: '2px solid black',
+                  background: 'white', border: '1px solid #e2e8f0',
                   borderLeft: `4px solid ${item.color}`,
-                  boxShadow: '4px 4px 0 black', padding: '16px 14px',
+                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '16px 14px',
                   cursor: 'pointer', transition: 'transform 0.1s, box-shadow 0.1s',
                   display: 'flex', flexDirection: 'column', gap: 6,
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translate(-2px, -2px)'
-                  e.currentTarget.style.boxShadow = '6px 6px 0 black'
+                  e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.08)'
                   e.currentTarget.style.background = item.color
                   e.currentTarget.style.color = 'white'
                   e.currentTarget.style.borderColor = item.color
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translate(0, 0)'
-                  e.currentTarget.style.boxShadow = '4px 4px 0 black'
+                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.07)'
                   e.currentTarget.style.background = 'white'
                   e.currentTarget.style.color = 'inherit'
-                  e.currentTarget.style.borderColor = 'black'
+                  e.currentTarget.style.borderColor = '#e2e8f0'
                 }}
               >
                 <Icon size={20} color={item.color} strokeWidth={2.2} />
-                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }}>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }}>
                   {item.label}
                 </span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, opacity: 0.7, lineHeight: 1.3 }}>

@@ -24,7 +24,7 @@ export default function FinanceiroPage() {
 
   return (
     <div>
-      <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 20, margin: 0, marginBottom: 16 }}>
+      <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 20, margin: 0, marginBottom: 16 }}>
         FINANCEIRO
       </h1>
 
@@ -32,10 +32,10 @@ export default function FinanceiroPage() {
       <div style={{ display: 'flex', gap: 0, marginBottom: 20, overflowX: 'auto' }}>
         {TABS.map(tab => (
           <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
-            padding: '10px 20px', border: '2px solid black',
+            padding: '10px 20px', border: '1px solid #e2e8f0',
             borderBottom: activeTab === tab.key ? 'none' : '2px solid black',
             background: activeTab === tab.key ? 'white' : '#f0f0f0',
-            fontFamily: 'var(--font-pixel)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+            fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
             textTransform: 'uppercase', position: 'relative',
             marginBottom: activeTab === tab.key ? -2 : 0, zIndex: activeTab === tab.key ? 1 : 0,
             color: activeTab === tab.key ? 'black' : '#888',
@@ -44,7 +44,7 @@ export default function FinanceiroPage() {
             {tab.label}
           </button>
         ))}
-        <div style={{ flex: 1, borderBottom: '2px solid black' }} />
+        <div style={{ flex: 1, borderBottom: '1px solid #e2e8f0' }} />
       </div>
 
       {activeTab === 'pagamentos' && <PaymentsContent />}

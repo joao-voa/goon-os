@@ -179,13 +179,13 @@ function LoadingSkeleton({ isMobile }: { isMobile: boolean }) {
       {/* Alert placeholders */}
       <div style={{ display: 'flex', gap, flexWrap: 'wrap' }}>
         {[0, 1, 2].map(i => (
-          <div key={i} style={{ flex: '1 1 200px', height: 64, background: '#c8c8c8', border: '2px solid black', boxShadow: '4px 4px 0 black' }} />
+          <div key={i} style={{ flex: '1 1 200px', height: 64, background: '#c8c8c8', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }} />
         ))}
       </div>
       {/* KPI row 1 */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap }}>
         {[0, 1, 2, 3].map(i => (
-          <div key={i} style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div key={i} style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
             <Skeleton height={10} width="60%" />
             <Skeleton height={24} width="40%" />
           </div>
@@ -194,7 +194,7 @@ function LoadingSkeleton({ isMobile }: { isMobile: boolean }) {
       {/* KPI row 2 */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap }}>
         {[0, 1, 2, 3].map(i => (
-          <div key={i} style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div key={i} style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
             <Skeleton height={10} width="60%" />
             <Skeleton height={24} width="40%" />
           </div>
@@ -202,17 +202,17 @@ function LoadingSkeleton({ isMobile }: { isMobile: boolean }) {
       </div>
       {/* Pipeline + Contracts */}
       <div style={{ display: 'flex', gap, flexDirection: isMobile ? 'column' : 'row' }}>
-        <div style={{ flex: 1, background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black', height: 200 }} />
-        <div style={{ flex: '0 0 240px', background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black', height: 200 }} />
+        <div style={{ flex: 1, background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', height: 200 }} />
+        <div style={{ flex: '0 0 240px', background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', height: 200 }} />
       </div>
       {/* Revenue by Product */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap }}>
         {[0, 1, 2].map(i => (
-          <div key={i} style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black', padding: '16px 20px', height: 80 }} />
+          <div key={i} style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '16px 20px', height: 80 }} />
         ))}
       </div>
       {/* Activity */}
-      <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black', padding: '20px 24px' }}>
+      <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '20px 24px' }}>
         <Skeleton height={12} width="40%" />
         <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {[0, 1, 2, 3, 4].map(i => <Skeleton key={i} height={12} />)}
@@ -239,8 +239,8 @@ function AlertCard({ icon, count, label, bg, href, onDismiss }: AlertCardProps) 
     <div
       style={{
         background: bg,
-        border: '2px solid black',
-        boxShadow: '4px 4px 0 black',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
         padding: '12px 16px',
         display: 'flex',
         alignItems: 'center',
@@ -253,17 +253,17 @@ function AlertCard({ icon, count, label, bg, href, onDismiss }: AlertCardProps) 
       onClick={() => router.push(href)}
       onMouseEnter={e => {
         (e.currentTarget as HTMLDivElement).style.transform = 'translate(-2px,-2px)'
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '6px 6px 0 black'
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.08)'
       }}
       onMouseLeave={e => {
         (e.currentTarget as HTMLDivElement).style.transform = ''
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '4px 4px 0 black'
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.07)'
       }}
     >
-      <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, color: 'white', flexShrink: 0 }}>
+      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: 'white', flexShrink: 0 }}>
         {icon}
       </span>
-      <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 18, color: 'white', flexShrink: 0, lineHeight: 1 }}>
+      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 18, color: 'white', flexShrink: 0, lineHeight: 1 }}>
         {count}
       </span>
       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'white', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', flex: 1 }}>
@@ -307,8 +307,8 @@ function KpiCard({ label, value, icon, accentColor, href }: KpiCardProps) {
     <div
       style={{
         background: 'white',
-        border: '2px solid black',
-        boxShadow: '4px 4px 0 black',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
         padding: '20px 20px 20px 24px',
         display: 'flex',
         flexDirection: 'column',
@@ -321,11 +321,11 @@ function KpiCard({ label, value, icon, accentColor, href }: KpiCardProps) {
       onClick={href ? () => router.push(href) : undefined}
       onMouseEnter={e => {
         (e.currentTarget as HTMLDivElement).style.transform = 'translate(-2px,-2px)'
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '6px 6px 0 black'
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.08)'
       }}
       onMouseLeave={e => {
         (e.currentTarget as HTMLDivElement).style.transform = ''
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '4px 4px 0 black'
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.07)'
       }}
     >
       {/* Colored left accent */}
@@ -334,11 +334,11 @@ function KpiCard({ label, value, icon, accentColor, href }: KpiCardProps) {
         <span style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           {label}
         </span>
-        <div style={{ width: 34, height: 34, border: '2px solid black', background: 'var(--retro-gray)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ width: 34, height: 34, border: '1px solid #e2e8f0', background: 'var(--retro-gray)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           {icon}
         </div>
       </div>
-      <span style={{ fontFamily: 'var(--font-pixel)', color: 'black', fontSize: 16, lineHeight: 1.3 }}>
+      <span style={{ fontFamily: 'var(--font-sans)', color: 'black', fontSize: 16, lineHeight: 1.3 }}>
         {value}
       </span>
     </div>
@@ -351,7 +351,7 @@ function RenewalSection({ renewals, isMobile }: { renewals: Renewals; isMobile: 
   const router = useRouter()
   if (renewals.count === 0) return null
   return (
-    <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black' }}>
+    <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }}>
       <div
         className="goon-card-header"
         style={{ background: '#ff6600', backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px' }}
@@ -414,7 +414,7 @@ function PipelineSummary({ data }: { data: PipelineStage[] }) {
   const router = useRouter()
   const maxCount = Math.max(...data.map(d => d.count), 1)
   return (
-    <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black', flex: 1, minWidth: 0 }}>
+    <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', flex: 1, minWidth: 0 }}>
       <div className="goon-card-header">PIPELINE ONBOARDING</div>
       <div style={{ padding: '16px 20px' }}>
         {data.length === 0 ? (
@@ -429,16 +429,16 @@ function PipelineSummary({ data }: { data: PipelineStage[] }) {
                 <div key={item.stage} style={{ cursor: 'pointer' }} onClick={() => router.push('/onboarding')}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 10, height: 10, background: color, border: '1px solid black', flexShrink: 0 }} />
+                      <div style={{ width: 10, height: 10, background: color, border: '1px solid #e2e8f0', flexShrink: 0 }} />
                       <span style={{ fontFamily: 'var(--font-mono)', color: 'black', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>
                         {label}
                       </span>
                     </div>
-                    <span style={{ background: 'black', color: 'white', border: '1px solid black', padding: '1px 6px', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700 }}>
+                    <span style={{ background: '#0f172a', color: 'white', border: '1px solid #e2e8f0', padding: '1px 6px', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700 }}>
                       {item.count}
                     </span>
                   </div>
-                  <div style={{ height: 8, background: 'var(--retro-gray)', border: '1px solid black' }}>
+                  <div style={{ height: 8, background: 'var(--retro-gray)', border: '1px solid #e2e8f0' }}>
                     <div style={{ height: '100%', width: `${pct}%`, background: color, transition: 'width 0.4s ease' }} />
                   </div>
                 </div>
@@ -461,20 +461,20 @@ function ContractsStatus({ data }: { data: ContractStatusItem[] }) {
     { label: 'Assinado', status: 'SIGNED', color: '#006600', textColor: 'white' },
   ]
   return (
-    <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black', flex: '0 0 240px' }}>
+    <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', flex: '0 0 240px' }}>
       <div className="goon-card-header">STATUS CONTRATOS</div>
       <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {items.map(item => (
           <div
             key={item.status}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', border: '2px solid black', background: 'var(--retro-gray)' }}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', border: '1px solid #e2e8f0', background: 'var(--retro-gray)' }}
           >
             <span
-              style={{ background: item.color, color: item.textColor, border: '1px solid black', boxShadow: '1px 1px 0 black', padding: '2px 8px', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }}
+              style={{ background: item.color, color: item.textColor, border: '1px solid #e2e8f0', boxShadow: 'none', padding: '2px 8px', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }}
             >
               {item.label}
             </span>
-            <span style={{ fontFamily: 'var(--font-pixel)', color: 'black', fontSize: 16 }}>
+            <span style={{ fontFamily: 'var(--font-sans)', color: 'black', fontSize: 16 }}>
               {getCount(item.status)}
             </span>
           </div>
@@ -493,8 +493,8 @@ function RevenueProductCard({ code, value }: { code: string; value: number }) {
     <div
       style={{
         background: 'white',
-        border: '2px solid black',
-        boxShadow: '4px 4px 0 black',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
         padding: '20px 24px',
         display: 'flex',
         flexDirection: 'column',
@@ -507,21 +507,21 @@ function RevenueProductCard({ code, value }: { code: string; value: number }) {
       onClick={() => router.push('/products')}
       onMouseEnter={e => {
         (e.currentTarget as HTMLDivElement).style.transform = 'translate(-2px,-2px)'
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '6px 6px 0 black'
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.08)'
       }}
       onMouseLeave={e => {
         (e.currentTarget as HTMLDivElement).style.transform = ''
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '4px 4px 0 black'
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.07)'
       }}
     >
       <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 4, background: color }} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ background: color, color: 'white', border: '1px solid black', padding: '2px 10px', fontFamily: 'var(--font-pixel)', fontSize: 12, fontWeight: 700 }}>
+        <span style={{ background: color, color: 'white', border: '1px solid #e2e8f0', padding: '2px 10px', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700 }}>
           {code}
         </span>
         <span style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 11 }}>{PRODUCT_NAMES[code]}</span>
       </div>
-      <span style={{ fontFamily: 'var(--font-pixel)', color: 'black', fontSize: 16, lineHeight: 1.3 }}>
+      <span style={{ fontFamily: 'var(--font-sans)', color: 'black', fontSize: 16, lineHeight: 1.3 }}>
         {fmtBRL(value)}
       </span>
     </div>
@@ -534,7 +534,7 @@ function RecentActivity({ data }: { data: ActivityEntry[] }) {
   const router = useRouter()
   const sliced = data.slice(0, 10)
   return (
-    <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black' }}>
+    <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }}>
       <div className="goon-card-header">ATIVIDADE RECENTE</div>
       <div style={{ padding: '16px 20px', maxHeight: 340, overflowY: 'auto' }}>
         {sliced.length === 0 ? (
@@ -602,16 +602,16 @@ function NegotiationCard({ data, isMobile }: { data: Negotiation; isMobile: bool
   const fmt = (n: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n)
 
   return (
-    <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black' }}>
+    <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }}>
       <div className="goon-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span>EM NEGOCIACAO</span>
-        <span style={{ fontSize: 11, fontFamily: 'var(--font-pixel)', color: '#e6a800' }}>{fmt(data.total)} ({data.count} leads)</span>
+        <span style={{ fontSize: 11, fontFamily: 'var(--font-sans)', color: '#e6a800' }}>{fmt(data.total)} ({data.count} leads)</span>
       </div>
       {data.leads.length > 0 ? (
         <div style={{ padding: '12px 16px' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
             <thead>
-              <tr style={{ borderBottom: '2px solid black' }}>
+              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
                 <th style={{ padding: '4px 8px', textAlign: 'left', fontWeight: 700, textTransform: 'uppercase', fontSize: 9 }}>Empresa</th>
                 <th style={{ padding: '4px 8px', textAlign: 'center', fontWeight: 700, textTransform: 'uppercase', fontSize: 9 }}>Etapa</th>
                 {!isMobile && <th style={{ padding: '4px 8px', textAlign: 'left', fontWeight: 700, textTransform: 'uppercase', fontSize: 9 }}>Vendedor</th>}
@@ -694,13 +694,13 @@ export default function DashboardPage() {
   const saldoRealizadoAno = cashflow?.totals.saldo ?? 0
   const saldoProjetadoAno = cashflow?.totals.saldoProjetado ?? 0
 
-  const cfCardStyle = (bg: string): React.CSSProperties => ({ background: bg, color: 'white', padding: '12px 16px', border: '2px solid black', boxShadow: '4px 4px 0 black', fontFamily: 'var(--font-mono)', fontWeight: 700 })
+  const cfCardStyle = (bg: string): React.CSSProperties => ({ background: bg, color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 })
 
   return (
     <div>
       {/* Header */}
       <div style={{ marginBottom: isMobile ? 16 : 24 }}>
-        <h1 style={{ fontFamily: 'var(--font-pixel)', color: 'black', fontSize: isMobile ? 12 : 16, fontWeight: 700, margin: 0, textTransform: 'uppercase', letterSpacing: 1 }}>
+        <h1 style={{ fontFamily: 'var(--font-sans)', color: 'black', fontSize: isMobile ? 12 : 16, fontWeight: 700, margin: 0, textTransform: 'uppercase', letterSpacing: 1 }}>
           Dashboard
         </h1>
         <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 12, marginTop: 6, marginBottom: 0 }}>
@@ -710,7 +710,7 @@ export default function DashboardPage() {
 
       {/* Error */}
       {error && (
-        <div style={{ background: '#fff0f0', border: '2px solid var(--danger)', boxShadow: '4px 4px 0 var(--danger)', padding: '12px 16px', fontFamily: 'var(--font-mono)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, marginBottom: 16 }}>
+        <div style={{ background: '#fff0f0', border: '1px solid #fecaca', boxShadow: '4px 4px 0 var(--danger)', padding: '12px 16px', fontFamily: 'var(--font-mono)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, marginBottom: 16 }}>
           [ERRO] {error}
         </div>
       )}
@@ -727,7 +727,7 @@ export default function DashboardPage() {
               value={
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span>{stats.kpis.totalActiveClients}</span>
-                  <span style={{ display: 'inline-block', width: 8, height: 8, background: '#ccff00', border: '1px solid black', borderRadius: '50%', animation: 'pulse 2s ease-in-out infinite' }} />
+                  <span style={{ display: 'inline-block', width: 8, height: 8, background: '#ccff00', border: '1px solid #e2e8f0', borderRadius: '50%', animation: 'pulse 2s ease-in-out infinite' }} />
                 </div>
               }
               icon={<Users size={16} />}
@@ -808,52 +808,52 @@ export default function DashboardPage() {
           )}
 
           {/* ══ 3. INADIMPLÊNCIA ══════════════════════════════════════════ */}
-          <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black' }}>
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }}>
             <div className="goon-card-header" style={{ background: overdueCount > 0 ? '#cc0000' : 'black' }}>INADIMPLENCIA</div>
             <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 16 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Valor Vencido</span>
-                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: totalOverdue > 0 ? '#cc0000' : '#006600' }}>{fmtBRL(totalOverdue)}</span>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: totalOverdue > 0 ? '#cc0000' : '#006600' }}>{fmtBRL(totalOverdue)}</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Parcelas Vencidas</span>
-                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: overdueCount > 0 ? '#cc0000' : 'black' }}>{overdueCount}</span>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: overdueCount > 0 ? '#cc0000' : 'black' }}>{overdueCount}</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Taxa Inadimplencia</span>
-                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: taxaInadimplencia > 5 ? '#cc0000' : taxaInadimplencia > 0 ? '#e6a800' : '#006600' }}>{taxaInadimplencia.toFixed(1)}%</span>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: taxaInadimplencia > 5 ? '#cc0000' : taxaInadimplencia > 0 ? '#e6a800' : '#006600' }}>{taxaInadimplencia.toFixed(1)}%</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>sobre carteira do ano</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Pendencias</span>
-                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: (stats.pendencies?.total ?? 0) > 0 ? '#cc0000' : 'black' }}>{stats.pendencies?.total ?? 0}</span>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: (stats.pendencies?.total ?? 0) > 0 ? '#cc0000' : 'black' }}>{stats.pendencies?.total ?? 0}</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>total abertas</span>
               </div>
             </div>
           </div>
 
           {/* ══ 4. RESULTADO E SALDOS ═════════════════════════════════════ */}
-          <div style={{ background: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black' }}>
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }}>
             <div className="goon-card-header">RESULTADO E SALDOS</div>
             <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 16 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Saldo Realizado (Mes)</span>
-                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: saldoRealizadoMes >= 0 ? '#006600' : '#cc0000' }}>{fmtBRL(saldoRealizadoMes)}</span>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: saldoRealizadoMes >= 0 ? '#006600' : '#cc0000' }}>{fmtBRL(saldoRealizadoMes)}</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>recebido - pago</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Saldo Projetado (Mes)</span>
-                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: saldoProjetadoMes >= 0 ? '#006600' : '#cc0000' }}>{fmtBRL(saldoProjetadoMes)}</span>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: saldoProjetadoMes >= 0 ? '#006600' : '#cc0000' }}>{fmtBRL(saldoProjetadoMes)}</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>entradas - saidas previstas</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Resultado Realizado (Ano)</span>
-                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: saldoRealizadoAno >= 0 ? '#006600' : '#cc0000' }}>{fmtBRL(saldoRealizadoAno)}</span>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: saldoRealizadoAno >= 0 ? '#006600' : '#cc0000' }}>{fmtBRL(saldoRealizadoAno)}</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>acumulado {currentYear}</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Resultado Projetado (Ano)</span>
-                <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 16, color: saldoProjetadoAno >= 0 ? '#006600' : '#cc0000' }}>{fmtBRL(saldoProjetadoAno)}</span>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: saldoProjetadoAno >= 0 ? '#006600' : '#cc0000' }}>{fmtBRL(saldoProjetadoAno)}</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>projecao {currentYear}</span>
               </div>
             </div>

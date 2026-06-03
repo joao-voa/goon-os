@@ -67,15 +67,15 @@ function EditModal({ product, onClose, onSaved }: EditModalProps) {
           width: '100%',
           maxWidth: 440,
           background: 'white',
-          border: '2px solid black',
-          boxShadow: '8px 8px 0px 0px #000',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
         }}
       >
         {/* Header */}
         <div style={{
           background: 'black',
           color: 'white',
-          fontFamily: 'var(--font-pixel)',
+          fontFamily: 'var(--font-sans)',
           fontSize: 10,
           textTransform: 'uppercase',
           padding: '12px 16px',
@@ -126,7 +126,7 @@ function EditModal({ product, onClose, onSaved }: EditModalProps) {
             />
           </div>
 
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8, borderTop: '2px solid black', paddingTop: 16 }}>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8, borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
             <button type="button" className="goon-btn-secondary" onClick={onClose} disabled={saving}>
               Cancelar
             </button>
@@ -155,8 +155,8 @@ function ProductCard({ product, onEdit, onToggleActive, onNavigate }: ProductCar
     <div
       style={{
         background: 'white',
-        border: '2px solid black',
-        boxShadow: '6px 6px 0px 0px #000',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.08)',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
@@ -172,7 +172,7 @@ function ProductCard({ product, onEdit, onToggleActive, onNavigate }: ProductCar
       }}
       onMouseLeave={e => {
         (e.currentTarget as HTMLDivElement).style.transform = ''
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '6px 6px 0px 0px #000'
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.08)'
       }}
     >
       {/* Code header */}
@@ -186,7 +186,7 @@ function ProductCard({ product, onEdit, onToggleActive, onNavigate }: ProductCar
         backgroundSize: '12px 12px',
       }}>
         <span style={{
-          fontFamily: 'var(--font-pixel)',
+          fontFamily: 'var(--font-sans)',
           fontSize: 20,
           color: 'white',
           fontWeight: 900,
@@ -235,7 +235,7 @@ function ProductCard({ product, onEdit, onToggleActive, onNavigate }: ProductCar
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '12px 24px',
-          borderTop: '2px solid black',
+          borderTop: '1px solid #e2e8f0',
           background: 'var(--retro-gray)',
         }}
         onClick={e => e.stopPropagation()}
@@ -251,8 +251,8 @@ function ProductCard({ product, onEdit, onToggleActive, onNavigate }: ProductCar
             style={{
               background: '#c0c0c0',
               color: 'black',
-              border: '2px solid black',
-              boxShadow: '2px 2px 0 black',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
               fontFamily: 'var(--font-mono)',
               fontSize: 10,
               fontWeight: 700,
@@ -263,11 +263,11 @@ function ProductCard({ product, onEdit, onToggleActive, onNavigate }: ProductCar
             }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLButtonElement).style.transform = 'translate(1px, 1px)'
-              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '1px 1px 0 black'
+              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = 'none'
             }}
             onMouseLeave={e => {
               (e.currentTarget as HTMLButtonElement).style.transform = ''
-              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '2px 2px 0 black'
+              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'
             }}
           >
             Editar
@@ -278,8 +278,8 @@ function ProductCard({ product, onEdit, onToggleActive, onNavigate }: ProductCar
           style={{
             background: product.isActive ? 'var(--success)' : 'var(--retro-gray)',
             color: product.isActive ? 'white' : 'black',
-            border: '2px solid black',
-            boxShadow: '2px 2px 0 black',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
             fontFamily: 'var(--font-mono)',
             fontSize: 10,
             fontWeight: 700,
@@ -290,11 +290,11 @@ function ProductCard({ product, onEdit, onToggleActive, onNavigate }: ProductCar
           }}
           onMouseEnter={e => {
             (e.currentTarget as HTMLButtonElement).style.transform = 'translate(1px, 1px)'
-            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '1px 1px 0 black'
+            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = 'none'
           }}
           onMouseLeave={e => {
             (e.currentTarget as HTMLButtonElement).style.transform = ''
-            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '2px 2px 0 black'
+            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'
           }}
         >
           {product.isActive ? 'Desativar' : 'Ativar'}
@@ -352,7 +352,7 @@ export default function ProductsPage() {
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <h1 style={{
-          fontFamily: 'var(--font-pixel)',
+          fontFamily: 'var(--font-sans)',
           fontSize: 14,
           fontWeight: 800,
           color: 'black',
@@ -374,7 +374,7 @@ export default function ProductsPage() {
             style={{
               width: 36,
               height: 36,
-              border: '3px solid black',
+              border: '1px solid #e2e8f0',
               borderTopColor: 'transparent',
               borderRadius: '50%',
               animation: 'spin 0.6s linear infinite',
@@ -406,13 +406,13 @@ export default function ProductsPage() {
         <div
           style={{
             background: 'white',
-            border: '2px solid black',
-            boxShadow: '4px 4px 0px 0px #000',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
             padding: 48,
             textAlign: 'center',
           }}
         >
-          <p style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, color: 'black', textTransform: 'uppercase' }}>
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'black', textTransform: 'uppercase' }}>
             Nenhum programa cadastrado.
           </p>
         </div>

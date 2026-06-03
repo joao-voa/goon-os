@@ -43,7 +43,7 @@ function TaskCard({ task, onClick }: { task: Task; onClick: () => void }) {
 
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} onClick={onClick} style={{
-      background: 'white', border: '2px solid black', boxShadow: isDragging ? 'none' : '3px 3px 0 black',
+      background: 'white', border: '1px solid #e2e8f0', boxShadow: isDragging ? 'none' : '0 2px 4px rgba(0,0,0,0.05)',
       padding: '12px', cursor: isDragging ? 'grabbing' : 'grab', opacity: isDragging ? 0.4 : 1,
       marginBottom: 8, transition: 'transform 0.1s',
     }}>
@@ -79,8 +79,8 @@ function Column({ stage, tasks, onCardClick }: { stage: string; tasks: Task[]; o
   const { setNodeRef, isOver } = useDroppable({ id: stage })
   return (
     <div style={{ flex: '1 1 300px', minWidth: 280, display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 200px)' }}>
-      <div style={{ background: STAGE_COLORS[stage], color: 'white', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '2px solid black', boxShadow: '4px 4px 0 black' }}>
-        <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 10 }}>{STAGE_LABELS[stage]}</span>
+      <div style={{ background: STAGE_COLORS[stage], color: 'white', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10 }}>{STAGE_LABELS[stage]}</span>
         <span style={{ background: 'rgba(255,255,255,0.3)', padding: '2px 8px', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700 }}>{tasks.length}</span>
       </div>
       <div ref={setNodeRef} style={{
@@ -207,25 +207,25 @@ export default function TasksPage() {
   const tasksByStage: Record<string, Task[]> = { TODO: [], DOING: [], DONE: [], WIKI: [] }
   tasks.forEach(t => { if (tasksByStage[t.stage]) tasksByStage[t.stage].push(t) })
 
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }
   const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 3 }
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-        <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 20, margin: 0 }}>TAREFAS</h1>
+        <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 20, margin: 0 }}>TAREFAS</h1>
         <button onClick={openNew} style={{
-          padding: '8px 16px', border: '2px solid black', background: '#4A78FF', color: 'white',
-          fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '3px 3px 0 black',
+          padding: '8px 16px', border: '1px solid #e2e8f0', background: '#4A78FF', color: 'white',
+          fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
         }}>+ NOVA TAREFA</button>
       </div>
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Responsavel:</span>
-        <button onClick={() => setAssigneeFilter('')} style={{ padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer', background: !assigneeFilter ? 'black' : 'white', color: !assigneeFilter ? 'white' : 'black' }}>TODOS</button>
+        <button onClick={() => setAssigneeFilter('')} style={{ padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer', background: !assigneeFilter ? 'black' : 'white', color: !assigneeFilter ? 'white' : 'black' }}>TODOS</button>
         {assignees.map(a => (
-          <button key={a} onClick={() => setAssigneeFilter(assigneeFilter === a ? '' : a)} style={{ padding: '4px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer', background: assigneeFilter === a ? 'black' : 'white', color: assigneeFilter === a ? 'white' : 'black' }}>{a}</button>
+          <button key={a} onClick={() => setAssigneeFilter(assigneeFilter === a ? '' : a)} style={{ padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer', background: assigneeFilter === a ? 'black' : 'white', color: assigneeFilter === a ? 'white' : 'black' }}>{a}</button>
         ))}
       </div>
 
@@ -238,7 +238,7 @@ export default function TasksPage() {
         </div>
         <DragOverlay>
           {activeTask && (
-            <div style={{ width: 280, background: 'white', border: '2px solid black', boxShadow: '8px 8px 0 black', padding: 12, transform: 'rotate(2deg)', opacity: 0.95 }}>
+            <div style={{ width: 280, background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: 12, transform: 'rotate(2deg)', opacity: 0.95 }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>{activeTask.title}</span>
             </div>
           )}
@@ -249,8 +249,8 @@ export default function TasksPage() {
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
           onClick={e => { if (e.target === e.currentTarget && confirm('Sair sem salvar?')) setShowModal(false) }}>
-          <div style={{ background: 'white', border: '2px solid black', boxShadow: '8px 8px 0 black', width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ background: '#4A78FF', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-pixel)', fontSize: 11 }}>
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ background: '#4A78FF', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
               {editTask ? 'EDITAR TAREFA' : 'NOVA TAREFA'}
             </div>
             <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -311,10 +311,10 @@ export default function TasksPage() {
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                 {editTask && (
-                  <button onClick={handleDelete} style={{ padding: '10px 14px', border: '2px solid black', background: '#cc0000', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>EXCLUIR</button>
+                  <button onClick={handleDelete} style={{ padding: '10px 14px', border: '1px solid #e2e8f0', background: '#cc0000', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>EXCLUIR</button>
                 )}
-                <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: '10px', border: '2px solid black', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
-                <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '10px', border: '2px solid black', background: '#4A78FF', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', boxShadow: '3px 3px 0 black' }}>
+                <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
+                <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#4A78FF', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                   {saving ? 'SALVANDO...' : editTask ? 'ATUALIZAR' : 'CRIAR'}
                 </button>
               </div>

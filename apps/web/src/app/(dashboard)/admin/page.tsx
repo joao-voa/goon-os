@@ -143,23 +143,23 @@ export default function AdminPage() {
     } catch { toast.error('Erro ao excluir') }
   }
 
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 10px', border: '2px solid black', fontFamily: 'var(--font-mono)', fontSize: 12 }
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }
 
   return (
     <div style={{ padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 20, margin: 0 }}>ADMINISTRACAO</h1>
+          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 20, margin: 0 }}>ADMINISTRACAO</h1>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#888', marginTop: 4 }}>AURA360 OS {SYSTEM_VERSION}</div>
         </div>
-        <button onClick={() => { setEditId(null); setForm(emptyForm); setShowModal(true) }} style={{ background: 'black', color: 'white', border: '2px solid black', boxShadow: '4px 4px 0 black', padding: '8px 16px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>+ NOVO USUARIO</button>
+        <button onClick={() => { setEditId(null); setForm(emptyForm); setShowModal(true) }} style={{ background: '#0f172a', color: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '8px 16px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>+ NOVO USUARIO</button>
       </div>
 
       {/* Users Table */}
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
           <thead>
-            <tr style={{ background: 'black', color: 'white', textTransform: 'uppercase' }}>
+            <tr style={{ background: '#0f172a', color: 'white', textTransform: 'uppercase' }}>
               <th style={{ padding: '8px 12px', textAlign: 'left' }}>Nome</th>
               <th style={{ padding: '8px 12px', textAlign: 'left' }}>Email</th>
               <th style={{ padding: '8px 12px', textAlign: 'center' }}>Perfil</th>
@@ -191,9 +191,9 @@ export default function AdminPage() {
                   </td>
                   <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-                      <button onClick={() => handleEdit(u)} style={{ background: 'var(--retro-blue)', color: 'white', border: '2px solid black', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>EDITAR</button>
-                      <button onClick={() => handleToggleActive(u)} style={{ background: u.isActive ? '#e6a800' : '#006600', color: 'white', border: '2px solid black', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>{u.isActive ? 'DESATIVAR' : 'ATIVAR'}</button>
-                      <button onClick={() => handleDelete(u)} style={{ background: '#cc0000', color: 'white', border: '2px solid black', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>X</button>
+                      <button onClick={() => handleEdit(u)} style={{ background: 'var(--retro-blue)', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>EDITAR</button>
+                      <button onClick={() => handleToggleActive(u)} style={{ background: u.isActive ? '#e6a800' : '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>{u.isActive ? 'DESATIVAR' : 'ATIVAR'}</button>
+                      <button onClick={() => handleDelete(u)} style={{ background: '#cc0000', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>X</button>
                     </div>
                   </td>
                 </tr>
@@ -209,8 +209,8 @@ export default function AdminPage() {
       {/* Create/Edit Modal */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div style={{ background: 'var(--retro-gray)', border: '3px solid black', boxShadow: '6px 6px 0 black', padding: 24, width: 480, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h2 style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, marginBottom: 16 }}>{editId ? 'EDITAR' : 'NOVO'} USUARIO</h2>
+          <div style={{ background: 'var(--retro-gray)', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.08)', padding: 24, width: 480, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: 14, marginBottom: 16 }}>{editId ? 'EDITAR' : 'NOVO'} USUARIO</h2>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -244,22 +244,22 @@ export default function AdminPage() {
                 <label style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Modulos com Acesso ({form.modules.length}/{ALL_MODULES.length})</label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
                   {ALL_MODULES.map(m => (
-                    <label key={m.href} style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 11, cursor: 'pointer', padding: '6px 8px', background: form.modules.includes(m.href) ? 'black' : 'white', color: form.modules.includes(m.href) ? 'white' : 'black', border: '2px solid black' }}>
+                    <label key={m.href} style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 11, cursor: 'pointer', padding: '6px 8px', background: form.modules.includes(m.href) ? 'black' : 'white', color: form.modules.includes(m.href) ? 'white' : 'black', border: '1px solid #e2e8f0' }}>
                       <input type="checkbox" checked={form.modules.includes(m.href)} onChange={() => toggleModule(m.href)} style={{ accentColor: 'white' }} />
                       {m.label}
                     </label>
                   ))}
                 </div>
                 <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                  <button type="button" onClick={() => setForm(f => ({ ...f, modules: ALL_MODULES.map(m => m.href) }))} style={{ padding: '4px 10px', border: '1px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>MARCAR TODOS</button>
-                  <button type="button" onClick={() => setForm(f => ({ ...f, modules: [] }))} style={{ padding: '4px 10px', border: '1px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>DESMARCAR TODOS</button>
+                  <button type="button" onClick={() => setForm(f => ({ ...f, modules: ALL_MODULES.map(m => m.href) }))} style={{ padding: '4px 10px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>MARCAR TODOS</button>
+                  <button type="button" onClick={() => setForm(f => ({ ...f, modules: [] }))} style={{ padding: '4px 10px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>DESMARCAR TODOS</button>
                 </div>
               </div>
             </div>
 
             <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
-              <button onClick={() => { setShowModal(false); setEditId(null) }} style={{ padding: '8px 16px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>CANCELAR</button>
-              <button onClick={handleSave} style={{ background: 'black', color: 'white', padding: '8px 16px', border: '2px solid black', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, boxShadow: '3px 3px 0 black' }}>SALVAR</button>
+              <button onClick={() => { setShowModal(false); setEditId(null) }} style={{ padding: '8px 16px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>CANCELAR</button>
+              <button onClick={handleSave} style={{ background: '#0f172a', color: 'white', padding: '8px 16px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>SALVAR</button>
             </div>
           </div>
         </div>

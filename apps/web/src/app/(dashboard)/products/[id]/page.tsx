@@ -108,7 +108,7 @@ function statusBadgeStyle(s: string): React.CSSProperties {
     padding: '2px 8px',
     background: colors[s] ?? '#c0c0c0',
     color: textColors[s] ?? 'white',
-    border: '1px solid black',
+    border: '1px solid #e2e8f0',
     fontFamily: 'var(--font-mono)',
     fontSize: 10,
     fontWeight: 700,
@@ -137,7 +137,7 @@ interface TabBarProps {
 
 function TabBar({ tabs, active, onChange }: TabBarProps) {
   return (
-    <div style={{ display: 'flex', gap: 0, marginBottom: 0, borderBottom: '2px solid black' }}>
+    <div style={{ display: 'flex', gap: 0, marginBottom: 0, borderBottom: '1px solid #e2e8f0' }}>
       {tabs.map((tab, i) => (
         <button
           key={tab}
@@ -146,9 +146,9 @@ function TabBar({ tabs, active, onChange }: TabBarProps) {
             padding: '10px 18px',
             background: i === active ? 'black' : '#c0c0c0',
             color: i === active ? 'white' : 'black',
-            border: '2px solid black',
+            border: '1px solid #e2e8f0',
             borderBottom: i === active ? '2px solid black' : '2px solid black',
-            fontFamily: 'var(--font-pixel)',
+            fontFamily: 'var(--font-sans)',
             fontSize: 9,
             textTransform: 'uppercase',
             letterSpacing: 0.5,
@@ -181,8 +181,8 @@ function KpiCard({ label, value, color = 'black', onClick }: KpiCardProps) {
       onClick={onClick}
       style={{
         background: 'white',
-        border: '2px solid black',
-        boxShadow: '4px 4px 0px 0px #000',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
         padding: '16px 20px',
         cursor: onClick ? 'pointer' : 'default',
         transition: 'transform 0.1s, box-shadow 0.1s',
@@ -212,7 +212,7 @@ function KpiCard({ label, value, color = 'black', onClick }: KpiCardProps) {
         {label}
       </div>
       <div style={{
-        fontFamily: 'var(--font-pixel)',
+        fontFamily: 'var(--font-sans)',
         fontSize: 14,
         color,
         fontWeight: 800,
@@ -258,8 +258,8 @@ function EditProductModal({ product, onClose, onSaved }: EditProductModalProps) 
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{ width: '100%', maxWidth: 440, background: 'white', border: '2px solid black', boxShadow: '8px 8px 0px 0px #000' }}>
-        <div style={{ background: 'black', color: 'white', fontFamily: 'var(--font-pixel)', fontSize: 10, textTransform: 'uppercase', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', letterSpacing: 1, backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
+      <div style={{ width: '100%', maxWidth: 440, background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+        <div style={{ background: '#0f172a', color: 'white', fontFamily: 'var(--font-sans)', fontSize: 10, textTransform: 'uppercase', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', letterSpacing: 1, backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
           <span>Editar Programa</span>
           <button onClick={onClose} style={{ background: 'var(--danger)', border: '1px solid white', color: 'white', cursor: 'pointer', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700 }}>×</button>
         </div>
@@ -272,7 +272,7 @@ function EditProductModal({ product, onClose, onSaved }: EditProductModalProps) 
             <label className="goon-label">Descrição</label>
             <textarea className="goon-textarea" value={description} onChange={e => setDescription(e.target.value)} rows={3} />
           </div>
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8, borderTop: '2px solid black', paddingTop: 16 }}>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8, borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
             <button type="button" className="goon-btn-secondary" onClick={onClose} disabled={saving}>Cancelar</button>
             <button type="submit" className="goon-btn-primary" disabled={saving}>{saving ? 'Salvando...' : 'Salvar'}</button>
           </div>
@@ -393,7 +393,7 @@ export default function ProductDetailPage() {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300, gap: 12 }}>
-        <div style={{ width: 32, height: 32, border: '3px solid black', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
+        <div style={{ width: 32, height: 32, border: '1px solid #e2e8f0', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     )
@@ -453,8 +453,8 @@ export default function ProductDetailPage() {
               padding: '6px 14px',
               background: productColor,
               color: 'white',
-              border: '2px solid black',
-              fontFamily: 'var(--font-pixel)',
+              border: '1px solid #e2e8f0',
+              fontFamily: 'var(--font-sans)',
               fontSize: 14,
               fontWeight: 800,
               letterSpacing: 1,
@@ -462,7 +462,7 @@ export default function ProductDetailPage() {
               {product.code}
             </span>
             <div>
-              <h1 style={{ fontFamily: 'var(--font-pixel)', fontSize: 14, fontWeight: 800, color: 'black', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: 1 }}>
+              <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 800, color: 'black', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: 1 }}>
                 {PRODUCT_NAMES[product.code] ?? product.name}
               </h1>
               {product.description && (
@@ -475,9 +475,9 @@ export default function ProductDetailPage() {
             style={{
               background: '#c0c0c0',
               color: 'black',
-              border: '2px solid black',
-              boxShadow: '3px 3px 0 black',
-              fontFamily: 'var(--font-pixel)',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+              fontFamily: 'var(--font-sans)',
               fontSize: 9,
               textTransform: 'uppercase',
               padding: '8px 14px',
@@ -537,7 +537,7 @@ export default function ProductDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ border: '2px solid black', boxShadow: '4px 4px 0 black', overflow: 'hidden' }}>
+      <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
         <TabBar tabs={TABS} active={activeTab} onChange={setActiveTab} />
 
         <div style={{ background: 'white', padding: 24 }}>
@@ -593,7 +593,7 @@ export default function ProductDetailPage() {
                                       padding: '2px 8px',
                                       background: CONTRACT_STATUS_COLORS[contract.status] ?? '#c0c0c0',
                                       color: contract.status === 'DRAFT' || contract.status === 'CANCELLED' ? '#333' : 'white',
-                                      border: '1px solid black',
+                                      border: '1px solid #e2e8f0',
                                       fontFamily: 'var(--font-mono)',
                                       fontSize: 10,
                                       fontWeight: 700,
@@ -650,7 +650,7 @@ export default function ProductDetailPage() {
                                         value={newMentorName}
                                         onChange={e => setNewMentorName(e.target.value)}
                                         onClick={e => e.stopPropagation()}
-                                        style={{ flex: '1 1 100px', fontSize: 10, padding: '4px 6px', border: '2px solid black', fontFamily: 'var(--font-mono)', background: 'white' }}
+                                        style={{ flex: '1 1 100px', fontSize: 10, padding: '4px 6px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', background: 'white' }}
                                       />
                                       <datalist id="product-mentor-list">
                                         {(suggestions?.mentors ?? []).map(s => <option key={s} value={s} />)}
@@ -662,7 +662,7 @@ export default function ProductDetailPage() {
                                         value={newMentorValue}
                                         onChange={e => setNewMentorValue(e.target.value)}
                                         onClick={e => e.stopPropagation()}
-                                        style={{ width: 80, fontSize: 10, padding: '4px 6px', border: '2px solid black', fontFamily: 'var(--font-mono)', background: 'white' }}
+                                        style={{ width: 80, fontSize: 10, padding: '4px 6px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', background: 'white' }}
                                       />
                                       <button
                                         disabled={savingMentor}
@@ -683,11 +683,11 @@ export default function ProductDetailPage() {
                                           } catch { toast.error('Erro ao atribuir mentor') }
                                           setSavingMentor(false)
                                         }}
-                                        style={{ background: '#006600', color: 'white', border: '2px solid black', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}
+                                        style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}
                                       >OK</button>
                                       <button
                                         onClick={(e) => { e.stopPropagation(); setAddingMentor(null) }}
-                                        style={{ background: 'white', border: '2px solid black', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
+                                        style={{ background: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
                                       >X</button>
                                     </div>
                                   ) : (
@@ -771,7 +771,7 @@ export default function ProductDetailPage() {
                               padding: '2px 8px',
                               background: CONTRACT_STATUS_COLORS[contract.status] ?? '#c0c0c0',
                               color: contract.status === 'DRAFT' || contract.status === 'CANCELLED' ? '#333' : 'white',
-                              border: '1px solid black',
+                              border: '1px solid #e2e8f0',
                               fontFamily: 'var(--font-mono)',
                               fontSize: 10,
                               fontWeight: 700,
@@ -844,7 +844,7 @@ export default function ProductDetailPage() {
                                   padding: '2px 8px',
                                   background: PAYMENT_STATUS_COLORS[payment.status] ?? '#c0c0c0',
                                   color: payment.status === 'SCHEDULED' || payment.status === 'CANCELLED' ? '#333' : 'white',
-                                  border: '1px solid black',
+                                  border: '1px solid #e2e8f0',
                                   fontFamily: 'var(--font-mono)',
                                   fontSize: 10,
                                   fontWeight: 700,
@@ -861,22 +861,22 @@ export default function ProductDetailPage() {
                   </div>
 
                   {/* Summary */}
-                  <div style={{ marginTop: 20, padding: '14px 20px', background: 'var(--retro-gray)', border: '2px solid black', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                  <div style={{ marginTop: 20, padding: '14px 20px', background: 'var(--retro-gray)', border: '1px solid #e2e8f0', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
                     <div>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555', textTransform: 'uppercase', display: 'block', fontWeight: 700, marginBottom: 4 }}>Total Pago</span>
-                      <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 13, color: '#006600', fontWeight: 800 }}>
+                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: '#006600', fontWeight: 800 }}>
                         {fmtBRL(payments.filter(p => p.status === 'PAID').reduce((s, p) => s + p.value, 0))}
                       </span>
                     </div>
                     <div>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555', textTransform: 'uppercase', display: 'block', fontWeight: 700, marginBottom: 4 }}>Total Pendente</span>
-                      <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 13, color: '#000080', fontWeight: 800 }}>
+                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: '#000080', fontWeight: 800 }}>
                         {fmtBRL(payments.filter(p => p.status === 'PENDING').reduce((s, p) => s + p.value, 0))}
                       </span>
                     </div>
                     <div>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555', textTransform: 'uppercase', display: 'block', fontWeight: 700, marginBottom: 4 }}>Total Vencido</span>
-                      <span style={{ fontFamily: 'var(--font-pixel)', fontSize: 13, color: '#cc0000', fontWeight: 800 }}>
+                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: '#cc0000', fontWeight: 800 }}>
                         {fmtBRL(payments.filter(p => p.status === 'OVERDUE').reduce((s, p) => s + p.value, 0))}
                       </span>
                     </div>
@@ -889,7 +889,7 @@ export default function ProductDetailPage() {
           {/* Tab 3: TURMAS */}
           {activeTab === 3 && (
             <div style={{ padding: '32px 0', textAlign: 'center' }}>
-              <p style={{ fontFamily: 'var(--font-pixel)', fontSize: 11, color: '#555', textTransform: 'uppercase', letterSpacing: 1 }}>
+              <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: '#555', textTransform: 'uppercase', letterSpacing: 1 }}>
                 Em desenvolvimento...
               </p>
               <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#888', marginTop: 12 }}>
