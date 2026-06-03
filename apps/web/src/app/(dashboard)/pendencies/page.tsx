@@ -617,7 +617,7 @@ export default function PendenciesPage() {
             <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14 }}>CLIENTES INADIMPLENTES</div>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, color: '#666' }}>FILTRO:</span>
-              {([['todos', 'TODOS', '#1e293b'], ['sem', 'SEM CARTEIRA', '#006600'], ['carteira', 'EM CARTEIRA', '#cc0000']] as const).map(([key, label, bg]) => (
+              {([['todos', 'TODOS', '#1e293b'], ['sem', 'SEM A RECUPERAR', '#006600'], ['carteira', 'A RECUPERAR', '#cc0000']] as const).map(([key, label, bg]) => (
                 <button key={key} onClick={() => setCarteiraFilter(carteiraFilter === key ? 'todos' : key)} style={{
                   padding: '4px 10px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 10,
                   background: carteiraFilter === key ? bg : 'white', color: carteiraFilter === key ? 'white' : 'black',
@@ -677,9 +677,9 @@ export default function PendenciesPage() {
                               try {
                                 await apiFetch(`/api/payments/${pay.id}/carteira`, { method: 'PATCH', body: JSON.stringify({ inCarteira: !pay.inCarteira }) })
                                 setOverduePayments(prev => prev.map(p => p.id === pay.id ? { ...p, inCarteira: !p.inCarteira } : p))
-                                toast.success(pay.inCarteira ? 'Removido da carteira' : 'Adicionado a carteira')
+                                toast.success(pay.inCarteira ? 'Removido de A Recuperar' : 'Adicionado a A Recuperar')
                               } catch { toast.error('Erro') }
-                            }} style={{ background: pay.inCarteira ? '#e6a800' : '#888', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{pay.inCarteira ? 'TIRAR' : 'CARTEIRA'}</button>
+                            }} style={{ background: pay.inCarteira ? '#e6a800' : '#888', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{pay.inCarteira ? 'TIRAR' : 'RECUP'}</button>
                           </div>
                         </td>
                       </tr>

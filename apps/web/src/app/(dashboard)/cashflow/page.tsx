@@ -136,7 +136,7 @@ export default function CashflowPage() {
             }}>{v === 'mensal' ? 'MENSAL' : 'DIARIO'}</button>
           ))}
           <button onClick={() => setComCarteira(!comCarteira)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: comCarteira ? '#006600' : '#cc0000', color: 'white', borderRadius: 6 }}>
-            {comCarteira ? 'COM CARTEIRA' : 'SEM CARTEIRA'}
+            {comCarteira ? 'COM A RECUPERAR' : 'SEM A RECUPERAR'}
           </button>
           <button onClick={() => setExcluirGiu(!excluirGiu)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: excluirGiu ? '#d4a017' : '#64748b', color: 'white', borderRadius: 6 }}>
             {excluirGiu ? 'SEM PESSOAL GIU' : 'COM PESSOAL GIU'}
@@ -257,12 +257,12 @@ export default function CashflowPage() {
           <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 12 }}>
             <div style={cardStyle('#1e293b')}>
-              <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Faturamento em Carteira (Ano)</div>
+              <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Faturamento Total (Ano)</div>
               <div style={{ fontSize: 18 }}>{fmt(entradasAno)}</div>
               <div style={{ fontSize: 9, opacity: 0.7 }}>{comCarteira ? 'Todos os pagamentos' : 'Excluindo inadimplentes'} {year}</div>
             </div>
             <div style={cardStyle('#334155')}>
-              <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Receber (Carteira)</div>
+              <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Receber (Total)</div>
               <div style={{ fontSize: 18 }}>{fmt(aReceberAno)}</div>
               <div style={{ fontSize: 9, opacity: 0.7 }}>{comCarteira ? 'Pendente + Vencido' : 'Somente pendente'}</div>
             </div>
@@ -278,7 +278,7 @@ export default function CashflowPage() {
             </div>
             {!comCarteira && overdueAno > 0 && (
               <div style={cardStyle('#cc0000')}>
-                <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Carteira de Cobranca</div>
+                <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Recuperar</div>
                 <div style={{ fontSize: 18 }}>{fmt(overdueAno)}</div>
                 <div style={{ fontSize: 9, opacity: 0.7 }}>Inadimplentes a recuperar</div>
               </div>
@@ -286,12 +286,12 @@ export default function CashflowPage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 12 }}>
             <div style={cardStyle('#1e293b')}>
-              <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Gastos em Carteira (Ano)</div>
+              <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Gastos Total (Ano)</div>
               <div style={{ fontSize: 18 }}>{fmt(gastosAno)}</div>
               <div style={{ fontSize: 9, opacity: 0.7 }}>Despesas + Comissoes {year}</div>
             </div>
             <div style={cardStyle('#334155')}>
-              <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Pagar (Carteira)</div>
+              <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Pagar (Total)</div>
               <div style={{ fontSize: 18 }}>{fmt(aPagarAno)}</div>
               <div style={{ fontSize: 9, opacity: 0.7 }}>Previsto + Pendente no ano</div>
             </div>

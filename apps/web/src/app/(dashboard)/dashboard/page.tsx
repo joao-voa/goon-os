@@ -762,12 +762,12 @@ export default function DashboardPage() {
             <>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12 }}>
                 <div style={cfCardStyle('#1e293b')}>
-                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Faturamento em Carteira (Ano)</div>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Faturamento Total (Ano)</div>
                   <div style={{ fontSize: 18 }}>{fmtBRL(cashflow.totals.entradas)}</div>
                   <div style={{ fontSize: 9, opacity: 0.7 }}>Todos os pagamentos {currentYear}</div>
                 </div>
                 <div style={cfCardStyle('#334155')}>
-                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Receber (Carteira)</div>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Receber (Total)</div>
                   <div style={{ fontSize: 18 }}>{fmtBRL(aReceberAno)}</div>
                   <div style={{ fontSize: 9, opacity: 0.7 }}>Pendente + Vencido no ano</div>
                 </div>
@@ -784,12 +784,12 @@ export default function DashboardPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12 }}>
                 <div style={cfCardStyle('#1e293b')}>
-                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Gastos em Carteira (Ano)</div>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Gastos Total (Ano)</div>
                   <div style={{ fontSize: 18 }}>{fmtBRL(gastosAno)}</div>
                   <div style={{ fontSize: 9, opacity: 0.7 }}>Despesas + Comissoes {currentYear}</div>
                 </div>
                 <div style={cfCardStyle('#334155')}>
-                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Pagar (Carteira)</div>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Pagar (Total)</div>
                   <div style={{ fontSize: 18 }}>{fmtBRL(aPagarAno)}</div>
                   <div style={{ fontSize: 9, opacity: 0.7 }}>Previsto + Pendente no ano</div>
                 </div>
@@ -822,7 +822,7 @@ export default function DashboardPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Taxa Inadimplencia</span>
                 <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: taxaInadimplencia > 5 ? '#cc0000' : taxaInadimplencia > 0 ? '#e6a800' : '#006600' }}>{taxaInadimplencia.toFixed(1)}%</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>sobre carteira do ano</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>sobre total do ano</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Pendencias</span>
