@@ -91,7 +91,7 @@ export function Sidebar({
 
       <nav style={{
         position: 'fixed', top: 0, left: 0, height: '100vh', width: sidebarWidth,
-        background: '#0f172a',
+        background: '#1e3a5f',
         display: 'flex', flexDirection: 'column', zIndex: 51,
         transition: 'transform 0.25s ease, width 0.25s ease',
         transform: isVisible ? 'translateX(0)' : 'translateX(-100%)',
@@ -112,9 +112,9 @@ export function Sidebar({
                 fontFamily: 'var(--font-sans)', letterSpacing: '-0.02em',
               }}>AURA360</span>
               <span style={{
-                color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 600,
-                fontFamily: 'var(--font-sans)',
-              }}>OS</span>
+                color: 'rgba(255,255,255,0.35)', fontSize: 9, fontWeight: 500,
+                fontFamily: 'var(--font-sans)', marginLeft: 2,
+              }}>Operacional System</span>
             </a>
           )}
           {collapsed && !isMobile && (

@@ -66,7 +66,7 @@ export default function ChangePasswordPage() {
 
         <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', margin: 0 }}>
-            Bem-vindo ao AURA360 OS! Crie uma senha segura para acessar o sistema.
+            Bem-vindo ao AURA360 Operacional System! Crie uma senha segura para acessar o sistema.
           </p>
 
           <div>
