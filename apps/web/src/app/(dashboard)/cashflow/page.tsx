@@ -42,6 +42,7 @@ export default function CashflowPage() {
   const [fullscreen, setFullscreen] = useState(false)
   const [viewMode, setViewMode] = useState<'mensal' | 'diario'>('mensal')
   const [comCarteira, setComCarteira] = useState(true)
+  const [excluirGiu, setExcluirGiu] = useState(false)
   const [dailyMonth, setDailyMonth] = useState(new Date().getMonth())
   const [dailyData, setDailyData] = useState<Array<{ day: number; entradas: number; saidas: number; saldo: number; items: Array<{ type: 'entrada' | 'saida'; description: string; value: number }> }>>([])
 
@@ -115,7 +116,8 @@ export default function CashflowPage() {
 
   const barMax = Math.max(...data.months.map(m => {
     const ent = comCarteira ? m.entradas.total : m.entradas.total - m.entradas.overdue
-    return Math.max(ent, m.saidas.total + m.comissoes.total)
+    const giuVal = excluirGiu ? ((m.saidas as any).byCategory?.['PESSOAL'] ?? 0) : 0
+    return Math.max(ent, m.saidas.total + m.comissoes.total - giuVal)
   }), 1)
 
   return (
@@ -133,8 +135,11 @@ export default function CashflowPage() {
               background: viewMode === v ? 'black' : 'white', color: viewMode === v ? 'white' : 'black',
             }}>{v === 'mensal' ? 'MENSAL' : 'DIARIO'}</button>
           ))}
-          <button onClick={() => setComCarteira(!comCarteira)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: comCarteira ? '#006600' : '#cc0000', color: 'white' }}>
+          <button onClick={() => setComCarteira(!comCarteira)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: comCarteira ? '#006600' : '#cc0000', color: 'white', borderRadius: 6 }}>
             {comCarteira ? 'COM CARTEIRA' : 'SEM CARTEIRA'}
+          </button>
+          <button onClick={() => setExcluirGiu(!excluirGiu)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: excluirGiu ? '#d4a017' : '#64748b', color: 'white', borderRadius: 6 }}>
+            {excluirGiu ? 'SEM PESSOAL GIU' : 'COM PESSOAL GIU'}
           </button>
           <button onClick={() => setFullscreen(!fullscreen)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: fullscreen ? 'black' : 'white', color: fullscreen ? 'white' : 'black' }}>
             {fullscreen ? 'MINIMIZAR' : 'MAXIMIZAR'}
@@ -234,10 +239,17 @@ export default function CashflowPage() {
         const entradasMes = comCarteira ? (mesAtual?.entradas.total ?? 0) : (mesAtual ? mesAtual.entradas.received + mesAtual.entradas.pending : 0)
         const aReceberAno = comCarteira ? data.totals.entradas - data.totals.entradasReceived : data.totals.entradas - data.totals.entradasReceived - overdueAno
         const aReceberMes = mesAtual ? (comCarteira ? mesAtual.entradas.pending + mesAtual.entradas.overdue : mesAtual.entradas.pending) : 0
-        const gastosAno = data.totals.saidas + data.totals.comissoes
-        const gastosMes = mesAtual ? mesAtual.saidas.total + mesAtual.comissoes.total : 0
-        const aPagarAno = (data.totals.saidas - data.totals.saidasPago) + (data.totals.comissoes - data.totals.comissoesPaid)
-        const aPagarMes = mesAtual ? (mesAtual.saidas.previsto + mesAtual.comissoes.pending) : 0
+        // Excluir PESSOAL Giulliano das saidas quando flag ativo
+        const giuCat = (m: typeof data.months[0]) => {
+          const bc = (m.saidas as any).byCategory as Record<string, number> | undefined
+          return bc?.['PESSOAL'] ?? 0
+        }
+        const giuAno = excluirGiu ? data.months.reduce((s, m) => s + giuCat(m), 0) : 0
+        const giuMes = excluirGiu && mesAtual ? giuCat(mesAtual) : 0
+        const gastosAno = data.totals.saidas + data.totals.comissoes - giuAno
+        const gastosMes = mesAtual ? mesAtual.saidas.total + mesAtual.comissoes.total - giuMes : 0
+        const aPagarAno = (data.totals.saidas - data.totals.saidasPago) + (data.totals.comissoes - data.totals.comissoesPaid) - giuAno
+        const aPagarMes = mesAtual ? (mesAtual.saidas.previsto + mesAtual.comissoes.pending) - giuMes : 0
 
         const cardStyle = (bg: string): React.CSSProperties => ({ background: bg, color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 })
 
@@ -297,10 +309,10 @@ export default function CashflowPage() {
           {/* Resultado */}
           {(() => {
             const resultadoStyle = (val: number): React.CSSProperties => ({ ...cardStyle(val >= 0 ? '#166534' : '#991b1b'), })
-            const saldoRealizadoAno = data.totals.saldo
-            const saldoProjetadoAno = comCarteira ? data.totals.saldoProjetado : data.totals.saldoProjetado - overdueAno
-            const saldoRealizadoMes = mesAtual ? mesAtual.saldo : 0
-            const saldoProjetadoMes = mesAtual ? (comCarteira ? mesAtual.saldoProjetado : mesAtual.saldoProjetado - overdueMes) : 0
+            const saldoRealizadoAno = data.totals.saldo + giuAno
+            const saldoProjetadoAno = (comCarteira ? data.totals.saldoProjetado : data.totals.saldoProjetado - overdueAno) + giuAno
+            const saldoRealizadoMes = (mesAtual ? mesAtual.saldo : 0) + giuMes
+            const saldoProjetadoMes = (mesAtual ? (comCarteira ? mesAtual.saldoProjetado : mesAtual.saldoProjetado - overdueMes) : 0) + giuMes
             return (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
                 <div style={resultadoStyle(saldoRealizadoAno)}>
@@ -336,8 +348,10 @@ export default function CashflowPage() {
         <div style={{ padding: '16px 20px', display: 'flex', gap: 8, alignItems: 'flex-end', minHeight: 250, overflowX: 'auto' }}>
           {data.months.map(m => {
             const entValue = comCarteira ? m.entradas.total : m.entradas.total - m.entradas.overdue
+            const giuMonthVal = excluirGiu ? ((m.saidas as any).byCategory?.['PESSOAL'] ?? 0) : 0
+            const saiValue = m.saidas.total + m.comissoes.total - giuMonthVal
             const entH = barMax > 0 ? (entValue / barMax) * 160 : 0
-            const saiH = barMax > 0 ? ((m.saidas.total + m.comissoes.total) / barMax) * 160 : 0
+            const saiH = barMax > 0 ? (saiValue / barMax) * 160 : 0
             return (
               <div key={m.month} style={{ flex: 1, minWidth: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                 <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 180 }}>
@@ -346,7 +360,7 @@ export default function CashflowPage() {
                     <div style={{ width: 22, height: Math.max(entH, 2), background: '#006600', border: '1px solid #004400', borderRadius: 2 }} />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: '#cc0000', fontWeight: 700, whiteSpace: 'nowrap', writingMode: 'vertical-lr', transform: 'rotate(180deg)', maxHeight: 55, letterSpacing: 0.5 }}>{(m.saidas.total + m.comissoes.total) > 0 ? fmt(m.saidas.total + m.comissoes.total) : ''}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: '#cc0000', fontWeight: 700, whiteSpace: 'nowrap', writingMode: 'vertical-lr', transform: 'rotate(180deg)', maxHeight: 55, letterSpacing: 0.5 }}>{saiValue > 0 ? fmt(saiValue) : ''}</span>
                     <div style={{ width: 22, height: Math.max(saiH, 2), background: '#cc0000', border: '1px solid #990000', borderRadius: 2 }} />
                   </div>
                 </div>
@@ -389,13 +403,21 @@ export default function CashflowPage() {
                 }}
               >
                 <span>{MONTH_NAMES[m.month - 1]} {m.year}</span>
-                <div style={{ display: 'flex', gap: 16, fontSize: 11 }}>
-                  <span style={{ color: isExpanded ? '#22c55e' : '#006600' }}>+{fmt(m.entradas.total)}</span>
-                  <span style={{ color: isExpanded ? '#ff6666' : '#cc0000' }}>-{fmt(m.saidas.total + m.comissoes.total)}</span>
-                  <span style={{ color: m.saldoProjetado >= 0 ? (isExpanded ? '#22c55e' : '#006600') : (isExpanded ? '#ff6666' : '#cc0000'), fontWeight: 900 }}>
-                    = {fmt(m.saldoProjetado)}
-                  </span>
-                </div>
+                {(() => {
+                  const mEnt = comCarteira ? m.entradas.total : m.entradas.total - m.entradas.overdue
+                  const mGiu = excluirGiu ? ((m.saidas as any).byCategory?.['PESSOAL'] ?? 0) : 0
+                  const mSai = m.saidas.total + m.comissoes.total - mGiu
+                  const mSaldo = mEnt - mSai
+                  return (
+                    <div style={{ display: 'flex', gap: 16, fontSize: 11 }}>
+                      <span style={{ color: isExpanded ? '#22c55e' : '#006600' }}>+{fmt(mEnt)}</span>
+                      <span style={{ color: isExpanded ? '#ff6666' : '#cc0000' }}>-{fmt(mSai)}</span>
+                      <span style={{ color: mSaldo >= 0 ? (isExpanded ? '#22c55e' : '#006600') : (isExpanded ? '#ff6666' : '#cc0000'), fontWeight: 900 }}>
+                        = {fmt(mSaldo)}
+                      </span>
+                    </div>
+                  )
+                })()}
               </button>
 
               {/* Expanded detail */}
@@ -443,11 +465,12 @@ export default function CashflowPage() {
                       {m.saidas.byCategory && Object.entries(m.saidas.byCategory).sort((a, b) => b[1] - a[1]).map(([cat, val]) => {
                         const catLabels: Record<string, string> = { PESSOAL: 'Pessoal Giu', MENTORIA: 'Mentorias', COMISSAO: 'Comissao Vendas', IMPOSTOS: 'Impostos', MARKETING: 'Marketing', PESSOAS: 'Pessoas', SISTEMAS: 'Sistemas', ESTRUTURA: 'Estrutura', OUTRO: 'Outro' }
                         const catColors: Record<string, string> = { PESSOAL: '#000080', MENTORIA: '#4A78FF', COMISSAO: '#e6a800', IMPOSTOS: '#cc0000', MARKETING: '#7c3aed', PESSOAS: '#059669', SISTEMAS: '#06b6d4', ESTRUTURA: '#475569', OUTRO: '#888' }
+                        const isExcluded = excluirGiu && cat === 'PESSOAL'
                         return (
-                          <tr key={cat} style={{ borderBottom: '1px solid #eee' }}>
-                            <td style={{ padding: '4px 8px 4px 24px', fontSize: 10, color: catColors[cat] ?? '#888' }}>↳ {catLabels[cat] ?? cat}</td>
+                          <tr key={cat} style={{ borderBottom: '1px solid #eee', opacity: isExcluded ? 0.35 : 1 }}>
+                            <td style={{ padding: '4px 8px 4px 24px', fontSize: 10, color: catColors[cat] ?? '#888', textDecoration: isExcluded ? 'line-through' : 'none' }}>↳ {catLabels[cat] ?? cat}{isExcluded ? ' (excluido)' : ''}</td>
                             <td colSpan={2} />
-                            <td style={{ padding: '4px 8px', textAlign: 'right', fontSize: 10, color: '#555' }}>{fmt(val)}</td>
+                            <td style={{ padding: '4px 8px', textAlign: 'right', fontSize: 10, color: '#555', textDecoration: isExcluded ? 'line-through' : 'none' }}>{fmt(val)}</td>
                           </tr>
                         )
                       })}
