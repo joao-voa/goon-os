@@ -206,6 +206,7 @@ export class PlansService {
       id: string; mentorName: string; value: number; notes: string | null;
       createdAt: Date; client: string; clientId: string; product: string;
       productName: string; planValue: number; monthlyBreakdown: Record<string, number>;
+      installments?: Array<{ date: string; value: number; status: string }>;
     }> = []
 
     // Group mentors by plan to calculate Giulliano's remaining share
@@ -232,11 +233,13 @@ export class PlansService {
       const mentorValue = Number(m.value)
 
       const monthlyBreakdown: Record<string, number> = {}
+      const installments: Array<{ date: string; value: number; status: string }> = []
       for (const pay of m.plan.payments) {
         const proportion = totalPayments > 0 ? Number(pay.value) / totalPayments : 0
         const mentorInstallment = Math.round(mentorValue * proportion * 100) / 100
         const monthKey = `${pay.dueDate.getFullYear()}-${String(pay.dueDate.getMonth() + 1).padStart(2, '0')}`
         monthlyBreakdown[monthKey] = (monthlyBreakdown[monthKey] ?? 0) + mentorInstallment
+        installments.push({ date: pay.dueDate.toISOString(), value: mentorInstallment, status: pay.status })
       }
 
       result.push({
@@ -251,6 +254,7 @@ export class PlansService {
         productName: m.plan.product.name,
         planValue,
         monthlyBreakdown,
+        installments,
       })
     }
 

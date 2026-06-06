@@ -665,10 +665,23 @@ export default function CommissionsPage() {
                         </div>
                         <div style={{ padding: 16 }}>
                           {clientMentors.map(m => (
-                            <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-                              <span style={{ fontWeight: 700 }}>{m.mentorName}</span>
-                              <span>{fmt(m.value)}</span>
-                              <span style={{ fontSize: 10, color: '#666' }}>{planValue > 0 ? Math.round(m.value / planValue * 100) : 0}% do plano</span>
+                            <div key={m.id}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                                <span style={{ fontWeight: 700 }}>{m.mentorName}</span>
+                                <span>{fmt(m.value)}</span>
+                                <span style={{ fontSize: 10, color: '#666' }}>{planValue > 0 ? Math.round(m.value / planValue * 100) : 0}% do plano</span>
+                              </div>
+                              {(m as any).installments?.length > 0 && (
+                                <div style={{ padding: '4px 0 8px 16px' }}>
+                                  {(m as any).installments.map((inst: { date: string; value: number; status: string }, idx: number) => (
+                                    <div key={idx} style={{ display: 'flex', gap: 12, padding: '2px 0', fontFamily: 'var(--font-mono)', fontSize: 10, color: '#64748b' }}>
+                                      <span style={{ minWidth: 75 }}>{new Date(inst.date).toLocaleDateString('pt-BR')}</span>
+                                      <span style={{ minWidth: 70, textAlign: 'right' }}>{fmt(inst.value)}</span>
+                                      <span style={{ background: inst.status === 'PAID' ? '#dcfce7' : '#fef3c7', color: inst.status === 'PAID' ? '#166534' : '#92400e', padding: '0 6px', borderRadius: 100, fontSize: 9 }}>{inst.status === 'PAID' ? 'PAGO' : inst.status}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           ))}
                           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0 0', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, borderTop: '1px solid #e2e8f0', marginTop: 8 }}>
