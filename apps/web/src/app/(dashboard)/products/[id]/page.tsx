@@ -378,7 +378,7 @@ export default function ProductDetailPage() {
   // Load mentors for each client's plan
   useEffect(() => {
     clients.forEach(client => {
-      const plan = client.plans.find(p => p.product.code === product?.code)
+      const plan = (client.plans ?? []).find(p => p.product.code === product?.code)
       if (plan) loadMentors(plan.id)
     })
   }, [clients, product, loadMentors])
@@ -413,7 +413,7 @@ export default function ProductDetailPage() {
   // KPI calculations
   const activeClients = clients.filter(c => c.status === 'ACTIVE')
   const totalRevenue = clients.reduce((sum, c) => {
-    const activePlans = c.plans.filter(p => p.status === 'ACTIVE' && p.product.code === product.code)
+    const activePlans = (c.plans ?? []).filter(p => p.status === 'ACTIVE' && p.product.code === product.code)
     return sum + activePlans.reduce((s, p) => s + (p.value ?? 0), 0)
   }, 0)
   const cycleDuration = 3 // default months
@@ -421,7 +421,7 @@ export default function ProductDetailPage() {
   const activeContracts = contracts.filter(c => c.status === 'SIGNED' || c.status === 'SENT')
   const overduePayments = payments.filter(p => p.status === 'OVERDUE')
   const renewingClients = clients.filter(c => {
-    const activePlan = c.plans.find(p => p.status === 'ACTIVE' && p.product.code === product.code)
+    const activePlan = (c.plans ?? []).find(p => p.status === 'ACTIVE' && p.product.code === product.code)
     if (!activePlan?.endDate) return false
     const end = new Date(activePlan.endDate)
     const now = new Date()
@@ -562,7 +562,7 @@ export default function ProductDetailPage() {
                     </thead>
                     <tbody>
                       {clients.map(client => {
-                        const plan = client.plans.find(p => p.product.code === product.code)
+                        const plan = (client.plans ?? []).find(p => p.product.code === product.code)
                         const contract = client.contracts[0]
                         const planMentors = plan ? (mentors[plan.id] ?? []) : []
                         const totalMentors = planMentors.reduce((s, m) => s + m.value, 0)
