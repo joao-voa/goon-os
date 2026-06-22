@@ -143,7 +143,50 @@ export const LEAD_SOURCE_LABELS: Record<string, string> = {
   facebook: 'Facebook',
   base_clientes: 'Base de Clientes',
   outro: 'Outro',
+  nao_informado: 'Nao informado',
 }
+
+// Source options offered when creating a lead (no "outro" — avoids untagged leads)
+export const LEAD_SOURCE_OPTIONS = [
+  'instagram',
+  'facebook',
+  'indicacao',
+  'evento',
+  'site',
+  'base_clientes',
+] as const
+
+// Faturamento mensal bands (ICP filter). ICP threshold = R$100k/mês.
+export const FATURAMENTO_BANDS = [
+  'ATE_50K',
+  '50_100K',
+  '100_500K',
+  '500K_1M',
+  'ACIMA_1M',
+  'NAO_INFORMADO',
+] as const
+
+export const FATURAMENTO_BAND_LABELS: Record<string, string> = {
+  ATE_50K: 'Até R$50k/mês',
+  '50_100K': 'R$50k–100k/mês',
+  '100_500K': 'R$100k–500k/mês',
+  '500K_1M': 'R$500k–1M/mês',
+  ACIMA_1M: 'Acima de R$1M/mês',
+  NAO_INFORMADO: 'Não informado',
+}
+
+// Filter options for the dashboard faturamento selector
+export const FATURAMENTO_FILTERS = [
+  { value: 'ALL', label: 'Todos' },
+  { value: 'ICP', label: 'Dentro do ICP (≥R$100k/mês)' },
+  { value: 'FORA', label: 'Fora do ICP (<R$100k/mês)' },
+  { value: 'ATE_50K', label: 'Até R$50k/mês' },
+  { value: '50_100K', label: 'R$50k–100k/mês' },
+  { value: '100_500K', label: 'R$100k–500k/mês' },
+  { value: '500K_1M', label: 'R$500k–1M/mês' },
+  { value: 'ACIMA_1M', label: 'Acima de R$1M/mês' },
+  { value: 'NAO_INFORMADO', label: 'Não informado' },
+] as const
 
 export const INTERACTION_TYPES: Record<string, string> = {
   LIGACAO: 'Ligacao',

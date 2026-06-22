@@ -28,8 +28,8 @@ export class CrmController {
   }
 
   @Get('metrics')
-  getMetrics() {
-    return this.service.getMetrics()
+  getMetrics(@Query('faturamento') faturamento?: string) {
+    return this.service.getMetrics({ faturamento })
   }
 
   @Get('suggestions')

@@ -395,39 +395,95 @@ export class CrmService {
     return interaction
   }
 
-  async getMetrics() {
+  async getMetrics(params: { faturamento?: string } = {}) {
     const now = new Date()
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
-    // All prospects
-    const prospects = await this.prisma.client.findMany({
+    // All prospects (anyone that ever entered the pipeline)
+    const allProspects = await this.prisma.client.findMany({
       where: { leadStage: { not: null } },
-      select: { id: true, leadStage: true, salesRep: true, stageChangedAt: true, createdAt: true, closedAt: true, saleValue: true },
+      select: { id: true, leadStage: true, leadSource: true, salesRep: true, stageChangedAt: true, createdAt: true, closedAt: true, saleValue: true, estimatedRevenue: true },
     })
 
-    // Count by stage
+    // Faturamento / ICP filter (does not change unfiltered ICP split below)
+    const filter = params.faturamento
+    const prospects = filter && filter !== 'ALL'
+      ? allProspects.filter(p => {
+          const v = CrmService.parseMonthlyRevenue(p.estimatedRevenue)
+          if (filter === 'ICP') return CrmService.isICP(v)
+          if (filter === 'FORA') return v !== null && !CrmService.isICP(v)
+          if (filter === 'NAO_INFORMADO') return v === null
+          return CrmService.revenueBand(v) === filter
+        })
+      : allProspects
+
+    const norm = (s: string | null) => (s === 'FOLLOW_UP' ? 'FUP' : s)
+
+    // ---- Count by current stage ----
     const byStage: Record<string, number> = {}
     for (const p of prospects) {
-      byStage[p.leadStage!] = (byStage[p.leadStage!] ?? 0) + 1
+      const st = norm(p.leadStage)!
+      byStage[st] = (byStage[st] ?? 0) + 1
     }
 
-    // Total leads this month
+    // ---- Funnel (cumulative "reached" among non-lost leads) ----
+    // A lead at stage N is counted as having passed every earlier stage.
+    const nonLost = prospects.filter(p => norm(p.leadStage) !== 'PERDIDO')
+    const reached: Record<string, number> = {}
+    for (const stage of CrmService.PIPE) reached[stage] = 0
+    for (const p of nonLost) {
+      const idx = CrmService.PIPE.indexOf(norm(p.leadStage)!)
+      if (idx < 0) continue
+      for (let i = 0; i <= idx; i++) reached[CrmService.PIPE[i]]++
+    }
+    const funnel = CrmService.PIPE.map((stage, i) => {
+      const count = reached[stage]
+      const prev = i > 0 ? reached[CrmService.PIPE[i - 1]] : null
+      const conversionFromPrev = prev && prev > 0 ? Math.round((count / prev) * 100) : null
+      return { stage, count, conversionFromPrev }
+    })
+    // Bottleneck = lowest conversion between consecutive stages
+    let bottleneck: string | null = null
+    let worst = Infinity
+    for (const f of funnel) {
+      if (f.conversionFromPrev !== null && f.conversionFromPrev < worst) {
+        worst = f.conversionFromPrev
+        bottleneck = f.stage
+      }
+    }
+
+    // ---- Cards ----
+    const stageCount = (s: string) => byStage[s] ?? 0
+    const closedAll = prospects.filter(p => norm(p.leadStage) === 'FECHADO')
+    const closedValueTotal = closedAll.reduce((s, p) => s + Number(p.saleValue ?? 0), 0)
+    const closedCountTotal = closedAll.length
+    const ticketMedio = closedCountTotal > 0 ? Math.round(closedValueTotal / closedCountTotal) : 0
+
+    const activeLeads = prospects.filter(p => !['FECHADO', 'PERDIDO'].includes(norm(p.leadStage)!))
     const newThisMonth = prospects.filter(p => p.createdAt >= startOfMonth).length
+    const closedThisMonthArr = prospects.filter(p => norm(p.leadStage) === 'FECHADO' && p.closedAt && p.closedAt >= startOfMonth)
+    const closedCount = closedThisMonthArr.length
+    const closedValue = closedThisMonthArr.reduce((sum, p) => sum + Number(p.saleValue ?? 0), 0)
+    const lostThisMonth = prospects.filter(p => norm(p.leadStage) === 'PERDIDO' && p.stageChangedAt && p.stageChangedAt >= startOfMonth).length
 
-    // Closed this month
-    const closedThisMonth = prospects.filter(p => p.leadStage === 'FECHADO' && p.closedAt && p.closedAt >= startOfMonth)
-    const closedCount = closedThisMonth.length
-    const closedValue = closedThisMonth.reduce((sum, p) => sum + Number(p.saleValue ?? 0), 0)
+    const cards = {
+      leadsAtivos: activeLeads.length,
+      novosNoPeriodo: newThisMonth,
+      qualificados: stageCount('QUALIFICADO'),
+      reunioesAgendadas: stageCount('REUNIAO_AGENDADA'),
+      propostasEnviadas: stageCount('PROPOSTA_ENVIADA'),
+      emNegociacao: stageCount('EM_NEGOCIACAO'),
+      fechadosGanho: stageCount('FECHADO'),
+      fechadosPerdido: stageCount('PERDIDO'),
+      valorTotalFechado: closedValueTotal,
+      ticketMedio,
+    }
 
-    // Lost this month
-    const lostThisMonth = prospects.filter(p => p.leadStage === 'PERDIDO' && p.stageChangedAt && p.stageChangedAt >= startOfMonth).length
-
-    // Conversion rate
+    // ---- Conversion rate (won vs decided, this month) ----
     const totalWithOutcome = closedCount + lostThisMonth
     const conversionRate = totalWithOutcome > 0 ? Math.round((closedCount / totalWithOutcome) * 100) : 0
 
     // Average days in current stage
-    const activeLeads = prospects.filter(p => p.leadStage && !['FECHADO', 'PERDIDO'].includes(p.leadStage))
     const avgDaysInStage = activeLeads.length > 0
       ? Math.round(activeLeads.reduce((sum, p) => {
           const from = p.stageChangedAt ?? p.createdAt
@@ -441,11 +497,11 @@ export class CrmService {
       const rep = p.salesRep ?? 'Sem vendedor'
       if (!repStats[rep]) repStats[rep] = { total: 0, closed: 0, lost: 0, value: 0 }
       repStats[rep].total++
-      if (p.leadStage === 'FECHADO') {
+      if (norm(p.leadStage) === 'FECHADO') {
         repStats[rep].closed++
         repStats[rep].value += Number(p.saleValue ?? 0)
       }
-      if (p.leadStage === 'PERDIDO') repStats[rep].lost++
+      if (norm(p.leadStage) === 'PERDIDO') repStats[rep].lost++
     }
 
     // Stale leads (> 7 days without movement)
@@ -455,12 +511,81 @@ export class CrmService {
       return from < sevenDaysAgo
     }).length
 
-    // Scheduled follow-ups
     const pendingFollowUps = await this.prisma.leadInteraction.count({
       where: { scheduledAt: { gte: now }, type: 'FOLLOW_UP' },
     })
 
+    // ---- Lead source breakdown (volume + quality) ----
+    const qIdx = CrmService.PIPE.indexOf('QUALIFICADO')
+    const sourceMap: Record<string, { leads: number; qualified: number; closed: number; lostCount: number }> = {}
+    for (const p of prospects) {
+      const src = p.leadSource ?? 'nao_informado'
+      if (!sourceMap[src]) sourceMap[src] = { leads: 0, qualified: 0, closed: 0, lostCount: 0 }
+      sourceMap[src].leads++
+      const stage = norm(p.leadStage)!
+      const idx = CrmService.PIPE.indexOf(stage)
+      if (stage !== 'PERDIDO' && idx >= qIdx) sourceMap[src].qualified++
+      if (stage === 'FECHADO') sourceMap[src].closed++
+      if (stage === 'PERDIDO') sourceMap[src].lostCount++
+    }
+    const bySource = Object.entries(sourceMap)
+      .map(([source, v]) => ({
+        source,
+        leads: v.leads,
+        qualified: v.qualified,
+        closed: v.closed,
+        conversion: v.leads > 0 ? Math.round((v.closed / v.leads) * 100) : 0,
+      }))
+      .sort((a, b) => b.closed - a.closed || b.leads - a.leads)
+
+    // ---- ICP split (always over the unfiltered base) ----
+    let icpDentro = 0, icpFora = 0, icpNaoInformado = 0
+    const byBand: Record<string, number> = {}
+    for (const p of allProspects) {
+      const v = CrmService.parseMonthlyRevenue(p.estimatedRevenue)
+      const band = CrmService.revenueBand(v)
+      byBand[band] = (byBand[band] ?? 0) + 1
+      if (v === null) icpNaoInformado++
+      else if (CrmService.isICP(v)) icpDentro++
+      else icpFora++
+    }
+
+    // ---- Meetings block (current month) ----
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    const monthMeetings = await this.prisma.meeting.findMany({
+      where: { date: { gte: startOfMonth, lt: monthEnd } },
+      select: { status: true },
+    })
+    const mCount = (s: string) => monthMeetings.filter(m => m.status === s).length
+    const mtgDone = mCount('DONE')
+    const mtgCancelled = mCount('CANCELLED')
+    const mtgRescheduled = mCount('RESCHEDULED')
+    const mtgNoShow = mCount('NO_SHOW')
+    const mtgScheduled = mCount('SCHEDULED')
+    const mtgTotal = monthMeetings.length
+    const meetings = {
+      agendadas: mtgTotal,
+      feitas: mtgDone,
+      canceladas: mtgCancelled,
+      reagendadas: mtgRescheduled,
+      noShow: mtgNoShow,
+      scheduled: mtgScheduled,
+      showRate: mtgTotal > 0 ? Math.round((mtgDone / mtgTotal) * 100) : 0,
+      feitasPct: mtgTotal > 0 ? Math.round((mtgDone / mtgTotal) * 100) : 0,
+      canceladasPct: mtgTotal > 0 ? Math.round((mtgCancelled / mtgTotal) * 100) : 0,
+      reagendadasPct: mtgTotal > 0 ? Math.round((mtgRescheduled / mtgTotal) * 100) : 0,
+    }
+
     return {
+      // ---- new structured blocks ----
+      cards,
+      funnel,
+      bottleneck,
+      meetings,
+      bySource,
+      icp: { dentro: icpDentro, fora: icpFora, naoInformado: icpNaoInformado, byBand },
+      filterApplied: filter ?? 'ALL',
+      // ---- legacy fields (kept for compatibility) ----
       byStage,
       newThisMonth,
       closedThisMonth: closedCount,
@@ -472,6 +597,83 @@ export class CrmService {
       pendingFollowUps,
       bySalesRep: repStats,
     }
+  }
+
+  // ===== Faturamento / ICP helpers =====
+  static readonly PIPE = ['NOVO', 'FUP', 'QUALIFICADO', 'REUNIAO_AGENDADA', 'PROPOSTA_ENVIADA', 'EM_NEGOCIACAO', 'FECHADO']
+  static readonly ICP_THRESHOLD = 100000 // R$/mês
+
+  /** Best-effort parse of messy free-text monthly revenue into a number (R$/mês). Returns null when unparseable. */
+  static parseMonthlyRevenue(raw: string | null | undefined): number | null {
+    if (!raw) return null
+    let s = String(raw).toLowerCase().trim()
+    if (!s) return null
+    const original = s
+    // "até X" expresses an upper bound — should land in the band *below* X
+    const isUpperBound = /\bat[eé]\b/.test(original) && !/entre/.test(original)
+    // obvious junk / non-answers
+    if (/^(0|n[aã]o sei|nao informado|hoje|come[cç]ando|estou come[cç]ando|estamos|comecei|sim|nao|teste)/.test(s)) {
+      if (s === '0') return null
+    }
+    // strip currency + period markers
+    s = s.replace(/r\$|\$|\/m[eê]s|por m[eê]s|ao m[eê]s|mensal|mensais|\/ano|anual/g, ' ')
+
+    // detect range "entre X e Y" -> use lower bound X
+    const rangeMatch = s.match(/entre(.+?)\be\b(.+)/)
+    if (rangeMatch) s = rangeMatch[1]
+    // "acima de" / "+" / ">" keep the number as floor
+    s = s.replace(/acima de|mais de|>=?|\+/g, ' ')
+
+    // find first numeric token
+    const numMatch = s.match(/(\d[\d.,]*)/)
+    if (!numMatch) return null
+    let token = numMatch[1]
+
+    // multiplier from surrounding text
+    let mult = 1
+    const after = s.slice(s.indexOf(token) + token.length, s.indexOf(token) + token.length + 12)
+    const ctx = (token + ' ' + after)
+    if (/\bmm\b|\bmi\b|milh|\bm\b|mtoi|milhao|milhões|milhoes/.test(ctx)) mult = 1_000_000
+    else if (/\bk\b|mil\b|\bmil/.test(ctx)) mult = 1_000
+
+    // normalize number formatting
+    const hasDot = token.includes('.')
+    const hasComma = token.includes(',')
+    if (hasDot && hasComma) {
+      // 1.200.000,00 -> dots thousands, comma decimal
+      token = token.replace(/\./g, '').replace(',', '.')
+    } else if (hasComma) {
+      token = token.replace(',', '.')
+    } else if (hasDot) {
+      // ambiguous: "1.2" (decimal, with multiplier) vs "200.000" (thousands)
+      if (mult > 1) {
+        // keep as decimal
+      } else {
+        token = token.replace(/\./g, '')
+      }
+    }
+    let value = parseFloat(token)
+    if (isNaN(value)) return null
+    value = value * mult
+    // "até X" -> nudge below X so it bands as up-to-X
+    if (isUpperBound) value -= 1
+
+    // sanity bounds: ignore absurd or trivially small
+    if (value < 100 || value > 5_000_000_000) return null
+    return Math.round(value)
+  }
+
+  static revenueBand(value: number | null): string {
+    if (value === null) return 'NAO_INFORMADO'
+    if (value < 50_000) return 'ATE_50K'
+    if (value < 100_000) return '50_100K'
+    if (value < 500_000) return '100_500K'
+    if (value < 1_000_000) return '500K_1M'
+    return 'ACIMA_1M'
+  }
+
+  static isICP(value: number | null): boolean {
+    return value !== null && value >= CrmService.ICP_THRESHOLD
   }
 
   async syncFromSheets(): Promise<{ imported: number; skipped: number; errors: string[] }> {

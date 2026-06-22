@@ -46,8 +46,8 @@ model Client {
   goonFitScore     Int?
 
   // CRM fields
-  leadStage        String?   // NOVO, FOLLOW_UP, EM_NEGOCIACAO, FECHADO, PERDIDO
-  leadSource       String?   // instagram, indicacao, evento, site, facebook, outro
+  leadStage        String?   // NOVO, FUP, QUALIFICADO, REUNIAO_AGENDADA, PROPOSTA_ENVIADA, EM_NEGOCIACAO, FECHADO, PERDIDO
+  leadSource       String?   // instagram, indicacao, evento, site, facebook, base_clientes (outro descontinuado)
   salesRep         String?   // nome do vendedor
   stageChangedAt   DateTime? // quando mudou de etapa (tracking de tempo)
   saleValue        Decimal?  @db.Decimal(10, 2)
@@ -98,7 +98,7 @@ model Meeting {
   duration    Int       @default(60) // minutes
   mentorName  String?
   notes       String?
-  status      String    @default("SCHEDULED") // SCHEDULED, DONE, CANCELLED, NO_SHOW
+  status      String    @default("SCHEDULED") // SCHEDULED, DONE, CANCELLED, RESCHEDULED, NO_SHOW
   doneAt      DateTime?
 
   client      Client?   @relation(fields: [clientId], references: [id])

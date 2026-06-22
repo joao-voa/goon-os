@@ -51,6 +51,7 @@ const STATUS_LABELS: Record<string, string> = {
   SCHEDULED: 'Agendada',
   DONE: 'Realizada',
   CANCELLED: 'Cancelada',
+  RESCHEDULED: 'Reagendada',
   NO_SHOW: 'No-Show',
 }
 
@@ -463,6 +464,8 @@ export default function AgendaPage() {
                       <>
                         <button onClick={() => handleStatusChange(m.id, 'DONE')} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FEITA</button>
                         <button onClick={() => handleStatusChange(m.id, 'NO_SHOW')} style={{ background: '#e6a800', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FALTOU</button>
+                        <button onClick={() => handleStatusChange(m.id, 'RESCHEDULED')} style={{ background: '#0ea5e9', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>REAGENDAR</button>
+                        <button onClick={() => handleStatusChange(m.id, 'CANCELLED')} style={{ background: '#888', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>CANCELAR</button>
                       </>
                     )}
                     <button onClick={() => openEditMeeting(m)} style={{ background: '#4A78FF', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>EDITAR</button>

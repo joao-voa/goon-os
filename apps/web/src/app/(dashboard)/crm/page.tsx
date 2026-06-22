@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, type CSSProperties } from 'react'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 import { useIsMobile } from '@/hooks/useMediaQuery'
@@ -9,6 +9,9 @@ import {
   LEAD_STAGE_LABELS,
   LEAD_STAGE_COLORS,
   LEAD_SOURCE_LABELS,
+  LEAD_SOURCE_OPTIONS,
+  FATURAMENTO_FILTERS,
+  FATURAMENTO_BAND_LABELS,
   PRODUCT_COLORS,
   PRODUCT_NAMES,
   INTERACTION_TYPES,
@@ -118,7 +121,7 @@ function CloseDealModal({
     }
   }
 
-  const inputStyle: React.CSSProperties = {
+  const inputStyle: CSSProperties = {
     width: '100%',
     padding: '8px 10px',
     border: '1px solid #e2e8f0',
@@ -127,7 +130,7 @@ function CloseDealModal({
     background: 'white',
   }
 
-  const labelStyle: React.CSSProperties = {
+  const labelStyle: CSSProperties = {
     fontFamily: 'var(--font-mono)',
     fontSize: 11,
     fontWeight: 700,
@@ -341,11 +344,11 @@ function NewLeadModal({
     }
   }
 
-  const inputStyle: React.CSSProperties = {
+  const inputStyle: CSSProperties = {
     width: '100%', padding: '8px 10px', border: '1px solid #e2e8f0',
     fontFamily: 'var(--font-mono)', fontSize: 13, background: 'white',
   }
-  const labelStyle: React.CSSProperties = {
+  const labelStyle: CSSProperties = {
     fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
     textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4, display: 'block',
   }
@@ -406,13 +409,9 @@ function NewLeadModal({
               <label style={labelStyle}>Origem</label>
               <select value={leadSource} onChange={e => setLeadSource(e.target.value)} style={inputStyle}>
                 <option value="">Selecione...</option>
-                <option value="instagram">Instagram</option>
-                <option value="facebook">Facebook</option>
-                <option value="indicacao">Indicacao</option>
-                <option value="evento">Evento</option>
-                <option value="site">Site</option>
-                <option value="base_clientes">Base de Clientes</option>
-                <option value="outro">Outro</option>
+                {LEAD_SOURCE_OPTIONS.map(src => (
+                  <option key={src} value={src}>{LEAD_SOURCE_LABELS[src]}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -504,6 +503,36 @@ interface CrmMetrics {
   staleLeads: number
   pendingFollowUps: number
   bySalesRep: Record<string, { total: number; closed: number; lost: number; value: number }>
+  // structured blocks
+  cards: {
+    leadsAtivos: number
+    novosNoPeriodo: number
+    qualificados: number
+    reunioesAgendadas: number
+    propostasEnviadas: number
+    emNegociacao: number
+    fechadosGanho: number
+    fechadosPerdido: number
+    valorTotalFechado: number
+    ticketMedio: number
+  }
+  funnel: Array<{ stage: string; count: number; conversionFromPrev: number | null }>
+  bottleneck: string | null
+  meetings: {
+    agendadas: number
+    feitas: number
+    canceladas: number
+    reagendadas: number
+    noShow: number
+    scheduled: number
+    showRate: number
+    feitasPct: number
+    canceladasPct: number
+    reagendadasPct: number
+  }
+  bySource: Array<{ source: string; leads: number; qualified: number; closed: number; conversion: number }>
+  icp: { dentro: number; fora: number; naoInformado: number; byBand: Record<string, number> }
+  filterApplied: string
 }
 
 interface CommissionItem {
@@ -656,7 +685,7 @@ function LeadDetailModal({
     ? Math.floor((Date.now() - new Date(lead.stageChangedAt).getTime()) / (1000 * 60 * 60 * 24))
     : Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / (1000 * 60 * 60 * 24))
 
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }
+  const inputStyle: CSSProperties = { width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }
 
   return (
     <div
@@ -1055,6 +1084,8 @@ export default function CrmPage() {
   const [salesRepFilter, setSalesRepFilter] = useState('')
   const [cardResponsibleFilter, setCardResponsibleFilter] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [faturamentoFilter, setFaturamentoFilter] = useState('ALL')
+  const [crmView, setCrmView] = useState<'kanban' | 'dashboard'>('kanban')
   const isMobile = useIsMobile()
 
   const PIPELINE_STAGES = LEAD_STAGES
@@ -1072,21 +1103,25 @@ export default function CrmPage() {
 
   const fetchMetrics = useCallback(async () => {
     try {
-      const data = await apiFetch<CrmMetrics>('/api/crm/metrics')
+      const qs = faturamentoFilter && faturamentoFilter !== 'ALL' ? `?faturamento=${faturamentoFilter}` : ''
+      const data = await apiFetch<CrmMetrics>(`/api/crm/metrics${qs}`)
       setMetrics(data)
     } catch { /* ignore */ }
-  }, [])
+  }, [faturamentoFilter])
 
   useEffect(() => {
     fetchLeads()
-    fetchMetrics()
     apiFetch<Array<{ id: string; code: string; name: string }>>('/api/products')
       .then(setProducts)
       .catch(() => {})
     apiFetch<{ salesReps: string[]; mentors: string[] }>('/api/crm/suggestions')
       .then(setSuggestions)
       .catch(() => {})
-  }, [fetchLeads, fetchMetrics])
+  }, [fetchLeads])
+
+  useEffect(() => {
+    fetchMetrics()
+  }, [fetchMetrics])
 
   async function handleStageChange(id: string, toStage: string) {
     const lead = leads.find(l => l.id === id)
@@ -1506,6 +1541,25 @@ export default function CrmPage() {
         </div>
       </div>
 
+      {/* View toggle: Kanban / Dashboard */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['kanban', 'dashboard'] as const).map(v => (
+          <button key={v} onClick={() => setCrmView(v)} style={{
+            padding: '6px 18px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: 0.5,
+            background: crmView === v ? 'black' : 'white', color: crmView === v ? 'white' : 'black',
+          }}>{v === 'kanban' ? '▦ Kanban' : '▤ Dashboard'}</button>
+        ))}
+      </div>
+
+      {crmView === 'dashboard' ? (
+        <CrmDashboard
+          metrics={metrics}
+          faturamentoFilter={faturamentoFilter}
+          setFaturamentoFilter={setFaturamentoFilter}
+          isMobile={isMobile}
+        />
+      ) : (
+      <>
       {/* KPI Strip */}
       <div style={{
         display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)',
@@ -1554,6 +1608,8 @@ export default function CrmPage() {
           setDetailLead(item as unknown as LeadItem)
         }}
       />
+      </>
+      )}
 
       {detailLead && (
         <LeadDetailModal
@@ -1597,6 +1653,162 @@ export default function CrmPage() {
           salesRepSuggestions={suggestions.salesReps}
         />
       )}
+    </div>
+  )
+}
+
+// ============== CRM DASHBOARD (4 blocos) ==============
+function CrmDashboard({ metrics, faturamentoFilter, setFaturamentoFilter, isMobile }: {
+  metrics: CrmMetrics | null
+  faturamentoFilter: string
+  setFaturamentoFilter: (v: string) => void
+  isMobile: boolean
+}) {
+  if (!metrics) {
+    return <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#888', padding: 24 }}>Carregando metricas...</div>
+  }
+  const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+  const { cards, funnel, bottleneck, meetings, bySource, icp } = metrics
+  const maxFunnel = Math.max(1, ...funnel.map(f => f.count))
+
+  const titleStyle: CSSProperties = { fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, margin: '24px 0 12px', display: 'flex', alignItems: 'center', gap: 10 }
+  const box: CSSProperties = { border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: isMobile ? '10px 8px' : '12px 14px', background: 'white' }
+
+  const card1 = [
+    { label: 'Leads Ativos', value: String(cards.leadsAtivos), color: '#4A78FF' },
+    { label: 'Novos (mes)', value: String(cards.novosNoPeriodo), color: '#06b6d4' },
+    { label: 'Qualificados', value: String(cards.qualificados), color: '#8b5cf6' },
+    { label: 'Reunioes Agend.', value: String(cards.reunioesAgendadas), color: '#0ea5e9' },
+    { label: 'Propostas Env.', value: String(cards.propostasEnviadas), color: '#e6a800' },
+    { label: 'Em Negociacao', value: String(cards.emNegociacao), color: '#f97316' },
+    { label: 'Fechados Ganho', value: String(cards.fechadosGanho), color: '#22c55e' },
+    { label: 'Fechados Perdido', value: String(cards.fechadosPerdido), color: '#cc0000' },
+    { label: 'Valor Fechado', value: fmt(cards.valorTotalFechado), color: '#22c55e' },
+    { label: 'Ticket Medio', value: fmt(cards.ticketMedio), color: '#0d9488' },
+  ]
+
+  const mtgCards = [
+    { label: 'Agendadas', value: String(meetings.agendadas), sub: '', color: '#4A78FF' },
+    { label: 'Feitas', value: String(meetings.feitas), sub: `${meetings.feitasPct}%`, color: '#22c55e' },
+    { label: 'Canceladas', value: String(meetings.canceladas), sub: `${meetings.canceladasPct}%`, color: '#cc0000' },
+    { label: 'Reagendadas', value: String(meetings.reagendadas), sub: `${meetings.reagendadasPct}%`, color: '#e6a800' },
+    { label: 'No-show', value: String(meetings.noShow), sub: '', color: '#f97316' },
+    { label: 'Taxa de Show', value: `${meetings.showRate}%`, sub: 'feitas/agendadas', color: meetings.showRate >= 70 ? '#22c55e' : meetings.showRate >= 50 ? '#e6a800' : '#cc0000' },
+  ]
+
+  return (
+    <div>
+      {/* Filtro de faturamento / ICP */}
+      <div style={{ ...box, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', marginBottom: 4 }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Faturamento / ICP:</span>
+        <select value={faturamentoFilter} onChange={e => setFaturamentoFilter(e.target.value)} style={{ padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>
+          {FATURAMENTO_FILTERS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+        </select>
+        <div style={{ display: 'flex', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 11, flexWrap: 'wrap' }}>
+          <span style={{ color: '#22c55e', fontWeight: 700 }}>Dentro ICP: {icp.dentro}</span>
+          <span style={{ color: '#cc0000', fontWeight: 700 }}>Fora: {icp.fora}</span>
+          <span style={{ color: '#888' }}>Sem info: {icp.naoInformado}</span>
+        </div>
+        {faturamentoFilter !== 'ALL' && (
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#4A78FF', fontWeight: 700 }}>● filtro ativo — todos os blocos abaixo respeitam a faixa</span>
+        )}
+      </div>
+
+      {/* ===== BLOCO 1 — Numeros do topo ===== */}
+      <div style={titleStyle}>1 · Numeros do topo</div>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: isMobile ? 8 : 12 }}>
+        {card1.map(k => (
+          <div key={k.label} style={box}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5, color: '#666' }}>{k.label}</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: isMobile ? 15 : 20, color: k.color, marginTop: 4 }}>{k.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ===== BLOCO 2 — Funil de vendas ===== */}
+      <div style={titleStyle}>
+        2 · Funil de vendas
+        {bottleneck && (
+          <span style={{ background: '#cc0000', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, padding: '3px 8px', textTransform: 'uppercase' }}>
+            Gargalo: {LEAD_STAGE_LABELS[bottleneck] ?? bottleneck}
+          </span>
+        )}
+      </div>
+      <div style={{ ...box, padding: isMobile ? 10 : 16 }}>
+        {funnel.map(f => {
+          const isBottleneck = f.stage === bottleneck
+          const color = LEAD_STAGE_COLORS[f.stage] ?? '#4A78FF'
+          return (
+            <div key={f.stage} style={{ marginBottom: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 11, marginBottom: 3 }}>
+                <span style={{ fontWeight: 700 }}>{LEAD_STAGE_LABELS[f.stage] ?? f.stage}</span>
+                <span>
+                  <strong>{f.count}</strong>
+                  {f.conversionFromPrev !== null && (
+                    <span style={{ marginLeft: 8, color: isBottleneck ? '#cc0000' : '#666', fontWeight: isBottleneck ? 700 : 400 }}>
+                      {f.conversionFromPrev}% {isBottleneck ? '◄ gargalo' : ''}
+                    </span>
+                  )}
+                </span>
+              </div>
+              <div style={{ background: '#f1f5f9', height: 18, border: isBottleneck ? '2px solid #cc0000' : '1px solid #e2e8f0', position: 'relative' }}>
+                <div style={{ background: color, height: '100%', width: `${(f.count / maxFunnel) * 100}%`, transition: 'width .3s' }} />
+              </div>
+            </div>
+          )
+        })}
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 6 }}>
+          Funil cumulativo: cada etapa conta quem ja passou por ela (fechados contam como tendo passado por todas). Perdidos ({cards.fechadosPerdido}) fora do funil.
+        </div>
+      </div>
+
+      {/* ===== BLOCO 3 — Reunioes ===== */}
+      <div style={titleStyle}>3 · Reunioes (mes atual)</div>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(6, 1fr)', gap: isMobile ? 8 : 12 }}>
+        {mtgCards.map(k => (
+          <div key={k.label} style={box}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5, color: '#666' }}>{k.label}</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: isMobile ? 15 : 20, color: k.color, marginTop: 4 }}>{k.value}</div>
+            {k.sub && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 2 }}>{k.sub}</div>}
+          </div>
+        ))}
+      </div>
+
+      {/* ===== BLOCO 4 — Origem dos leads ===== */}
+      <div style={titleStyle}>4 · Origem dos leads (volume x qualidade)</div>
+      <div style={{ ...box, padding: 0, overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #e2e8f0', background: '#f8fafc' }}>
+              {['Origem', 'Leads', 'Qualificados', 'Fechados', '% Conversao'].map((h, i) => (
+                <th key={h} style={{ padding: '10px 12px', textAlign: i === 0 ? 'left' : 'right', fontSize: 9, textTransform: 'uppercase', color: '#666' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {bySource.map(s => {
+              const convColor = s.conversion >= 30 ? '#22c55e' : s.conversion >= 10 ? '#e6a800' : '#cc0000'
+              return (
+                <tr key={s.source} style={{ borderBottom: '1px solid #eee' }}>
+                  <td style={{ padding: '8px 12px', fontWeight: 700 }}>{LEAD_SOURCE_LABELS[s.source] ?? s.source}</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'right' }}>{s.leads}</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'right', color: '#8b5cf6' }}>{s.qualified}</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'right', color: '#22c55e', fontWeight: 700 }}>{s.closed}</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'right' }}>
+                    <span style={{ color: convColor, fontWeight: 700 }}>{s.conversion}%</span>
+                  </td>
+                </tr>
+              )
+            })}
+            {bySource.length === 0 && (
+              <tr><td colSpan={5} style={{ padding: 20, textAlign: 'center', color: '#888' }}>Sem leads no filtro selecionado</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', margin: '6px 0 4px' }}>
+        Distribuicao por faixa de faturamento: {Object.entries(icp.byBand).map(([b, n]) => `${FATURAMENTO_BAND_LABELS[b] ?? b}: ${n}`).join('  ·  ')}
+      </div>
     </div>
   )
 }
