@@ -1,7 +1,8 @@
 generator client {
-  provider      = "prisma-client-js"
-  // native = dev local; rhel-openssl-3.0.x = runtime serverless do Vercel (AWS Lambda)
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  provider        = "prisma-client-js"
+  // driverAdapters + queryCompiler = engine WASM via driver Neon (HTTP/WS na 443),
+  // SEM engine binário nativo -> imune ao crash de bundling/incompatibilidade no serverless.
+  previewFeatures = ["driverAdapters", "queryCompiler"]
 }
 
 datasource db {
