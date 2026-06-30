@@ -435,3 +435,75 @@ model LeadInteraction {
   @@index([clientId, createdAt])
   @@index([type])
 }
+
+
+// ============================================================
+// Módulo: Controle de Mentorados (camada sobre Client + Meeting)
+// Interno / single-tenant. Mentee = Client; Sessão = Meeting.
+// ============================================================
+
+// Marca um Client como "em acompanhamento" (a camada de mentoria sobre o cliente)
+model MenteeProfile {
+  id            String    @id @default(cuid())
+  clientId      String    @unique
+  mentorName    String?
+  status        String    @default("ACTIVE") // ACTIVE | PAUSED | GRADUATED | CHURNED
+  lastContactAt DateTime? // atualizado ao registrar sessão/estudo de caso
+  color         String?
+  notes         String?
+  enrolledAt    DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+
+  @@index([status])
+  @@index([mentorName])
+}
+
+// Estudo de caso preenchido por sessão (métricas fixas + notas)
+model SessionCaseStudy {
+  id                 String   @id @default(cuid())
+  clientId           String
+  meetingId          String?  // reunião que originou (opcional)
+  sessionDate        DateTime
+  mentorName         String?
+  // métricas fixas (marca de moda)
+  faturamentoAno     Float?   // R$/ano
+  numVendas          Int?     // pedidos no período
+  ticketMedio        Float?   // R$
+  investimentoTrafego Float?  // R$
+  roas               Float?   // x
+  seguidoresIg       Int?     // seguidores Instagram
+  // notas
+  situacaoAtual      String?
+  oQueTrabalhou      String?
+  proximosPassos     String?
+  createdAt          DateTime @default(now())
+
+  @@index([clientId])
+  @@index([sessionDate])
+}
+
+// Pendência / ação no formato: O QUE · QUEM · QUANDO · check
+model ActionItem {
+  id           String    @id @default(cuid())
+  clientId     String
+  caseStudyId  String?   // estudo de caso que originou (opcional)
+  what         String    // O QUE
+  who          String?   // QUEM (responsável)
+  dueDate      DateTime? // QUANDO
+  done         Boolean   @default(false)
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([clientId])
+  @@index([done])
+  @@index([dueDate])
+}
+
+// Fluxo padrão (template reutilizável) — pra quando o método se organizar
+model FlowTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  items       Json     // [{ what, who, offsetDays }]
+  createdAt   DateTime @default(now())
+}

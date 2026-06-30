@@ -1,6 +1,6 @@
 'use client'
 
-import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, DollarSign, AlertTriangle, LogOut, ChevronLeft, ChevronRight, Users, Percent, Receipt, ArrowLeftRight, Settings, Calendar, CheckSquare, ScrollText } from 'lucide-react'
+import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, DollarSign, AlertTriangle, LogOut, ChevronLeft, ChevronRight, Users, Percent, Receipt, ArrowLeftRight, Settings, Calendar, CheckSquare, ScrollText, GraduationCap } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
@@ -34,6 +34,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/agenda',      label: 'Agenda',      icon: Calendar },
   { href: '/products',    label: 'Programas',   icon: Package },
   { href: '/onboarding',  label: 'Onboarding',  icon: GitBranch },
+  { href: '/mentorship',  label: 'Mentorados',  icon: GraduationCap },
   { href: '/payments',    label: 'Financeiro',  icon: DollarSign },
   { href: '/tasks',       label: 'Tarefas',      icon: CheckSquare },
   { href: '/pendencies',  label: 'Pendencias',  icon: AlertTriangle },
