@@ -1547,25 +1547,31 @@ export default function CrmPage() {
             }}>{val === '' ? 'TODOS' : val === 'SOCIAL_SELLING' ? 'SOCIAL SELLING' : 'CLOSER'}</button>
           ))}
         </div>
-        {/* Faturamento / ICP */}
+        {/* Faturamento — por faixa (recorte) */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Faturamento:</span>
           {([
-            ['ALL', 'TODOS', '#000'],
-            ['ICP', 'DENTRO ICP', '#22c55e'],
-            ['FORA', 'FORA ICP', '#cc0000'],
-            ['NAO_INFORMADO', 'S/ INFO', '#888'],
-          ] as const).map(([val, label, color]) => {
+            ['ALL', 'TODOS'],
+            ['ATE_50K', 'ATÉ 50K'],
+            ['50_100K', '50–100K'],
+            ['100_500K', '100–500K'],
+            ['500K_1M', '500K–1M'],
+            ['ACIMA_1M', '+1M'],
+            ['NAO_INFORMADO', 'S/ INFO'],
+          ] as const).map(([val, label]) => {
             const on = faturamentoFilter === val
+            // faixas dentro do ICP (>=100k) destacam em verde quando ativas
+            const icpBand = ['100_500K', '500K_1M', 'ACIMA_1M'].includes(val)
+            const bg = on ? (icpBand ? '#22c55e' : 'black') : 'white'
             return (
               <button key={val} onClick={() => setFaturamentoFilter(val)} style={{
                 padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
-                background: on ? color : 'white', color: on ? 'white' : 'black',
+                background: bg, color: on ? 'white' : 'black',
               }}>{label}</button>
             )
           })}
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#666', marginLeft: 4 }}>
-            ({activeLeads.filter(l => l.isICP).length} ICP / {activeLeads.filter(l => !l.isICP && l.faturamentoBand !== 'NAO_INFORMADO').length} fora)
+            {activeLeads.length} leads · {activeLeads.filter(l => l.isICP).length} no ICP
           </span>
         </div>
       </div>
