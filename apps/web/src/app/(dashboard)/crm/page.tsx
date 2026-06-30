@@ -566,6 +566,21 @@ function LeadDetailModal({
 }) {
   const [interactions, setInteractions] = useState<Interaction[]>([])
   const [commissions, setCommissions] = useState<CommissionItem[]>([])
+  const [stage, setStage] = useState(lead.leadStage)
+  const [movingStage, setMovingStage] = useState(false)
+
+  // mover de etapa sem arrastar / sem fechar o card
+  async function changeStage(toStage: string) {
+    if (toStage === stage || movingStage) return
+    if (toStage === 'FECHADO') { onCloseDeal(); return } // usa o fluxo de fechar venda
+    setMovingStage(true)
+    try {
+      await apiFetch(`/api/crm/${lead.id}/stage`, { method: 'PATCH', body: JSON.stringify({ toStage }) })
+      setStage(toStage)
+      toast.success(`Movido para ${LEAD_STAGE_LABELS[toStage] ?? toStage}`)
+      onUpdated()
+    } catch { toast.error('Erro ao mover etapa') } finally { setMovingStage(false) }
+  }
   const [newType, setNewType] = useState('NOTA')
   const [newDesc, setNewDesc] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -696,9 +711,17 @@ function LeadDetailModal({
     >
       <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'auto' }}>
         {/* Header */}
-        <div style={{ background: LEAD_STAGE_COLORS[lead.leadStage] ?? 'black', color: 'white', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ background: LEAD_STAGE_COLORS[stage] ?? 'black', color: 'white', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12 }}>{lead.companyName}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, opacity: 0.8 }}>{LEAD_STAGE_LABELS[lead.leadStage] ?? lead.leadStage} | {daysInStage}d</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, opacity: 0.8 }}>{LEAD_STAGE_LABELS[stage] ?? stage} | {daysInStage}d</span>
+        </div>
+
+        {/* Mover de etapa (sem arrastar / sem fechar o card) */}
+        <div style={{ padding: '10px 16px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Etapa:</span>
+          <select value={stage} onChange={e => changeStage(e.target.value)} disabled={movingStage} style={{ flex: 1, padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+            {LEAD_STAGES.map(s => <option key={s} value={s}>{LEAD_STAGE_LABELS[s] ?? s}</option>)}
+          </select>
         </div>
 
         <div style={{ padding: 16 }}>
@@ -1045,7 +1068,7 @@ function LeadDetailModal({
           {/* Actions */}
           <div style={{ display: 'flex', gap: 8, marginTop: 16, borderTop: '1px solid #e2e8f0', paddingTop: 12 }}>
             <button onClick={onClose} style={{ flex: 1, padding: '8px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>FECHAR</button>
-            {lead.leadStage !== 'FECHADO' && lead.leadStage !== 'PERDIDO' && (
+            {stage !== 'FECHADO' && stage !== 'PERDIDO' && (
               <button onClick={onCloseDeal} style={{ flex: 1, padding: '8px', border: '1px solid #e2e8f0', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>FECHAR NEGOCIO</button>
             )}
             <button onClick={onDelete} style={{ padding: '8px 12px', border: '1px solid #e2e8f0', background: '#cc0000', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>EXCLUIR</button>
