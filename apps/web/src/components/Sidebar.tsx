@@ -1,6 +1,6 @@
 'use client'
 
-import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, DollarSign, AlertTriangle, LogOut, ChevronLeft, ChevronRight, Users, Percent, Receipt, ArrowLeftRight, Settings, Calendar, CheckSquare } from 'lucide-react'
+import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, DollarSign, AlertTriangle, LogOut, ChevronLeft, ChevronRight, Users, Percent, Receipt, ArrowLeftRight, Settings, Calendar, CheckSquare, ScrollText } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
@@ -21,7 +21,11 @@ interface SidebarProps {
   onLogout: () => void
   userRole?: string
   userAllowedModules?: string | null
+  isOwner?: boolean
 }
+
+// Item exclusivo do dono (João) — fora da lista normal de nav.
+const AUDIT_ITEM: NavItem = { href: '/audit', label: 'Auditoria', icon: ScrollText }
 
 export const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard',   label: 'Dashboard',   icon: LayoutDashboard },
@@ -47,22 +51,27 @@ export function Sidebar({
   onLogout,
   userRole,
   userAllowedModules,
+  isOwner,
 }: SidebarProps) {
   const pathname = usePathname()
 
   const visibleItems = (() => {
-    if (userAllowedModules) {
-      try {
-        const mods: string[] = JSON.parse(userAllowedModules)
-        if (mods.length > 0) return navItems.filter(item => mods.includes(item.href))
-      } catch { /* fall through */ }
-    }
-    if (userRole === 'admin') return navItems
-    if (userRole === 'comercial') {
-      const comercialPaths = ['/crm', '/agenda', '/products']
-      return navItems.filter(item => comercialPaths.includes(item.href))
-    }
-    return navItems
+    const base = (() => {
+      if (userAllowedModules) {
+        try {
+          const mods: string[] = JSON.parse(userAllowedModules)
+          if (mods.length > 0) return navItems.filter(item => mods.includes(item.href))
+        } catch { /* fall through */ }
+      }
+      if (userRole === 'admin') return navItems
+      if (userRole === 'comercial') {
+        const comercialPaths = ['/crm', '/agenda', '/products']
+        return navItems.filter(item => comercialPaths.includes(item.href))
+      }
+      return navItems
+    })()
+    // Auditoria: só o dono vê (independente de role/módulos).
+    return isOwner ? [...base, AUDIT_ITEM] : base
   })()
   const [openPendenciesCount, setOpenPendenciesCount] = useState(0)
 

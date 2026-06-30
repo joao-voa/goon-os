@@ -1,3 +1,6 @@
+// Dono do sistema — acesso exclusivo (ex: Auditoria)
+export const OWNER_EMAIL = 'joaovitorafonso@gmail.com'
+
 export const ONBOARDING_STAGES = [
   'CLIENT_CLOSED', 'CONTRACT_SENT', 'BILLING_CREATED',
   'KICKOFF_SCHEDULED', 'ONBOARDING_DONE',

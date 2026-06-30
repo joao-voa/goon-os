@@ -363,6 +363,24 @@ model Expense {
   @@index([recurrence])
 }
 
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  userEmail  String?  // quem fez a ação
+  userRole   String?
+  method     String   // POST, PATCH, PUT, DELETE
+  path       String   // rota acionada (com id)
+  action     String   // rótulo amigável (ex: "Fechou venda")
+  statusCode Int?
+  ip         String?
+  durationMs Int?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([userEmail])
+  @@index([createdAt])
+}
+
 model Person {
   id          String   @id @default(cuid())
   name        String   @unique

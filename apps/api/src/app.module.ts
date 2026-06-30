@@ -20,6 +20,7 @@ import { AdminModule } from './modules/admin/admin.module'
 import { MeetingsModule } from './modules/meetings/meetings.module'
 import { TasksModule } from './modules/tasks/tasks.module'
 import { PersonAccountsModule } from './modules/person-accounts/person-accounts.module'
+import { AuditModule } from './modules/audit/audit.module'
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { PersonAccountsModule } from './modules/person-accounts/person-accounts.
     TasksModule,
     AdminModule,
     PersonAccountsModule,
+    AuditModule,
   ],
   controllers: [AppController],
 })
