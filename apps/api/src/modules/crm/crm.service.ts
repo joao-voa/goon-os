@@ -80,13 +80,18 @@ export class CrmService {
       orderBy: { createdAt: 'desc' },
     })
 
-    return leads.map(lead => ({
-      ...lead,
-      saleValue: lead.saleValue ? Number(lead.saleValue) : null,
-      installmentValue: lead.installmentValue ? Number(lead.installmentValue) : null,
-      productCode: lead.plans[0]?.product?.code ?? null,
-      plans: undefined,
-    }))
+    return leads.map(lead => {
+      const fat = CrmService.parseMonthlyRevenue(lead.estimatedRevenue)
+      return {
+        ...lead,
+        saleValue: lead.saleValue ? Number(lead.saleValue) : null,
+        installmentValue: lead.installmentValue ? Number(lead.installmentValue) : null,
+        productCode: lead.plans[0]?.product?.code ?? null,
+        faturamentoBand: CrmService.revenueBand(fat),
+        isICP: CrmService.isICP(fat),
+        plans: undefined,
+      }
+    })
   }
 
   async changeStage(id: string, toStage: string) {
@@ -610,7 +615,8 @@ export class CrmService {
     if (!s) return null
     const original = s
     // "até X" expresses an upper bound — should land in the band *below* X
-    const isUpperBound = /\bat[eé]\b/.test(original) && !/entre/.test(original)
+    // \b não funciona após "é" acentuado; usa fronteira por espaço/início/fim
+    const isUpperBound = /(?:^|\s)at[eé](?:\s|$)/.test(original) && !/entre/.test(original)
     // obvious junk / non-answers
     if (/^(0|n[aã]o sei|nao informado|hoje|come[cç]ando|estou come[cç]ando|estamos|comecei|sim|nao|teste)/.test(s)) {
       if (s === '0') return null

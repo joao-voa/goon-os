@@ -28,6 +28,8 @@ interface LeadItem {
   saleValue: number | null
   leadNotes: string | null
   estimatedRevenue: string | null
+  faturamentoBand: string | null
+  isICP: boolean
   segment: string | null
   suggestedProduct: string | null
   cardResponsible: string | null
@@ -70,9 +72,19 @@ function DraggableCard({ item, onClick }: { item: LeadItem; onClick: (item: Lead
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', marginBottom: 2 }}>
         {item.responsible}
       </div>
-      {item.estimatedRevenue && (
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginBottom: 2 }}>
-          Faturamento: {item.estimatedRevenue}
+      {(item.estimatedRevenue || item.faturamentoBand !== 'NAO_INFORMADO') && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2, flexWrap: 'wrap' }}>
+          {item.faturamentoBand && item.faturamentoBand !== 'NAO_INFORMADO' && (
+            <span style={{
+              fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, padding: '1px 5px', color: 'white',
+              background: item.isICP ? '#22c55e' : '#cc0000',
+            }}>{item.isICP ? 'ICP' : 'FORA'}</span>
+          )}
+          {item.estimatedRevenue && (
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>
+              {item.estimatedRevenue}
+            </span>
+          )}
         </div>
       )}
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>

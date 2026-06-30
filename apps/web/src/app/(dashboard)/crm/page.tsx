@@ -41,6 +41,8 @@ interface LeadItem {
   leadNotes: string | null
   selectedModules: string | null
   estimatedRevenue: string | null
+  faturamentoBand: string | null
+  isICP: boolean
   segment: string | null
   suggestedProduct: string | null
   cardResponsible: string | null
@@ -1179,6 +1181,12 @@ export default function CrmPage() {
   const activeLeads = leads.filter(l => {
     if (salesRepFilter && l.salesRep !== salesRepFilter) return false
     if (cardResponsibleFilter && l.cardResponsible !== cardResponsibleFilter) return false
+    if (faturamentoFilter && faturamentoFilter !== 'ALL') {
+      if (faturamentoFilter === 'ICP') { if (!l.isICP) return false }
+      else if (faturamentoFilter === 'FORA') { if (l.isICP || l.faturamentoBand === 'NAO_INFORMADO') return false }
+      else if (faturamentoFilter === 'NAO_INFORMADO') { if (l.faturamentoBand !== 'NAO_INFORMADO') return false }
+      else if (l.faturamentoBand !== faturamentoFilter) return false
+    }
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
       if (!l.companyName.toLowerCase().includes(q) && !l.responsible.toLowerCase().includes(q) && !(l.email?.toLowerCase().includes(q)) && !(l.phone?.includes(q))) return false
@@ -1538,6 +1546,27 @@ export default function CrmPage() {
               background: cardResponsibleFilter === val ? 'black' : 'white', color: cardResponsibleFilter === val ? 'white' : 'black',
             }}>{val === '' ? 'TODOS' : val === 'SOCIAL_SELLING' ? 'SOCIAL SELLING' : 'CLOSER'}</button>
           ))}
+        </div>
+        {/* Faturamento / ICP */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Faturamento:</span>
+          {([
+            ['ALL', 'TODOS', '#000'],
+            ['ICP', 'DENTRO ICP', '#22c55e'],
+            ['FORA', 'FORA ICP', '#cc0000'],
+            ['NAO_INFORMADO', 'S/ INFO', '#888'],
+          ] as const).map(([val, label, color]) => {
+            const on = faturamentoFilter === val
+            return (
+              <button key={val} onClick={() => setFaturamentoFilter(val)} style={{
+                padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+                background: on ? color : 'white', color: on ? 'white' : 'black',
+              }}>{label}</button>
+            )
+          })}
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#666', marginLeft: 4 }}>
+            ({activeLeads.filter(l => l.isICP).length} ICP / {activeLeads.filter(l => !l.isICP && l.faturamentoBand !== 'NAO_INFORMADO').length} fora)
+          </span>
         </div>
       </div>
 
