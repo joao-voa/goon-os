@@ -448,6 +448,8 @@ model MenteeProfile {
   clientId      String    @unique
   mentorName    String?
   status        String    @default("ACTIVE") // ACTIVE | PAUSED | GRADUATED | CHURNED
+  mainPains     String?   // principais dores
+  goal          String?   // objetivo com a mentoria
   lastContactAt DateTime? // atualizado ao registrar sessão/estudo de caso
   color         String?
   notes         String?

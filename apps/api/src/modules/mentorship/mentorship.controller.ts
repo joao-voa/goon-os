@@ -34,7 +34,7 @@ export class MentorshipController {
   }
 
   @Patch('profile/:clientId')
-  updateProfile(@Param('clientId') clientId: string, @Body() dto: { mentorName?: string; status?: string; color?: string; notes?: string }) {
+  updateProfile(@Param('clientId') clientId: string, @Body() dto: { mentorName?: string; status?: string; color?: string; notes?: string; mainPains?: string; goal?: string }) {
     return this.service.updateProfile(clientId, dto)
   }
 

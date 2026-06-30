@@ -22,7 +22,7 @@ interface Kpis { ativos: number; total: number; emAtencao: number; acoesPendente
 interface CaseStudy { id: string; sessionDate: string; mentorName: string | null; faturamentoAno: number | null; numVendas: number | null; ticketMedio: number | null; investimentoTrafego: number | null; roas: number | null; seguidoresIg: number | null; situacaoAtual: string | null; oQueTrabalhou: string | null; proximosPassos: string | null }
 interface ActionItem { id: string; what: string; who: string | null; dueDate: string | null; done: boolean }
 interface Detail {
-  profile: { mentorName: string | null; status: string; notes: string | null }
+  profile: { mentorName: string | null; status: string; notes: string | null; mainPains: string | null; goal: string | null }
   client: { companyName: string; responsible: string | null; email: string | null; whatsapp: string | null; plans: { product: { code: string; name: string } }[] } | null
   attention: boolean
   caseStudies: CaseStudy[]
@@ -136,9 +136,18 @@ export default function MentorshipPage() {
 // ============ DRAWER (detalhe / jornada) ============
 function Drawer({ clientId, onClose, onChange }: { clientId: string; onClose: () => void; onChange: () => void }) {
   const [d, setD] = useState<Detail | null>(null)
-  const [tab, setTab] = useState<'acoes' | 'casos'>('acoes')
+  const [tab, setTab] = useState<'acoes' | 'dados' | 'reunioes'>('acoes')
   const load = useCallback(() => { apiFetch<Detail>(`/api/mentorship/clients/${clientId}`).then(setD).catch(() => {}) }, [clientId])
   useEffect(() => { load() }, [load])
+
+  // contexto (dores / objetivo)
+  const [ctx, setCtx] = useState<{ mainPains: string; goal: string } | null>(null)
+  useEffect(() => { if (d) setCtx({ mainPains: d.profile.mainPains ?? '', goal: d.profile.goal ?? '' }) }, [d])
+  async function saveCtx() {
+    if (!ctx) return
+    await apiFetch(`/api/mentorship/profile/${clientId}`, { method: 'PATCH', body: JSON.stringify(ctx) })
+    toast.success('Contexto salvo'); load()
+  }
 
   // nova ação
   const [aWhat, setAWhat] = useState(''); const [aWho, setAWho] = useState(''); const [aWhen, setAWhen] = useState('')
@@ -188,10 +197,22 @@ function Drawer({ clientId, onClose, onChange }: { clientId: string; onClose: ()
             </div>
             {d.attention && <div style={{ background: '#fee2e2', color: '#dc2626', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, padding: '6px 10px', marginTop: 10 }}>🔴 Em atenção — ação atrasada ou tempo sem sessão</div>}
 
+            {/* Contexto: dores + objetivo */}
+            {ctx && (
+              <div style={{ ...card, padding: 12, marginTop: 12 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, color: '#666', marginBottom: 6 }}>CONTEXTO DA MENTORIA</div>
+                <label style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#888' }}>Principais dores</label>
+                <textarea value={ctx.mainPains} onChange={e => setCtx({ ...ctx, mainPains: e.target.value })} style={{ ...inp, minHeight: 40, resize: 'vertical', marginBottom: 6 }} />
+                <label style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#888' }}>Objetivo com a mentoria</label>
+                <textarea value={ctx.goal} onChange={e => setCtx({ ...ctx, goal: e.target.value })} style={{ ...inp, minHeight: 40, resize: 'vertical', marginBottom: 6 }} />
+                <button onClick={saveCtx} style={{ ...btn, background: '#4A78FF', color: 'white' }}>Salvar contexto</button>
+              </div>
+            )}
+
             {/* tabs */}
             <div style={{ display: 'flex', gap: 8, margin: '14px 0' }}>
-              {(['acoes', 'casos'] as const).map(t => (
-                <button key={t} onClick={() => setTab(t)} style={{ ...btn, background: tab === t ? 'black' : 'white', color: tab === t ? 'white' : 'black' }}>{t === 'acoes' ? `AÇÕES (${d.actionItems.filter(a => !a.done).length})` : `ESTUDOS (${d.caseStudies.length})`}</button>
+              {([['acoes', `AÇÕES (${d.actionItems.filter(a => !a.done).length})`], ['dados', `DADOS DO NEGÓCIO (${d.caseStudies.length})`], ['reunioes', `REUNIÕES (${d.meetings.length})`]] as const).map(([t, label]) => (
+                <button key={t} onClick={() => setTab(t)} style={{ ...btn, background: tab === t ? 'black' : 'white', color: tab === t ? 'white' : 'black' }}>{label}</button>
               ))}
             </div>
 
@@ -223,9 +244,9 @@ function Drawer({ clientId, onClose, onChange }: { clientId: string; onClose: ()
               </div>
             )}
 
-            {tab === 'casos' && (
+            {tab === 'dados' && (
               <div>
-                <button onClick={() => setShowCase(s => !s)} style={{ ...btn, background: showCase ? '#888' : '#4A78FF', color: 'white', marginBottom: 12 }}>{showCase ? 'Cancelar' : '+ NOVO ESTUDO DE CASO'}</button>
+                <button onClick={() => setShowCase(s => !s)} style={{ ...btn, background: showCase ? '#888' : '#4A78FF', color: 'white', marginBottom: 12 }}>{showCase ? 'Cancelar' : '+ REGISTRAR DADOS DA SESSÃO'}</button>
                 {showCase && (
                   <div style={{ ...card, padding: 12, marginBottom: 12 }}>
                     <input type="date" value={cs.sessionDate ?? ''} onChange={e => setCs({ ...cs, sessionDate: e.target.value })} style={{ ...inp, marginBottom: 8 }} />
@@ -233,9 +254,9 @@ function Drawer({ clientId, onClose, onChange }: { clientId: string; onClose: ()
                       {M.map(([k, label]) => <input key={k} placeholder={label} value={cs[k] ?? ''} onChange={e => setCs({ ...cs, [k]: e.target.value })} style={inp} />)}
                     </div>
                     {['situacaoAtual', 'oQueTrabalhou', 'proximosPassos'].map((k, i) => (
-                      <textarea key={k} placeholder={['Situação atual', 'O que foi trabalhado', 'Próximos passos'][i]} value={cs[k] ?? ''} onChange={e => setCs({ ...cs, [k]: e.target.value })} style={{ ...inp, marginBottom: 6, minHeight: 44, resize: 'vertical' }} />
+                      <textarea key={k} placeholder={['O que foi falado na reunião', 'O que foi passado ao cliente', 'Próximos passos'][i]} value={cs[k] ?? ''} onChange={e => setCs({ ...cs, [k]: e.target.value })} style={{ ...inp, marginBottom: 6, minHeight: 44, resize: 'vertical' }} />
                     ))}
-                    <button onClick={addCase} style={{ ...btn, background: '#16a34a', color: 'white' }}>SALVAR ESTUDO</button>
+                    <button onClick={addCase} style={{ ...btn, background: '#16a34a', color: 'white' }}>SALVAR</button>
                   </div>
                 )}
                 {d.caseStudies.map(s => (
@@ -245,12 +266,26 @@ function Drawer({ clientId, onClose, onChange }: { clientId: string; onClose: ()
                       <Metric l="Fat/ano" v={fmtBRL(s.faturamentoAno)} /><Metric l="Vendas" v={fmtN(s.numVendas)} /><Metric l="Ticket" v={fmtBRL(s.ticketMedio)} />
                       <Metric l="Tráfego" v={fmtBRL(s.investimentoTrafego)} /><Metric l="ROAS" v={s.roas != null ? s.roas + 'x' : '—'} /><Metric l="IG" v={fmtN(s.seguidoresIg)} />
                     </div>
-                    {s.situacaoAtual && <Note l="Situação" v={s.situacaoAtual} />}
-                    {s.oQueTrabalhou && <Note l="Trabalhado" v={s.oQueTrabalhou} />}
+                    {s.situacaoAtual && <Note l="O que foi falado" v={s.situacaoAtual} />}
+                    {s.oQueTrabalhou && <Note l="O que foi passado" v={s.oQueTrabalhou} />}
                     {s.proximosPassos && <Note l="Próximos passos" v={s.proximosPassos} />}
                   </div>
                 ))}
-                {d.caseStudies.length === 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888' }}>Nenhum estudo de caso ainda.</div>}
+                {d.caseStudies.length === 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888' }}>Nenhum dado de negócio registrado ainda.</div>}
+              </div>
+            )}
+
+            {tab === 'reunioes' && (
+              <div>
+                {d.meetings.map(m => (
+                  <div key={m.id} style={{ ...card, padding: 10, marginBottom: 6 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                      <span style={{ fontWeight: 700 }}>{fmtDate(m.date)} · {m.title}</span>
+                      <span style={{ fontSize: 9, background: m.status === 'DONE' ? '#dcfce7' : m.status === 'SCHEDULED' ? '#dbeafe' : '#f1f5f9', color: m.status === 'DONE' ? '#16a34a' : m.status === 'SCHEDULED' ? '#2563eb' : '#888', padding: '2px 6px', fontWeight: 700 }}>{m.status}</span>
+                    </div>
+                  </div>
+                ))}
+                {d.meetings.length === 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888' }}>Nenhuma reunião registrada.</div>}
               </div>
             )}
           </>

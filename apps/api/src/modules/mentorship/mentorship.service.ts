@@ -146,7 +146,7 @@ export class MentorshipService {
     return this.prisma.menteeProfile.create({ data: { clientId: dto.clientId, mentorName } })
   }
 
-  async updateProfile(clientId: string, dto: { mentorName?: string; status?: string; color?: string; notes?: string }) {
+  async updateProfile(clientId: string, dto: { mentorName?: string; status?: string; color?: string; notes?: string; mainPains?: string; goal?: string }) {
     await this.prisma.menteeProfile.update({ where: { clientId }, data: { ...dto, updatedAt: new Date() } })
     return this.getClientDetail(clientId)
   }

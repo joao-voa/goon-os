@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 import { useIsMobile } from '@/hooks/useMediaQuery'
+import { ClientMentorship } from '@/components/ClientMentorship'
 import {
   PRODUCT_COLORS,
   PRODUCT_NAMES,
@@ -949,7 +950,7 @@ export default function ClientDetailPage() {
     gap: isMobile ? 12 : 20,
   }
 
-  const TABS = ['CADENCIA', 'DADOS', 'CONTRATO', 'FINANCEIRO', 'PENDÊNCIAS']
+  const TABS = ['CADENCIA', 'DADOS', 'CONTRATO', 'FINANCEIRO', 'PENDÊNCIAS', 'MENTORIA']
 
   return (
     <div style={{ maxWidth: 960, margin: '0 auto' }}>
@@ -1727,6 +1728,7 @@ export default function ClientDetailPage() {
               )}
             </div>
           )}
+          {activeTab === 5 && <ClientMentorship clientId={id} />}
         </div>
       </div>
 
