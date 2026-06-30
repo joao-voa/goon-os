@@ -428,6 +428,7 @@ function NewLeadModal({
             <label style={labelStyle}>Responsavel</label>
             <select value={cardResponsible} onChange={e => setCardResponsible(e.target.value)} style={inputStyle}>
               <option value="">Selecione...</option>
+              <option value="JOAO">João</option>
               <option value="SOCIAL_SELLING">Social Selling</option>
               <option value="CLOSER">Closer</option>
             </select>
@@ -782,6 +783,7 @@ function LeadDetailModal({
                   <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>RESPONSAVEL</label>
                   <select value={editCardResponsible} onChange={e => setEditCardResponsible(e.target.value)} style={inputStyle}>
                     <option value="">Selecione...</option>
+                    <option value="JOAO">João</option>
                     <option value="SOCIAL_SELLING">Social Selling</option>
                     <option value="CLOSER">Closer</option>
                   </select>
@@ -1563,11 +1565,11 @@ export default function CrmPage() {
         {/* Responsavel */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Responsavel:</span>
-          {['', 'SOCIAL_SELLING', 'CLOSER'].map(val => (
+          {['', 'JOAO', 'SOCIAL_SELLING', 'CLOSER'].map(val => (
             <button key={val} onClick={() => setCardResponsibleFilter(cardResponsibleFilter === val ? '' : val)} style={{
               padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
               background: cardResponsibleFilter === val ? 'black' : 'white', color: cardResponsibleFilter === val ? 'white' : 'black',
-            }}>{val === '' ? 'TODOS' : val === 'SOCIAL_SELLING' ? 'SOCIAL SELLING' : 'CLOSER'}</button>
+            }}>{val === '' ? 'TODOS' : val === 'JOAO' ? 'JOÃO' : val === 'SOCIAL_SELLING' ? 'SOCIAL SELLING' : 'CLOSER'}</button>
           ))}
         </div>
         {/* Faturamento — por faixa (recorte) */}
