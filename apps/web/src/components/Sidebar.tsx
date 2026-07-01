@@ -4,6 +4,7 @@ import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBran
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
+import { GoonLogo } from './GoonLogo'
 
 interface NavItem {
   href: string
@@ -101,7 +102,7 @@ export function Sidebar({
 
       <nav style={{
         position: 'fixed', top: 0, left: 0, height: '100vh', width: sidebarWidth,
-        background: '#0A0A0C', borderRight: '1px solid #2A2A30',
+        background: '#1e3a5f',
         display: 'flex', flexDirection: 'column', zIndex: 51,
         transition: 'transform 0.25s ease, width 0.25s ease',
         transform: isVisible ? 'translateX(0)' : 'translateX(-100%)',
@@ -116,14 +117,14 @@ export function Sidebar({
           flexShrink: 0,
         }}>
           {(!collapsed || isMobile) && (
-            <a href="/home" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1, textDecoration: 'none' }}>
-              <span style={{ color: 'var(--goon-signal)', fontSize: 26, fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '0.18em', lineHeight: 1 }}>GOON</span>
-              <span style={{ color: 'var(--goon-ash)', fontSize: 8, fontFamily: 'var(--font-mono)', fontWeight: 700, letterSpacing: '0.28em', marginTop: 3 }}>OPERACIONAL SYSTEM</span>
+            <a href="/home" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, textDecoration: 'none' }}>
+              <GoonLogo height={22} chrome />
+              <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 8, fontFamily: 'var(--font-sans)', fontWeight: 600, letterSpacing: '0.18em' }}>OPERACIONAL SYSTEM</span>
             </a>
           )}
           {collapsed && !isMobile && (
             <a href="/home" style={{ textDecoration: 'none' }}>
-              <span style={{ color: 'var(--goon-signal)', fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '0.08em' }}>G</span>
+              <GoonLogo height={11} chrome />
             </a>
           )}
           {!isMobile && (
@@ -150,12 +151,12 @@ export function Sidebar({
                   padding: collapsed && !isMobile ? '10px 0' : '10px 16px',
                   justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
                   textDecoration: 'none',
-                  color: isActive ? '#0A0A0C' : 'rgba(255,255,255,0.55)',
-                  background: isActive ? 'var(--goon-chrome)' : 'transparent',
-                  borderRadius: 6, margin: '1px 8px',
-                  fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em',
+                  color: isActive ? 'white' : 'rgba(255,255,255,0.5)',
+                  background: isActive ? 'rgba(212,160,23,0.15)' : 'transparent',
+                  borderRadius: 8, margin: '1px 8px',
+                  fontFamily: 'var(--font-sans)', fontWeight: isActive ? 600 : 500, fontSize: 13,
                   whiteSpace: 'nowrap', transition: 'all 0.15s',
-                  borderLeft: isActive ? '3px solid transparent' : '3px solid transparent',
+                  borderLeft: isActive ? '3px solid #d4a017' : '3px solid transparent',
                 }}
                 onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.85)' } }}
                 onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'; (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.5)' } }}

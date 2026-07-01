@@ -58,7 +58,7 @@ export default function ChangePasswordPage() {
         border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
       }}>
         <div style={{
-          background: '#0A0A0C', color: 'white', padding: '14px 20px',
+          background: '#0f172a', color: 'white', padding: '14px 20px',
           fontFamily: 'var(--font-sans)', fontSize: 12,
         }}>
           PRIMEIRO ACESSO — DEFINA SUA SENHA
@@ -114,7 +114,7 @@ export default function ChangePasswordPage() {
 
           <button type="submit" disabled={loading} style={{
             width: '100%', padding: '12px', border: '1px solid #e2e8f0',
-            background: '#0A0A0C', color: 'white', fontFamily: 'var(--font-sans)',
+            background: '#0f172a', color: 'white', fontFamily: 'var(--font-sans)',
             fontSize: 11, cursor: loading ? 'wait' : 'pointer',
             boxShadow: '4px 4px 0 #888',
           }}>
