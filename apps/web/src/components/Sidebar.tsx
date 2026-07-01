@@ -102,7 +102,7 @@ export function Sidebar({
 
       <nav style={{
         position: 'fixed', top: 0, left: 0, height: '100vh', width: sidebarWidth,
-        background: '#1e3a5f',
+        background: '#0A0A0C', borderRight: '1px solid #1c1c22',
         display: 'flex', flexDirection: 'column', zIndex: 51,
         transition: 'transform 0.25s ease, width 0.25s ease',
         transform: isVisible ? 'translateX(0)' : 'translateX(-100%)',
@@ -152,11 +152,11 @@ export function Sidebar({
                   justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
                   textDecoration: 'none',
                   color: isActive ? 'white' : 'rgba(255,255,255,0.5)',
-                  background: isActive ? 'rgba(212,160,23,0.15)' : 'transparent',
+                  background: isActive ? 'rgba(255,255,255,0.09)' : 'transparent',
                   borderRadius: 8, margin: '1px 8px',
                   fontFamily: 'var(--font-sans)', fontWeight: isActive ? 600 : 500, fontSize: 13,
                   whiteSpace: 'nowrap', transition: 'all 0.15s',
-                  borderLeft: isActive ? '3px solid #d4a017' : '3px solid transparent',
+                  borderLeft: isActive ? '3px solid #FFFFFF' : '3px solid transparent',
                 }}
                 onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.85)' } }}
                 onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'; (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.5)' } }}

@@ -66,8 +66,8 @@ export default function HomePage() {
       justifyContent: 'center', padding: '20px 0', minHeight: 'calc(100vh - 140px)',
     }}>
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}><GoonLogo height={54} fill="#0f172a" /></div>
-        <p style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: '#d4a017', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 600, marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}><GoonLogo height={54} fill="#0A0A0C" /></div>
+        <p style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: '#6E6E78', textTransform: 'uppercase', letterSpacing: '0.28em', fontWeight: 600, marginBottom: 16 }}>
           Operacional System
         </p>
         {userName && (
@@ -101,9 +101,9 @@ export default function HomePage() {
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translate(-2px, -2px)'
                   e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.08)'
-                  e.currentTarget.style.background = item.color
+                  e.currentTarget.style.background = '#0A0A0C'
                   e.currentTarget.style.color = 'white'
-                  e.currentTarget.style.borderColor = item.color
+                  e.currentTarget.style.borderColor = '#0A0A0C'
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translate(0, 0)'
