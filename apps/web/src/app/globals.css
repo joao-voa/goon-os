@@ -1,15 +1,27 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
 
 /* ═══════════════════════════════════════════════════════════════
-   AURA360 Operacional System — PROFESSIONAL DESIGN SYSTEM
+   GOON — Operacional System · Design System (preto & metal)
+   "O preto é postura. Metal, não cor. Nada decora, tudo estrutura."
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
+  /* GOON brand — preto & cromado */
+  --goon-void: #000000;
+  --goon-obsidian: #0A0A0C;
+  --goon-graphite: #141418;
+  --goon-steel: #2A2A30;
+  --goon-ash: #6E6E78;
+  --goon-fog: #A2A2AC;
+  --goon-signal: #FFFFFF;
+  --goon-chrome: linear-gradient(178deg,#FFFFFF 0%,#C9C9D2 18%,#7B7B85 40%,#F4F4F8 50%,#9A9AA4 60%,#6E6E78 82%,#EDEDF2 100%);
+
   --retro-bg: #f8fafc;
   --retro-gray: #f1f5f9;
   --retro-blue: #1e40af;
   --retro-green: #16a34a;
-  --black: #0f172a;
+  --black: #0A0A0C;
   --white: #ffffff;
   --danger: #dc2626;
   --success: #16a34a;
@@ -21,10 +33,12 @@
   --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04);
   --shadow-blue: 0 4px 12px rgba(30,64,175,0.15);
 
-  --font-pixel: 'Inter', 'Space Grotesk', sans-serif;
-  --font-mono: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-sans: 'Inter', 'Space Grotesk', sans-serif;
-  --font-marker: 'Space Grotesk', sans-serif;
+  --font-pixel: 'Sora', 'Inter', sans-serif;
+  --font-mono: 'Space Mono', 'Inter', ui-monospace, monospace;
+  --font-sans: 'Sora', 'Inter', sans-serif;
+  --font-display: 'Sora', sans-serif;
+  --font-marker: 'Sora', sans-serif;
+  --font-body: 'Inter', sans-serif;
 
   --radius: 8px;
   --radius-sm: 6px;
@@ -32,10 +46,10 @@
 
   --border-color: #e2e8f0;
   --border-hover: #cbd5e1;
-  --accent: #d4a017;
-  --accent-light: #fef3c7;
-  --primary: #1e40af;
-  --primary-light: #dbeafe;
+  --accent: #2A2A30;
+  --accent-light: #EDEDF2;
+  --primary: #0A0A0C;
+  --primary-light: #EDEDF2;
   --surface: #ffffff;
   --surface-alt: #f8fafc;
   --text-primary: #0f172a;
@@ -50,7 +64,7 @@
 }
 
 body {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   background-color: var(--retro-bg);
   color: var(--text-primary);
   font-size: 13px;

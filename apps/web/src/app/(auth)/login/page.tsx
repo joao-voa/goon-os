@@ -60,7 +60,7 @@ export default function LoginPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#0f172a',
+      minHeight: '100vh', background: '#0A0A0C',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
     }}>
       <div style={{
@@ -71,7 +71,7 @@ export default function LoginPage() {
         {/* Header */}
         <div style={{ padding: '2.5rem 2rem 0', textAlign: 'center' }}>
           <div style={{ marginBottom: 8 }}>
-            <img src="/logo-aura360.png" alt="Aura 360" style={{ height: 72, margin: '0 auto' }} />
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 46, letterSpacing: '0.16em', color: '#0A0A0C', lineHeight: 1, paddingLeft: '0.16em' }}>GOON</div>
           </div>
           <p style={{ fontFamily: 'var(--font-sans)', color: '#94a3b8', fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 4 }}>
             Operacional System
@@ -87,7 +87,7 @@ export default function LoginPage() {
               <label htmlFor="email" style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>E-mail</label>
               <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seu@email.com" required
                 style={{ width: '100%', padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: 8, fontFamily: 'var(--font-sans)', fontSize: 14, outline: 'none', transition: 'all 0.15s', color: '#0f172a' }}
-                onFocus={e => { e.currentTarget.style.borderColor = '#d4a017'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(212,160,23,0.1)' }}
+                onFocus={e => { e.currentTarget.style.borderColor = '#2A2A30'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(42,42,48,0.12)' }}
                 onBlur={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = 'none' }}
               />
             </div>
@@ -95,7 +95,7 @@ export default function LoginPage() {
               <label htmlFor="password" style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Senha</label>
               <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="********" required
                 style={{ width: '100%', padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: 8, fontFamily: 'var(--font-sans)', fontSize: 14, outline: 'none', transition: 'all 0.15s', color: '#0f172a' }}
-                onFocus={e => { e.currentTarget.style.borderColor = '#d4a017'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(212,160,23,0.1)' }}
+                onFocus={e => { e.currentTarget.style.borderColor = '#2A2A30'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(42,42,48,0.12)' }}
                 onBlur={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = 'none' }}
               />
             </div>
@@ -108,22 +108,22 @@ export default function LoginPage() {
 
             <button type="submit" disabled={loading}
               style={{
-                background: '#d4a017', color: 'white', border: 'none',
+                background: '#0A0A0C', color: 'var(--goon-signal)', border: 'none',
                 borderRadius: 8, padding: '12px', cursor: loading ? 'wait' : 'pointer',
                 fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700,
                 transition: 'all 0.15s', marginTop: 4, width: '100%',
-                boxShadow: '0 1px 3px rgba(212,160,23,0.3)',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.4)',
                 opacity: loading ? 0.7 : 1,
               }}
-              onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#b8860b' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#d4a017' }}
+              onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#2A2A30' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#0A0A0C' }}
             >
               {loading ? 'Aguarde...' : 'Entrar'}
             </button>
           </form>
 
           <p style={{ textAlign: 'center', marginTop: 24, fontSize: 11, fontFamily: 'var(--font-sans)', color: '#cbd5e1' }}>
-            AURA360 Consultoria &copy; 2026
+            GOON &copy; 2026
           </p>
         </div>
       </div>

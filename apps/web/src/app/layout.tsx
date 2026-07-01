@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'AURA360 Operacional System — Sistema de Gestão',
-  description: 'Sistema operacional AURA360',
+  title: 'GOON — Operacional System',
+  description: 'Sistema operacional GOON',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

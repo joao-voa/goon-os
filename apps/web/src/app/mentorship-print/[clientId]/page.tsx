@@ -34,7 +34,7 @@ export default function PrintPage() {
     <div style={{ maxWidth: 800, margin: '0 auto', padding: 32, fontFamily: 'Inter, sans-serif', color: '#111', background: 'white' }}>
       <style>{`@media print { @page { margin: 16mm } button { display: none } }`}</style>
       <div style={{ borderBottom: '2px solid #111', paddingBottom: 12, marginBottom: 20 }}>
-        <div style={{ fontSize: 11, color: '#888', letterSpacing: 1 }}>ACOMPANHAMENTO DE MENTORADO · AURA360</div>
+        <div style={{ fontSize: 11, color: '#888', letterSpacing: 1 }}>ACOMPANHAMENTO DE MENTORADO · GOON</div>
         <h1 style={{ fontSize: 26, margin: '4px 0 0' }}>{d.client?.companyName}</h1>
         <div style={{ fontSize: 13, color: '#555' }}>{d.client?.responsible} · Mentor: {d.profile.mentorName ?? '—'} · {d.profile.status}</div>
       </div>

@@ -65,18 +65,18 @@ export default function HomePage() {
       justifyContent: 'center', padding: '20px 0', minHeight: 'calc(100vh - 140px)',
     }}>
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
-        <img src="/logo-aura360.png" alt="Aura 360" style={{ height: 160, margin: '0 auto 2px' }} />
-        <p style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: '#d4a017', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 600, marginBottom: 16 }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 84, letterSpacing: '0.16em', color: '#0A0A0C', lineHeight: 1, paddingLeft: '0.16em' }}>GOON</div>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--goon-ash)', textTransform: 'uppercase', letterSpacing: '0.32em', fontWeight: 700, margin: '6px 0 16px' }}>
           Operacional System
         </p>
         {userName && (
           <p style={{ fontFamily: 'var(--font-sans)', fontSize: 15, color: '#334155', fontWeight: 500 }}>
-            Seja bem-vindo ao Sistema Operacional da Aura360{userName ? `, ${userName}` : ''}.
+            Seja bem-vindo ao Sistema Operacional GOON{userName ? `, ${userName}` : ''}.
           </p>
         )}
         {!userName && (
           <p style={{ fontFamily: 'var(--font-sans)', fontSize: 15, color: '#334155', fontWeight: 500 }}>
-            Seja bem-vindo ao Sistema Operacional da Aura360.
+            Seja bem-vindo ao Sistema Operacional GOON.
           </p>
         )}
       </div>
