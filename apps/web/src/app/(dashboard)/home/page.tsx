@@ -65,21 +65,18 @@ export default function HomePage() {
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', padding: '20px 0', minHeight: 'calc(100vh - 140px)',
     }}>
-      <div style={{ textAlign: 'center', marginBottom: 32 }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}><GoonLogo height={54} fill="#0A0A0C" /></div>
-        <p style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: '#6E6E78', textTransform: 'uppercase', letterSpacing: '0.28em', fontWeight: 600, marginBottom: 16 }}>
-          Operacional System
+      <div style={{ textAlign: 'center', marginBottom: 40 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><GoonLogo height={52} fill="#0A0A0C" /></div>
+        <p style={{ fontFamily: 'var(--font-display)', fontSize: 11, color: '#6E6E78', textTransform: 'uppercase', letterSpacing: '0.42em', paddingLeft: '0.42em', fontWeight: 600, marginBottom: 18 }}>
+          Advisor
         </p>
-        {userName && (
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 15, color: '#334155', fontWeight: 500 }}>
-            Seja bem-vindo ao Sistema Operacional GOON{userName ? `, ${userName}` : ''}.
-          </p>
-        )}
-        {!userName && (
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 15, color: '#334155', fontWeight: 500 }}>
-            Seja bem-vindo ao Sistema Operacional GOON.
-          </p>
-        )}
+        <div style={{ width: 32, height: 3, background: '#C7F900', borderRadius: 2, margin: '0 auto 20px' }} />
+        <p style={{ fontFamily: 'var(--font-sans)', fontSize: 15, color: '#334155', fontWeight: 500 }}>
+          Seja bem-vindo ao Sistema Operacional GOON{userName ? `, ${userName}` : ''}.
+        </p>
+        <p style={{ fontFamily: 'var(--font-display)', fontSize: 11, color: '#9ca3af', letterSpacing: '0.32em', fontWeight: 700, marginTop: 10, textTransform: 'uppercase' }}>
+          Global <span style={{ color: '#8fb800' }}>or</span> Nothing
+        </p>
       </div>
 
       <div style={{

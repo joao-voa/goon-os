@@ -119,7 +119,7 @@ export function Sidebar({
           {(!collapsed || isMobile) && (
             <a href="/home" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, textDecoration: 'none' }}>
               <GoonLogo height={22} fill="#F2F2F2" />
-              <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 8, fontFamily: 'var(--font-sans)', fontWeight: 600, letterSpacing: '0.18em' }}>OPERACIONAL SYSTEM</span>
+              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9, fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: '0.42em', paddingLeft: '0.42em' }}>ADVISOR</span>
             </a>
           )}
           {collapsed && !isMobile && (

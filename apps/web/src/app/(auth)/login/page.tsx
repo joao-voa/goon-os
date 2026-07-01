@@ -74,9 +74,10 @@ export default function LoginPage() {
           <div style={{ marginBottom: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'center' }}><GoonLogo height={34} fill="#0A0A0C" /></div>
           </div>
-          <p style={{ fontFamily: 'var(--font-sans)', color: '#94a3b8', fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 4 }}>
-            Operacional System
+          <p style={{ fontFamily: 'var(--font-display)', color: '#64748b', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.42em', paddingLeft: '0.42em', marginBottom: 12 }}>
+            Advisor
           </p>
+          <div style={{ width: 28, height: 3, background: '#C7F900', borderRadius: 2, margin: '0 auto 12px' }} />
           <p style={{ fontFamily: 'var(--font-sans)', color: '#94a3b8', fontSize: 13, fontWeight: 500 }}>
             Acesse sua conta
           </p>
@@ -124,7 +125,7 @@ export default function LoginPage() {
           </form>
 
           <p style={{ textAlign: 'center', marginTop: 24, fontSize: 11, fontFamily: 'var(--font-sans)', color: '#cbd5e1' }}>
-            GOON &copy; 2026
+            GOON Advisor &copy; 2026 &middot; <span style={{ color: '#64748b', letterSpacing: '0.1em' }}>GLOBAL <span style={{ color: '#a3cc00' }}>OR</span> NOTHING</span>
           </p>
         </div>
       </div>

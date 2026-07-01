@@ -25,6 +25,7 @@
   --font-mono: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-sans: 'Inter', 'Space Grotesk', sans-serif;
   --font-marker: 'Space Grotesk', sans-serif;
+  --font-display: 'Sora', 'Inter', sans-serif;
 
   --radius: 8px;
   --radius-sm: 6px;
@@ -245,8 +246,8 @@ body {
   transition: all 0.15s ease;
 }
 .goon-input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(30,64,175,0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(199,249,0,0.22);
 }
 .goon-input::placeholder {
   color: var(--text-muted);
@@ -275,8 +276,8 @@ body {
   transition: all 0.15s ease;
 }
 .goon-select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(30,64,175,0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(199,249,0,0.22);
 }
 
 .goon-textarea {
@@ -294,8 +295,8 @@ body {
   transition: all 0.15s ease;
 }
 .goon-textarea:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(30,64,175,0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(199,249,0,0.22);
 }
 
 /* ═══════ LABELS ═══════ */
@@ -443,7 +444,7 @@ body {
   color: white;
 }
 .goon-sidebar-item-active {
-  background: rgba(30,64,175,0.3);
+  background: rgba(199,249,0,0.28);
   color: white;
   box-shadow: none;
 }
@@ -583,3 +584,12 @@ body {
   align-items: center;
   justify-content: center;
 }
+
+
+/* ═══════ GOON DESIGN SYSTEM v2 — tipografia (Sora títulos / Inter textos) ═══════ */
+h1, h2, h3, h4, h5, .goon-display { font-family: var(--font-display); letter-spacing: -0.01em; }
+h1 { font-size: 48px; font-weight: 700; line-height: 1.05; }
+h2 { font-size: 36px; font-weight: 600; line-height: 1.1; }
+h3 { font-size: 28px; font-weight: 500; line-height: 1.15; }
+.goon-tagline { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.02em; }
+.goon-neon { color: #C7F900; }

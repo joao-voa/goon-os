@@ -139,7 +139,7 @@ export default function CashflowPage() {
           <button onClick={() => setComCarteira(!comCarteira)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: comCarteira ? '#006600' : '#cc0000', color: 'white', borderRadius: 6 }}>
             {comCarteira ? 'COM A RECUPERAR' : 'SEM A RECUPERAR'}
           </button>
-          <button onClick={() => setExcluirGiu(!excluirGiu)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: excluirGiu ? '#d4a017' : '#64748b', color: 'white', borderRadius: 6 }}>
+          <button onClick={() => setExcluirGiu(!excluirGiu)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: excluirGiu ? '#C7F900' : '#64748b', color: excluirGiu ? '#0A0A0C' : 'white', borderRadius: 6 }}>
             {excluirGiu ? 'SEM PESSOAL GIU' : 'COM PESSOAL GIU'}
           </button>
           <button onClick={() => setFullscreen(!fullscreen)} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, background: fullscreen ? 'black' : 'white', color: fullscreen ? 'white' : 'black' }}>
