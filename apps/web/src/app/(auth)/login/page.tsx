@@ -88,7 +88,7 @@ export default function LoginPage() {
               <label htmlFor="email" style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>E-mail</label>
               <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seu@email.com" required
                 style={{ width: '100%', padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: 8, fontFamily: 'var(--font-sans)', fontSize: 14, outline: 'none', transition: 'all 0.15s', color: '#0f172a' }}
-                onFocus={e => { e.currentTarget.style.borderColor = '#0A0A0C'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(10,10,12,0.08)' }}
+                onFocus={e => { e.currentTarget.style.borderColor = '#C7F900'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(199,249,0,0.18)' }}
                 onBlur={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = 'none' }}
               />
             </div>
@@ -96,7 +96,7 @@ export default function LoginPage() {
               <label htmlFor="password" style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Senha</label>
               <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="********" required
                 style={{ width: '100%', padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: 8, fontFamily: 'var(--font-sans)', fontSize: 14, outline: 'none', transition: 'all 0.15s', color: '#0f172a' }}
-                onFocus={e => { e.currentTarget.style.borderColor = '#0A0A0C'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(10,10,12,0.08)' }}
+                onFocus={e => { e.currentTarget.style.borderColor = '#C7F900'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(199,249,0,0.18)' }}
                 onBlur={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = 'none' }}
               />
             </div>
@@ -109,15 +109,15 @@ export default function LoginPage() {
 
             <button type="submit" disabled={loading}
               style={{
-                background: '#0A0A0C', color: 'white', border: 'none',
+                background: '#C7F900', color: '#0A0A0C', border: 'none',
                 borderRadius: 8, padding: '12px', cursor: loading ? 'wait' : 'pointer',
                 fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700,
                 transition: 'all 0.15s', marginTop: 4, width: '100%',
-                boxShadow: '0 1px 3px rgba(10,10,12,0.3)',
+                boxShadow: '0 4px 14px rgba(199,249,0,0.35)',
                 opacity: loading ? 0.7 : 1,
               }}
-              onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#2A2A30' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#0A0A0C' }}
+              onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#a9d600' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#C7F900' }}
             >
               {loading ? 'Aguarde...' : 'Entrar'}
             </button>

@@ -93,7 +93,7 @@ export default function HomePage() {
               <div
                 style={{
                   background: 'white', border: '1px solid #e2e8f0',
-                  borderLeft: `4px solid ${item.color}`,
+                  borderLeft: '4px solid #C7F900',
                   boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '16px 14px',
                   cursor: 'pointer', transition: 'transform 0.1s, box-shadow 0.1s',
                   display: 'flex', flexDirection: 'column', gap: 6,
@@ -113,7 +113,7 @@ export default function HomePage() {
                   e.currentTarget.style.borderColor = '#e2e8f0'
                 }}
               >
-                <Icon size={20} color={item.color} strokeWidth={2.2} />
+                <Icon size={20} color="currentColor" strokeWidth={2.2} />
                 <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }}>
                   {item.label}
                 </span>

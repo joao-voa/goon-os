@@ -118,13 +118,13 @@ export function Sidebar({
         }}>
           {(!collapsed || isMobile) && (
             <a href="/home" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, textDecoration: 'none' }}>
-              <GoonLogo height={22} chrome />
+              <GoonLogo height={22} fill="#F2F2F2" />
               <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 8, fontFamily: 'var(--font-sans)', fontWeight: 600, letterSpacing: '0.18em' }}>OPERACIONAL SYSTEM</span>
             </a>
           )}
           {collapsed && !isMobile && (
             <a href="/home" style={{ textDecoration: 'none' }}>
-              <GoonLogo height={11} chrome />
+              <GoonLogo height={11} fill="#F2F2F2" />
             </a>
           )}
           {!isMobile && (
@@ -152,11 +152,11 @@ export function Sidebar({
                   justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
                   textDecoration: 'none',
                   color: isActive ? 'white' : 'rgba(255,255,255,0.5)',
-                  background: isActive ? 'rgba(255,255,255,0.09)' : 'transparent',
+                  background: isActive ? 'rgba(199,249,0,0.12)' : 'transparent',
                   borderRadius: 8, margin: '1px 8px',
                   fontFamily: 'var(--font-sans)', fontWeight: isActive ? 600 : 500, fontSize: 13,
                   whiteSpace: 'nowrap', transition: 'all 0.15s',
-                  borderLeft: isActive ? '3px solid #FFFFFF' : '3px solid transparent',
+                  borderLeft: isActive ? '3px solid #C7F900' : '3px solid transparent',
                 }}
                 onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.85)' } }}
                 onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'; (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.5)' } }}
