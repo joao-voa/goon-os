@@ -631,7 +631,7 @@ export default function PendenciesPage() {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
                 <thead>
-                  <tr style={{ background: '#cc0000', color: 'white', textTransform: 'uppercase' }}>
+                  <tr style={{ background: '#dc2626', color: 'white', textTransform: 'uppercase' }}>
                     <th style={{ padding: '8px 12px', textAlign: 'left' }}>Cliente</th>
                     <th style={{ padding: '8px 12px', textAlign: 'center' }}>Programa</th>
                     <th style={{ padding: '8px 12px', textAlign: 'center' }}>Parcela</th>
@@ -671,8 +671,8 @@ export default function PendenciesPage() {
                                 toast.success('Pagamento confirmado em ' + dateStr)
                                 setOverduePayments(prev => prev.filter(p => p.id !== pay.id))
                               } catch { toast.error('Erro ao dar baixa') }
-                            }} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>PAGAR</button>
-                            <button onClick={() => window.location.href = `/clients/${pay.client.id}`} style={{ background: '#4A78FF', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>VER</button>
+                            }} style={{ background: '#16a34a', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>PAGAR</button>
+                            <button onClick={() => window.location.href = `/clients/${pay.client.id}`} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>VER</button>
                             <button onClick={async () => {
                               try {
                                 await apiFetch(`/api/payments/${pay.id}/carteira`, { method: 'PATCH', body: JSON.stringify({ inCarteira: !pay.inCarteira }) })
@@ -782,7 +782,7 @@ export default function PendenciesPage() {
 
       {/* Active filter indicator */}
       {clientIdFilter && (
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 16, padding: '6px 12px', background: '#ccff00', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 16, padding: '6px 12px', background: '#C7F900', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'black', textTransform: 'uppercase' }}>
             Filtro ativo: cliente={clientIdFilter}
           </span>

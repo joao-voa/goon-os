@@ -259,7 +259,7 @@ function EditProductModal({ product, onClose, onSaved }: EditProductModalProps) 
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div style={{ width: '100%', maxWidth: 440, background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
-        <div style={{ background: '#0f172a', color: 'white', fontFamily: 'var(--font-sans)', fontSize: 10, textTransform: 'uppercase', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', letterSpacing: 1, backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
+        <div style={{ background: '#0A0A0C', color: 'white', fontFamily: 'var(--font-sans)', fontSize: 10, textTransform: 'uppercase', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', letterSpacing: 1, backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
           <span>Editar Programa</span>
           <button onClick={onClose} style={{ background: 'var(--danger)', border: '1px solid white', color: 'white', cursor: 'pointer', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700 }}>×</button>
         </div>
@@ -634,7 +634,7 @@ export default function ProductDetailPage() {
                                             if (!confirm(`Remover ${m.mentorName}?`)) return
                                             await apiFetch(`/api/mentors/${m.id}`, { method: 'DELETE' })
                                             loadMentors(plan.id)
-                                          }} style={{ background: '#cc0000', color: 'white', border: 'none', padding: '1px 6px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
+                                          }} style={{ background: '#dc2626', color: 'white', border: 'none', padding: '1px 6px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
                                         </div>
                                       ))}
                                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#666', textAlign: 'right' }}>
@@ -683,7 +683,7 @@ export default function ProductDetailPage() {
                                           } catch { toast.error('Erro ao atribuir mentor') }
                                           setSavingMentor(false)
                                         }}
-                                        style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}
+                                        style={{ background: '#16a34a', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}
                                       >OK</button>
                                       <button
                                         onClick={(e) => { e.stopPropagation(); setAddingMentor(null) }}

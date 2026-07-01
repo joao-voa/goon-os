@@ -157,12 +157,12 @@ export default function PersonAccountsPage() {
     <div>
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
-        <div style={{ background: '#1e293b', color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+        <div style={{ background: '#0A0A0C', color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
           <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Total a Pagar</div>
           <div style={{ fontSize: 18 }}>{fmt(totalBalance)}</div>
           <div style={{ fontSize: 9, opacity: 0.7 }}>{personsWithBalance.length} pessoas com saldo</div>
         </div>
-        <div style={{ background: '#334155', color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+        <div style={{ background: '#0A0A0C', color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
           <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Total Pago</div>
           <div style={{ fontSize: 18 }}>{fmt(totalPaid)}</div>
           <div style={{ fontSize: 9, opacity: 0.7 }}>Creditos registrados</div>
@@ -179,7 +179,7 @@ export default function PersonAccountsPage() {
       {/* Sync button */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
         <button onClick={handleSync} disabled={syncing} style={{
-          background: '#0f172a', color: 'white', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+          background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
           padding: '6px 16px', cursor: syncing ? 'wait' : 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
         }}>
           {syncing ? 'SINCRONIZANDO...' : 'SYNC'}
@@ -193,7 +193,7 @@ export default function PersonAccountsPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12, background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }}>
             <thead>
-              <tr style={{ background: '#0f172a', color: 'white', textTransform: 'uppercase' }}>
+              <tr style={{ background: '#0A0A0C', color: 'white', textTransform: 'uppercase' }}>
                 <th style={{ padding: '10px 12px', textAlign: 'left' }}>Nome</th>
                 <th style={{ padding: '10px 12px', textAlign: 'center' }}>Tipo</th>
                 <th style={{ padding: '10px 12px', textAlign: 'right' }}>Total Devido</th>
@@ -223,7 +223,7 @@ export default function PersonAccountsPage() {
                     <td style={{ padding: '10px 12px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                       <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                         {p.balance > 0 && p.type !== 'SOCIO' && (
-                          <button onClick={() => handlePay(p)} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>PAGAR</button>
+                          <button onClick={() => handlePay(p)} style={{ background: '#16a34a', color: 'white', border: '1px solid #e2e8f0', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>PAGAR</button>
                         )}
                         <button onClick={() => toggleExtract(p.id)} style={{ background: extractId === p.id ? 'black' : 'var(--retro-blue)', color: 'white', border: '1px solid #e2e8f0', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>
                           {extractId === p.id ? 'FECHAR' : 'EXTRATO'}
@@ -255,7 +255,7 @@ export default function PersonAccountsPage() {
                                     toast.success(`${fmtFull(d.value)} pago — ${d.description}`)
                                     loadPersons()
                                   } catch { toast.error('Erro ao pagar') }
-                                }} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '2px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, flexShrink: 0 }}>PG</button>
+                                }} style={{ background: '#16a34a', color: 'white', border: '1px solid #e2e8f0', padding: '2px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, flexShrink: 0 }}>PG</button>
                               )}
                               {d.paid && (
                                 <button onClick={async () => {
@@ -265,14 +265,14 @@ export default function PersonAccountsPage() {
                                     toast.success('Pagamento revertido')
                                     loadPersons()
                                   } catch { toast.error('Erro ao reverter') }
-                                }} style={{ background: '#cc0000', color: 'white', border: '1px solid #e2e8f0', padding: '2px 6px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, flexShrink: 0 }}>PAGO ✕</button>
+                                }} style={{ background: '#dc2626', color: 'white', border: '1px solid #e2e8f0', padding: '2px 6px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, flexShrink: 0 }}>PAGO ✕</button>
                               )}
                             </div>
                           ))}
                           {p.balance > 0 && p.type !== 'SOCIO' && (
                             <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: 10, paddingTop: 8, borderTop: '1px solid #e2e8f0' }}>
                               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginRight: 12 }}>Saldo: {fmtFull(p.balance)}</span>
-                              <button onClick={() => handlePay(p)} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '6px 16px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>PAGAR</button>
+                              <button onClick={() => handlePay(p)} style={{ background: '#16a34a', color: 'white', border: '1px solid #e2e8f0', padding: '6px 16px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>PAGAR</button>
                             </div>
                           )}
                         </div>
@@ -325,7 +325,7 @@ export default function PersonAccountsPage() {
                                       </td>
                                       <td style={{ padding: '5px 8px', textAlign: 'center' }}>
                                         {tx.source === 'MANUAL' && tx.type === 'CREDIT' && (
-                                          <button onClick={() => handleDeleteTx(tx.id)} style={{ background: '#cc0000', color: 'white', border: '1px solid #e2e8f0', padding: '2px 6px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700 }}>X</button>
+                                          <button onClick={() => handleDeleteTx(tx.id)} style={{ background: '#dc2626', color: 'white', border: '1px solid #e2e8f0', padding: '2px 6px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700 }}>X</button>
                                         )}
                                       </td>
                                     </tr>

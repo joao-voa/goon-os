@@ -601,7 +601,7 @@ export default function ClientsPage() {
 
       {/* Active filter indicator */}
       {statusFilter && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, padding: '6px 12px', background: '#ccff00', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', width: 'fit-content' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, padding: '6px 12px', background: '#C7F900', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', width: 'fit-content' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'black', textTransform: 'uppercase' }}>
             Filtro ativo: status={statusFilter}
           </span>
@@ -723,7 +723,7 @@ export default function ClientsPage() {
                             fetchClients()
                           } catch { toast.error('Erro ao cancelar') }
                         }}
-                        style={{ background: '#cc0000', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}
+                        style={{ background: '#dc2626', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}
                       >
                         CANCELAR
                       </button>

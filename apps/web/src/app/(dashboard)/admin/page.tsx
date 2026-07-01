@@ -152,14 +152,14 @@ export default function AdminPage() {
           <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 20, margin: 0 }}>ADMINISTRACAO</h1>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#888', marginTop: 4 }}>GOON — Operacional System {SYSTEM_VERSION}</div>
         </div>
-        <button onClick={() => { setEditId(null); setForm(emptyForm); setShowModal(true) }} style={{ background: '#0f172a', color: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '8px 16px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>+ NOVO USUARIO</button>
+        <button onClick={() => { setEditId(null); setForm(emptyForm); setShowModal(true) }} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '8px 16px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>+ NOVO USUARIO</button>
       </div>
 
       {/* Users Table */}
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
           <thead>
-            <tr style={{ background: '#0f172a', color: 'white', textTransform: 'uppercase' }}>
+            <tr style={{ background: '#0A0A0C', color: 'white', textTransform: 'uppercase' }}>
               <th style={{ padding: '8px 12px', textAlign: 'left' }}>Nome</th>
               <th style={{ padding: '8px 12px', textAlign: 'left' }}>Email</th>
               <th style={{ padding: '8px 12px', textAlign: 'center' }}>Perfil</th>
@@ -193,7 +193,7 @@ export default function AdminPage() {
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                       <button onClick={() => handleEdit(u)} style={{ background: 'var(--retro-blue)', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>EDITAR</button>
                       <button onClick={() => handleToggleActive(u)} style={{ background: u.isActive ? '#e6a800' : '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>{u.isActive ? 'DESATIVAR' : 'ATIVAR'}</button>
-                      <button onClick={() => handleDelete(u)} style={{ background: '#cc0000', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>X</button>
+                      <button onClick={() => handleDelete(u)} style={{ background: '#dc2626', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>X</button>
                     </div>
                   </td>
                 </tr>
@@ -259,7 +259,7 @@ export default function AdminPage() {
 
             <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
               <button onClick={() => { setShowModal(false); setEditId(null) }} style={{ padding: '8px 16px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>CANCELAR</button>
-              <button onClick={handleSave} style={{ background: '#0f172a', color: 'white', padding: '8px 16px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>SALVAR</button>
+              <button onClick={handleSave} style={{ background: '#0A0A0C', color: 'white', padding: '8px 16px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>SALVAR</button>
             </div>
           </div>
         </div>

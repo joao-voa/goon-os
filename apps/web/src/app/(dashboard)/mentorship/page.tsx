@@ -110,7 +110,7 @@ export default function MentorshipPage() {
           <div key={m.clientId} onClick={() => setSelected(m.clientId)} style={{ ...card, padding: 14, cursor: 'pointer', borderLeft: `4px solid ${m.attention ? '#dc2626' : '#16a34a'}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700 }}>{m.company}</div>
-              {m.tier && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, background: '#0f172a', color: 'white', padding: '2px 5px' }}>{m.tier}</span>}
+              {m.tier && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, background: '#0A0A0C', color: 'white', padding: '2px 5px' }}>{m.tier}</span>}
             </div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#888', marginTop: 2 }}>Mentor: {m.mentorName ?? '—'}</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 10 }}>
@@ -205,7 +205,7 @@ function Drawer({ clientId, onClose, onChange }: { clientId: string; onClose: ()
                 <textarea value={ctx.mainPains} onChange={e => setCtx({ ...ctx, mainPains: e.target.value })} style={{ ...inp, minHeight: 40, resize: 'vertical', marginBottom: 6 }} />
                 <label style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#888' }}>Objetivo com a mentoria</label>
                 <textarea value={ctx.goal} onChange={e => setCtx({ ...ctx, goal: e.target.value })} style={{ ...inp, minHeight: 40, resize: 'vertical', marginBottom: 6 }} />
-                <button onClick={saveCtx} style={{ ...btn, background: '#4A78FF', color: 'white' }}>Salvar contexto</button>
+                <button onClick={saveCtx} style={{ ...btn, background: '#0A0A0C', color: 'white' }}>Salvar contexto</button>
               </div>
             )}
 

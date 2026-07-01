@@ -161,7 +161,7 @@ function CloseDealModal({
           width: '100%', maxWidth: 420, position: 'relative',
         }}
       >
-        <div style={{ background: '#22c55e', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
+        <div style={{ background: '#16a34a', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
           FECHAR NEGÓCIO — {lead.companyName}
         </div>
         <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -261,7 +261,7 @@ function CloseDealModal({
               CANCELAR
             </button>
             <button type="submit" disabled={submitting} style={{
-              flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#22c55e', color: 'white',
+              flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#16a34a', color: 'white',
               fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer',
               boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
             }}>
@@ -380,7 +380,7 @@ function NewLeadModal({
           width: '100%', maxWidth: 420, maxHeight: '90vh', overflowY: 'auto',
         }}
       >
-        <div style={{ background: '#4A78FF', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
+        <div style={{ background: '#0A0A0C', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
           NOVO LEAD
         </div>
         <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -472,7 +472,7 @@ function NewLeadModal({
               CANCELAR
             </button>
             <button type="submit" disabled={submitting} style={{
-              flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#4A78FF', color: 'white',
+              flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#0A0A0C', color: 'white',
               fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer',
               boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
             }}>
@@ -730,7 +730,7 @@ function LeadDetailModal({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <div style={{ fontFamily: 'var(--font-sans)', fontSize: 10 }}>DADOS</div>
             {!editing && (
-              <button onClick={() => setEditing(true)} style={{ background: '#4A78FF', color: 'white', border: '1px solid #e2e8f0', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>EDITAR</button>
+              <button onClick={() => setEditing(true)} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>EDITAR</button>
             )}
           </div>
           {editing ? (
@@ -851,7 +851,7 @@ function LeadDetailModal({
                     onUpdated()
                   } catch { toast.error('Erro ao salvar') }
                   setSaving(false)
-                }} style={{ flex: 1, padding: '6px', border: '1px solid #e2e8f0', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                }} style={{ flex: 1, padding: '6px', border: '1px solid #e2e8f0', background: '#16a34a', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                   {saving ? 'SALVANDO...' : 'SALVAR'}
                 </button>
               </div>
@@ -908,7 +908,7 @@ function LeadDetailModal({
           <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12, marginBottom: 12 }}>
             {!showSchedule ? (
               <button onClick={() => setShowSchedule(true)} style={{
-                width: '100%', padding: '8px', border: '2px solid #22c55e', background: '#22c55e', color: 'white',
+                width: '100%', padding: '8px', border: '2px solid #22c55e', background: '#16a34a', color: 'white',
                 fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
               }}>AGENDAR REUNIAO COMERCIAL</button>
             ) : (
@@ -924,7 +924,7 @@ function LeadDetailModal({
                 <input value={schedNotes} onChange={e => setSchedNotes(e.target.value)} placeholder="Observacoes..." style={{ ...inputStyle, fontSize: 11, padding: '5px 8px', marginBottom: 6, width: '100%' }} />
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button type="button" onClick={() => setShowSchedule(false)} style={{ flex: 1, padding: '5px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
-                  <button type="submit" disabled={scheduling} style={{ flex: 1, padding: '5px', border: '1px solid #e2e8f0', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: scheduling ? 'wait' : 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                  <button type="submit" disabled={scheduling} style={{ flex: 1, padding: '5px', border: '1px solid #e2e8f0', background: '#16a34a', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: scheduling ? 'wait' : 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                     {scheduling ? 'AGENDANDO...' : 'CONFIRMAR'}
                   </button>
                 </div>
@@ -941,7 +941,7 @@ function LeadDetailModal({
                 ))}
               </select>
               <input placeholder="Descreva..." value={newDesc} onChange={e => setNewDesc(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-              <button type="submit" disabled={submitting} style={{ background: '#0f172a', color: 'white', border: '1px solid #e2e8f0', padding: '6px 12px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>+</button>
+              <button type="submit" disabled={submitting} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', padding: '6px 12px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>+</button>
             </div>
           </form>
 
@@ -998,7 +998,7 @@ function LeadDetailModal({
                                   if (!confirm(`Remover ${m.mentorName}?`)) return
                                   await apiFetch(`/api/mentors/${m.id}`, { method: 'DELETE' })
                                   loadMentors(p.id)
-                                }} style={{ background: '#cc0000', color: 'white', border: 'none', padding: '1px 6px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
+                                }} style={{ background: '#dc2626', color: 'white', border: 'none', padding: '1px 6px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
                               </div>
                             ))}
                             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#666', textAlign: 'right' }}>
@@ -1030,7 +1030,7 @@ function LeadDetailModal({
                                 onUpdated()
                               } catch { toast.error('Erro ao atribuir mentor') }
                               setSavingMentor(false)
-                            }} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>OK</button>
+                            }} style={{ background: '#16a34a', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>OK</button>
                             <button onClick={() => setAddingMentor(null)} style={{ background: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
                           </div>
                         ) : (
@@ -1071,9 +1071,9 @@ function LeadDetailModal({
           <div style={{ display: 'flex', gap: 8, marginTop: 16, borderTop: '1px solid #e2e8f0', paddingTop: 12 }}>
             <button onClick={onClose} style={{ flex: 1, padding: '8px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>FECHAR</button>
             {stage !== 'FECHADO' && stage !== 'PERDIDO' && (
-              <button onClick={onCloseDeal} style={{ flex: 1, padding: '8px', border: '1px solid #e2e8f0', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>FECHAR NEGOCIO</button>
+              <button onClick={onCloseDeal} style={{ flex: 1, padding: '8px', border: '1px solid #e2e8f0', background: '#16a34a', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>FECHAR NEGOCIO</button>
             )}
-            <button onClick={onDelete} style={{ padding: '8px 12px', border: '1px solid #e2e8f0', background: '#cc0000', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>EXCLUIR</button>
+            <button onClick={onDelete} style={{ padding: '8px 12px', border: '1px solid #e2e8f0', background: '#dc2626', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>EXCLUIR</button>
           </div>
         </div>
       </div>
@@ -1311,7 +1311,7 @@ export default function CrmPage() {
 
             {/* Pipeline summary */}
             <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white', marginBottom: 20 }}>
-              <div style={{ background: '#0f172a', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>FUNIL DE VENDAS</div>
+              <div style={{ background: '#0A0A0C', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>FUNIL DE VENDAS</div>
               <div style={{ padding: 16 }}>
                 {[
                   { label: 'Novo', count: inNovo, color: '#4A78FF', pct: totalLeads > 0 ? Math.round(inNovo / totalLeads * 100) : 0 },
@@ -1336,7 +1336,7 @@ export default function CrmPage() {
               leads.forEach(l => { const rep = l.salesRep ?? 'Sem vendedor'; bySeller[rep] = (bySeller[rep] ?? 0) + 1 })
               return (
                 <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
-                  <div style={{ background: '#0f172a', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>LEADS POR VENDEDOR</div>
+                  <div style={{ background: '#0A0A0C', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>LEADS POR VENDEDOR</div>
                   <div style={{ padding: 16 }}>
                     {Object.entries(bySeller).sort((a, b) => b[1] - a[1]).map(([rep, count]) => (
                       <div key={rep} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
@@ -1369,7 +1369,7 @@ export default function CrmPage() {
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: 14, margin: 0 }}>AGENDA COMERCIAL</h2>
-            <a href="/agenda" style={{ padding: '6px 14px', border: '1px solid #e2e8f0', background: '#22c55e', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+            <a href="/agenda" style={{ padding: '6px 14px', border: '1px solid #e2e8f0', background: '#16a34a', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
               + AGENDAR REUNIAO
             </a>
           </div>
@@ -1402,10 +1402,10 @@ export default function CrmPage() {
                   }}>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: isToday ? 900 : 400, color: isToday ? '#22c55e' : 'black', display: 'flex', justifyContent: 'space-between' }}>
                       <span>{day}</span>
-                      {dayMeetings.length > 0 && <span style={{ background: '#22c55e', color: 'white', borderRadius: '50%', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8 }}>{dayMeetings.length}</span>}
+                      {dayMeetings.length > 0 && <span style={{ background: '#16a34a', color: 'white', borderRadius: '50%', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8 }}>{dayMeetings.length}</span>}
                     </div>
                     {dayMeetings.slice(0, 2).map(m => (
-                      <div key={m.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 7, padding: '1px 3px', marginTop: 1, background: '#22c55e', color: 'white', borderRadius: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', opacity: m.status === 'DONE' ? 0.6 : 1 }}>
+                      <div key={m.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 7, padding: '1px 3px', marginTop: 1, background: '#16a34a', color: 'white', borderRadius: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', opacity: m.status === 'DONE' ? 0.6 : 1 }}>
                         {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} {m.client?.companyName ?? m.title}
                       </div>
                     ))}
@@ -1421,7 +1421,7 @@ export default function CrmPage() {
             const dayMeetings = meetingsByDay[dayNum] ?? []
             return (
               <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', background: 'white', marginBottom: 16 }}>
-                <div style={{ background: '#22c55e', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>
+                <div style={{ background: '#16a34a', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>
                   {new Date(comSelectedDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </div>
                 <div style={{ padding: 12 }}>
@@ -1441,10 +1441,10 @@ export default function CrmPage() {
                           <>
                             <button onClick={async () => {
                               try { await apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ status: 'DONE' }) }); toast.success('Marcada como feita'); loadCommercialMeetings() } catch { toast.error('Erro') }
-                            }} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FEITA</button>
+                            }} style={{ background: '#16a34a', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FEITA</button>
                             <button onClick={async () => {
                               try { await apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ status: 'NO_SHOW' }) }); toast.success('Marcada como no-show'); loadCommercialMeetings() } catch { toast.error('Erro') }
-                            }} style={{ background: '#e6a800', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FALTOU</button>
+                            }} style={{ background: '#f59e0b', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FALTOU</button>
                             <button onClick={() => {
                               const newDate = prompt('Nova data (DD/MM/AAAA):', new Date(m.date).toLocaleDateString('pt-BR'))
                               if (!newDate) return
@@ -1456,15 +1456,15 @@ export default function CrmPage() {
                               apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ date: dt.toISOString() }) })
                                 .then(() => { toast.success('Reagendada para ' + newDate + ' ' + newTime); loadCommercialMeetings() })
                                 .catch(() => toast.error('Erro ao reagendar'))
-                            }} style={{ background: '#4A78FF', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>REAGENDAR</button>
+                            }} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>REAGENDAR</button>
                             <button onClick={async () => {
                               if (!confirm('Cancelar esta reuniao?')) return
                               try { await apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ status: 'CANCELLED' }) }); toast.success('Reuniao cancelada'); loadCommercialMeetings() } catch { toast.error('Erro') }
-                            }} style={{ background: '#cc0000', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>CANCELAR</button>
+                            }} style={{ background: '#dc2626', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>CANCELAR</button>
                           </>
                         )}
-                        {m.status === 'DONE' && <span style={{ background: '#006600', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>FEITA</span>}
-                        {m.status === 'NO_SHOW' && <span style={{ background: '#cc0000', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>FALTOU</span>}
+                        {m.status === 'DONE' && <span style={{ background: '#16a34a', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>FEITA</span>}
+                        {m.status === 'NO_SHOW' && <span style={{ background: '#dc2626', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>FALTOU</span>}
                         {m.status === 'CANCELLED' && <span style={{ background: '#888', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>CANCELADA</span>}
                       </div>
                     </div>
@@ -1520,7 +1520,7 @@ export default function CrmPage() {
           <button
             onClick={() => setShowNewLead(true)}
             style={{
-              padding: '8px 16px', border: '1px solid #e2e8f0', background: '#4A78FF', color: 'white',
+              padding: '8px 16px', border: '1px solid #e2e8f0', background: '#0A0A0C', color: 'white',
               fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
               boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
             }}
@@ -1649,7 +1649,7 @@ export default function CrmPage() {
       {/* Valor fechado + Performance vendedores */}
       {metrics && metrics.closedValueThisMonth > 0 && (
         <div style={{ marginBottom: 16, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ background: '#22c55e', color: 'white', padding: '8px 16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12 }}>
+          <div style={{ background: '#16a34a', color: 'white', padding: '8px 16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12 }}>
             Fechado no mes: {fmtBRL(metrics.closedValueThisMonth)}
           </div>
           {Object.entries(metrics.bySalesRep).filter(([, v]) => v.closed > 0).map(([rep, v]) => (
@@ -1789,7 +1789,7 @@ function CrmDashboard({ metrics, faturamentoFilter, setFaturamentoFilter, isMobi
       <div style={titleStyle}>
         2 · Funil de vendas
         {bottleneck && (
-          <span style={{ background: '#cc0000', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, padding: '3px 8px', textTransform: 'uppercase' }}>
+          <span style={{ background: '#dc2626', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, padding: '3px 8px', textTransform: 'uppercase' }}>
             Gargalo: {LEAD_STAGE_LABELS[bottleneck] ?? bottleneck}
           </span>
         )}

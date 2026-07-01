@@ -138,17 +138,17 @@ export default function ExpensesPage() {
     <div style={{ padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 20 }}>DESPESAS</h1>
-        <button onClick={() => { setEditId(null); setForm(emptyForm); setShowModal(true) }} style={{ background: '#0f172a', color: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '8px 16px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>+ NOVA DESPESA</button>
+        <button onClick={() => { setEditId(null); setForm(emptyForm); setShowModal(true) }} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '8px 16px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>+ NOVA DESPESA</button>
       </div>
 
       {/* KPI Strip */}
       {summary && (
         <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-          <div style={{ background: '#e6a800', color: 'white', padding: '12px 20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+          <div style={{ background: '#f59e0b', color: 'white', padding: '12px 20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
             <div style={{ fontSize: 10, textTransform: 'uppercase' }}>Previsto</div>
             <div style={{ fontSize: 18 }}>{fmt(summary.totalPrevisto)}</div>
           </div>
-          <div style={{ background: '#006600', color: 'white', padding: '12px 20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+          <div style={{ background: '#16a34a', color: 'white', padding: '12px 20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
             <div style={{ fontSize: 10, textTransform: 'uppercase' }}>Pago</div>
             <div style={{ fontSize: 18 }}>{fmt(summary.totalPago)}</div>
           </div>
@@ -198,14 +198,14 @@ export default function ExpensesPage() {
           <label style={labelStyle}>Ano</label>
           <input type="number" value={year} onChange={e => setYear(parseInt(e.target.value))} style={{ width: 80, padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }} />
         </div>
-        <button onClick={() => loadData()} style={{ background: '#0f172a', color: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '8px 16px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>APLICAR</button>
+        <button onClick={() => loadData()} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '8px 16px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>APLICAR</button>
       </div>
 
       {/* Table */}
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
           <thead>
-            <tr style={{ background: '#0f172a', color: 'white', textTransform: 'uppercase' }}>
+            <tr style={{ background: '#0A0A0C', color: 'white', textTransform: 'uppercase' }}>
               <th onClick={() => toggleSort('description')} style={{ padding: '8px 12px', textAlign: 'left', cursor: 'pointer' }}>Descricao{sortField === 'description' ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>
               <th onClick={() => toggleSort('category')} style={{ padding: '8px 12px', textAlign: 'center', cursor: 'pointer' }}>Categoria{sortField === 'category' ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>
               <th onClick={() => toggleSort('value')} style={{ padding: '8px 12px', textAlign: 'right', cursor: 'pointer' }}>Valor{sortField === 'value' ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>
@@ -230,7 +230,7 @@ export default function ExpensesPage() {
                   <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                     <button onClick={() => handleEdit(e)} style={{ background: 'var(--retro-blue)', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>EDITAR</button>
                     {e.status === 'PREVISTO' && (
-                      <button onClick={() => handlePay(e.id)} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>PAGAR</button>
+                      <button onClick={() => handlePay(e.id)} style={{ background: '#16a34a', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>PAGAR</button>
                     )}
                     {e.status === 'PAGO' && (
                       <button onClick={async () => {
@@ -240,9 +240,9 @@ export default function ExpensesPage() {
                           toast.success('Despesa revertida')
                           loadData()
                         } catch { toast.error('Erro ao reverter') }
-                      }} style={{ background: '#e6a800', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>REVERTER</button>
+                      }} style={{ background: '#f59e0b', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>REVERTER</button>
                     )}
-                    <button onClick={() => handleDelete(e.id)} style={{ background: '#cc0000', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>X</button>
+                    <button onClick={() => handleDelete(e.id)} style={{ background: '#dc2626', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>X</button>
                   </div>
                 </td>
               </tr>
@@ -282,7 +282,7 @@ export default function ExpensesPage() {
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
               <button onClick={() => { setShowModal(false); setEditId(null) }} style={{ padding: '8px 16px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>CANCELAR</button>
-              <button onClick={handleSave} style={{ background: '#0f172a', color: 'white', padding: '8px 16px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>SALVAR</button>
+              <button onClick={handleSave} style={{ background: '#0A0A0C', color: 'white', padding: '8px 16px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>SALVAR</button>
             </div>
           </div>
         </div>

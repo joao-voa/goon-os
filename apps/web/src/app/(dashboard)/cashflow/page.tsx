@@ -164,11 +164,11 @@ export default function CashflowPage() {
           {/* KPIs do mês */}
           {data && data.months[dailyMonth] && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 20 }}>
-              <div style={{ background: '#006600', color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+              <div style={{ background: '#16a34a', color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
                 <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Entradas</div>
                 <div style={{ fontSize: 16 }}>{fmt(data.months[dailyMonth].entradas.total)}</div>
               </div>
-              <div style={{ background: '#cc0000', color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+              <div style={{ background: '#dc2626', color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
                 <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Saidas</div>
                 <div style={{ fontSize: 16 }}>{fmt(data.months[dailyMonth].saidas.total + data.months[dailyMonth].comissoes.total)}</div>
               </div>
@@ -183,7 +183,7 @@ export default function CashflowPage() {
           <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
               <thead>
-                <tr style={{ background: '#0f172a', color: 'white', textTransform: 'uppercase' }}>
+                <tr style={{ background: '#0A0A0C', color: 'white', textTransform: 'uppercase' }}>
                   <th style={{ padding: '8px 12px', textAlign: 'center', width: 50 }}>Dia</th>
                   <th style={{ padding: '8px 12px', textAlign: 'right' }}>Entradas</th>
                   <th style={{ padding: '8px 12px', textAlign: 'right' }}>Saidas</th>
@@ -358,11 +358,11 @@ export default function CashflowPage() {
                 <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 180 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: '#006600', fontWeight: 700, whiteSpace: 'nowrap', writingMode: 'vertical-lr', transform: 'rotate(180deg)', maxHeight: 55, letterSpacing: 0.5 }}>{entValue > 0 ? fmt(entValue) : ''}</span>
-                    <div style={{ width: 22, height: Math.max(entH, 2), background: '#006600', border: '1px solid #004400', borderRadius: 2 }} />
+                    <div style={{ width: 22, height: Math.max(entH, 2), background: '#16a34a', border: '1px solid #004400', borderRadius: 2 }} />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: '#cc0000', fontWeight: 700, whiteSpace: 'nowrap', writingMode: 'vertical-lr', transform: 'rotate(180deg)', maxHeight: 55, letterSpacing: 0.5 }}>{saiValue > 0 ? fmt(saiValue) : ''}</span>
-                    <div style={{ width: 22, height: Math.max(saiH, 2), background: '#cc0000', border: '1px solid #990000', borderRadius: 2 }} />
+                    <div style={{ width: 22, height: Math.max(saiH, 2), background: '#dc2626', border: '1px solid #990000', borderRadius: 2 }} />
                   </div>
                 </div>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' }}>{MONTH_NAMES[m.month - 1]}</span>
@@ -371,8 +371,8 @@ export default function CashflowPage() {
           })}
         </div>
         <div style={{ padding: '0 20px 12px', display: 'flex', gap: 16, fontFamily: 'var(--font-mono)', fontSize: 10 }}>
-          <span><span style={{ display: 'inline-block', width: 10, height: 10, background: '#006600', marginRight: 4, verticalAlign: 'middle' }} />Entradas</span>
-          <span><span style={{ display: 'inline-block', width: 10, height: 10, background: '#cc0000', marginRight: 4, verticalAlign: 'middle' }} />Saidas + Comissoes</span>
+          <span><span style={{ display: 'inline-block', width: 10, height: 10, background: '#16a34a', marginRight: 4, verticalAlign: 'middle' }} />Entradas</span>
+          <span><span style={{ display: 'inline-block', width: 10, height: 10, background: '#dc2626', marginRight: 4, verticalAlign: 'middle' }} />Saidas + Comissoes</span>
         </div>
       </div>
 

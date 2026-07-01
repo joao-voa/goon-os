@@ -89,7 +89,7 @@ export default function PrintPage() {
         {d.caseStudies.length === 0 && <p style={{ fontSize: 12, color: '#888' }}>Sem estudos de caso.</p>}
       </section>
 
-      <button onClick={() => window.print()} style={{ marginTop: 24, padding: '8px 16px', background: '#111', color: 'white', border: 0, cursor: 'pointer', borderRadius: 4 }}>Imprimir / Salvar PDF</button>
+      <button onClick={() => window.print()} style={{ marginTop: 24, padding: '8px 16px', background: '#0A0A0C', color: 'white', border: 0, cursor: 'pointer', borderRadius: 4 }}>Imprimir / Salvar PDF</button>
     </div>
   )
 }

@@ -382,7 +382,7 @@ export default function OnboardingPage() {
           </p>
         </div>
         <button onClick={() => setShowCreate(true)} style={{
-          padding: '8px 16px', border: '1px solid #e2e8f0', background: '#4A78FF', color: 'white',
+          padding: '8px 16px', border: '1px solid #e2e8f0', background: '#0A0A0C', color: 'white',
           fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
         }}>+ CRIAR</button>
       </div>
@@ -392,7 +392,7 @@ export default function OnboardingPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
           onClick={e => { if (e.target === e.currentTarget) setShowCreate(false) }}>
           <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', width: '100%', maxWidth: 400 }}>
-            <div style={{ background: '#4A78FF', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>CRIAR ONBOARDING</div>
+            <div style={{ background: '#0A0A0C', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>CRIAR ONBOARDING</div>
             <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
                 <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Cliente</label>
@@ -415,7 +415,7 @@ export default function OnboardingPage() {
                     loadData()
                   } catch { toast.error('Erro ao criar. Cliente ja pode ter onboarding.') }
                   setCreating(false)
-                }} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#4A78FF', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: creating ? 'wait' : 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                }} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#0A0A0C', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: creating ? 'wait' : 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                   {creating ? 'CRIANDO...' : 'CRIAR'}
                 </button>
               </div>

@@ -544,7 +544,7 @@ export default function PaymentsPage() {
       {(statusFilter || productFilter) && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
           {statusFilter && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: '#ccff00', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: '#C7F900', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'black', textTransform: 'uppercase' }}>
                 Filtro ativo: status={statusFilter}
               </span>
@@ -787,7 +787,7 @@ export default function PaymentsPage() {
                         )}
                         {payment.status === 'PAID' && (
                           <button
-                            style={{ fontSize: 8, padding: '5px 8px', whiteSpace: 'nowrap', background: '#e6a800', color: 'white', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontWeight: 700, cursor: 'pointer' }}
+                            style={{ fontSize: 8, padding: '5px 8px', whiteSpace: 'nowrap', background: '#f59e0b', color: 'white', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontWeight: 700, cursor: 'pointer' }}
                             onClick={() => handleUnpay(payment.id)}
                           >
                             Reverter

@@ -215,7 +215,7 @@ export default function TasksPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 20, margin: 0 }}>TAREFAS</h1>
         <button onClick={openNew} style={{
-          padding: '8px 16px', border: '1px solid #e2e8f0', background: '#4A78FF', color: 'white',
+          padding: '8px 16px', border: '1px solid #e2e8f0', background: '#0A0A0C', color: 'white',
           fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
         }}>+ NOVA TAREFA</button>
       </div>
@@ -250,7 +250,7 @@ export default function TasksPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
           onClick={e => { if (e.target === e.currentTarget && confirm('Sair sem salvar?')) setShowModal(false) }}>
           <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ background: '#4A78FF', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
+            <div style={{ background: '#0A0A0C', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
               {editTask ? 'EDITAR TAREFA' : 'NOVA TAREFA'}
             </div>
             <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -311,10 +311,10 @@ export default function TasksPage() {
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                 {editTask && (
-                  <button onClick={handleDelete} style={{ padding: '10px 14px', border: '1px solid #e2e8f0', background: '#cc0000', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>EXCLUIR</button>
+                  <button onClick={handleDelete} style={{ padding: '10px 14px', border: '1px solid #e2e8f0', background: '#dc2626', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>EXCLUIR</button>
                 )}
                 <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
-                <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#4A78FF', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#0A0A0C', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                   {saving ? 'SALVANDO...' : editTask ? 'ATUALIZAR' : 'CRIAR'}
                 </button>
               </div>

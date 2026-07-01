@@ -455,13 +455,13 @@ function AddPlanModal({ clientId, onClose, onCreated }: AddPlanModalProps) {
     border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', margin: 'auto',
   }
   const headerStyle: React.CSSProperties = {
-    background: '#0f172a', color: 'white', fontFamily: 'var(--font-sans)', fontSize: 10,
+    background: '#0A0A0C', color: 'white', fontFamily: 'var(--font-sans)', fontSize: 10,
     textTransform: 'uppercase', padding: '12px 16px', display: 'flex',
     justifyContent: 'space-between', alignItems: 'center', letterSpacing: 1,
     backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px',
   }
   const accentBtnStyle: React.CSSProperties = {
-    background: '#ccff00', color: 'black', border: '1px solid #e2e8f0', boxShadow: '4px 4px 0px black',
+    background: '#C7F900', color: 'black', border: '1px solid #e2e8f0', boxShadow: '4px 4px 0px black',
     fontFamily: 'var(--font-sans)', fontSize: 10, textTransform: 'uppercase',
     padding: '10px 20px', cursor: 'pointer', transition: 'transform 0.1s, box-shadow 0.1s',
     borderRadius: 8, letterSpacing: 0.5, display: 'inline-flex', alignItems: 'center',
@@ -585,7 +585,7 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
   }
 
   const accentBtnStyle: React.CSSProperties = {
-    background: '#ccff00', color: 'black', border: '1px solid #e2e8f0', boxShadow: '4px 4px 0px black',
+    background: '#C7F900', color: 'black', border: '1px solid #e2e8f0', boxShadow: '4px 4px 0px black',
     fontFamily: 'var(--font-sans)', fontSize: 10, textTransform: 'uppercase',
     padding: '10px 20px', cursor: 'pointer', borderRadius: 8, letterSpacing: 0.5,
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontWeight: 700,
@@ -594,7 +594,7 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16, overflowY: 'auto' }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{ width: '100%', maxWidth: 480, background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', margin: 'auto' }}>
-        <div style={{ background: '#0f172a', color: 'white', fontFamily: 'var(--font-sans)', fontSize: 10, textTransform: 'uppercase', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', letterSpacing: 1, backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
+        <div style={{ background: '#0A0A0C', color: 'white', fontFamily: 'var(--font-sans)', fontSize: 10, textTransform: 'uppercase', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', letterSpacing: 1, backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
           <span>Gerar Contrato</span>
           <button onClick={onClose} style={{ background: 'var(--danger)', border: '1px solid white', color: 'white', cursor: 'pointer', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700 }}>×</button>
         </div>
@@ -672,7 +672,7 @@ function NewPendencyModal({ clientId, onClose, onCreated }: NewPendencyModalProp
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{ width: '100%', maxWidth: 440, background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
-        <div style={{ background: '#0f172a', color: 'white', fontFamily: 'var(--font-sans)', fontSize: 10, textTransform: 'uppercase', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', letterSpacing: 1, backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
+        <div style={{ background: '#0A0A0C', color: 'white', fontFamily: 'var(--font-sans)', fontSize: 10, textTransform: 'uppercase', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', letterSpacing: 1, backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
           <span>Nova Pendência</span>
           <button onClick={onClose} style={{ background: 'var(--danger)', border: '1px solid white', color: 'white', cursor: 'pointer', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700 }}>×</button>
         </div>
@@ -999,7 +999,7 @@ export default function ClientDetailPage() {
                   } catch { toast.error('Erro ao cancelar') }
                 }}
                 style={{
-                  background: '#cc0000', color: 'white', border: '1px solid #e2e8f0',
+                  background: '#dc2626', color: 'white', border: '1px solid #e2e8f0',
                   boxShadow: '0 2px 4px rgba(0,0,0,0.05)', fontFamily: 'var(--font-sans)', fontSize: 9,
                   textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', letterSpacing: 0.5,
                 }}
@@ -1017,7 +1017,7 @@ export default function ClientDetailPage() {
                   } catch { toast.error('Erro ao excluir') }
                 }}
                 style={{
-                  background: '#cc0000', color: 'white', border: '1px solid #e2e8f0',
+                  background: '#dc2626', color: 'white', border: '1px solid #e2e8f0',
                   boxShadow: '0 2px 4px rgba(0,0,0,0.05)', fontFamily: 'var(--font-sans)', fontSize: 9,
                   textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', letterSpacing: 0.5,
                 }}
@@ -1028,7 +1028,7 @@ export default function ClientDetailPage() {
             <a
               href="/contracts/generate"
               style={{
-                background: '#0f172a', color: 'white', border: '1px solid #e2e8f0',
+                background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0',
                 boxShadow: '3px 3px 0 #555', fontFamily: 'var(--font-sans)', fontSize: 9,
                 textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', letterSpacing: 0.5,
                 textDecoration: 'none', display: 'inline-block',
@@ -1176,7 +1176,7 @@ export default function ClientDetailPage() {
 
               {/* Quick add meeting button */}
               <div style={{ marginTop: 16 }}>
-                <a href="/agenda" style={{ display: 'inline-block', padding: '8px 16px', border: '1px solid #e2e8f0', background: '#4A78FF', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                <a href="/agenda" style={{ display: 'inline-block', padding: '8px 16px', border: '1px solid #e2e8f0', background: '#0A0A0C', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                   AGENDAR REUNIAO
                 </a>
               </div>
@@ -1409,7 +1409,7 @@ export default function ClientDetailPage() {
                                               toast.success(`${m.mentorName} removido`)
                                               loadMentors(plan.id)
                                             } catch { toast.error('Erro ao remover mentor') }
-                                          }} style={{ background: '#cc0000', color: 'white', border: 'none', padding: '1px 6px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
+                                          }} style={{ background: '#dc2626', color: 'white', border: 'none', padding: '1px 6px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
                                         </div>
                                       </div>
                                     ))}
@@ -1441,7 +1441,7 @@ export default function ClientDetailPage() {
                                         loadMentors(plan.id)
                                       } catch { toast.error('Erro ao atribuir mentor') }
                                       setSavingMentor(false)
-                                    }} style={{ background: '#006600', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>OK</button>
+                                    }} style={{ background: '#16a34a', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>OK</button>
                                     <button onClick={() => setAddingMentor(null)} style={{ background: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
                                   </div>
                                 ) : (

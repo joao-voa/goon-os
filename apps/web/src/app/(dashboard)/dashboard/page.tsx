@@ -434,7 +434,7 @@ function PipelineSummary({ data }: { data: PipelineStage[] }) {
                         {label}
                       </span>
                     </div>
-                    <span style={{ background: '#0f172a', color: 'white', border: '1px solid #e2e8f0', padding: '1px 6px', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700 }}>
+                    <span style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', padding: '1px 6px', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700 }}>
                       {item.count}
                     </span>
                   </div>
@@ -623,7 +623,7 @@ function NegotiationCard({ data, isMobile }: { data: Negotiation; isMobile: bool
                 <tr key={l.id} style={{ borderBottom: '1px solid #ddd' }}>
                   <td style={{ padding: '6px 8px' }}>{l.companyName}</td>
                   <td style={{ padding: '6px 8px', textAlign: 'center' }}>
-                    <span style={{ background: '#e6a800', color: 'white', padding: '1px 6px', fontSize: 9, fontWeight: 700 }}>{STAGE_LABEL_MAP[l.stage] ?? l.stage}</span>
+                    <span style={{ background: '#f59e0b', color: 'white', padding: '1px 6px', fontSize: 9, fontWeight: 700 }}>{STAGE_LABEL_MAP[l.stage] ?? l.stage}</span>
                   </td>
                   {!isMobile && <td style={{ padding: '6px 8px' }}>{l.salesRep ?? '-'}</td>}
                   <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(l.value)}</td>
@@ -727,7 +727,7 @@ export default function DashboardPage() {
               value={
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span>{stats.kpis.totalActiveClients}</span>
-                  <span style={{ display: 'inline-block', width: 8, height: 8, background: '#ccff00', border: '1px solid #e2e8f0', borderRadius: '50%', animation: 'pulse 2s ease-in-out infinite' }} />
+                  <span style={{ display: 'inline-block', width: 8, height: 8, background: '#C7F900', border: '1px solid #e2e8f0', borderRadius: '50%', animation: 'pulse 2s ease-in-out infinite' }} />
                 </div>
               }
               icon={<Users size={16} />}
