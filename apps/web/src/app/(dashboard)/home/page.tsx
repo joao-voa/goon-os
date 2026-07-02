@@ -14,9 +14,12 @@ import {
   AlertTriangle,
   CheckSquare,
   Settings,
+  GraduationCap,
+  ScrollText,
 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { GoonLogo } from '@/components/GoonLogo'
+import { OWNER_EMAIL } from '@/lib/constants'
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', description: 'Visao geral e KPIs', href: '/dashboard', color: 'var(--retro-blue)' },
@@ -25,6 +28,7 @@ const menuItems = [
   { icon: Calendar, label: 'Agenda', description: 'Reunioes e acompanhamento', href: '/agenda', color: '#7c3aed' },
   { icon: Package, label: 'Programas', description: 'Produtos e programas', href: '/products', color: 'var(--success)' },
   { icon: GitBranch, label: 'Onboarding', description: 'Fluxo de onboarding de clientes', href: '/onboarding', color: 'var(--warning)' },
+  { icon: GraduationCap, label: 'Mentorados', description: 'Acompanhamento de mentorados', href: '/mentorship', color: '#7c3aed' },
   { icon: DollarSign, label: 'Financeiro', description: 'Pagamentos, despesas e fluxo', href: '/payments', color: '#22c55e' },
   { icon: CheckSquare, label: 'Tarefas', description: 'Gestao de tarefas e projetos', href: '/tasks', color: '#4A78FF' },
   { icon: AlertTriangle, label: 'Pendencias', description: 'Inadimplentes e contratos', href: '/pendencies', color: '#cc0000' },
@@ -32,18 +36,23 @@ const menuItems = [
   { icon: Settings, label: 'Admin', description: 'Usuarios e configuracoes', href: '/admin', color: 'var(--retro-blue)' },
 ]
 
+// Item exclusivo do dono (João) — igual à sidebar.
+const AUDIT_ITEM = { icon: ScrollText, label: 'Auditoria', description: 'Log de acoes por usuario', href: '/audit', color: '#0A0A0C' }
+
 const comercialPaths = ['/crm', '/agenda', '/products']
 
 export default function HomePage() {
   const [userRole, setUserRole] = useState<string>('')
   const [allowedModules, setAllowedModules] = useState<string[] | null>(null)
   const [userName, setUserName] = useState('')
+  const [isOwner, setIsOwner] = useState(false)
 
   useEffect(() => {
-    apiFetch<{ role: string; allowedModules?: string | null; name: string }>('/api/auth/me')
+    apiFetch<{ role: string; allowedModules?: string | null; name: string; email: string }>('/api/auth/me')
       .then(user => {
         setUserRole(user.role)
         setUserName(user.name)
+        setIsOwner(user.email === OWNER_EMAIL)
         if (user.allowedModules) {
           try { setAllowedModules(JSON.parse(user.allowedModules)) } catch { /* ignore */ }
         }
@@ -52,12 +61,16 @@ export default function HomePage() {
   }, [])
 
   const visibleItems = (() => {
-    if (allowedModules && allowedModules.length > 0) {
-      return menuItems.filter(item => allowedModules.includes(item.href))
-    }
-    if (userRole === 'admin') return menuItems
-    if (userRole === 'comercial') return menuItems.filter(item => comercialPaths.includes(item.href))
-    return menuItems
+    const base = (() => {
+      if (allowedModules && allowedModules.length > 0) {
+        return menuItems.filter(item => allowedModules.includes(item.href))
+      }
+      if (userRole === 'admin') return menuItems
+      if (userRole === 'comercial') return menuItems.filter(item => comercialPaths.includes(item.href))
+      return menuItems
+    })()
+    // Auditoria: só o dono vê (independente de role/módulos).
+    return isOwner ? [...base, AUDIT_ITEM] : base
   })()
 
   return (
