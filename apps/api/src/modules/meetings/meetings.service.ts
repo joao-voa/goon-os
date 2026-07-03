@@ -151,33 +151,89 @@ export class MeetingsService {
         status: 'ACTIVE',
         plans: { some: { status: 'ACTIVE', product: { code: { in: ['GE', 'TTS', 'AURA'] } } } },
       },
-      select: { id: true, companyName: true },
+      select: {
+        id: true,
+        companyName: true,
+        plans: {
+          where: { status: 'ACTIVE' },
+          select: { endDate: true, renewalStatus: true, product: { select: { code: true, name: true } } },
+        },
+      },
     })
 
-    const result: Array<{ clientId: string; lastMeetingDate: Date | null; nextMeetingDate: Date | null; daysSinceLastMeeting: number | null; health: string }> = []
+    const result: Array<{
+      clientId: string; companyName: string; programCode: string | null; programName: string | null
+      lastMeetingDate: Date | null; nextMeetingDate: Date | null; daysSinceLastMeeting: number | null
+      doneMeetingsCount: number; overdueCount: number; overdueValue: number; planExpired: boolean
+      reasons: string[]; health: 'red' | 'yellow' | 'green'
+    }> = []
     for (const client of clients) {
-      const lastMeeting = await this.prisma.meeting.findFirst({
-        where: { clientId: client.id, status: 'DONE' },
-        orderBy: { date: 'desc' },
-        select: { date: true },
-      })
-      const nextMeeting = await this.prisma.meeting.findFirst({
-        where: { clientId: client.id, status: 'SCHEDULED', date: { gte: now } },
-        orderBy: { date: 'asc' },
-        select: { date: true },
-      })
+      const [lastMeeting, nextMeeting, doneMeetingsCount, overdue, futurePaymentCount] = await Promise.all([
+        this.prisma.meeting.findFirst({
+          where: { clientId: client.id, status: 'DONE' },
+          orderBy: { date: 'desc' },
+          select: { date: true },
+        }),
+        this.prisma.meeting.findFirst({
+          where: { clientId: client.id, status: 'SCHEDULED', date: { gte: now } },
+          orderBy: { date: 'asc' },
+          select: { date: true, type: true },
+        }),
+        this.prisma.meeting.count({ where: { clientId: client.id, status: 'DONE' } }),
+        this.prisma.payment.findMany({
+          where: {
+            clientId: client.id,
+            OR: [{ status: 'OVERDUE' }, { status: 'PENDING', dueDate: { lt: now } }],
+          },
+          select: { value: true },
+        }),
+        this.prisma.payment.count({
+          where: { clientId: client.id, status: { in: ['PENDING', 'SCHEDULED'] }, dueDate: { gte: now } },
+        }),
+      ])
+
       const daysSince = lastMeeting ? Math.floor((now.getTime() - lastMeeting.date.getTime()) / (1000 * 60 * 60 * 24)) : null
-      let health: string = 'red'
-      if (daysSince !== null) {
-        if (daysSince <= 14) health = 'green'
-        else if (daysSince <= 30) health = 'yellow'
-      }
+      const overdueCount = overdue.length
+      const overdueValue = overdue.reduce((s, p) => s + Number(p.value), 0)
+
+      // Programa individual principal
+      const indivPlan = client.plans.find(p => ['GE', 'TTS', 'AURA'].includes(p.product.code)) ?? client.plans[0]
+      const programCode = indivPlan?.product.code ?? null
+      const programName = indivPlan?.product.name ?? null
+
+      // Vencido: renovação sinalizada, OU contrato acabou E não há nenhuma parcela futura
+      // (evita falso positivo de ciclo antigo quando o cliente já renovou / segue faturando)
+      const endDates = client.plans.map(p => p.endDate).filter((d): d is Date => !!d)
+      const maxEnd = endDates.length ? new Date(Math.max(...endDates.map(d => d.getTime()))) : null
+      const renewalFlag = client.plans.some(p => ['PENDING', 'NOTIFIED'].includes(p.renewalStatus ?? ''))
+      const planExpired = renewalFlag || (!!maxEnd && maxEnd < now && futurePaymentCount === 0)
+
+      // Cadência só é "gap" se NÃO há reunião futura marcada (marcar reunião = já agiu)
+      const cadenceGap = !nextMeeting && (daysSince === null || daysSince > 30)
+
+      const reasons: string[] = []
+      if (overdueCount > 0) reasons.push('FINANCEIRO')
+      if (planExpired) reasons.push('VENCIDO')
+      if (cadenceGap) reasons.push('SEM_REUNIAO')
+
+      // Severidade: financeiro/vencido são críticos (não some com reunião); cadência é atenção leve
+      let health: 'red' | 'yellow' | 'green' = 'green'
+      if (overdueCount > 0 || planExpired) health = 'red'
+      else if (cadenceGap) health = 'yellow'
 
       result.push({
         clientId: client.id,
+        companyName: client.companyName,
+        programCode,
+        programName,
         lastMeetingDate: lastMeeting?.date ?? null,
         nextMeetingDate: nextMeeting?.date ?? null,
         daysSinceLastMeeting: daysSince,
+        doneMeetingsCount,
+        overdueCount,
+        overdueValue,
+        planExpired,
+        reasons,
         health,
       })
     }

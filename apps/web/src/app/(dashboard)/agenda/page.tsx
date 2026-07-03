@@ -85,7 +85,7 @@ export default function AgendaPage() {
   const [formMentor, setFormMentor] = useState('')
   const [formNotes, setFormNotes] = useState('')
   const [saving, setSaving] = useState(false)
-  const [cadenceData, setCadenceData] = useState<Array<{ clientId: string; lastMeetingDate: string | null; nextMeetingDate: string | null; daysSinceLastMeeting: number | null; health: string }>>([])
+  const [cadenceData, setCadenceData] = useState<Array<{ clientId: string; companyName: string; programCode: string | null; programName: string | null; lastMeetingDate: string | null; nextMeetingDate: string | null; daysSinceLastMeeting: number | null; doneMeetingsCount: number; overdueCount: number; overdueValue: number; planExpired: boolean; reasons: string[]; health: string }>>([])
   const [stats, setStats] = useState<{ todayCount: number; weekCount: number; totalDone: number; totalScheduled: number } | null>(null)
   const [viewMode, setViewMode] = useState<'calendario' | 'painel'>('calendario')
 
@@ -311,24 +311,38 @@ export default function AgendaPage() {
             {/* Clientes que precisam de atencao */}
             <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
               <div style={{ background: '#dc2626', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>PRECISAM DE ATENCAO</div>
-              <div style={{ padding: 12, maxHeight: 300, overflowY: 'auto' }}>
-                {cadenceData.filter(d => d.health !== 'green').sort((a, b) => (b.daysSinceLastMeeting ?? 999) - (a.daysSinceLastMeeting ?? 999)).map(d => {
-                  const client = clients.find(c => c.id === d.clientId)
-                  if (!client) return null
-                  return (
-                    <div key={d.clientId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.health === 'red' ? '#cc0000' : '#e6a800', flexShrink: 0 }} />
-                        <strong>{client.companyName}</strong>
+              <div style={{ padding: 12, maxHeight: 360, overflowY: 'auto' }}>
+                {cadenceData
+                  .filter(d => d.health !== 'green')
+                  .sort((a, b) => (a.health === b.health ? (b.overdueValue - a.overdueValue) || ((b.daysSinceLastMeeting ?? 999) - (a.daysSinceLastMeeting ?? 999)) : a.health === 'red' ? -1 : 1))
+                  .map(d => {
+                    const next = d.nextMeetingDate ? new Date(d.nextMeetingDate) : null
+                    const tag = (bg: string, label: string) => (
+                      <span key={label} style={{ background: bg, color: 'white', padding: '2px 6px', fontSize: 8, fontWeight: 700, borderRadius: 3, whiteSpace: 'nowrap' }}>{label}</span>
+                    )
+                    return (
+                      <div key={d.clientId} style={{ padding: '10px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.health === 'red' ? '#dc2626' : '#f59e0b', flexShrink: 0 }} />
+                          <strong style={{ flex: 1 }}>{d.companyName}</strong>
+                          {d.programCode && <span style={{ background: '#0A0A0C', color: 'white', padding: '2px 6px', fontSize: 8, fontWeight: 700, borderRadius: 3 }}>{d.programCode}</span>}
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 6, paddingLeft: 16 }}>
+                          {d.overdueCount > 0 && tag('#dc2626', `FINANCEIRO ATRASADO · R$${d.overdueValue.toLocaleString('pt-BR')}`)}
+                          {d.planExpired && tag('#b45309', 'CONTRATO VENCIDO')}
+                          {d.reasons.includes('SEM_REUNIAO') && tag('#f59e0b', d.daysSinceLastMeeting !== null ? `${d.daysSinceLastMeeting}D SEM REUNIAO` : 'NUNCA REUNIU')}
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingLeft: 16, fontSize: 9, color: '#888' }}>
+                          <span>{d.doneMeetingsCount} {d.doneMeetingsCount === 1 ? 'reuniao realizada' : 'reunioes realizadas'}</span>
+                          {next
+                            ? <span style={{ color: '#16a34a', fontWeight: 700 }}>✓ proxima {next.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
+                            : <span style={{ color: '#dc2626', fontWeight: 700 }}>sem reuniao marcada</span>}
+                        </div>
                       </div>
-                      <span style={{ color: d.health === 'red' ? '#cc0000' : '#e6a800', fontSize: 10, fontWeight: 700 }}>
-                        {d.daysSinceLastMeeting !== null ? d.daysSinceLastMeeting + 'd sem reuniao' : 'Nunca reuniu'}
-                      </span>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
                 {cadenceData.filter(d => d.health !== 'green').length === 0 && (
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#006600', textAlign: 'center', padding: 20 }}>Todos os clientes em dia!</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#006600', textAlign: 'center', padding: 20 }}>Todos os clientes sob controle!</div>
                 )}
               </div>
             </div>
