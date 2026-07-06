@@ -105,6 +105,7 @@ export const CONTRACT_STATUS_COLORS: Record<string, string> = {
 
 export const LEAD_STAGES = [
   'NOVO',
+  'RECUPERAR',
   'FUP',
   'QUALIFICADO',
   'REUNIAO_AGENDADA',
@@ -116,6 +117,7 @@ export const LEAD_STAGES = [
 
 export const LEAD_STAGE_LABELS: Record<string, string> = {
   NOVO: 'Novo',
+  RECUPERAR: 'Recuperar',
   FUP: 'Follow Up',
   QUALIFICADO: 'Qualificado',
   REUNIAO_AGENDADA: 'Reuniao Agendada',
@@ -128,6 +130,7 @@ export const LEAD_STAGE_LABELS: Record<string, string> = {
 
 export const LEAD_STAGE_COLORS: Record<string, string> = {
   NOVO: '#4A78FF',
+  RECUPERAR: '#ec4899',
   FUP: '#06b6d4',
   QUALIFICADO: '#8b5cf6',
   REUNIAO_AGENDADA: '#0ea5e9',
