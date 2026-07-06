@@ -19,6 +19,7 @@ import {
   AURA_MODULES,
 } from '@/lib/constants'
 import dynamic from 'next/dynamic'
+import { X, Trash2 } from 'lucide-react'
 
 const CrmKanbanBoard = dynamic(() => import('@/components/CrmKanbanBoard'), { ssr: false })
 const ClientsPage = dynamic(() => import('../clients/page'), { ssr: false })
@@ -569,6 +570,7 @@ function LeadDetailModal({
   const [commissions, setCommissions] = useState<CommissionItem[]>([])
   const [stage, setStage] = useState(lead.leadStage)
   const [movingStage, setMovingStage] = useState(false)
+  const [showMovePicker, setShowMovePicker] = useState(false)
 
   // mover de etapa sem arrastar / sem fechar o card
   async function changeStage(toStage: string) {
@@ -712,26 +714,22 @@ function LeadDetailModal({
     >
       <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'auto' }}>
         {/* Header */}
-        <div style={{ background: LEAD_STAGE_COLORS[stage] ?? 'black', color: 'white', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12 }}>{lead.companyName}</span>
+        <div style={{ background: LEAD_STAGE_COLORS[stage] ?? 'black', color: 'white', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, flex: 1 }}>{lead.companyName}</span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, opacity: 0.8 }}>{LEAD_STAGE_LABELS[stage] ?? stage} | {daysInStage}d</span>
-        </div>
-
-        {/* Mover de etapa (sem arrastar / sem fechar o card) */}
-        <div style={{ padding: '10px 16px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Etapa:</span>
-          <select value={stage} onChange={e => changeStage(e.target.value)} disabled={movingStage} style={{ flex: 1, padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-            {LEAD_STAGES.map(s => <option key={s} value={s}>{LEAD_STAGE_LABELS[s] ?? s}</option>)}
-          </select>
+          <button onClick={onClose} title="Fechar" style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 6, width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}><X size={15} strokeWidth={3} /></button>
         </div>
 
         <div style={{ padding: 16 }}>
           {/* Info Grid - with edit button */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <div style={{ fontFamily: 'var(--font-sans)', fontSize: 10 }}>DADOS</div>
-            {!editing && (
-              <button onClick={() => setEditing(true)} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>EDITAR</button>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {!editing && (
+                <button onClick={() => setEditing(true)} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>EDITAR</button>
+              )}
+              <button onClick={onDelete} title="Excluir lead" style={{ background: 'white', color: '#dc2626', border: '1px solid #fecaca', padding: '4px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', borderRadius: 3 }}><Trash2 size={13} /></button>
+            </div>
           </div>
           {editing ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
@@ -1068,12 +1066,23 @@ function LeadDetailModal({
           )}
 
           {/* Actions */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 16, borderTop: '1px solid #e2e8f0', paddingTop: 12 }}>
-            <button onClick={onClose} style={{ flex: 1, padding: '8px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>FECHAR</button>
-            {stage !== 'FECHADO' && stage !== 'PERDIDO' && (
-              <button onClick={onCloseDeal} style={{ flex: 1, padding: '8px', border: '1px solid #e2e8f0', background: '#16a34a', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>FECHAR NEGOCIO</button>
+          <div style={{ marginTop: 16, borderTop: '1px solid #e2e8f0', paddingTop: 12 }}>
+            {showMovePicker && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10, padding: 10, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                {LEAD_STAGES.filter(s => s !== stage && s !== 'FECHADO').map(s => (
+                  <button key={s} onClick={() => { changeStage(s); setShowMovePicker(false) }} disabled={movingStage}
+                    style={{ padding: '5px 10px', border: `1px solid ${LEAD_STAGE_COLORS[s] ?? '#e2e8f0'}`, background: 'white', color: LEAD_STAGE_COLORS[s] ?? '#333', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer', borderRadius: 3 }}>
+                    {LEAD_STAGE_LABELS[s] ?? s}
+                  </button>
+                ))}
+              </div>
             )}
-            <button onClick={onDelete} style={{ padding: '8px 12px', border: '1px solid #e2e8f0', background: '#dc2626', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>EXCLUIR</button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setShowMovePicker(v => !v)} style={{ flex: 1, padding: '8px', border: '1px solid #0A0A0C', background: showMovePicker ? '#0A0A0C' : 'white', color: showMovePicker ? 'white' : '#0A0A0C', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>MOVER</button>
+              {stage !== 'FECHADO' && stage !== 'PERDIDO' && (
+                <button onClick={onCloseDeal} style={{ flex: 1, padding: '8px', border: '1px solid #e2e8f0', background: '#16a34a', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>FECHAR NEGOCIO</button>
+              )}
+            </div>
           </div>
         </div>
       </div>
