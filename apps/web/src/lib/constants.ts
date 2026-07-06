@@ -118,14 +118,14 @@ export const LEAD_STAGES = [
 export const LEAD_STAGE_LABELS: Record<string, string> = {
   NOVO: 'Novo',
   RECUPERAR: 'Recuperar',
-  FUP: 'Follow Up',
+  FUP: 'Conexao',
   QUALIFICADO: 'Qualificado',
   REUNIAO_AGENDADA: 'Reuniao Agendada',
   PROPOSTA_ENVIADA: 'Proposta Enviada',
   EM_NEGOCIACAO: 'Em Negociacao',
   FECHADO: 'Fechado Ganho',
   PERDIDO: 'Fechado Perdido',
-  FOLLOW_UP: 'Follow Up',
+  FOLLOW_UP: 'Conexao',
 }
 
 export const LEAD_STAGE_COLORS: Record<string, string> = {

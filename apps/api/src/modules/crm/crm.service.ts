@@ -20,7 +20,8 @@ const VALID_LEAD_STAGES = [
 
 const STAGE_LABELS: Record<string, string> = {
   NOVO: 'Novo',
-  FOLLOW_UP: 'Follow Up',
+  FOLLOW_UP: 'Conexao',
+  FUP: 'Conexao',
   EM_NEGOCIACAO: 'Em Negociacao',
   FECHADO: 'Fechado',
   PERDIDO: 'Perdido',
