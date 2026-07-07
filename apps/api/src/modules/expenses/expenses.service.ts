@@ -143,10 +143,12 @@ export class ExpensesService {
     const existing = await this.prisma.expense.findUnique({ where: { id } })
     if (!existing) throw new NotFoundException(`Expense ${id} not found`)
 
-    return this.prisma.expense.update({
+    const updated = await this.prisma.expense.update({
       where: { id },
       data: { status: 'PAGO', paidValue: existing.value, paidAt: new Date() },
-    }).then(e => ({ ...e, value: Number(e.value), paidValue: Number(e.paidValue) }))
+    })
+    await this.syncMentoriaToPerson(updated, true)
+    return { ...updated, value: Number(updated.value), paidValue: Number(updated.paidValue) }
   }
 
   async partialPay(id: string, amount: number) {
@@ -158,24 +160,70 @@ export class ExpensesService {
     const newPaid = Math.min(currentPaid + amount, total)
     const isFullyPaid = newPaid >= total
 
-    return this.prisma.expense.update({
+    const updated = await this.prisma.expense.update({
       where: { id },
       data: {
         paidValue: newPaid,
         status: isFullyPaid ? 'PAGO' : 'PARCIAL',
         paidAt: isFullyPaid ? new Date() : existing.paidAt,
       },
-    }).then(e => ({ ...e, value: Number(e.value), paidValue: Number(e.paidValue) }))
+    })
+    // Cruza com Conta Pessoas só quando quita a parcela inteira
+    await this.syncMentoriaToPerson(updated, isFullyPaid)
+    return { ...updated, value: Number(updated.value), paidValue: Number(updated.paidValue) }
   }
 
   async revertPayment(id: string) {
     const existing = await this.prisma.expense.findUnique({ where: { id } })
     if (!existing) throw new NotFoundException(`Expense ${id} not found`)
 
-    return this.prisma.expense.update({
+    const updated = await this.prisma.expense.update({
       where: { id },
       data: { paidValue: 0, status: 'PREVISTO', paidAt: null },
-    }).then(e => ({ ...e, value: Number(e.value), paidValue: Number(e.paidValue) }))
+    })
+    await this.syncMentoriaToPerson(updated, false)
+    return { ...updated, value: Number(updated.value), paidValue: Number(updated.paidValue) }
+  }
+
+  /**
+   * Cruza o pagamento de uma despesa de MENTORIA com a Conta Pessoas do mentor:
+   * ao quitar, cria o crédito correspondente; ao estornar, remove. Assim não
+   * precisa dar "pago" em dois lugares. Giulliano (casa) fica de fora.
+   */
+  private async syncMentoriaToPerson(
+    expense: { id: string; description: string; value: unknown; category: string },
+    paid: boolean,
+  ) {
+    if (expense.category !== 'MENTORIA') return
+    const m = expense.description.match(/Mentoria\s+(.+?)\s+—/)
+    if (!m) return
+    const mentorName = m[1].toLowerCase()
+    if (mentorName.includes('giulliano')) return
+
+    const persons = await this.prisma.person.findMany()
+    let personId: string | undefined
+    for (const p of persons) {
+      const names = [p.name]
+      if (p.aliases) { try { names.push(...(JSON.parse(p.aliases) as string[])) } catch { /* ignore */ } }
+      if (names.some(n => n.toLowerCase() === mentorName)) { personId = p.id; break }
+    }
+    if (!personId) return
+
+    const debitDesc = expense.description.replace(/Mentoria .+? — /, '')
+    const existingCredit = await this.prisma.personTransaction.findFirst({
+      where: { personId, type: 'CREDIT', notes: debitDesc },
+    })
+    if (paid && !existingCredit) {
+      await this.prisma.personTransaction.create({
+        data: {
+          personId, type: 'CREDIT', source: 'MENTORIA', sourceId: expense.id,
+          description: 'Pagamento mentoria', value: Number(expense.value),
+          date: new Date(), notes: debitDesc,
+        },
+      })
+    } else if (!paid && existingCredit) {
+      await this.prisma.personTransaction.delete({ where: { id: existingCredit.id } })
+    }
   }
 
   async delete(id: string) {

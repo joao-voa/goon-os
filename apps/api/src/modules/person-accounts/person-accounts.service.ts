@@ -139,6 +139,10 @@ export class PersonAccountsService {
       },
     })
 
+    // Cruza com a aba Mentorias: se o débito veio de uma despesa de mentoria,
+    // marca a despesa como paga (mesmo pagamento, sem check em dois lugares).
+    await this.linkMentoriaExpense(personId, dto.notes, true)
+
     return { ...tx, value: Number(tx.value) }
   }
 
@@ -148,7 +152,25 @@ export class PersonAccountsService {
     })
     if (!tx) throw new NotFoundException('Pagamento nao encontrado')
     await this.prisma.personTransaction.delete({ where: { id: tx.id } })
+    await this.linkMentoriaExpense(personId, notes, false)
     return { reverted: true }
+  }
+
+  /** Reflete o pagamento/estorno da Conta Pessoas na despesa de mentoria ligada (via débito). */
+  private async linkMentoriaExpense(personId: string, notes: string | undefined, paid: boolean) {
+    if (!notes) return
+    const debit = await this.prisma.personTransaction.findFirst({
+      where: { personId, type: 'DEBIT', description: notes },
+    })
+    if (debit?.source !== 'MENTORIA' || !debit.sourceId) return
+    const exp = await this.prisma.expense.findUnique({ where: { id: debit.sourceId } })
+    if (!exp) return
+    await this.prisma.expense.update({
+      where: { id: exp.id },
+      data: paid
+        ? { status: 'PAGO', paidValue: exp.value, paidAt: new Date() }
+        : { status: 'PREVISTO', paidValue: 0, paidAt: null },
+    })
   }
 
   async deleteTransaction(txId: string) {
