@@ -258,7 +258,7 @@ export class PlansService {
       })
     }
 
-    // Add virtual "Giulliano (AURA)" entries for unassigned plan value
+    // Add virtual Giulliano entries for unassigned plan value (residual = receita Giulliano)
     // Skip plans that already have a Giulliano mentor assigned
     for (const plan of activePlans) {
       const hasGiulliano = plan.mentors.some(m => m.mentorName.toLowerCase().includes('giulliano'))
@@ -280,7 +280,7 @@ export class PlansService {
 
       result.push({
         id: `giu-${plan.id}`,
-        mentorName: 'Giulliano (AURA)',
+        mentorName: 'Giulliano',
         value: giullianoValue,
         notes: 'Valor nao atribuido — receita Giulliano',
         createdAt: plan.createdAt,
