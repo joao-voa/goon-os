@@ -889,6 +889,12 @@ export class CrmService {
 
     // Name too short or numeric
     if (name.length < 3 || /^\d+$/.test(name)) return true
+    // Name is a single letter repeated (nnnn, jjj, aaaa) — junk/test entry
+    const letters = name.replace(/[^a-zà-ú]/gi, '')
+    if (letters.length >= 2 && new Set(letters).size === 1) return true
+    // Responsible/contact name is also single-letter junk (e.g. "Jjj")
+    const respLetters = (lead.responsible || '').toLowerCase().replace(/[^a-zà-ú]/gi, '')
+    if (letters.length <= 4 && respLetters.length >= 2 && new Set(respLetters).size === 1) return true
     // All fields identical (test/spam)
     if (name === cargo && cargo === faturamento) return true
     // Known spam patterns
