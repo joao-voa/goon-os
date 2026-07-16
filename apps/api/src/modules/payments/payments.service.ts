@@ -192,9 +192,11 @@ export class PaymentsService {
       startDate: Date | string
       paymentDay: number
       contractId?: string
+      labelTotal?: number // "/N" mostrado (quando difere da qtd criada, ex.: há entrada)
     },
   ) {
     const { totalInstallments, value, startDate, paymentDay, contractId } = params
+    const labelTotal = params.labelTotal ?? totalInstallments
 
     const start = new Date(startDate)
     const payments: Array<{
@@ -215,7 +217,7 @@ export class PaymentsService {
         clientPlanId: planId ?? null,
         contractId: contractId ?? null,
         installment: i + 1,
-        totalInstallments,
+        totalInstallments: labelTotal,
         dueDate,
         value,
         status: 'PENDING',

@@ -96,7 +96,9 @@ function CloseDealModal({
   const entry = parseFloat(entryValue) || 0
   const remaining = value - entry
   const installments = parseInt(saleInstallments) || 1
-  const installmentVal = installments > 0 ? remaining / installments : 0
+  // Quando há entrada, ela conta como 1 das parcelas: 12x com entrada = entrada + 11 regulares
+  const regularCount = entry > 0 ? Math.max(installments - 1, 1) : installments
+  const installmentVal = regularCount > 0 ? remaining / regularCount : 0
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -240,9 +242,9 @@ function CloseDealModal({
           )}
           {installments > 0 && value > 0 && (
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, background: '#f0f0f0', padding: '8px 12px', border: '1px solid #ccc' }}>
-              {entry > 0 && <div>Entrada: R$ {entry.toFixed(2)}</div>}
-              {installments}x de R$ {installmentVal.toFixed(2)}
-              <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>1a parcela: {new Date(firstInstallmentDate + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
+              {entry > 0 && <div>Entrada: R$ {entry.toFixed(2)} <span style={{ color: '#666' }}>(1/{installments})</span></div>}
+              {entry > 0 ? '+ ' : ''}{regularCount}x de R$ {installmentVal.toFixed(2)}
+              <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>Total: {installments}x &middot; 1a parcela regular: {new Date(firstInstallmentDate + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
               {wasAdvanced && parseFloat(advanceValue) > 0 && (
                 <div style={{ fontSize: 10, color: '#4A78FF', marginTop: 2 }}>Adiantado: R$ {parseFloat(advanceValue).toFixed(2)}</div>
               )}

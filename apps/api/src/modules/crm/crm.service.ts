@@ -221,7 +221,7 @@ export class CrmService {
           clientId: id,
           clientPlanId: plan.id,
           installment: 0,
-          totalInstallments: dto.saleInstallments + 1,
+          totalInstallments: dto.saleInstallments,
           dueDate: now,
           value: dto.entryValue,
           status: 'PAID',
@@ -235,7 +235,9 @@ export class CrmService {
     const firstDate = dto.firstInstallmentDate ? new Date(dto.firstInstallmentDate) : (() => { const d = new Date(now); d.setDate(d.getDate() + 30); return d })()
     const paymentDay = dto.paymentDay ?? firstDate.getDate()
     const payments = await this.paymentsService.createBulk(id, plan.id, {
-      totalInstallments: dto.saleInstallments,
+      // entrada conta como 1 das parcelas: 12x com entrada = entrada + 11 regulares
+      totalInstallments: entryPayment ? dto.saleInstallments - 1 : dto.saleInstallments,
+      labelTotal: dto.saleInstallments,
       value: dto.installmentValue,
       startDate: firstDate,
       paymentDay,
