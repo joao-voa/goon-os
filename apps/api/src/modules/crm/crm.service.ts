@@ -831,6 +831,7 @@ export class CrmService {
       cargo ? `Cargo: ${cargo}` : null,
       instagram ? `IG: ${instagram}` : null,
       website ? `Site: ${website}` : null,
+      `Plataforma: ${platform === 'fb' ? 'Facebook' : 'Instagram'}`,
     ].filter(Boolean).join(' | ')
 
     return {
@@ -843,7 +844,7 @@ export class CrmService {
       segment: 'Moda',
       status: 'PROSPECT',
       leadStage: 'NOVO',
-      leadSource: platform === 'fb' ? 'facebook' : 'instagram',
+      leadSource: 'meta_ads',
       leadNotes: notes || null,
       stageChangedAt: createdTime ? new Date(createdTime) : new Date(),
       createdAt: createdTime ? new Date(createdTime) : new Date(),
@@ -875,7 +876,7 @@ export class CrmService {
       segment: 'Moda',
       status: 'PROSPECT',
       leadStage: 'NOVO',
-      leadSource: 'site',
+      leadSource: 'respondi',
       leadNotes: notes || null,
       stageChangedAt: createdTime ? new Date(createdTime) : new Date(),
       createdAt: createdTime ? new Date(createdTime) : new Date(),

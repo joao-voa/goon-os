@@ -143,11 +143,14 @@ export const LEAD_STAGE_COLORS: Record<string, string> = {
 
 export const LEAD_SOURCE_LABELS: Record<string, string> = {
   instagram: 'Instagram',
+  meta_ads: 'Meta Ads',
+  respondi: 'Respondi',
   indicacao: 'Indicacao',
   evento: 'Evento',
+  base_clientes: 'Base de Clientes',
+  // legado (dados antigos migrados; mantidos p/ exibição)
   site: 'Site',
   facebook: 'Facebook',
-  base_clientes: 'Base de Clientes',
   outro: 'Outro',
   nao_informado: 'Nao informado',
 }
@@ -155,10 +158,10 @@ export const LEAD_SOURCE_LABELS: Record<string, string> = {
 // Source options offered when creating a lead (no "outro" — avoids untagged leads)
 export const LEAD_SOURCE_OPTIONS = [
   'instagram',
-  'facebook',
+  'meta_ads',
+  'respondi',
   'indicacao',
   'evento',
-  'site',
   'base_clientes',
 ] as const
 
