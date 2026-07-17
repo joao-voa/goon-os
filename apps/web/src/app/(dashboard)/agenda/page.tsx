@@ -88,6 +88,11 @@ export default function AgendaPage() {
   const [cadenceData, setCadenceData] = useState<Array<{ clientId: string; companyName: string; programCode: string | null; programName: string | null; lastMeetingDate: string | null; nextMeetingDate: string | null; daysSinceLastMeeting: number | null; doneMeetingsCount: number; overdueCount: number; overdueValue: number; planExpired: boolean; reasons: string[]; health: string }>>([])
   const [stats, setStats] = useState<{ todayCount: number; weekCount: number; totalDone: number; totalScheduled: number } | null>(null)
   const [viewMode, setViewMode] = useState<'calendario' | 'painel'>('calendario')
+  const [refreshing, setRefreshing] = useState(false)
+  const [fltInadimplente, setFltInadimplente] = useState(true)
+  const [fltVencido, setFltVencido] = useState(true)
+  const [fltSemReuniao, setFltSemReuniao] = useState(true)
+  const [programFilter, setProgramFilter] = useState('')
 
   const loadMeetings = useCallback(async () => {
     try {
@@ -101,15 +106,30 @@ export default function AgendaPage() {
   }, [month, year, mentorFilter])
 
   useEffect(() => { loadMeetings() }, [loadMeetings])
+  const loadPanel = useCallback(async () => {
+    try {
+      const [cad, st] = await Promise.all([
+        apiFetch<typeof cadenceData>('/api/meetings/cadence'),
+        apiFetch<typeof stats>('/api/meetings/stats'),
+      ])
+      setCadenceData(cad)
+      setStats(st)
+    } catch { /* ignore */ }
+  }, [])
+
   useEffect(() => {
     apiFetch<{ data: Client[] }>('/api/clients?limit=200')
       .then(res => setClients(res.data || []))
       .catch(() => {})
-    apiFetch<typeof cadenceData>('/api/meetings/cadence')
-      .then(setCadenceData).catch(() => {})
-    apiFetch<typeof stats>('/api/meetings/stats')
-      .then(setStats).catch(() => {})
-  }, [])
+    loadPanel()
+  }, [loadPanel])
+
+  async function handleRefresh() {
+    setRefreshing(true)
+    await Promise.all([loadPanel(), loadMeetings()])
+    setRefreshing(false)
+    toast.success('Painel atualizado')
+  }
 
   const mentors = [...new Set(meetings.map(m => m.mentorName).filter(Boolean))] as string[]
 
@@ -288,6 +308,35 @@ export default function AgendaPage() {
             </div>
           </div>
 
+          {/* Filtros do painel de atencao + refresh */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#666', textTransform: 'uppercase' }}>Filtrar:</span>
+            {([
+              ['Inadimplente', fltInadimplente, setFltInadimplente, '#dc2626'] as const,
+              ['Vencido', fltVencido, setFltVencido, '#b45309'] as const,
+              ['Sem reuniao', fltSemReuniao, setFltSemReuniao, '#f59e0b'] as const,
+            ]).map(([label, val, set, color]) => (
+              <button key={label} onClick={() => set(v => !v)} style={{
+                padding: '5px 10px', border: `1px solid ${val ? color : '#e2e8f0'}`,
+                background: val ? color : 'white', color: val ? 'white' : '#999',
+                fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer', borderRadius: 3,
+              }}>{val ? '✓ ' : ''}{label}</button>
+            ))}
+            <select value={programFilter} onChange={e => setProgramFilter(e.target.value)} style={{
+              padding: '5px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+            }}>
+              <option value="">Todos os programas</option>
+              {[...new Set(cadenceData.map(d => d.programCode).filter(Boolean))].sort().map(p => (
+                <option key={p} value={p as string}>{p}</option>
+              ))}
+            </select>
+            <button onClick={handleRefresh} disabled={refreshing} title="Atualizar o painel (apos dar baixa em pagamento)" style={{
+              marginLeft: 'auto', padding: '5px 14px', border: '1px solid #0A0A0C',
+              background: '#0A0A0C', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700,
+              cursor: refreshing ? 'wait' : 'pointer', borderRadius: 3,
+            }}>{refreshing ? '↻ ATUALIZANDO...' : '↻ SYNC'}</button>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             {/* Proximas reunioes */}
             <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
@@ -314,6 +363,8 @@ export default function AgendaPage() {
               <div style={{ padding: 12, maxHeight: 360, overflowY: 'auto' }}>
                 {cadenceData
                   .filter(d => d.health !== 'green')
+                  .filter(d => !programFilter || d.programCode === programFilter)
+                  .filter(d => (fltInadimplente && d.reasons.includes('FINANCEIRO')) || (fltVencido && d.reasons.includes('VENCIDO')) || (fltSemReuniao && d.reasons.includes('SEM_REUNIAO')))
                   .sort((a, b) => (a.health === b.health ? (b.overdueValue - a.overdueValue) || ((b.daysSinceLastMeeting ?? 999) - (a.daysSinceLastMeeting ?? 999)) : a.health === 'red' ? -1 : 1))
                   .map(d => {
                     const next = d.nextMeetingDate ? new Date(d.nextMeetingDate) : null
@@ -341,8 +392,12 @@ export default function AgendaPage() {
                       </div>
                     )
                   })}
-                {cadenceData.filter(d => d.health !== 'green').length === 0 && (
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#006600', textAlign: 'center', padding: 20 }}>Todos os clientes sob controle!</div>
+                {cadenceData
+                  .filter(d => d.health !== 'green')
+                  .filter(d => !programFilter || d.programCode === programFilter)
+                  .filter(d => (fltInadimplente && d.reasons.includes('FINANCEIRO')) || (fltVencido && d.reasons.includes('VENCIDO')) || (fltSemReuniao && d.reasons.includes('SEM_REUNIAO')))
+                  .length === 0 && (
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#006600', textAlign: 'center', padding: 20 }}>Nenhum cliente nesse filtro.</div>
                 )}
               </div>
             </div>
