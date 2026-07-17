@@ -64,6 +64,7 @@ export class CrmService {
         paymentMethod: true,
         saleInstallments: true,
         installmentValue: true,
+        entryValue: true,
         leadNotes: true,
         selectedModules: true,
         estimatedRevenue: true,
@@ -88,6 +89,7 @@ export class CrmService {
         ...lead,
         saleValue: lead.saleValue ? Number(lead.saleValue) : null,
         installmentValue: lead.installmentValue ? Number(lead.installmentValue) : null,
+        entryValue: lead.entryValue ? Number(lead.entryValue) : null,
         productCode: lead.plans[0]?.product?.code ?? null,
         faturamentoBand: CrmService.revenueBand(fat),
         isICP: CrmService.isICP(fat),
@@ -180,6 +182,7 @@ export class CrmService {
         paymentMethod: dto.paymentMethod,
         saleInstallments: dto.saleInstallments,
         installmentValue: dto.installmentValue,
+        entryValue: dto.entryValue && dto.entryValue > 0 ? dto.entryValue : null,
         closedAt: now,
       },
     })

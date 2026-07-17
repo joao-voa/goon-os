@@ -82,6 +82,9 @@ export class CreateClientDto {
   @IsOptional()
   installmentValue?: number
 
+  @IsOptional()
+  entryValue?: number
+
   @IsOptional() @IsString()
   leadNotes?: string
 

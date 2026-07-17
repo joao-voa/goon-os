@@ -39,6 +39,7 @@ interface LeadItem {
   paymentMethod: string | null
   saleInstallments: number | null
   installmentValue: number | null
+  entryValue: number | null
   leadNotes: string | null
   selectedModules: string | null
   estimatedRevenue: string | null
@@ -631,6 +632,7 @@ function LeadDetailModal({
   const [editSaleValue, setEditSaleValue] = useState(lead.saleValue?.toString() ?? '')
   const [editInstallments, setEditInstallments] = useState(lead.saleInstallments?.toString() ?? '')
   const [editInstallmentValue, setEditInstallmentValue] = useState(lead.installmentValue?.toString() ?? '')
+  const [editEntryValue, setEditEntryValue] = useState(lead.entryValue?.toString() ?? '')
   const [editPaymentMethod, setEditPaymentMethod] = useState(lead.paymentMethod ?? '')
   const [editSalesRep, setEditSalesRep] = useState(lead.salesRep ?? '')
   const [editSuggestedProduct, setEditSuggestedProduct] = useState(lead.suggestedProduct ?? '')
@@ -804,13 +806,17 @@ function LeadDetailModal({
                   </select>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6 }}>
                 <div>
                   <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>VALOR (R$)</label>
                   <input type="number" step="0.01" value={editSaleValue} onChange={e => setEditSaleValue(e.target.value)} style={inputStyle} />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>PARCELAS</label>
+                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>ENTRADA</label>
+                  <input type="number" step="0.01" placeholder="0" value={editEntryValue} onChange={e => setEditEntryValue(e.target.value)} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>PARCELAS (total)</label>
                   <input type="number" min="1" value={editInstallments} onChange={e => setEditInstallments(e.target.value)} style={inputStyle} />
                 </div>
                 <div>
@@ -843,6 +849,7 @@ function LeadDetailModal({
                         saleValue: parseFloat(editSaleValue) || null,
                         saleInstallments: parseInt(editInstallments) || null,
                         installmentValue: parseFloat(editInstallmentValue) || null,
+                        entryValue: parseFloat(editEntryValue) || null,
                         leadNotes: editLeadNotes.trim() || null,
                       }),
                     })
@@ -867,7 +874,13 @@ function LeadDetailModal({
               <div><strong>Programa:</strong> {lead.suggestedProduct ?? lead.productCode ?? '-'}</div>
               {lead.estimatedRevenue && <div><strong>Faturamento:</strong> {lead.estimatedRevenue}</div>}
               {lead.saleValue && <div><strong>Valor:</strong> {fmt(lead.saleValue)}</div>}
-              {lead.saleInstallments && <div><strong>Parcelas:</strong> {lead.saleInstallments}x {lead.installmentValue ? fmt(lead.installmentValue) : ''}</div>}
+              {lead.saleInstallments && (
+                lead.entryValue && lead.entryValue > 0 ? (
+                  <div><strong>Parcelas:</strong> {lead.saleInstallments}x (entrada {fmt(lead.entryValue)} + {lead.saleInstallments - 1}x {lead.installmentValue ? fmt(lead.installmentValue) : ''})</div>
+                ) : (
+                  <div><strong>Parcelas:</strong> {lead.saleInstallments}x {lead.installmentValue ? fmt(lead.installmentValue) : ''}</div>
+                )
+              )}
               {lead.paymentMethod && <div><strong>Pagamento:</strong> {lead.paymentMethod}</div>}
               <div><strong>Criado:</strong> {fmtDate(lead.createdAt)}</div>
               {lead.closedAt && <div><strong>Fechado:</strong> {fmtDate(lead.closedAt)}</div>}
