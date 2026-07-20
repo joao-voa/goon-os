@@ -869,9 +869,22 @@ export class CrmService {
       leadStage: 'NOVO',
       leadSource: 'meta_ads',
       leadNotes: notes || null,
-      stageChangedAt: createdTime ? new Date(createdTime) : new Date(),
-      createdAt: createdTime ? new Date(createdTime) : new Date(),
+      stageChangedAt: this.parseSheetDate(createdTime),
+      createdAt: this.parseSheetDate(createdTime),
     }
+  }
+
+  /** Parseia a data da planilha. Formato ISO com fuso (Meta) vai direto;
+   * "YYYY-MM-DD HH:MM:SS" (Respondi, hora BR sem fuso) é tratado como BRT (-03:00). */
+  private parseSheetDate(s?: string): Date {
+    if (!s) return new Date()
+    const t = s.trim()
+    if (/(Z|[+-]\d{2}:?\d{2})$/.test(t)) {
+      const d = new Date(t)
+      return isNaN(d.getTime()) ? new Date() : d
+    }
+    const d = new Date(t.replace(' ', 'T') + '-03:00')
+    return isNaN(d.getTime()) ? new Date() : d
   }
 
   private parseRespondiLead(r: Record<string, string>) {
@@ -901,8 +914,8 @@ export class CrmService {
       leadStage: 'NOVO',
       leadSource: 'respondi',
       leadNotes: notes || null,
-      stageChangedAt: createdTime ? new Date(createdTime) : new Date(),
-      createdAt: createdTime ? new Date(createdTime) : new Date(),
+      stageChangedAt: this.parseSheetDate(createdTime),
+      createdAt: this.parseSheetDate(createdTime),
     }
   }
 
