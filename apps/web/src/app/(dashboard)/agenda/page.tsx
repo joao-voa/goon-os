@@ -69,6 +69,8 @@ export default function AgendaPage() {
   const [month, setMonth] = useState(now.getMonth())
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [clients, setClients] = useState<Client[]>([])
+  const [leadClients, setLeadClients] = useState<Client[]>([])
+  const [clientSource, setClientSource] = useState<'active' | 'lead'>('active')
   const [showModal, setShowModal] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null)
@@ -119,8 +121,12 @@ export default function AgendaPage() {
   }, [])
 
   useEffect(() => {
-    apiFetch<{ data: Client[] }>('/api/clients?limit=200')
+    // Ativos (mentoria) e leads do CRM em listas separadas
+    apiFetch<{ data: Client[] }>('/api/clients?status=ACTIVE&limit=500')
       .then(res => setClients(res.data || []))
+      .catch(() => {})
+    apiFetch<{ data: Client[] }>('/api/clients?status=PROSPECT&limit=500')
+      .then(res => setLeadClients(res.data || []))
       .catch(() => {})
     loadPanel()
   }, [loadPanel])
@@ -137,6 +143,7 @@ export default function AgendaPage() {
   function openNewMeeting(dateStr: string) {
     setSelectedMeeting(null)
     setFormClientId('')
+    setClientSource('active')
     setFormTitle('')
     setFormType('INDIVIDUAL')
     setFormDate(dateStr)
@@ -150,6 +157,7 @@ export default function AgendaPage() {
   function openEditMeeting(m: Meeting) {
     setSelectedMeeting(m)
     setFormClientId(m.clientId)
+    setClientSource(leadClients.some(c => c.id === m.clientId) ? 'lead' : 'active')
     setFormTitle(m.title)
     setFormType(m.type)
     const d = new Date(m.date)
@@ -582,10 +590,21 @@ export default function AgendaPage() {
               </div>
               {!['RG', 'ALINHAMENTO'].includes(formType) && (
                 <div>
-                  <label style={labelStyle}>Cliente *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <label style={labelStyle}>Cliente *</label>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      {([['active', 'Ativos'], ['lead', 'Leads (CRM)']] as const).map(([src, lbl]) => (
+                        <button key={src} type="button" onClick={() => { setClientSource(src); setFormClientId('') }}
+                          style={{ padding: '3px 8px', border: `1px solid ${clientSource === src ? '#0A0A0C' : '#e2e8f0'}`, background: clientSource === src ? '#0A0A0C' : 'white', color: clientSource === src ? 'white' : '#888', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, cursor: 'pointer', borderRadius: 3 }}>{lbl}</button>
+                      ))}
+                    </div>
+                  </div>
                   <select value={formClientId} onChange={e => setFormClientId(e.target.value)} style={inputStyle}>
-                    <option value="">Selecione...</option>
-                    {clients.map(c => <option key={c.id} value={c.id}>{c.companyName}</option>)}
+                    <option value="">{clientSource === 'active' ? 'Selecione um cliente ativo...' : 'Selecione um lead do CRM...'}</option>
+                    {(clientSource === 'active' ? clients : leadClients)
+                      .slice()
+                      .sort((a, b) => a.companyName.localeCompare(b.companyName))
+                      .map(c => <option key={c.id} value={c.id}>{c.companyName}</option>)}
                   </select>
                 </div>
               )}
