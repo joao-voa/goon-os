@@ -92,6 +92,7 @@ export default function AgendaPage() {
   const [fltInadimplente, setFltInadimplente] = useState(true)
   const [fltVencido, setFltVencido] = useState(true)
   const [fltSemReuniao, setFltSemReuniao] = useState(true)
+  const [fltEmDia, setFltEmDia] = useState(true)
   const [programFilter, setProgramFilter] = useState('')
 
   const loadMeetings = useCallback(async () => {
@@ -219,6 +220,20 @@ export default function AgendaPage() {
   const firstDay = getFirstDayOfWeek(year, month)
   const monthName = new Date(year, month).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
 
+  // Roster completo do painel: atenção no topo, "em dia" abaixo (rolando)
+  const catOf = (d: typeof cadenceData[number]) =>
+    d.health === 'green' ? 'OK'
+      : d.reasons.includes('FINANCEIRO') ? 'FIN'
+        : d.reasons.includes('VENCIDO') ? 'VEN' : 'SEM'
+  const healthRank = (h: string) => (h === 'red' ? 0 : h === 'yellow' ? 1 : 2)
+  const roster = cadenceData
+    .filter(d => !programFilter || d.programCode === programFilter)
+    .filter(d => {
+      const c = catOf(d)
+      return (c === 'FIN' && fltInadimplente) || (c === 'VEN' && fltVencido) || (c === 'SEM' && fltSemReuniao) || (c === 'OK' && fltEmDia)
+    })
+    .sort((a, b) => (healthRank(a.health) - healthRank(b.health)) || (b.overdueValue - a.overdueValue) || ((b.daysSinceLastMeeting ?? -1) - (a.daysSinceLastMeeting ?? -1)))
+
   const filteredMeetings = categoryFilter ? meetings.filter(m => m.category === categoryFilter) : meetings
   const meetingsByDay: Record<number, Meeting[]> = {}
   filteredMeetings.forEach(m => {
@@ -315,6 +330,7 @@ export default function AgendaPage() {
               ['Inadimplente', fltInadimplente, setFltInadimplente, '#dc2626'] as const,
               ['Vencido', fltVencido, setFltVencido, '#b45309'] as const,
               ['Sem reuniao', fltSemReuniao, setFltSemReuniao, '#f59e0b'] as const,
+              ['Em dia', fltEmDia, setFltEmDia, '#16a34a'] as const,
             ]).map(([label, val, set, color]) => (
               <button key={label} onClick={() => set(v => !v)} style={{
                 padding: '5px 10px', border: `1px solid ${val ? color : '#e2e8f0'}`,
@@ -359,45 +375,39 @@ export default function AgendaPage() {
 
             {/* Clientes que precisam de atencao */}
             <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
-              <div style={{ background: '#dc2626', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>PRECISAM DE ATENCAO</div>
-              <div style={{ padding: 12, maxHeight: 360, overflowY: 'auto' }}>
-                {cadenceData
-                  .filter(d => d.health !== 'green')
-                  .filter(d => !programFilter || d.programCode === programFilter)
-                  .filter(d => { const cat = d.reasons.includes('FINANCEIRO') ? 'FIN' : d.reasons.includes('VENCIDO') ? 'VEN' : 'SEM'; return (cat === 'FIN' && fltInadimplente) || (cat === 'VEN' && fltVencido) || (cat === 'SEM' && fltSemReuniao) })
-                  .sort((a, b) => (a.health === b.health ? (b.overdueValue - a.overdueValue) || ((b.daysSinceLastMeeting ?? 999) - (a.daysSinceLastMeeting ?? 999)) : a.health === 'red' ? -1 : 1))
-                  .map(d => {
-                    const next = d.nextMeetingDate ? new Date(d.nextMeetingDate) : null
-                    const tag = (bg: string, label: string) => (
-                      <span key={label} style={{ background: bg, color: 'white', padding: '2px 6px', fontSize: 8, fontWeight: 700, borderRadius: 3, whiteSpace: 'nowrap' }}>{label}</span>
-                    )
-                    return (
-                      <div key={d.clientId} style={{ padding: '10px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.health === 'red' ? '#dc2626' : '#f59e0b', flexShrink: 0 }} />
-                          <strong style={{ flex: 1 }}>{d.companyName}</strong>
-                          {d.programCode && <span style={{ background: '#0A0A0C', color: 'white', padding: '2px 6px', fontSize: 8, fontWeight: 700, borderRadius: 3 }}>{d.programCode}</span>}
-                        </div>
+              <div style={{ background: '#0A0A0C', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>CLIENTES · ATENCAO NO TOPO ({roster.length})</div>
+              <div style={{ padding: 12, maxHeight: 420, overflowY: 'auto' }}>
+                {roster.map(d => {
+                  const next = d.nextMeetingDate ? new Date(d.nextMeetingDate) : null
+                  const isGreen = d.health === 'green'
+                  const tag = (bg: string, label: string) => (
+                    <span key={label} style={{ background: bg, color: 'white', padding: '2px 6px', fontSize: 8, fontWeight: 700, borderRadius: 3, whiteSpace: 'nowrap' }}>{label}</span>
+                  )
+                  return (
+                    <div key={d.clientId} style={{ padding: '10px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11, opacity: isGreen ? 0.72 : 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: isGreen ? 3 : 6 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.health === 'red' ? '#dc2626' : d.health === 'yellow' ? '#f59e0b' : '#16a34a', flexShrink: 0 }} />
+                        <strong style={{ flex: 1 }}>{d.companyName}</strong>
+                        {d.programCode && <span style={{ background: '#0A0A0C', color: 'white', padding: '2px 6px', fontSize: 8, fontWeight: 700, borderRadius: 3 }}>{d.programCode}</span>}
+                      </div>
+                      {!isGreen && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 6, paddingLeft: 16 }}>
                           {d.overdueCount > 0 && tag('#dc2626', `FINANCEIRO ATRASADO · R$${d.overdueValue.toLocaleString('pt-BR')}`)}
                           {d.planExpired && tag('#b45309', 'CONTRATO VENCIDO')}
                           {d.reasons.includes('SEM_REUNIAO') && tag('#f59e0b', d.daysSinceLastMeeting !== null ? `${d.daysSinceLastMeeting}D SEM REUNIAO` : 'NUNCA REUNIU')}
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingLeft: 16, fontSize: 9, color: '#888' }}>
-                          <span>{d.doneMeetingsCount} {d.doneMeetingsCount === 1 ? 'reuniao realizada' : 'reunioes realizadas'}</span>
-                          {next
-                            ? <span style={{ color: '#16a34a', fontWeight: 700 }}>✓ proxima {next.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
-                            : <span style={{ color: '#dc2626', fontWeight: 700 }}>sem reuniao marcada</span>}
-                        </div>
+                      )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingLeft: 16, fontSize: 9, color: '#888' }}>
+                        <span>{isGreen ? <span style={{ color: '#16a34a', fontWeight: 700 }}>EM DIA</span> : null} {d.doneMeetingsCount} {d.doneMeetingsCount === 1 ? 'reuniao' : 'reunioes'}{d.daysSinceLastMeeting !== null ? ` · ultima ha ${d.daysSinceLastMeeting}d` : ''}</span>
+                        {next
+                          ? <span style={{ color: '#16a34a', fontWeight: 700 }}>✓ proxima {next.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
+                          : !isGreen ? <span style={{ color: '#dc2626', fontWeight: 700 }}>sem reuniao marcada</span> : <span>—</span>}
                       </div>
-                    )
-                  })}
-                {cadenceData
-                  .filter(d => d.health !== 'green')
-                  .filter(d => !programFilter || d.programCode === programFilter)
-                  .filter(d => { const cat = d.reasons.includes('FINANCEIRO') ? 'FIN' : d.reasons.includes('VENCIDO') ? 'VEN' : 'SEM'; return (cat === 'FIN' && fltInadimplente) || (cat === 'VEN' && fltVencido) || (cat === 'SEM' && fltSemReuniao) })
-                  .length === 0 && (
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#006600', textAlign: 'center', padding: 20 }}>Nenhum cliente nesse filtro.</div>
+                    </div>
+                  )
+                })}
+                {roster.length === 0 && (
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', textAlign: 'center', padding: 20 }}>Nenhum cliente nesse filtro.</div>
                 )}
               </div>
             </div>

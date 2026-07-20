@@ -145,11 +145,13 @@ export class MeetingsService {
 
   async getAllClientsCadence() {
     const now = new Date()
-    // Only clients with individual mentoring programs (GE, TTS, AURA) — GI is group only
+    // Todos os clientes ativos com algum plano ativo (inclui grupo GI/TTSG).
+    // A cadência de reunião só se aplica a programas individuais; grupo entra
+    // apenas por financeiro/vencido.
     const clients = await this.prisma.client.findMany({
       where: {
         status: 'ACTIVE',
-        plans: { some: { status: 'ACTIVE', product: { code: { in: ['GE', 'TTS', 'AURA'] } } } },
+        plans: { some: { status: 'ACTIVE' } },
       },
       select: {
         id: true,
@@ -196,10 +198,11 @@ export class MeetingsService {
       const overdueCount = overdue.length
       const overdueValue = overdue.reduce((s, p) => s + Number(p.value), 0)
 
-      // Programa individual principal
+      // Programa principal (prioriza individual p/ rótulo; senão o 1º plano ativo)
       const indivPlan = client.plans.find(p => ['GE', 'TTS', 'AURA'].includes(p.product.code)) ?? client.plans[0]
       const programCode = indivPlan?.product.code ?? null
       const programName = indivPlan?.product.name ?? null
+      const isIndividual = ['GE', 'TTS', 'AURA'].includes(programCode ?? '')
 
       // Vencido: renovação sinalizada, OU contrato acabou E não há nenhuma parcela futura
       // (evita falso positivo de ciclo antigo quando o cliente já renovou / segue faturando)
@@ -208,8 +211,9 @@ export class MeetingsService {
       const renewalFlag = client.plans.some(p => ['PENDING', 'NOTIFIED'].includes(p.renewalStatus ?? ''))
       const planExpired = renewalFlag || (!!maxEnd && maxEnd < now && futurePaymentCount === 0)
 
-      // Cadência só é "gap" se NÃO há reunião futura marcada (marcar reunião = já agiu)
-      const cadenceGap = !nextMeeting && (daysSince === null || daysSince > 30)
+      // Cadência só se aplica a programas individuais e só é "gap" se não há
+      // reunião futura marcada (marcar reunião = já agiu)
+      const cadenceGap = isIndividual && !nextMeeting && (daysSince === null || daysSince > 30)
 
       const reasons: string[] = []
       if (overdueCount > 0) reasons.push('FINANCEIRO')
