@@ -364,7 +364,7 @@ export default function AgendaPage() {
                 {cadenceData
                   .filter(d => d.health !== 'green')
                   .filter(d => !programFilter || d.programCode === programFilter)
-                  .filter(d => (fltInadimplente && d.reasons.includes('FINANCEIRO')) || (fltVencido && d.reasons.includes('VENCIDO')) || (fltSemReuniao && d.reasons.includes('SEM_REUNIAO')))
+                  .filter(d => { const cat = d.reasons.includes('FINANCEIRO') ? 'FIN' : d.reasons.includes('VENCIDO') ? 'VEN' : 'SEM'; return (cat === 'FIN' && fltInadimplente) || (cat === 'VEN' && fltVencido) || (cat === 'SEM' && fltSemReuniao) })
                   .sort((a, b) => (a.health === b.health ? (b.overdueValue - a.overdueValue) || ((b.daysSinceLastMeeting ?? 999) - (a.daysSinceLastMeeting ?? 999)) : a.health === 'red' ? -1 : 1))
                   .map(d => {
                     const next = d.nextMeetingDate ? new Date(d.nextMeetingDate) : null
@@ -395,7 +395,7 @@ export default function AgendaPage() {
                 {cadenceData
                   .filter(d => d.health !== 'green')
                   .filter(d => !programFilter || d.programCode === programFilter)
-                  .filter(d => (fltInadimplente && d.reasons.includes('FINANCEIRO')) || (fltVencido && d.reasons.includes('VENCIDO')) || (fltSemReuniao && d.reasons.includes('SEM_REUNIAO')))
+                  .filter(d => { const cat = d.reasons.includes('FINANCEIRO') ? 'FIN' : d.reasons.includes('VENCIDO') ? 'VEN' : 'SEM'; return (cat === 'FIN' && fltInadimplente) || (cat === 'VEN' && fltVencido) || (cat === 'SEM' && fltSemReuniao) })
                   .length === 0 && (
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#006600', textAlign: 'center', padding: 20 }}>Nenhum cliente nesse filtro.</div>
                 )}
