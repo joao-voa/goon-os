@@ -882,8 +882,8 @@ function LeadDetailModal({
                 )
               )}
               {lead.paymentMethod && <div><strong>Pagamento:</strong> {lead.paymentMethod}</div>}
-              <div><strong>Criado:</strong> {fmtDate(lead.createdAt)}</div>
-              {lead.closedAt && <div><strong>Fechado:</strong> {fmtDate(lead.closedAt)}</div>}
+              <div><strong>Criado:</strong> {fmtTime(lead.createdAt)}</div>
+              {lead.closedAt && <div><strong>Fechado:</strong> {fmtTime(lead.closedAt)}</div>}
             </div>
           )}
           {/* AURA Modules */}

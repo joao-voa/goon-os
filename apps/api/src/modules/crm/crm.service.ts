@@ -6,6 +6,9 @@ import { CommissionsService } from '../commissions/commissions.service'
 import { ExpensesService } from '../expenses/expenses.service'
 import { TAX_RATE, getNextCommissionPaymentDate } from '../../shared/constants'
 
+// Leads mais antigos que esta data não são reimportados no sync (já entraram)
+const SYNC_CUTOFF = new Date('2026-07-15T00:00:00Z')
+
 const VALID_LEAD_STAGES = [
   'NOVO',
   'RECUPERAR',
@@ -383,15 +386,23 @@ export class CrmService {
     clientId: string
     type: string
     description: string
+    userId?: string
     userName?: string
     scheduledAt?: Date | string
   }) {
+    // Autor: resolve o nome pelo usuário logado (JWT)
+    let userName = dto.userName
+    if (dto.userId && !userName) {
+      const u = await this.prisma.user.findUnique({ where: { id: dto.userId }, select: { name: true, email: true } })
+      userName = u?.name ?? u?.email ?? undefined
+    }
     const interaction = await this.prisma.leadInteraction.create({
       data: {
         clientId: dto.clientId,
         type: dto.type,
         description: dto.description,
-        userName: dto.userName,
+        userId: dto.userId,
+        userName,
         scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
       },
     })
@@ -729,6 +740,13 @@ export class CrmService {
               : this.parseRespondiLead(record)
 
             if (!lead || !lead.companyName || lead.companyName.length < 2) {
+              skipped++
+              continue
+            }
+
+            // Corte de importação: leads mais antigos que 15/07/2026 já foram
+            // importados — não sobem de novo.
+            if (lead.createdAt && new Date(lead.createdAt) < SYNC_CUTOFF) {
               skipped++
               continue
             }

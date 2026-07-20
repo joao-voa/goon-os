@@ -6,6 +6,7 @@ import {
   Body,
   Param,
   Query,
+  Request,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -73,13 +74,13 @@ export class CrmController {
 
   @Post(':id/interactions')
   @HttpCode(201)
-  addInteraction(@Param('id') id: string, @Body() dto: {
+  addInteraction(@Request() req: { user?: { id?: string } }, @Param('id') id: string, @Body() dto: {
     type: string
     description: string
     userName?: string
     scheduledAt?: string
   }) {
-    return this.service.addInteraction({ ...dto, clientId: id })
+    return this.service.addInteraction({ ...dto, clientId: id, userId: req.user?.id })
   }
 
   @Patch(':id/stage')
