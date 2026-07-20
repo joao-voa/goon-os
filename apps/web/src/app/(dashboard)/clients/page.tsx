@@ -408,6 +408,8 @@ export default function ClientsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') ?? '')
   const [segmentFilter, setSegmentFilter] = useState('')
+  const [programFilter, setProgramFilter] = useState('')
+  const [expiredFilter, setExpiredFilter] = useState('')
   const [sort, setSort] = useState('companyName')
 
   const [sortField, setSortField] = useState<string>('')
@@ -468,6 +470,8 @@ export default function ClientsPage() {
       if (debouncedSearch) params.set('search', debouncedSearch)
       if (statusFilter) params.set('status', statusFilter)
       if (segmentFilter) params.set('segment', segmentFilter)
+      if (programFilter) params.set('product', programFilter)
+      if (expiredFilter) params.set('expired', expiredFilter)
       params.set('page', String(page))
       params.set('limit', String(limit))
       params.set('sort', sort)
@@ -480,7 +484,7 @@ export default function ClientsPage() {
     } finally {
       setLoading(false)
     }
-  }, [debouncedSearch, statusFilter, segmentFilter, page, sort])
+  }, [debouncedSearch, statusFilter, segmentFilter, programFilter, expiredFilter, page, sort])
 
   useEffect(() => {
     fetchClients()
@@ -488,7 +492,7 @@ export default function ClientsPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [debouncedSearch, statusFilter, segmentFilter, sort])
+  }, [debouncedSearch, statusFilter, segmentFilter, programFilter, expiredFilter, sort])
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto' }}>
@@ -566,6 +570,36 @@ export default function ClientsPage() {
               value={segmentFilter}
               onChange={e => setSegmentFilter(e.target.value)}
             />
+          </div>
+          <div>
+            <label style={filterLabelStyle}>Programa</label>
+            <select
+              className="goon-select"
+              style={isMobile ? { minWidth: 150, flexShrink: 0 } : { maxWidth: 180 }}
+              value={programFilter}
+              onChange={e => setProgramFilter(e.target.value)}
+            >
+              <option value="">Todos os programas</option>
+              <option value="GE">GOON Elite</option>
+              <option value="GI">GOON Infinity</option>
+              <option value="GS">GOON Scale</option>
+              <option value="TTS">TikTok Scale</option>
+              <option value="TTSG">TikTok Scale Grupo</option>
+              <option value="AURA">AURA 360</option>
+            </select>
+          </div>
+          <div>
+            <label style={filterLabelStyle}>Contrato</label>
+            <select
+              className="goon-select"
+              style={isMobile ? { minWidth: 130, flexShrink: 0 } : { maxWidth: 150 }}
+              value={expiredFilter}
+              onChange={e => setExpiredFilter(e.target.value)}
+            >
+              <option value="">Todos</option>
+              <option value="false">Em dia</option>
+              <option value="true">Vencidos</option>
+            </select>
           </div>
           <div>
             <label style={filterLabelStyle}>Ordenar</label>

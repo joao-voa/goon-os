@@ -16,11 +16,12 @@ export class ClientsService {
     status?: string
     segment?: string
     product?: string
+    expired?: string
     page?: number
     limit?: number
     sort?: string
   }) {
-    const { search, status, segment, product, page = 1, limit = 20, sort = 'companyName' } = params
+    const { search, status, segment, product, expired, page = 1, limit = 20, sort = 'companyName' } = params
 
     const where: Record<string, unknown> = {}
 
@@ -46,6 +47,18 @@ export class ClientsService {
           product: { code: product.toUpperCase() },
         },
       }
+    }
+
+    // Vencido: plano ativo com fim no passado E sem parcela futura (igual à agenda)
+    if (expired === 'true' || expired === 'false') {
+      const now = new Date()
+      const isExpired = {
+        AND: [
+          { plans: { some: { status: 'ACTIVE', endDate: { lt: now } } } },
+          { payments: { none: { status: { in: ['PENDING', 'SCHEDULED'] }, dueDate: { gte: now } } } },
+        ],
+      }
+      where.AND = expired === 'true' ? [isExpired] : [{ NOT: isExpired }]
     }
 
     const validSortFields: Record<string, object> = {
