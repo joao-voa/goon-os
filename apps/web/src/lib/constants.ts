@@ -109,7 +109,6 @@ export const LEAD_STAGES = [
   'FUP',
   'QUALIFICADO',
   'REUNIAO_AGENDADA',
-  'PROPOSTA_ENVIADA',
   'EM_NEGOCIACAO',
   'FECHADO',
   'PERDIDO',
@@ -121,8 +120,8 @@ export const LEAD_STAGE_LABELS: Record<string, string> = {
   FUP: 'Conexao',
   QUALIFICADO: 'Qualificado',
   REUNIAO_AGENDADA: 'Reuniao Agendada',
-  PROPOSTA_ENVIADA: 'Proposta Enviada',
-  EM_NEGOCIACAO: 'Em Negociacao',
+  EM_NEGOCIACAO: 'Proposta / Negociacao',
+  PROPOSTA_ENVIADA: 'Proposta / Negociacao', // legado — mesclado em EM_NEGOCIACAO
   FECHADO: 'Fechado Ganho',
   PERDIDO: 'Fechado Perdido',
   FOLLOW_UP: 'Conexao',

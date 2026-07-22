@@ -7,7 +7,7 @@ import { ExpensesService } from '../expenses/expenses.service'
 import { TAX_RATE, getNextCommissionPaymentDate } from '../../shared/constants'
 
 // Leads mais antigos que esta data não são reimportados no sync (já entraram)
-const SYNC_CUTOFF = new Date('2026-07-15T00:00:00Z')
+const SYNC_CUTOFF = new Date('2026-07-21T00:00:00Z')
 
 const VALID_LEAD_STAGES = [
   'NOVO',
@@ -25,7 +25,8 @@ const STAGE_LABELS: Record<string, string> = {
   NOVO: 'Novo',
   FOLLOW_UP: 'Conexao',
   FUP: 'Conexao',
-  EM_NEGOCIACAO: 'Em Negociacao',
+  EM_NEGOCIACAO: 'Proposta / Negociacao',
+  PROPOSTA_ENVIADA: 'Proposta / Negociacao',
   FECHADO: 'Fechado',
   PERDIDO: 'Perdido',
 }
@@ -494,8 +495,8 @@ export class CrmService {
       novosNoPeriodo: newThisMonth,
       qualificados: stageCount('QUALIFICADO'),
       reunioesAgendadas: stageCount('REUNIAO_AGENDADA'),
-      propostasEnviadas: stageCount('PROPOSTA_ENVIADA'),
-      emNegociacao: stageCount('EM_NEGOCIACAO'),
+      propostasEnviadas: stageCount('PROPOSTA_ENVIADA'), // legado (0 após unificação)
+      emNegociacao: stageCount('EM_NEGOCIACAO') + stageCount('PROPOSTA_ENVIADA'),
       fechadosGanho: stageCount('FECHADO'),
       fechadosPerdido: stageCount('PERDIDO'),
       valorTotalFechado: closedValueTotal,
@@ -623,7 +624,7 @@ export class CrmService {
   }
 
   // ===== Faturamento / ICP helpers =====
-  static readonly PIPE = ['NOVO', 'FUP', 'QUALIFICADO', 'REUNIAO_AGENDADA', 'PROPOSTA_ENVIADA', 'EM_NEGOCIACAO', 'FECHADO']
+  static readonly PIPE = ['NOVO', 'FUP', 'QUALIFICADO', 'REUNIAO_AGENDADA', 'EM_NEGOCIACAO', 'FECHADO']
   static readonly ICP_THRESHOLD = 100000 // R$/mês
 
   /** Best-effort parse of messy free-text monthly revenue into a number (R$/mês). Returns null when unparseable. */
