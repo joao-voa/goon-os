@@ -9,6 +9,19 @@ export class CashflowService {
     const yearStart = new Date(year, 0, 1)
     const yearEnd = new Date(year + 1, 0, 1)
 
+    // Clientes em recuperação de crédito / carteira de cobrança: suas parcelas
+    // FUTURAS (PENDING) não entram na projeção do fluxo (receita incerta).
+    const carteiraClients = await this.prisma.client.findMany({
+      where: {
+        OR: [
+          { leadStage: 'RECUPERAR' },
+          { payments: { some: { inCarteira: true } } },
+        ],
+      },
+      select: { id: true },
+    })
+    const carteiraSet = new Set(carteiraClients.map(c => c.id))
+
     // Fetch all data for the year in 3 queries
     const [payments, expenses, commissions] = await this.prisma.$transaction([
       this.prisma.payment.findMany({
@@ -49,6 +62,8 @@ export class CashflowService {
     for (const pay of payments) {
       const m = new Date(pay.dueDate).getMonth()
       const val = Number(pay.value)
+      // Parcela futura (PENDING) de cliente em carteira/recuperação: fora do fluxo
+      if (pay.status === 'PENDING' && pay.client && carteiraSet.has(pay.client.id)) continue
       if (pay.status === 'PAID') months[m].entradas.received += val
       else if (pay.status === 'PENDING') months[m].entradas.pending += val
       else if (pay.status === 'OVERDUE') {
