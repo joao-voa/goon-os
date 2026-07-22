@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { daysUntil } from '../clients/renewal.util'
+import { NOT_CARTEIRA_CLIENT_FILTER } from '../../shared/constants'
 
 @Injectable()
 export class DashboardService {
@@ -93,7 +94,7 @@ export class DashboardService {
       }),
       // Total pendente
       this.prisma.payment.aggregate({
-        where: { status: 'PENDING' },
+        where: { status: 'PENDING', ...NOT_CARTEIRA_CLIENT_FILTER },
         _sum: { value: true },
         _count: true,
       }),
@@ -105,7 +106,7 @@ export class DashboardService {
       }),
       // A receber este mês
       this.prisma.payment.aggregate({
-        where: { status: 'PENDING', dueDate: { gte: startOfMonth, lt: endOfMonth } },
+        where: { status: 'PENDING', dueDate: { gte: startOfMonth, lt: endOfMonth }, ...NOT_CARTEIRA_CLIENT_FILTER },
         _sum: { value: true },
         _count: true,
       }),

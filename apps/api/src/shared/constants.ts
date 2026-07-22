@@ -26,3 +26,17 @@ export function getNextClosingCutoff(now: Date): Date {
   }
   return new Date(year, month + 1, COMMISSION_CUTOFF_DAY, 23, 59, 59)
 }
+
+/**
+ * Cliente em carteira de cobrança / recuperação de crédito:
+ * leadStage RECUPERAR, ou tem alguma parcela marcada na carteira (inCarteira).
+ * Parcelas FUTURAS (PENDING) desses clientes não entram no fluxo nem nos
+ * indicadores de "a receber" — receita incerta. Fragmento de where Prisma
+ * que EXCLUI esses clientes (usar em agregações de PENDING).
+ */
+export const NOT_CARTEIRA_CLIENT_FILTER = {
+  client: {
+    leadStage: { not: 'RECUPERAR' },
+    payments: { none: { inCarteira: true } },
+  },
+} as const

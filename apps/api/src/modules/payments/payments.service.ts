@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
+import { NOT_CARTEIRA_CLIENT_FILTER } from '../../shared/constants'
 
 @Injectable()
 export class PaymentsService {
@@ -23,7 +24,7 @@ export class PaymentsService {
       }),
       // Total pendente
       this.prisma.payment.aggregate({
-        where: { status: 'PENDING' },
+        where: { status: 'PENDING', ...NOT_CARTEIRA_CLIENT_FILTER },
         _sum: { value: true },
         _count: true,
       }),
@@ -46,7 +47,7 @@ export class PaymentsService {
       }),
       // A receber este mês (pendentes com vencimento no mês)
       this.prisma.payment.aggregate({
-        where: { status: 'PENDING', dueDate: { gte: startOfMonth, lt: endOfMonth } },
+        where: { status: 'PENDING', dueDate: { gte: startOfMonth, lt: endOfMonth }, ...NOT_CARTEIRA_CLIENT_FILTER },
         _sum: { value: true },
         _count: true,
       }),
