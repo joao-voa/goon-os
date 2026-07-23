@@ -82,6 +82,7 @@ export default function AgendaPage() {
   const [formTitle, setFormTitle] = useState('')
   const [formType, setFormType] = useState('INDIVIDUAL')
   const [formProgram, setFormProgram] = useState('')
+  const [formGroupDone, setFormGroupDone] = useState(false)
   const [formDate, setFormDate] = useState('')
   const [formTime, setFormTime] = useState('10:00')
   const [formDuration, setFormDuration] = useState('60')
@@ -148,6 +149,7 @@ export default function AgendaPage() {
     setFormTitle('')
     setFormType('INDIVIDUAL')
     setFormProgram('')
+    setFormGroupDone(false)
     setFormDate(dateStr)
     setFormTime('10:00')
     setFormDuration('60')
@@ -209,9 +211,10 @@ export default function AgendaPage() {
             duration: parseInt(formDuration, 10) || 60,
             mentorName: formMentor || undefined,
             notes: formNotes || undefined,
+            status: formGroupDone ? 'DONE' : 'SCHEDULED',
           }),
         })
-        toast.success(`Mentoria em grupo marcada para ${res.created} clientes`)
+        toast.success(`Mentoria em grupo ${formGroupDone ? 'registrada (realizada)' : 'agendada'} para ${res.created} clientes`)
       } else if (selectedMeeting) {
         await apiFetch(`/api/meetings/${selectedMeeting.id}`, { method: 'PUT', body: JSON.stringify(body) })
         toast.success('Reuniao atualizada')
@@ -623,6 +626,10 @@ export default function AgendaPage() {
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 4 }}>
                     A reuniao sera marcada para TODOS os clientes ativos desse programa (saem da atencao).
                   </div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700 }}>
+                    <input type="checkbox" checked={formGroupDone} onChange={e => setFormGroupDone(e.target.checked)} />
+                    Ja realizada (registrar como feita)
+                  </label>
                 </div>
               )}
               {!['RG', 'ALINHAMENTO'].includes(formType) && !(formType === 'GRUPO' && !selectedMeeting) && (

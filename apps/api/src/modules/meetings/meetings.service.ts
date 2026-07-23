@@ -97,6 +97,7 @@ export class MeetingsService {
     if (clients.length === 0) throw new NotFoundException('Nenhum cliente ativo nesse programa')
 
     const date = new Date(dto.date)
+    const status = dto.status ?? 'SCHEDULED'
     const created = await this.prisma.$transaction(
       clients.map(c => this.prisma.meeting.create({
         data: {
@@ -108,7 +109,8 @@ export class MeetingsService {
           duration: dto.duration ?? 60,
           mentorName: dto.mentorName,
           notes: dto.notes,
-          status: dto.status ?? 'SCHEDULED',
+          status,
+          doneAt: status === 'DONE' ? new Date() : null,
         },
       })),
     )
