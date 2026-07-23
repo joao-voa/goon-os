@@ -92,8 +92,6 @@ export default function AgendaPage() {
   const [cadenceData, setCadenceData] = useState<Array<{ clientId: string; companyName: string; programCode: string | null; programName: string | null; lastMeetingDate: string | null; nextMeetingDate: string | null; daysSinceLastMeeting: number | null; doneMeetingsCount: number; overdueCount: number; overdueValue: number; planExpired: boolean; reasons: string[]; health: string }>>([])
   const [stats, setStats] = useState<{ todayCount: number; weekCount: number; totalDone: number; totalScheduled: number } | null>(null)
   const [viewMode, setViewMode] = useState<'calendario' | 'painel'>('calendario')
-  const [userRole, setUserRole] = useState('')
-  const isComercial = userRole === 'comercial'
   const [refreshing, setRefreshing] = useState(false)
   const [fltInadimplente, setFltInadimplente] = useState(true)
   const [fltVencido, setFltVencido] = useState(true)
@@ -125,13 +123,6 @@ export default function AgendaPage() {
   }, [])
 
   useEffect(() => {
-    apiFetch<{ role: string }>('/api/auth/me')
-      .then(u => {
-        setUserRole(u.role)
-        // Comercial: só a agenda comercial (calendário), sem painel de mentoria
-        if (u.role === 'comercial') { setViewMode('calendario'); setCategoryFilter('COMERCIAL') }
-      })
-      .catch(() => {})
     // Ativos (mentoria) e leads do CRM em listas separadas
     apiFetch<{ data: Client[] }>('/api/clients?status=ACTIVE&limit=500')
       .then(res => setClients(res.data || []))
@@ -274,9 +265,7 @@ export default function AgendaPage() {
     })
     .sort((a, b) => (healthRank(a.health) - healthRank(b.health)) || (b.overdueValue - a.overdueValue) || ((b.daysSinceLastMeeting ?? -1) - (a.daysSinceLastMeeting ?? -1)))
 
-  // Comercial só enxerga reuniões comerciais
-  const scopedMeetings = isComercial ? meetings.filter(m => m.category === 'COMERCIAL') : meetings
-  const filteredMeetings = categoryFilter ? scopedMeetings.filter(m => m.category === categoryFilter) : scopedMeetings
+  const filteredMeetings = categoryFilter ? meetings.filter(m => m.category === categoryFilter) : meetings
   const meetingsByDay: Record<number, Meeting[]> = {}
   filteredMeetings.forEach(m => {
     const d = new Date(m.date)
@@ -297,7 +286,7 @@ export default function AgendaPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 20, margin: 0 }}>AGENDA</h1>
         <div style={{ display: 'flex', gap: 8 }}>
-          {(isComercial ? (['calendario'] as const) : (['painel', 'calendario'] as const)).map(v => (
+          {(['painel', 'calendario'] as const).map(v => (
             <button key={v} onClick={() => setViewMode(v)} style={{
               padding: '6px 14px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
               background: viewMode === v ? 'black' : 'white', color: viewMode === v ? 'white' : 'black',
@@ -310,8 +299,7 @@ export default function AgendaPage() {
         }}>+ NOVA REUNIAO</button>
       </div>
 
-      {/* Category filter — comercial fica travado em Comercial */}
-      {!isComercial && (
+      {/* Category filter */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Categoria:</span>
         {['', 'MENTORIA', 'COMERCIAL', 'GESTAO'].map(cat => (
@@ -321,7 +309,6 @@ export default function AgendaPage() {
           }}>{cat || 'TODAS'}</button>
         ))}
       </div>
-      )}
 
       {/* Mentor filter */}
       {mentors.length > 0 && (
