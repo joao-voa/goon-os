@@ -81,6 +81,7 @@ export default function AgendaPage() {
   const [formClientId, setFormClientId] = useState('')
   const [formTitle, setFormTitle] = useState('')
   const [formType, setFormType] = useState('INDIVIDUAL')
+  const [formProgram, setFormProgram] = useState('')
   const [formDate, setFormDate] = useState('')
   const [formTime, setFormTime] = useState('10:00')
   const [formDuration, setFormDuration] = useState('60')
@@ -146,6 +147,7 @@ export default function AgendaPage() {
     setClientSource('active')
     setFormTitle('')
     setFormType('INDIVIDUAL')
+    setFormProgram('')
     setFormDate(dateStr)
     setFormTime('10:00')
     setFormDuration('60')
@@ -170,7 +172,12 @@ export default function AgendaPage() {
   }
 
   async function handleSave() {
-    const needsClient = !['RG', 'ALINHAMENTO'].includes(formType)
+    const isGroup = formType === 'GRUPO' && !selectedMeeting
+    const needsClient = !['RG', 'ALINHAMENTO'].includes(formType) && !isGroup
+    if (isGroup && !formProgram) {
+      toast.error('Selecione o programa do grupo')
+      return
+    }
     if (needsClient && !formClientId) {
       toast.error('Preencha o cliente')
       return
@@ -192,7 +199,20 @@ export default function AgendaPage() {
         notes: formNotes || undefined,
       }
 
-      if (selectedMeeting) {
+      if (isGroup) {
+        const res = await apiFetch<{ created: number }>('/api/meetings/group', {
+          method: 'POST',
+          body: JSON.stringify({
+            program: formProgram,
+            title: formTitle,
+            date: dateTime.toISOString(),
+            duration: parseInt(formDuration, 10) || 60,
+            mentorName: formMentor || undefined,
+            notes: formNotes || undefined,
+          }),
+        })
+        toast.success(`Mentoria em grupo marcada para ${res.created} clientes`)
+      } else if (selectedMeeting) {
         await apiFetch(`/api/meetings/${selectedMeeting.id}`, { method: 'PUT', body: JSON.stringify(body) })
         toast.success('Reuniao atualizada')
       } else {
@@ -588,7 +608,24 @@ export default function AgendaPage() {
                   <input type="number" value={formDuration} onChange={e => setFormDuration(e.target.value)} style={inputStyle} />
                 </div>
               </div>
-              {!['RG', 'ALINHAMENTO'].includes(formType) && (
+              {formType === 'GRUPO' && !selectedMeeting && (
+                <div>
+                  <label style={labelStyle}>Programa do grupo *</label>
+                  <select value={formProgram} onChange={e => setFormProgram(e.target.value)} style={inputStyle}>
+                    <option value="">Selecione o programa...</option>
+                    <option value="GI">GOON Infinity (grupo)</option>
+                    <option value="TTSG">TikTok Scale Grupo</option>
+                    <option value="GE">GOON Elite</option>
+                    <option value="GS">GOON Scale</option>
+                    <option value="TTS">TikTok Scale</option>
+                    <option value="AURA">AURA 360</option>
+                  </select>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 4 }}>
+                    A reuniao sera marcada para TODOS os clientes ativos desse programa (saem da atencao).
+                  </div>
+                </div>
+              )}
+              {!['RG', 'ALINHAMENTO'].includes(formType) && !(formType === 'GRUPO' && !selectedMeeting) && (
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                     <label style={labelStyle}>Cliente *</label>

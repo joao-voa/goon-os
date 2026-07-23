@@ -58,6 +58,20 @@ export class MeetingsController {
     return this.service.create(dto)
   }
 
+  @Post('group')
+  @HttpCode(201)
+  createGroup(@Body() dto: {
+    program: string
+    title: string
+    date: string
+    duration?: number
+    mentorName?: string
+    notes?: string
+    status?: string
+  }) {
+    return this.service.createGroup(dto)
+  }
+
   @Put(':id')
   update(@Param('id') id: string, @Body() dto: {
     title?: string

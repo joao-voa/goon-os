@@ -73,6 +73,48 @@ export class MeetingsService {
     })
   }
 
+  /**
+   * Mentoria em grupo: cria a mesma reunião para TODOS os clientes ativos de um
+   * programa (ex.: GOON Infinity). Assim a cadência de cada um é atualizada e
+   * eles saem da lista de atenção de uma vez.
+   */
+  async createGroup(dto: {
+    program: string
+    title: string
+    date: string
+    duration?: number
+    mentorName?: string
+    notes?: string
+    status?: string
+  }) {
+    const clients = await this.prisma.client.findMany({
+      where: {
+        status: 'ACTIVE',
+        plans: { some: { status: 'ACTIVE', product: { code: dto.program.toUpperCase() } } },
+      },
+      select: { id: true, companyName: true },
+    })
+    if (clients.length === 0) throw new NotFoundException('Nenhum cliente ativo nesse programa')
+
+    const date = new Date(dto.date)
+    const created = await this.prisma.$transaction(
+      clients.map(c => this.prisma.meeting.create({
+        data: {
+          clientId: c.id,
+          title: dto.title,
+          type: 'GRUPO',
+          category: 'MENTORIA',
+          date,
+          duration: dto.duration ?? 60,
+          mentorName: dto.mentorName,
+          notes: dto.notes,
+          status: dto.status ?? 'SCHEDULED',
+        },
+      })),
+    )
+    return { created: created.length, clients: clients.map(c => c.companyName) }
+  }
+
   async update(id: string, dto: {
     title?: string
     type?: string
@@ -213,7 +255,10 @@ export class MeetingsService {
 
       // Cadência só se aplica a programas individuais e só é "gap" se não há
       // reunião futura marcada (marcar reunião = já agiu)
-      const cadenceGap = isIndividual && !nextMeeting && (daysSince === null || daysSince > 30)
+      // Cadência vale pra todos (individual e grupo). Grupo é atualizado pela
+      // reunião de grupo (que registra presença de todos do programa).
+      void isIndividual
+      const cadenceGap = !nextMeeting && (daysSince === null || daysSince > 30)
 
       const reasons: string[] = []
       if (overdueCount > 0) reasons.push('FINANCEIRO')
