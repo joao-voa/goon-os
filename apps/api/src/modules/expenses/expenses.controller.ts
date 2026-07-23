@@ -83,7 +83,7 @@ export class ExpensesController {
   }
 
   @Delete(':id')
-  delete(@Param('id') id: string) {
-    return this.service.delete(id)
+  delete(@Param('id') id: string, @Query('scope') scope?: string) {
+    return this.service.delete(id, scope === 'future' ? 'future' : 'one')
   }
 }

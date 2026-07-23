@@ -108,11 +108,24 @@ export default function ExpensesPage() {
     } catch { toast.error('Erro ao pagar despesa') }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Excluir despesa?')) return
+  const handleDelete = async (id: string, recurrence: string) => {
+    let scope = 'one'
+    if (recurrence !== 'UNICA') {
+      // Recorrente: escolher entre só este mês ou este + todos os futuros
+      const future = confirm(
+        'Despesa recorrente.\n\nOK = excluir ESTA e TODAS as futuras (para sempre)\nCancelar = escolher só este mes',
+      )
+      if (future) scope = 'future'
+      else {
+        if (!confirm('Excluir somente este mes?')) return
+        scope = 'one'
+      }
+    } else {
+      if (!confirm('Excluir despesa?')) return
+    }
     try {
-      await apiFetch(`/api/expenses/${id}`, { method: 'DELETE' })
-      toast.success('Despesa excluida')
+      const r = await apiFetch<{ deleted: number; scope: string }>(`/api/expenses/${id}?scope=${scope}`, { method: 'DELETE' })
+      toast.success(scope === 'future' ? `${r.deleted} lancamentos excluidos` : 'Despesa excluida')
       loadData()
     } catch { toast.error('Erro ao excluir') }
   }
@@ -242,7 +255,7 @@ export default function ExpensesPage() {
                         } catch { toast.error('Erro ao reverter') }
                       }} style={{ background: '#f59e0b', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>REVERTER</button>
                     )}
-                    <button onClick={() => handleDelete(e.id)} style={{ background: '#dc2626', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>X</button>
+                    <button onClick={() => handleDelete(e.id, e.recurrence)} style={{ background: '#dc2626', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>X</button>
                   </div>
                 </td>
               </tr>

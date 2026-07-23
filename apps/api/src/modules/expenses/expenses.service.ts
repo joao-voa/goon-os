@@ -226,10 +226,26 @@ export class ExpensesService {
     }
   }
 
-  async delete(id: string) {
+  async delete(id: string, scope: 'one' | 'future' = 'one') {
     const existing = await this.prisma.expense.findUnique({ where: { id } })
     if (!existing) throw new NotFoundException(`Expense ${id} not found`)
 
-    return this.prisma.expense.delete({ where: { id } })
+    // "future": apaga esta + todas as próximas ocorrências da mesma despesa
+    // recorrente (mesma descrição/categoria, recorrência != UNICA, vencimento >=).
+    // Preserva as passadas (histórico).
+    if (scope === 'future' && existing.recurrence !== 'UNICA') {
+      const res = await this.prisma.expense.deleteMany({
+        where: {
+          description: existing.description,
+          category: existing.category,
+          recurrence: existing.recurrence,
+          dueDate: { gte: existing.dueDate },
+        },
+      })
+      return { deleted: res.count, scope: 'future' }
+    }
+
+    await this.prisma.expense.delete({ where: { id } })
+    return { deleted: 1, scope: 'one' }
   }
 }
