@@ -26,6 +26,7 @@ interface Client {
 const TYPE_LABELS: Record<string, string> = {
   INDIVIDUAL: 'Mentoria Individual',
   GRUPO: 'Mentoria em Grupo',
+  CS: 'CS (Customer Success)',
   DIAGNOSTICO: 'Diagnostico',
   PLANO_VOO: 'Plano de Voo',
   KICKOFF: 'Kickoff',
@@ -38,6 +39,7 @@ const TYPE_LABELS: Record<string, string> = {
 const TYPE_COLORS: Record<string, string> = {
   INDIVIDUAL: '#4A78FF',
   GRUPO: '#7c3aed',
+  CS: '#0d9488',
   DIAGNOSTICO: '#059669',
   PLANO_VOO: '#d97706',
   KICKOFF: '#dc2626',

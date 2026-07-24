@@ -1137,8 +1137,8 @@ export default function ClientDetailPage() {
                   {clientMeetings.map((m, i) => {
                     const d = new Date(m.date)
                     const isPast = d < new Date()
-                    const typeColors: Record<string, string> = { INDIVIDUAL: '#4A78FF', GRUPO: '#7c3aed', DIAGNOSTICO: '#059669', PLANO_VOO: '#d97706', KICKOFF: '#dc2626', FOLLOW_UP: '#06b6d4', RG: '#000080', COMERCIAL: '#22c55e' }
-                    const typeLabels: Record<string, string> = { INDIVIDUAL: 'Individual', GRUPO: 'Grupo', DIAGNOSTICO: 'Diagnostico', PLANO_VOO: 'Plano de Voo', KICKOFF: 'Kickoff', FOLLOW_UP: 'Follow Up' }
+                    const typeColors: Record<string, string> = { INDIVIDUAL: '#4A78FF', GRUPO: '#7c3aed', CS: '#0d9488', DIAGNOSTICO: '#059669', PLANO_VOO: '#d97706', KICKOFF: '#dc2626', FOLLOW_UP: '#06b6d4', RG: '#000080', COMERCIAL: '#22c55e' }
+                    const typeLabels: Record<string, string> = { INDIVIDUAL: 'Individual', GRUPO: 'Grupo', CS: 'CS', DIAGNOSTICO: 'Diagnostico', PLANO_VOO: 'Plano de Voo', KICKOFF: 'Kickoff', FOLLOW_UP: 'Follow Up' }
                     const statusLabels: Record<string, string> = { SCHEDULED: 'Agendada', DONE: 'Realizada', CANCELLED: 'Cancelada', NO_SHOW: 'Faltou' }
                     const statusColors: Record<string, string> = { SCHEDULED: '#4A78FF', DONE: '#006600', CANCELLED: '#888', NO_SHOW: '#cc0000' }
 
