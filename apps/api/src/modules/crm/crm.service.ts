@@ -713,6 +713,11 @@ export class CrmService {
         url: 'https://docs.google.com/spreadsheets/d/1ahwY6sYpWT0WSv42J6zKtGPtg5PjCWncDCJXHX28Zp0/gviz/tq?tqx=out:csv&sheet=0',
         type: 'respondi' as const,
       },
+      {
+        name: 'Respondi 2',
+        url: 'https://docs.google.com/spreadsheets/d/1YZ14lNMh4iE4x8bUHkFLTI6o3IJFvUwIVL58aKhd47I/gviz/tq?tqx=out:csv&sheet=0',
+        type: 'respondi2' as const,
+      },
     ]
 
     let imported = 0
@@ -738,7 +743,9 @@ export class CrmService {
             const record = this.mapRow(header, row)
             const lead = sheet.type === 'meta'
               ? this.parseMetaLead(record)
-              : this.parseRespondiLead(record)
+              : sheet.type === 'respondi2'
+                ? this.parseRespondi2Lead(record)
+                : this.parseRespondiLead(record)
 
             if (!lead || !lead.companyName || lead.companyName.length < 2) {
               skipped++
@@ -909,6 +916,49 @@ export class CrmService {
       whatsapp: whatsapp ? `+${whatsapp.replace(/\D/g, '')}` : null,
       phone: whatsapp ? `+${whatsapp.replace(/\D/g, '')}` : null,
       email,
+      estimatedRevenue: faturamento || null,
+      segment: 'Moda',
+      status: 'PROSPECT',
+      leadStage: 'NOVO',
+      leadSource: 'respondi',
+      leadNotes: notes || null,
+      stageChangedAt: this.parseSheetDate(createdTime),
+      createdAt: this.parseSheetDate(createdTime),
+    }
+  }
+
+  /**
+   * Segunda planilha Respondi (colunas: nome, @Instagram da marca, tipo de
+   * negócio, WhatsApp, faturamento MENSAL, Data). Sem email. A marca é o @.
+   * Usa busca por palavra-chave no header (robusto a quebras de linha).
+   */
+  private parseRespondi2Lead(r: Record<string, string>) {
+    const pick = (kw: string) => {
+      const key = Object.keys(r).find(k => k.toLowerCase().includes(kw.toLowerCase()))
+      return key ? r[key]?.trim() : undefined
+    }
+    const name = pick('informe seu nome') ?? pick('seu nome')
+    const brand = pick('@ do instagram') ?? pick('instagram da sua marca')
+    const negocio = pick('descrevem o seu negócio') ?? pick('negócio')
+    const whatsapp = pick('whatsapp')
+    const faturamento = pick('faturamento')
+    const createdTime = pick('data')
+
+    const igHandle = brand ? (brand.startsWith('@') ? brand : `@${brand}`) : ''
+    const companyName = (brand || name || '').replace(/^@/, '').trim()
+
+    const notes = [
+      igHandle ? `IG: ${igHandle}` : null,
+      negocio ? `Negócio: ${negocio}` : null,
+      'Fonte: Respondi',
+    ].filter(Boolean).join(' | ')
+
+    return {
+      companyName: companyName || name || '',
+      responsible: name || companyName || '',
+      whatsapp: whatsapp ? `+${whatsapp.replace(/\D/g, '')}` : null,
+      phone: whatsapp ? `+${whatsapp.replace(/\D/g, '')}` : null,
+      email: null,
       estimatedRevenue: faturamento || null,
       segment: 'Moda',
       status: 'PROSPECT',
