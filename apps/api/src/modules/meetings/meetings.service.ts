@@ -156,14 +156,14 @@ export class MeetingsService {
   async getClientCadence(clientId: string) {
     const now = new Date()
     const lastMeeting = await this.prisma.meeting.findFirst({
-      where: { clientId, status: 'DONE' },
+      where: { clientId, status: 'DONE', type: { not: 'CS' } },
       orderBy: { date: 'desc' },
     })
     const nextMeeting = await this.prisma.meeting.findFirst({
-      where: { clientId, status: 'SCHEDULED', date: { gte: now } },
+      where: { clientId, status: 'SCHEDULED', date: { gte: now }, type: { not: 'CS' } },
       orderBy: { date: 'asc' },
     })
-    const totalDone = await this.prisma.meeting.count({ where: { clientId, status: 'DONE' } })
+    const totalDone = await this.prisma.meeting.count({ where: { clientId, status: 'DONE', type: { not: 'CS' } } })
     const totalScheduled = await this.prisma.meeting.count({ where: { clientId, status: 'SCHEDULED' } })
     const totalNoShow = await this.prisma.meeting.count({ where: { clientId, status: 'NO_SHOW' } })
 
@@ -215,17 +215,18 @@ export class MeetingsService {
     }> = []
     for (const client of clients) {
       const [lastMeeting, nextMeeting, doneMeetingsCount, overdue, futurePaymentCount] = await Promise.all([
+        // CS (Customer Success) não conta na cadência
         this.prisma.meeting.findFirst({
-          where: { clientId: client.id, status: 'DONE' },
+          where: { clientId: client.id, status: 'DONE', type: { not: 'CS' } },
           orderBy: { date: 'desc' },
           select: { date: true },
         }),
         this.prisma.meeting.findFirst({
-          where: { clientId: client.id, status: 'SCHEDULED', date: { gte: now } },
+          where: { clientId: client.id, status: 'SCHEDULED', date: { gte: now }, type: { not: 'CS' } },
           orderBy: { date: 'asc' },
           select: { date: true, type: true },
         }),
-        this.prisma.meeting.count({ where: { clientId: client.id, status: 'DONE' } }),
+        this.prisma.meeting.count({ where: { clientId: client.id, status: 'DONE', type: { not: 'CS' } } }),
         this.prisma.payment.findMany({
           where: {
             clientId: client.id,
