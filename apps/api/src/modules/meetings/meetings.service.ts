@@ -195,6 +195,7 @@ export class MeetingsService {
     const clients = await this.prisma.client.findMany({
       where: {
         status: 'ACTIVE',
+        mentorshipEnded: false, // mentoria encerrada não aparece na agenda
         plans: { some: { status: 'ACTIVE' } },
       },
       select: {

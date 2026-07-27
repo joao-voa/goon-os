@@ -69,6 +69,7 @@ model Client {
   hasContract      Boolean  @default(false)
   hasBilling       Boolean  @default(false)
   isClientActive   Boolean  @default(false)
+  mentorshipEnded  Boolean  @default(false) // mentoria encerrada: sai da agenda, mantém pagamentos
 
   status           String   @default("ACTIVE")
 

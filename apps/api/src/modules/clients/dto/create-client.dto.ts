@@ -114,4 +114,7 @@ export class CreateClientDto {
 
   @IsOptional() @IsBoolean()
   isClientActive?: boolean
+
+  @IsOptional() @IsBoolean()
+  mentorshipEnded?: boolean
 }
