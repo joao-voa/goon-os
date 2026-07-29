@@ -456,6 +456,8 @@ export default function PendenciesPage() {
   const [expiringPlans, setExpiringPlans] = useState<Array<{ id: string; companyName: string; contractEndDate: string; daysLeft: number; expired: boolean; productCode?: string }>>([])
   const [productFilter, setProductFilter] = useState('')
   const [carteiraFilter, setCarteiraFilter] = useState<'todos' | 'carteira' | 'sem'>('todos')
+  const [agruparCliente, setAgruparCliente] = useState(false)
+  const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set())
   const [pendencies, setPendencies] = useState<Pendency[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -616,6 +618,10 @@ export default function PendenciesPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
             <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14 }}>CLIENTES INADIMPLENTES</div>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <button onClick={() => setAgruparCliente(v => !v)} style={{
+                padding: '4px 10px', border: '1px solid #0A0A0C', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 10,
+                background: agruparCliente ? '#0A0A0C' : 'white', color: agruparCliente ? 'white' : 'black', marginRight: 6,
+              }}>{agruparCliente ? '▤ POR CLIENTE' : '▥ POR PARCELA'}</button>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, color: '#666' }}>FILTRO:</span>
               {([['todos', 'TODOS', '#1e293b'], ['sem', 'SEM A RECUPERAR', '#006600'], ['carteira', 'A RECUPERAR', '#cc0000']] as const).map(([key, label, bg]) => (
                 <button key={key} onClick={() => setCarteiraFilter(carteiraFilter === key ? 'todos' : key)} style={{
@@ -627,7 +633,79 @@ export default function PendenciesPage() {
           </div>
           {filtered.length === 0 ? (
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#006600', padding: 24, textAlign: 'center', border: '1px dashed #006600' }}>Nenhum inadimplente!</div>
-          ) : (
+          ) : agruparCliente ? (() => {
+            const groups = Object.values(filtered.reduce((acc: Record<string, { client: { id: string; companyName: string }; items: typeof filtered; total: number; carteira: boolean; prod: Set<string> }>, p) => {
+              const k = p.client.id
+              if (!acc[k]) acc[k] = { client: p.client, items: [], total: 0, carteira: false, prod: new Set() }
+              acc[k].items.push(p); acc[k].total += p.value; if (p.inCarteira) acc[k].carteira = true; if (p.productCode) acc[k].prod.add(p.productCode)
+              return acc
+            }, {})).sort((a, b) => b.total - a.total)
+            return (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                  <thead>
+                    <tr style={{ background: '#dc2626', color: 'white', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '8px 12px', textAlign: 'left' }}>Cliente</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'center' }}>Programa</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'center' }}>Parcelas em Aberto</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'right' }}>Total a Cobrar</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'center' }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {groups.map(g => {
+                      const open = expandedClients.has(g.client.id)
+                      return (
+                        <>
+                          <tr key={g.client.id} onClick={() => setExpandedClients(prev => { const n = new Set(prev); n.has(g.client.id) ? n.delete(g.client.id) : n.add(g.client.id); return n })}
+                            style={{ borderBottom: '1px solid #ddd', background: g.carteira ? '#fff5f5' : '#fafafa', cursor: 'pointer', fontWeight: 700 }}>
+                            <td style={{ padding: '10px 12px' }}>{open ? '▾ ' : '▸ '}{g.carteira && <span style={{ color: '#cc0000', marginRight: 4, fontSize: 10 }}>C</span>}{g.client.companyName}</td>
+                            <td style={{ padding: '10px 12px', textAlign: 'center' }}>{[...g.prod].map(pc => <span key={pc} style={{ background: PRODUCT_COLORS[pc] ?? '#888', color: 'white', padding: '2px 6px', fontSize: 9, fontWeight: 700, marginRight: 2 }}>{pc}</span>)}</td>
+                            <td style={{ padding: '10px 12px', textAlign: 'center' }}>{g.items.length}</td>
+                            <td style={{ padding: '10px 12px', textAlign: 'right', color: '#cc0000' }}>{fmtBRL(g.total)}</td>
+                            <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                              <button onClick={e => { e.stopPropagation(); window.location.href = `/clients/${g.client.id}` }} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>VER</button>
+                            </td>
+                          </tr>
+                          {open && g.items.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).map(pay => {
+                            const days = Math.floor((Date.now() - new Date(pay.dueDate).getTime()) / (1000*60*60*24))
+                            return (
+                              <tr key={pay.id} style={{ borderBottom: '1px solid #eee', background: '#fff', fontSize: 11 }}>
+                                <td style={{ padding: '6px 12px 6px 28px', color: '#555' }}>Parcela {pay.installment} · venc {new Date(pay.dueDate).toLocaleDateString('pt-BR')} · <span style={{ color: '#cc0000', fontWeight: 700 }}>{days}d atraso</span></td>
+                                <td />
+                                <td style={{ textAlign: 'center', color: '#888' }}>{pay.inCarteira ? 'A Recuperar' : ''}</td>
+                                <td style={{ padding: '6px 12px', textAlign: 'right' }}>{fmtBRL(pay.value)}</td>
+                                <td style={{ padding: '6px 12px', textAlign: 'center' }}>
+                                  <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                                    <button onClick={async () => {
+                                      const dateStr = prompt('Data do pagamento (DD/MM/AAAA):', new Date().toLocaleDateString('pt-BR'))
+                                      if (!dateStr) return
+                                      const parts = dateStr.split('/'); if (parts.length !== 3) { toast.error('Data invalida'); return }
+                                      const paidDate = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10), 12)
+                                      if (isNaN(paidDate.getTime())) { toast.error('Data invalida'); return }
+                                      try { await apiFetch(`/api/payments/${pay.id}`, { method: 'PUT', body: JSON.stringify({ status: 'PAID', paidAt: paidDate.toISOString() }) }); toast.success('Pagamento confirmado'); setOverduePayments(prev => prev.filter(p => p.id !== pay.id)) } catch { toast.error('Erro ao dar baixa') }
+                                    }} style={{ background: '#16a34a', color: 'white', border: 'none', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>PAGAR</button>
+                                    <button onClick={async () => {
+                                      try { await apiFetch(`/api/payments/${pay.id}/carteira`, { method: 'PATCH', body: JSON.stringify({ inCarteira: !pay.inCarteira }) }); setOverduePayments(prev => prev.map(p => p.id === pay.id ? { ...p, inCarteira: !p.inCarteira } : p)); toast.success(pay.inCarteira ? 'Removido de A Recuperar' : 'Adicionado a A Recuperar') } catch { toast.error('Erro') }
+                                    }} style={{ background: pay.inCarteira ? '#e6a800' : '#888', color: 'white', border: 'none', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{pay.inCarteira ? 'TIRAR' : 'RECUP'}</button>
+                                  </div>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </>
+                      )
+                    })}
+                    <tr style={{ background: '#f0f0f0', fontWeight: 700 }}>
+                      <td colSpan={3} style={{ padding: '8px 12px' }}>TOTAL ({groups.length} clientes)</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmtBRL(filtered.reduce((s, p) => s + p.value, 0))}</td>
+                      <td />
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )
+          })() : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
                 <thead>
