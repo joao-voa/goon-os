@@ -16,6 +16,7 @@ import {
   Settings,
   GraduationCap,
   ScrollText,
+  TrendingUp,
 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { GoonLogo } from '@/components/GoonLogo'
@@ -36,7 +37,8 @@ const menuItems = [
   { icon: Settings, label: 'Admin', description: 'Usuarios e configuracoes', href: '/admin', color: 'var(--retro-blue)' },
 ]
 
-// Item exclusivo do dono (João) — igual à sidebar.
+// Itens exclusivos do dono (João) — igual à sidebar.
+const SALES_ITEM = { icon: TrendingUp, label: 'Vendas', description: 'Contratos fechados por mes', href: '/sales', color: '#0A0A0C' }
 const AUDIT_ITEM = { icon: ScrollText, label: 'Auditoria', description: 'Log de acoes por usuario', href: '/audit', color: '#0A0A0C' }
 
 const comercialPaths = ['/crm', '/agenda', '/products']
@@ -69,8 +71,8 @@ export default function HomePage() {
       if (userRole === 'comercial') return menuItems.filter(item => comercialPaths.includes(item.href))
       return menuItems
     })()
-    // Auditoria: só o dono vê (independente de role/módulos).
-    return isOwner ? [...base, AUDIT_ITEM] : base
+    // Vendas + Auditoria: só o dono vê (independente de role/módulos).
+    return isOwner ? [...base, SALES_ITEM, AUDIT_ITEM] : base
   })()
 
   return (

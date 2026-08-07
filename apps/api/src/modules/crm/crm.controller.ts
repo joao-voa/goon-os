@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common'
 import { CrmService } from './crm.service'
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
+import { OwnerGuard } from '../../auth/owner.guard'
 
 @Controller('api/crm')
 @UseGuards(JwtAuthGuard)
@@ -39,6 +40,7 @@ export class CrmController {
   }
 
   @Get('sales-by-month')
+  @UseGuards(OwnerGuard)
   getSalesByMonth(@Query('year') year?: string) {
     return this.service.getSalesByMonth(year ? parseInt(year, 10) : new Date().getFullYear())
   }

@@ -1122,14 +1122,6 @@ export default function CrmPage() {
   const [comMonth, setComMonth] = useState(new Date().getMonth())
   const [comYear, setComYear] = useState(new Date().getFullYear())
   const [comSelectedDate, setComSelectedDate] = useState<string | null>(null)
-  const [salesYear, setSalesYear] = useState(new Date().getFullYear())
-  const [salesData, setSalesData] = useState<{ year: number; totalYear: number; countYear: number; months: Array<{ month: number; label: string; count: number; total: number; deals: Array<{ companyName: string; value: number; date: string; salesRep: string | null; product: string | null }> }> } | null>(null)
-  const [expandedSalesMonth, setExpandedSalesMonth] = useState<number | null>(null)
-
-  useEffect(() => {
-    if (crmTab !== 'dashboard') return
-    apiFetch<typeof salesData>(`/api/crm/sales-by-month?year=${salesYear}`).then(setSalesData).catch(() => {})
-  }, [crmTab, salesYear])
 
   const loadCommercialMeetings = useCallback(async () => {
     if (crmTab !== 'agenda') return
@@ -1381,48 +1373,6 @@ export default function CrmPage() {
               )
             })()}
 
-            {/* VENDAS POR MES */}
-            {salesData && (() => {
-              const maxTotal = Math.max(...salesData.months.map(m => m.total), 1)
-              return (
-                <div style={{ marginTop: 20, border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
-                  <div style={{ background: '#0A0A0C', color: 'white', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12 }}>VENDAS POR MES · {salesData.year} <span style={{ color: '#C7F900', marginLeft: 8 }}>{fmtBRL(salesData.totalYear)}</span> <span style={{ opacity: 0.6, fontSize: 10 }}>({salesData.countYear} contratos · valor total)</span></span>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button onClick={() => setSalesYear(y => y - 1)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.3)', color: 'white', cursor: 'pointer', padding: '2px 8px', fontFamily: 'var(--font-mono)', fontSize: 11 }}>◀</button>
-                      <button onClick={() => setSalesYear(y => y + 1)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.3)', color: 'white', cursor: 'pointer', padding: '2px 8px', fontFamily: 'var(--font-mono)', fontSize: 11 }}>▶</button>
-                    </div>
-                  </div>
-                  <div style={{ padding: 12 }}>
-                    {salesData.months.filter(m => m.count > 0).length === 0 && (
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', textAlign: 'center', padding: 20 }}>Nenhuma venda em {salesData.year}.</div>
-                    )}
-                    {salesData.months.map(m => m.count > 0 && (
-                      <div key={m.month} style={{ borderBottom: '1px solid #eee' }}>
-                        <div onClick={() => setExpandedSalesMonth(expandedSalesMonth === m.month ? null : m.month)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 4px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-                          <span style={{ width: 48, fontWeight: 700, textTransform: 'uppercase' }}>{expandedSalesMonth === m.month ? '▾' : '▸'} {m.label}</span>
-                          <div style={{ flex: 1, background: '#f0f0f0', height: 18, position: 'relative' }}>
-                            <div style={{ width: `${(m.total / maxTotal) * 100}%`, background: '#0A0A0C', height: '100%' }} />
-                          </div>
-                          <span style={{ width: 40, textAlign: 'center', color: '#888', fontSize: 10 }}>{m.count}x</span>
-                          <span style={{ width: 110, textAlign: 'right', fontWeight: 700 }}>{fmtBRL(m.total)}</span>
-                        </div>
-                        {expandedSalesMonth === m.month && (
-                          <div style={{ padding: '4px 4px 10px 58px' }}>
-                            {m.deals.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((dl, i) => (
-                              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontFamily: 'var(--font-mono)', fontSize: 11, color: '#444' }}>
-                                <span>{new Date(dl.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} · {dl.companyName}{dl.product ? ` (${dl.product})` : ''}</span>
-                                <span style={{ fontWeight: 700 }}>{fmtBRL(dl.value)}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )
-            })()}
           </div>
         )
       })()}

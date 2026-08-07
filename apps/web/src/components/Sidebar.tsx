@@ -1,6 +1,6 @@
 'use client'
 
-import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, DollarSign, AlertTriangle, LogOut, ChevronLeft, ChevronRight, Users, Percent, Receipt, ArrowLeftRight, Settings, Calendar, CheckSquare, ScrollText, GraduationCap } from 'lucide-react'
+import { type LucideIcon, LayoutDashboard, Building2, Package, FileText, GitBranch, DollarSign, AlertTriangle, LogOut, ChevronLeft, ChevronRight, Users, Percent, Receipt, ArrowLeftRight, Settings, Calendar, CheckSquare, ScrollText, GraduationCap, TrendingUp } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
@@ -25,7 +25,8 @@ interface SidebarProps {
   isOwner?: boolean
 }
 
-// Item exclusivo do dono (João) — fora da lista normal de nav.
+// Itens exclusivos do dono (João) — fora da lista normal de nav.
+const SALES_ITEM: NavItem = { href: '/sales', label: 'Vendas', icon: TrendingUp }
 const AUDIT_ITEM: NavItem = { href: '/audit', label: 'Auditoria', icon: ScrollText }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -72,8 +73,8 @@ export function Sidebar({
       }
       return navItems
     })()
-    // Auditoria: só o dono vê (independente de role/módulos).
-    return isOwner ? [...base, AUDIT_ITEM] : base
+    // Vendas + Auditoria: só o dono vê (independente de role/módulos).
+    return isOwner ? [...base, SALES_ITEM, AUDIT_ITEM] : base
   })()
   const [openPendenciesCount, setOpenPendenciesCount] = useState(0)
 
