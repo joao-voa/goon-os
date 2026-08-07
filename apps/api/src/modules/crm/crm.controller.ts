@@ -38,6 +38,11 @@ export class CrmController {
     return this.service.getSuggestions()
   }
 
+  @Get('sales-by-month')
+  getSalesByMonth(@Query('year') year?: string) {
+    return this.service.getSalesByMonth(year ? parseInt(year, 10) : new Date().getFullYear())
+  }
+
   @Post('sync-sheets')
   @HttpCode(HttpStatus.OK)
   syncFromSheets() {

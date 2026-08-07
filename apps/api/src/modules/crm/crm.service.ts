@@ -1010,6 +1010,44 @@ export class CrmService {
     }
   }
 
+  /** Vendas por mês (contratos fechados por closedAt) — valor total do contrato. */
+  async getSalesByMonth(year: number) {
+    const start = new Date(year, 0, 1)
+    const end = new Date(year + 1, 0, 1)
+    const closed = await this.prisma.client.findMany({
+      where: { leadStage: 'FECHADO', closedAt: { gte: start, lt: end } },
+      select: { companyName: true, saleValue: true, closedAt: true, salesRep: true, suggestedProduct: true },
+      orderBy: { closedAt: 'asc' },
+    })
+
+    const months = Array.from({ length: 12 }, (_, m) => ({
+      month: m + 1,
+      label: new Date(year, m, 1).toLocaleString('pt-BR', { month: 'short' }),
+      count: 0,
+      total: 0,
+      deals: [] as Array<{ companyName: string; value: number; date: string; salesRep: string | null; product: string | null }>,
+    }))
+
+    for (const c of closed) {
+      if (!c.closedAt) continue
+      const m = c.closedAt.getMonth()
+      const v = Number(c.saleValue ?? 0)
+      months[m].count++
+      months[m].total += v
+      months[m].deals.push({
+        companyName: c.companyName,
+        value: v,
+        date: c.closedAt.toISOString(),
+        salesRep: c.salesRep,
+        product: c.suggestedProduct,
+      })
+    }
+
+    const totalYear = months.reduce((s, m) => s + m.total, 0)
+    const countYear = months.reduce((s, m) => s + m.count, 0)
+    return { year, months, totalYear, countYear }
+  }
+
   async createLead(dto: {
     companyName: string
     responsible: string
