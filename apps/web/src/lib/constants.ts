@@ -1,5 +1,8 @@
 // Dono do sistema — acesso exclusivo (ex: Auditoria)
 export const OWNER_EMAIL = 'joaovitorafonso@gmail.com'
+// Acesso ao módulo Vendas: dono + conta de teste (temporário)
+export const SALES_EMAILS = [OWNER_EMAIL, 'teste@teste.com']
+export const canSeeSales = (email?: string | null) => !!email && SALES_EMAILS.includes(email)
 
 export const ONBOARDING_STAGES = [
   'CLIENT_CLOSED', 'CONTRACT_SENT', 'BILLING_CREATED',

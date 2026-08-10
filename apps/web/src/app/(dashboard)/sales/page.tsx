@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
 import { useAuth } from '@/hooks/useAuth'
-import { OWNER_EMAIL } from '@/lib/constants'
+import { canSeeSales } from '@/lib/constants'
 
 interface Deal { companyName: string; value: number; date: string; salesRep: string | null; product: string | null }
 interface MonthSales { month: number; label: string; count: number; total: number; deals: Deal[] }
@@ -13,7 +13,7 @@ const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', cur
 
 export default function SalesPage() {
   const { user, loading: authLoading } = useAuth()
-  const isOwner = user?.email === OWNER_EMAIL
+  const isOwner = canSeeSales(user?.email)
   const [year, setYear] = useState(new Date().getFullYear())
   const [data, setData] = useState<SalesData | null>(null)
   const [expanded, setExpanded] = useState<number | null>(null)

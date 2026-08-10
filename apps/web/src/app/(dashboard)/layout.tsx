@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSidebar } from '@/hooks/useSidebar'
 import { SidebarProvider } from '@/contexts/SidebarContext'
 import { Sidebar, NAV_ITEMS } from '@/components/Sidebar'
-import { OWNER_EMAIL } from '@/lib/constants'
+import { OWNER_EMAIL, canSeeSales } from '@/lib/constants'
 import { apiFetch } from '@/lib/api'
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
@@ -188,6 +188,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         userRole={user?.role}
         userAllowedModules={user?.allowedModules}
         isOwner={user?.email === OWNER_EMAIL}
+        canSeeSales={canSeeSales(user?.email)}
       />
 
       {/* Mobile top bar — simplified, no hamburger (bottom nav handles navigation) */}

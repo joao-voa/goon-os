@@ -23,6 +23,7 @@ interface SidebarProps {
   userRole?: string
   userAllowedModules?: string | null
   isOwner?: boolean
+  canSeeSales?: boolean
 }
 
 // Itens exclusivos do dono (João) — fora da lista normal de nav.
@@ -55,6 +56,7 @@ export function Sidebar({
   userRole,
   userAllowedModules,
   isOwner,
+  canSeeSales,
 }: SidebarProps) {
   const pathname = usePathname()
 
@@ -73,8 +75,8 @@ export function Sidebar({
       }
       return navItems
     })()
-    // Vendas + Auditoria: só o dono vê (independente de role/módulos).
-    return isOwner ? [...base, SALES_ITEM, AUDIT_ITEM] : base
+    // Vendas: dono + conta de teste. Auditoria: só o dono.
+    return [...base, ...(canSeeSales ? [SALES_ITEM] : []), ...(isOwner ? [AUDIT_ITEM] : [])]
   })()
   const [openPendenciesCount, setOpenPendenciesCount] = useState(0)
 

@@ -14,6 +14,7 @@ import {
 import { CrmService } from './crm.service'
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import { OwnerGuard } from '../../auth/owner.guard'
+import { SalesGuard } from '../../auth/sales.guard'
 
 @Controller('api/crm')
 @UseGuards(JwtAuthGuard)
@@ -40,7 +41,7 @@ export class CrmController {
   }
 
   @Get('sales-by-month')
-  @UseGuards(OwnerGuard)
+  @UseGuards(SalesGuard)
   getSalesByMonth(@Query('year') year?: string) {
     return this.service.getSalesByMonth(year ? parseInt(year, 10) : new Date().getFullYear())
   }

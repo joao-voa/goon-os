@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { GoonLogo } from '@/components/GoonLogo'
-import { OWNER_EMAIL } from '@/lib/constants'
+import { OWNER_EMAIL, canSeeSales } from '@/lib/constants'
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', description: 'Visao geral e KPIs', href: '/dashboard', color: 'var(--retro-blue)' },
@@ -48,12 +48,14 @@ export default function HomePage() {
   const [allowedModules, setAllowedModules] = useState<string[] | null>(null)
   const [userName, setUserName] = useState('')
   const [isOwner, setIsOwner] = useState(false)
+  const [userEmail, setUserEmail] = useState('')
 
   useEffect(() => {
     apiFetch<{ role: string; allowedModules?: string | null; name: string; email: string }>('/api/auth/me')
       .then(user => {
         setUserRole(user.role)
         setUserName(user.name)
+        setUserEmail(user.email)
         setIsOwner(user.email === OWNER_EMAIL)
         if (user.allowedModules) {
           try { setAllowedModules(JSON.parse(user.allowedModules)) } catch { /* ignore */ }
@@ -71,8 +73,8 @@ export default function HomePage() {
       if (userRole === 'comercial') return menuItems.filter(item => comercialPaths.includes(item.href))
       return menuItems
     })()
-    // Vendas + Auditoria: só o dono vê (independente de role/módulos).
-    return isOwner ? [...base, SALES_ITEM, AUDIT_ITEM] : base
+    // Vendas: dono + conta de teste. Auditoria: só o dono.
+    return [...base, ...(canSeeSales(userEmail) ? [SALES_ITEM] : []), ...(isOwner ? [AUDIT_ITEM] : [])]
   })()
 
   return (
