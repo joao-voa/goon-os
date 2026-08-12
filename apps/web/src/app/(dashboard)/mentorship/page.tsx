@@ -90,7 +90,7 @@ export default function MentorshipDashboard() {
   const sel = mentees.find(m => m.clientId === selId)
 
   return (
-    <div style={{ background: INK, margin: -28, minHeight: 'calc(100vh - 56px)', color: FG, display: 'flex', fontFamily: mono }}>
+    <div style={{ background: INK, minHeight: 'calc(100vh - 56px)', color: FG, display: 'flex', fontFamily: mono }}>
       {/* ══ LISTA (esquerda) — colapsável ══ */}
       {listCollapsed ? (
         <aside style={{ width: 40, borderRight: `1px solid ${LINE}`, display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, height: 'calc(100vh - 56px)', position: 'sticky', top: 0, paddingTop: 14 }}>

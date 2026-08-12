@@ -275,8 +275,9 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       <main style={{
         marginLeft: isMobile ? 0 : sidebarWidth,
         marginTop: isMobile ? 48 : 56,
-        padding: isMobile ? 12 : 28,
-        paddingBottom: isMobile ? 72 : undefined,
+        padding: pathname === '/mentorship' ? 0 : (isMobile ? 12 : 28),
+        paddingBottom: pathname === '/mentorship' ? (isMobile ? 60 : 0) : (isMobile ? 72 : undefined),
+        background: pathname === '/mentorship' ? '#0A0A0C' : undefined,
         transition: 'margin-left 0.2s ease',
         minHeight: isMobile ? 'calc(100vh - 48px)' : 'calc(100vh - 56px)',
       }}>
