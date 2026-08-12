@@ -79,7 +79,7 @@ export class MentorshipService {
         daysSinceContact,
         enrolled: !!p,
         attention: this.attention(overdue.length, daysSinceContact),
-        lastMetrics: study ? { faturamentoAno: study.faturamentoAno, numVendas: study.numVendas, ticketMedio: study.ticketMedio, roas: study.roas, seguidoresIg: study.seguidoresIg, sessionDate: study.sessionDate } : null,
+        lastMetrics: study ? { faturamentoMes: study.faturamentoMes, faturamentoAno: study.faturamentoAno, clientesAtivos: study.clientesAtivos, estoqueQtd: study.estoqueQtd, estoqueValor: study.estoqueValor, numVendas: study.numVendas, ticketMedio: study.ticketMedio, roas: study.roas, seguidoresIg: study.seguidoresIg, sessionDate: study.sessionDate } : null,
       }
     })
 
@@ -187,7 +187,8 @@ export class MentorshipService {
 
   async createCaseStudy(dto: {
     clientId: string; meetingId?: string; sessionDate?: string; mentorName?: string
-    faturamentoAno?: number; numVendas?: number; ticketMedio?: number; investimentoTrafego?: number; roas?: number; seguidoresIg?: number
+    faturamentoMes?: number; faturamentoAno?: number; clientesAtivos?: number; estoqueQtd?: number; estoqueValor?: number
+    numVendas?: number; ticketMedio?: number; investimentoTrafego?: number; roas?: number; seguidoresIg?: number
     numClientes?: number
     vendasPorCanal?: Array<{ canal: string; valor: number }>
     customFields?: Array<{ label: string; value: string }>
@@ -201,7 +202,9 @@ export class MentorshipService {
       data: {
         clientId: dto.clientId, meetingId: dto.meetingId ?? null, sessionDate,
         mentorName: dto.mentorName ?? profile.mentorName,
-        faturamentoAno: dto.faturamentoAno ?? null, numVendas: dto.numVendas ?? null, ticketMedio: dto.ticketMedio ?? null,
+        faturamentoMes: dto.faturamentoMes ?? null, faturamentoAno: dto.faturamentoAno ?? null,
+        clientesAtivos: dto.clientesAtivos ?? null, estoqueQtd: dto.estoqueQtd ?? null, estoqueValor: dto.estoqueValor ?? null,
+        numVendas: dto.numVendas ?? null, ticketMedio: dto.ticketMedio ?? null,
         investimentoTrafego: dto.investimentoTrafego ?? null, roas: dto.roas ?? null, seguidoresIg: dto.seguidoresIg ?? null,
         numClientes: dto.numClientes ?? null,
         vendasPorCanal: dto.vendasPorCanal ? (dto.vendasPorCanal as object) : undefined,

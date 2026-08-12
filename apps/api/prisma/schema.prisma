@@ -469,8 +469,12 @@ model SessionCaseStudy {
   meetingId          String?  // reunião que originou (opcional)
   sessionDate        DateTime
   mentorName         String?
-  // métricas fixas (marca de moda)
-  faturamentoAno     Float?   // R$/ano
+  // métricas fixas (marca de moda) — snapshot mensal
+  faturamentoMes     Float?   // R$ faturados no mês de referência
+  faturamentoAno     Float?   // R$/ano (acumulado, opcional)
+  clientesAtivos     Int?     // clientes ativos no mês
+  estoqueQtd         Int?     // estoque em quantidade (peças)
+  estoqueValor       Float?   // estoque em valor (R$)
   numVendas          Int?     // pedidos no período
   ticketMedio        Float?   // R$
   investimentoTrafego Float?  // R$

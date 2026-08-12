@@ -9,14 +9,15 @@ interface Mentee {
   clientId: string; company: string; responsible: string | null; tier: string | null
   mentorName: string | null; status: string; openActions: number; overdueActions: number
   daysSinceContact: number | null; attention: boolean
-  lastMetrics: { faturamentoAno: number | null; ticketMedio: number | null; roas: number | null; seguidoresIg: number | null; numVendas: number | null; sessionDate: string } | null
+  lastMetrics: { faturamentoMes: number | null; faturamentoAno: number | null; clientesAtivos: number | null; estoqueQtd: number | null; estoqueValor: number | null; ticketMedio: number | null; roas: number | null; seguidoresIg: number | null; numVendas: number | null; sessionDate: string } | null
 }
 interface Channel { canal: string; valor: number }
 interface CustomField { label: string; value: string }
 interface Material { label: string; url?: string }
 interface CaseStudy {
   id: string; meetingId?: string | null; sessionDate: string; mentorName: string | null
-  faturamentoAno: number | null; numVendas: number | null; ticketMedio: number | null
+  faturamentoMes: number | null; faturamentoAno: number | null; clientesAtivos: number | null; estoqueQtd: number | null; estoqueValor: number | null
+  numVendas: number | null; ticketMedio: number | null
   investimentoTrafego: number | null; roas: number | null; seguidoresIg: number | null; numClientes: number | null
   vendasPorCanal: Channel[] | null; customFields: CustomField[] | null; materiais: Material[] | null
   situacaoAtual: string | null; oQueTrabalhou: string | null; proximosPassos: string | null; transcricao: string | null; pontosPrincipais: string | null
@@ -134,7 +135,7 @@ export default function MentorshipDashboard() {
                   {m.tier && <span style={{ fontSize: 8, background: LINE, padding: '1px 5px', borderRadius: 3 }}>{m.tier}</span>}
                 </div>
                 <div style={{ fontSize: 9, color: MUT, paddingLeft: 13 }}>
-                  {m.mentorName ?? 'sem mentor'} · {m.lastMetrics?.faturamentoAno != null ? brl(m.lastMetrics.faturamentoAno) : 's/ dados'}
+                  {m.mentorName ?? 'sem mentor'} · {(m.lastMetrics?.faturamentoMes ?? m.lastMetrics?.faturamentoAno) != null ? brl(m.lastMetrics!.faturamentoMes ?? m.lastMetrics!.faturamentoAno) : 's/ dados'}
                   {m.overdueActions > 0 && <span style={{ color: '#ff5a5a' }}> · {m.overdueActions} atrasada(s)</span>}
                 </div>
               </button>
@@ -177,9 +178,11 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask }
   const last = studies[0], prev = studies[1]
   const delta = (a: number | null, b: number | null) => (a == null || b == null || b === 0) ? null : ((a - b) / b) * 100
   const kpis: [string, string, number | null, number | null][] = [
-    ['Faturamento', brl(last?.faturamentoAno ?? null), last?.faturamentoAno ?? null, prev?.faturamentoAno ?? null],
+    ['Fat. do Mês', brl(last?.faturamentoMes ?? null), last?.faturamentoMes ?? null, prev?.faturamentoMes ?? null],
+    ['Clientes Ativos', num(last?.clientesAtivos ?? null), last?.clientesAtivos ?? null, prev?.clientesAtivos ?? null],
+    ['Estoque (peças)', num(last?.estoqueQtd ?? null), last?.estoqueQtd ?? null, prev?.estoqueQtd ?? null],
+    ['Estoque (R$)', brl(last?.estoqueValor ?? null), last?.estoqueValor ?? null, prev?.estoqueValor ?? null],
     ['Ticket Médio', brl(last?.ticketMedio ?? null), last?.ticketMedio ?? null, prev?.ticketMedio ?? null],
-    ['Nº Clientes', num(last?.numClientes ?? null), last?.numClientes ?? null, prev?.numClientes ?? null],
     ['Nº Vendas', num(last?.numVendas ?? null), last?.numVendas ?? null, prev?.numVendas ?? null],
     ['ROAS', last?.roas != null ? last.roas + 'x' : '—', last?.roas ?? null, prev?.roas ?? null],
     ['Seguidores IG', num(last?.seguidoresIg ?? null), last?.seguidoresIg ?? null, prev?.seguidoresIg ?? null],
@@ -235,7 +238,7 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask }
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 14, marginBottom: 18 }}>
-        <Panel title="Evolução do faturamento"><EvolutionChart studies={studies} /></Panel>
+        <Panel title="Evolução do faturamento (mês a mês)"><EvolutionChart studies={studies} /></Panel>
         <Panel title="Contexto da mentoria">
           <div style={{ fontSize: 12, lineHeight: 1.6 }}>
             <div style={{ marginBottom: 8 }}><span style={{ color: MUT }}>Dores:</span> {detail.profile.mainPains || <span style={{ color: '#555' }}>não preenchido</span>}</div>
@@ -297,7 +300,7 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask }
             <div key={cs.id} style={{ background: PANEL, border: `1px solid ${LINE}`, marginBottom: 8 }}>
               <div onClick={() => setExpanded(expanded === cs.id ? null : cs.id)} style={{ display: 'flex', justifyContent: 'space-between', padding: '11px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
                 <span>{expanded === cs.id ? '▾' : '▸'} {dt(cs.sessionDate)}{cs.mentorName ? ` · ${cs.mentorName}` : ''}</span>
-                <span style={{ color: NEON }}>{brl(cs.faturamentoAno)}</span>
+                <span style={{ color: NEON }}>{brl(cs.faturamentoMes ?? cs.faturamentoAno)}</span>
               </div>
               {expanded === cs.id && (
                 <div style={{ padding: '12px 14px 14px', fontSize: 11, lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: 6, borderTop: `1px solid ${LINE}` }}>
@@ -357,8 +360,11 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask }
 function SessionView({ cs, onClose }: { cs: CaseStudy; onClose: () => void }) {
   const row = (l: string, v: React.ReactNode) => v ? <div style={{ marginBottom: 8 }}><div style={{ color: NEON, fontSize: 9, textTransform: 'uppercase', marginBottom: 3 }}>{l}</div><div style={{ color: '#ddd', fontSize: 12, whiteSpace: 'pre-wrap', lineHeight: 1.55 }}>{v}</div></div> : null
   const metrics = ([
-    ['Faturamento', brl(cs.faturamentoAno)], ['Ticket', brl(cs.ticketMedio)], ['Clientes', num(cs.numClientes)],
-    ['Vendas', num(cs.numVendas)], ['ROAS', cs.roas != null ? cs.roas + 'x' : '—'], ['IG', num(cs.seguidoresIg)],
+    ['Fat. mês', brl(cs.faturamentoMes)], ['Clientes ativos', num(cs.clientesAtivos)],
+    ['Estoque (pç)', num(cs.estoqueQtd)], ['Estoque R$', brl(cs.estoqueValor)],
+    ['Ticket', brl(cs.ticketMedio)], ['Vendas', num(cs.numVendas)],
+    ['ROAS', cs.roas != null ? cs.roas + 'x' : '—'], ['IG', num(cs.seguidoresIg)],
+    ['Fat. ano', brl(cs.faturamentoAno)],
   ] as [string, string][]).filter(([, v]) => v !== '—')
   return (
     <div onClick={e => { if (e.target === e.currentTarget) onClose() }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 16, overflowY: 'auto' }}>
@@ -370,7 +376,7 @@ function SessionView({ cs, onClose }: { cs: CaseStudy; onClose: () => void }) {
         <div style={{ padding: 16, fontFamily: mono }}>
           {metrics.length > 0 && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: 8, marginBottom: 14 }}>
-              {metrics.map(([l, v]) => <div key={l} style={{ border: `1px solid ${LINE}`, padding: '6px 8px' }}><div style={{ fontSize: 8, color: MUT, textTransform: 'uppercase' }}>{l}</div><div style={{ fontSize: 13, fontWeight: 700, color: l === 'Faturamento' ? NEON : FG }}>{v}</div></div>)}
+              {metrics.map(([l, v]) => <div key={l} style={{ border: `1px solid ${LINE}`, padding: '6px 8px' }}><div style={{ fontSize: 8, color: MUT, textTransform: 'uppercase' }}>{l}</div><div style={{ fontSize: 13, fontWeight: 700, color: l === 'Fat. mês' ? NEON : FG }}>{v}</div></div>)}
             </div>
           )}
           {row('Principais pontos', cs.pontosPrincipais)}
@@ -401,8 +407,16 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 }
 
 function EvolutionChart({ studies }: { studies: CaseStudy[] }) {
-  const pts = studies.slice().reverse().filter(s => s.faturamentoAno != null).map(s => ({ x: new Date(s.sessionDate).getTime(), y: s.faturamentoAno as number }))
-  if (pts.length < 2) return <div style={{ color: MUT, fontSize: 12, padding: '30px 0', textAlign: 'center' }}>Precisa de 2+ sessões com faturamento pra desenhar a evolução.</div>
+  // agrega por mês: um ponto por mês, valor = faturamento do mês da sessão mais recente daquele mês
+  const byMonth = new Map<string, number>()
+  for (const s of studies) { // studies vem em ordem desc (mais recente primeiro)
+    if (s.faturamentoMes == null) continue
+    const dt = new Date(s.sessionDate)
+    const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`
+    if (!byMonth.has(key)) byMonth.set(key, s.faturamentoMes)
+  }
+  const pts = [...byMonth.entries()].map(([k, y]) => ({ x: new Date(k + '-01').getTime(), y })).sort((a, b) => a.x - b.x)
+  if (pts.length < 2) return <div style={{ color: MUT, fontSize: 12, padding: '30px 0', textAlign: 'center' }}>Precisa de 2+ meses com faturamento pra desenhar a evolução.</div>
   const W = 460, H = 160, pad = 8
   const xs = pts.map(p => p.x), ys = pts.map(p => p.y)
   const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys)
@@ -439,8 +453,10 @@ function SessionForm({ clientId, meetingId, onClose, onSaved }: { clientId: stri
         method: 'POST',
         body: JSON.stringify({
           clientId, meetingId, sessionDate: f.sessionDate,
-          faturamentoAno: numOr(f.faturamentoAno), ticketMedio: numOr(f.ticketMedio), numVendas: numOr(f.numVendas),
-          numClientes: numOr(f.numClientes), investimentoTrafego: numOr(f.investimentoTrafego), roas: numOr(f.roas), seguidoresIg: numOr(f.seguidoresIg),
+          faturamentoMes: numOr(f.faturamentoMes), faturamentoAno: numOr(f.faturamentoAno),
+          clientesAtivos: numOr(f.clientesAtivos), estoqueQtd: numOr(f.estoqueQtd), estoqueValor: numOr(f.estoqueValor),
+          ticketMedio: numOr(f.ticketMedio), numVendas: numOr(f.numVendas),
+          investimentoTrafego: numOr(f.investimentoTrafego), roas: numOr(f.roas), seguidoresIg: numOr(f.seguidoresIg),
           vendasPorCanal: channels.filter(c => c.canal), customFields: customs.filter(c => c.label), materiais: materiais.filter(m => m.label || m.url).map(m => ({ label: m.label || 'arquivo', url: m.url })),
           pontosPrincipais: f.pontosPrincipais, oQueTrabalhou: f.oQueTrabalhou, proximosPassos: f.proximosPassos, transcricao: f.transcricao,
         }),
@@ -466,7 +482,7 @@ function SessionForm({ clientId, meetingId, onClose, onSaved }: { clientId: stri
           <div><label style={lbl}>Data da sessão</label><input type="date" value={f.sessionDate} onChange={e => set('sessionDate', e.target.value)} style={{ ...inp, colorScheme: 'dark' as React.CSSProperties['colorScheme'] }} /></div>
           <div style={sec}>Métricas do negócio</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {[['faturamentoAno', 'Faturamento (R$)'], ['ticketMedio', 'Ticket médio (R$)'], ['numClientes', 'Nº de clientes'], ['numVendas', 'Nº de vendas'], ['investimentoTrafego', 'Invest. tráfego (R$)'], ['roas', 'ROAS (x)'], ['seguidoresIg', 'Seguidores IG']].map(([k, l]) => (
+            {[['faturamentoMes', 'Faturamento do mês (R$)'], ['clientesAtivos', 'Clientes ativos'], ['estoqueQtd', 'Estoque (peças)'], ['estoqueValor', 'Estoque (R$)'], ['ticketMedio', 'Ticket médio (R$)'], ['numVendas', 'Nº de vendas'], ['investimentoTrafego', 'Invest. tráfego (R$)'], ['roas', 'ROAS (x)'], ['seguidoresIg', 'Seguidores IG'], ['faturamentoAno', 'Faturamento anual (R$, opc.)']].map(([k, l]) => (
               <div key={k}><label style={lbl}>{l}</label><input value={f[k] ?? ''} onChange={e => set(k, e.target.value)} style={inp} /></div>
             ))}
           </div>
