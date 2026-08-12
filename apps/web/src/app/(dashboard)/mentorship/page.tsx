@@ -35,6 +35,13 @@ interface Detail {
   attention: boolean; caseStudies: CaseStudy[]; actionItems: Action[]
   meetings?: { id: string; title: string; type?: string; date: string; status: string }[]
   monthlyMetrics?: MonthlyMetric[]
+  billing?: Billing
+}
+interface Billing {
+  plan: { code: string; name: string; value: number; installments: number | null; installmentValue: number | null; paymentType: string; status: string; renewalStatus: string | null; startDate: string; endDate: string | null } | null
+  delinquent: boolean; overdueCount: number; overdueTotal: number; oldestOverdueDue: string | null
+  nextDue: { dueDate: string; value: number; installment: number; totalInstallments: number } | null
+  paidCount: number; totalPayments: number
 }
 
 // ───────── helpers ─────────
@@ -385,6 +392,7 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask, 
           <div style={{ fontSize: 11, color: MUT, marginTop: 4 }}>
             {detail.client?.responsible ?? '—'} · Mentor <span style={{ color: FG }}>{detail.profile.mentorName ?? '—'}</span> · {studies.length} sessões
             {sel.attention && <span style={{ marginLeft: 8, background: '#3a1414', color: '#ff5a5a', padding: '2px 8px', fontWeight: 700 }}>🔴 EM ATENÇÃO</span>}
+            {detail.billing?.delinquent && <span style={{ marginLeft: 8, background: '#3a1414', color: '#ff5a5a', padding: '2px 8px', fontWeight: 700 }}>⚠ INADIMPLENTE</span>}
           </div>
         </div>
         <button onClick={() => onRegister()} style={{ background: NEON, color: INK, border: 'none', padding: '10px 16px', fontFamily: mono, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ REGISTRAR SESSÃO</button>
@@ -439,6 +447,45 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask, 
           </div>
         </Panel>
       </div>
+
+      {/* Plano & Financeiro */}
+      {detail.billing && (() => {
+        const b = detail.billing!
+        const p = b.plan
+        const end = p?.endDate ? new Date(p.endDate) : null
+        const daysLeft = end ? Math.ceil((end.getTime() - Date.now()) / 86400000) : null
+        const vigencia = p ? `${dt(p.startDate)} → ${end ? dt(p.endDate) : 'sem término'}` : '—'
+        const vigColor = daysLeft != null && daysLeft < 0 ? '#ff5a5a' : daysLeft != null && daysLeft <= 30 ? '#e6a800' : FG
+        const parcelas = p ? (p.installments && p.installmentValue ? `${p.installments}× ${brl(p.installmentValue)}` : p.installments ? `${p.installments}×` : 'à vista') : '—'
+        const items: [string, React.ReactNode, string?][] = [
+          ['Programa', p ? `${p.code} · ${p.name}` : '—'],
+          ['Valor total', p ? brl(p.value) : '—', NEON],
+          ['Parcelas', parcelas],
+          ['Vigência', vigencia + (daysLeft != null ? daysLeft < 0 ? ' (encerrada)' : daysLeft <= 30 ? ` (${daysLeft}d p/ vencer)` : '' : ''), vigColor],
+          ['Situação', b.delinquent ? `Inadimplente` : 'Adimplente', b.delinquent ? '#ff5a5a' : NEON],
+          ['Próxima parcela', b.nextDue ? `${dt(b.nextDue.dueDate)} · ${brl(b.nextDue.value)} (${b.nextDue.installment}/${b.nextDue.totalInstallments})` : '—'],
+          ['Parcelas pagas', `${b.paidCount}/${b.totalPayments}`],
+        ]
+        return (
+          <div style={{ marginBottom: 18 }}>
+            <Panel title="Plano & Financeiro">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px 18px', fontSize: 12 }}>
+                {items.map(([l, v, c]) => (
+                  <div key={l}>
+                    <div style={{ fontSize: 9, color: MUT, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{l}</div>
+                    <div style={{ color: c ?? FG, fontWeight: c ? 700 : 400 }}>{v}</div>
+                  </div>
+                ))}
+              </div>
+              {b.delinquent && (
+                <div style={{ marginTop: 12, background: '#2a1414', border: '1px solid #ff5a5a', color: '#ff8a8a', padding: '8px 12px', fontSize: 11 }}>
+                  ⚠ {b.overdueCount} parcela(s) em atraso · total <b style={{ color: '#ff5a5a' }}>{brl(b.overdueTotal)}</b>{b.oldestOverdueDue ? ` · vencida desde ${dt(b.oldestOverdueDue)}` : ''}
+                </div>
+              )}
+            </Panel>
+          </div>
+        )
+      })()}
 
       {/* Ficha do cliente + reuniões */}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 14, marginBottom: 18 }}>

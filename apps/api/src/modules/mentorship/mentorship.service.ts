@@ -165,25 +165,48 @@ export class MentorshipService {
   // ---------- Detalhe do mentorado (jornada) ----------
 
   async getClientDetail(clientId: string) {
-    const [profile, client, studies, actions, meetings, monthlyMetrics] = await Promise.all([
+    const [profile, client, studies, actions, meetings, monthlyMetrics, payments] = await Promise.all([
       this.prisma.menteeProfile.findUnique({ where: { clientId } }),
       this.prisma.client.findUnique({
         where: { id: clientId },
         select: {
           id: true, companyName: true, tradeName: true, cnpj: true, responsible: true, email: true, whatsapp: true, phone: true,
           segment: true, city: true, state: true, estimatedRevenue: true, mainPains: true, strategicGoals: true, createdAt: true,
-          plans: { where: { status: 'ACTIVE' }, select: { value: true, installments: true, product: { select: { code: true, name: true } } } },
+          plans: { where: { status: 'ACTIVE' }, orderBy: { value: 'desc' }, select: { value: true, installments: true, installmentValue: true, paymentType: true, startDate: true, endDate: true, status: true, renewalStatus: true, product: { select: { code: true, name: true } } } },
         },
       }),
       this.prisma.sessionCaseStudy.findMany({ where: { clientId }, orderBy: { sessionDate: 'desc' } }),
       this.prisma.actionItem.findMany({ where: { clientId }, orderBy: [{ done: 'asc' }, { dueDate: 'asc' }] }),
       this.prisma.meeting.findMany({ where: { clientId }, orderBy: { date: 'desc' }, take: 20, select: { id: true, title: true, type: true, date: true, status: true, notes: true } }),
       this.prisma.monthlyMetric.findMany({ where: { clientId }, orderBy: { month: 'asc' } }),
+      this.prisma.payment.findMany({ where: { clientId, status: { not: 'CANCELLED' } }, orderBy: { dueDate: 'asc' }, select: { installment: true, totalInstallments: true, dueDate: true, value: true, status: true, paidAt: true } }),
     ])
     if (!client) throw new NotFoundException('Cliente não encontrado')
     // mentor derivado do split se não houver perfil
     const mentorName = profile?.mentorName ?? await this.deriveMentor(clientId)
     const now = Date.now()
+
+    // financeiro / inadimplência
+    const activePlan = client.plans[0]
+    const isOverdue = (p: typeof payments[number]) => p.status !== 'PAID' && p.dueDate.getTime() < now
+    const overduePayments = payments.filter(isOverdue)
+    const nextDue = payments.find(p => p.status !== 'PAID' && p.dueDate.getTime() >= now) ?? null
+    const paidCount = payments.filter(p => p.status === 'PAID').length
+    const billing = {
+      plan: activePlan ? {
+        code: activePlan.product.code, name: activePlan.product.name,
+        value: Number(activePlan.value), installments: activePlan.installments,
+        installmentValue: activePlan.installmentValue != null ? Number(activePlan.installmentValue) : null,
+        paymentType: activePlan.paymentType, status: activePlan.status, renewalStatus: activePlan.renewalStatus ?? null,
+        startDate: activePlan.startDate, endDate: activePlan.endDate ?? null,
+      } : null,
+      delinquent: overduePayments.length > 0,
+      overdueCount: overduePayments.length,
+      overdueTotal: overduePayments.reduce((s, p) => s + Number(p.value), 0),
+      oldestOverdueDue: overduePayments[0]?.dueDate ?? null,
+      nextDue: nextDue ? { dueDate: nextDue.dueDate, value: Number(nextDue.value), installment: nextDue.installment, totalInstallments: nextDue.totalInstallments } : null,
+      paidCount, totalPayments: payments.length,
+    }
     const openOverdue = actions.filter(a => !a.done && a.dueDate && a.dueDate.getTime() < now).length
     const lastMeeting = meetings.find(m => m.status === 'DONE')?.date ?? null
     const lastContact = profile?.lastContactAt ?? lastMeeting ?? null
@@ -204,6 +227,7 @@ export class MentorshipService {
       actionItems: actions,
       meetings,
       monthlyMetrics,
+      billing,
     }
   }
 
