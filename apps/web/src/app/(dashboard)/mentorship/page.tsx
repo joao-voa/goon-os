@@ -56,6 +56,15 @@ export default function MentorshipDashboard() {
   const [attF, setAttF] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const [tab, setTab] = useState<'sessoes' | 'tarefas'>('sessoes')
+  const [listCollapsed, setListCollapsed] = useState(false)
+
+  async function addTask(what: string) {
+    if (!selId || !what.trim()) return
+    try {
+      await apiFetch('/api/mentorship/action-items', { method: 'POST', body: JSON.stringify({ clientId: selId, what }) })
+      loadDetail(selId)
+    } catch { toast.error('Erro ao criar tarefa') }
+  }
 
   const loadList = useCallback(() => {
     const p = new URLSearchParams()
@@ -81,11 +90,20 @@ export default function MentorshipDashboard() {
   const sel = mentees.find(m => m.clientId === selId)
 
   return (
-    <div style={{ background: INK, margin: '-16px', minHeight: 'calc(100vh - 40px)', color: FG, display: 'flex', fontFamily: mono }}>
-      {/* ══ LISTA (esquerda) ══ */}
-      <aside style={{ width: 300, borderRight: `1px solid ${LINE}`, display: 'flex', flexDirection: 'column', flexShrink: 0, height: 'calc(100vh - 40px)', position: 'sticky', top: 0 }}>
+    <div style={{ background: INK, margin: -28, minHeight: 'calc(100vh - 56px)', color: FG, display: 'flex', fontFamily: mono }}>
+      {/* ══ LISTA (esquerda) — colapsável ══ */}
+      {listCollapsed ? (
+        <aside style={{ width: 40, borderRight: `1px solid ${LINE}`, display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, height: 'calc(100vh - 56px)', position: 'sticky', top: 0, paddingTop: 14 }}>
+          <button onClick={() => setListCollapsed(false)} title="Expandir lista" style={{ background: 'none', border: 'none', color: MUT, cursor: 'pointer', fontSize: 16 }}>▸</button>
+          <div style={{ writingMode: 'vertical-rl', marginTop: 12, fontFamily: disp, fontSize: 12, letterSpacing: '0.1em', color: MUT }}>MENTORIA · {mentees.length}</div>
+        </aside>
+      ) : (
+      <aside style={{ width: 300, borderRight: `1px solid ${LINE}`, display: 'flex', flexDirection: 'column', flexShrink: 0, height: 'calc(100vh - 56px)', position: 'sticky', top: 0 }}>
         <div style={{ padding: '18px 16px 12px' }}>
-          <div style={{ fontFamily: disp, fontSize: 18, fontWeight: 700, letterSpacing: '0.04em' }}>MENTORIA</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontFamily: disp, fontSize: 18, fontWeight: 700, letterSpacing: '0.04em' }}>MENTORIA</div>
+            <button onClick={() => setListCollapsed(true)} title="Recolher lista" style={{ background: 'none', border: 'none', color: MUT, cursor: 'pointer', fontSize: 16 }}>◂</button>
+          </div>
           <div style={{ fontSize: 10, color: MUT, marginTop: 2 }}>{mentees.length} mentorados · <span style={{ color: totAtt ? '#ff5a5a' : NEON }}>{totAtt} em atenção</span></div>
         </div>
         <div style={{ padding: '0 16px 10px' }}>
@@ -123,15 +141,16 @@ export default function MentorshipDashboard() {
         </div>
         <div style={{ margin: 12, fontSize: 9, color: '#555', textAlign: 'center', lineHeight: 1.5 }}>Todos os clientes ativos aparecem aqui.<br />Selecione um pra ver a ficha completa.</div>
       </aside>
+      )}
 
       {/* ══ PAINEL (direita) ══ */}
-      <main style={{ flex: 1, padding: 24, overflowY: 'auto', height: 'calc(100vh - 40px)' }}>
+      <main style={{ flex: 1, padding: 24, overflowY: 'auto', height: 'calc(100vh - 56px)' }}>
         {!sel || !detail ? (
           <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: MUT, fontFamily: disp, fontSize: 16 }}>
             {mentees.length ? 'Selecione um cliente' : 'Nenhum mentorado ainda'}
           </div>
         ) : (
-          <ClientPanel key={sel.clientId} detail={detail} sel={sel} tab={tab} setTab={setTab} onMove={moveAction} onRegister={() => setFormOpen(true)} />
+          <ClientPanel key={sel.clientId} detail={detail} sel={sel} tab={tab} setTab={setTab} onMove={moveAction} onRegister={() => setFormOpen(true)} onAddTask={addTask} />
         )}
       </main>
 
@@ -141,11 +160,12 @@ export default function MentorshipDashboard() {
 }
 
 // ───────── Painel do cliente ─────────
-function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister }: {
+function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask }: {
   detail: Detail; sel: Mentee; tab: 'sessoes' | 'tarefas'; setTab: (t: 'sessoes' | 'tarefas') => void
-  onMove: (id: string, s: string) => void; onRegister: () => void
+  onMove: (id: string, s: string) => void; onRegister: () => void; onAddTask: (what: string) => void
 }) {
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [newTask, setNewTask] = useState('')
   const studies = detail.caseStudies
   const last = studies[0], prev = studies[1]
   const delta = (a: number | null, b: number | null) => (a == null || b == null || b === 0) ? null : ((a - b) / b) * 100
@@ -303,7 +323,11 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister }: {
                       </div>
                     )
                   })}
-                  {items.length === 0 && <div style={{ fontSize: 10, color: '#555', textAlign: 'center', padding: 8 }}>—</div>}
+                  {items.length === 0 && st !== 'TODO' && <div style={{ fontSize: 10, color: '#555', textAlign: 'center', padding: 8 }}>—</div>}
+                  {st === 'TODO' && (
+                    <input value={newTask} onChange={e => setNewTask(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && newTask.trim()) { onAddTask(newTask.trim()); setNewTask('') } }}
+                      placeholder="+ nova tarefa (Enter)" style={{ background: 'transparent', border: `1px dashed ${LINE}`, color: FG, padding: '6px 8px', fontFamily: mono, fontSize: 10, outline: 'none' }} />
+                  )}
                 </div>
               </div>
             )
