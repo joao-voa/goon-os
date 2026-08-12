@@ -15,7 +15,7 @@ interface Channel { canal: string; valor: number }
 interface CustomField { label: string; value: string }
 interface Material { label: string; url?: string }
 interface CaseStudy {
-  id: string; sessionDate: string; mentorName: string | null
+  id: string; meetingId?: string | null; sessionDate: string; mentorName: string | null
   faturamentoAno: number | null; numVendas: number | null; ticketMedio: number | null
   investimentoTrafego: number | null; roas: number | null; seguidoresIg: number | null; numClientes: number | null
   vendasPorCanal: Channel[] | null; customFields: CustomField[] | null; materiais: Material[] | null
@@ -55,8 +55,10 @@ export default function MentorshipDashboard() {
   const [mentorF, setMentorF] = useState('')
   const [attF, setAttF] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
+  const [formMeetingId, setFormMeetingId] = useState<string | undefined>(undefined)
   const [tab, setTab] = useState<'sessoes' | 'tarefas'>('sessoes')
   const [listCollapsed, setListCollapsed] = useState(false)
+  const openForm = (meetingId?: string) => { setFormMeetingId(meetingId); setFormOpen(true) }
 
   async function addTask(what: string) {
     if (!selId || !what.trim()) return
@@ -150,11 +152,11 @@ export default function MentorshipDashboard() {
             {mentees.length ? 'Selecione um cliente' : 'Nenhum mentorado ainda'}
           </div>
         ) : (
-          <ClientPanel key={sel.clientId} detail={detail} sel={sel} tab={tab} setTab={setTab} onMove={moveAction} onRegister={() => setFormOpen(true)} onAddTask={addTask} />
+          <ClientPanel key={sel.clientId} detail={detail} sel={sel} tab={tab} setTab={setTab} onMove={moveAction} onRegister={openForm} onAddTask={addTask} />
         )}
       </main>
 
-      {formOpen && selId && <SessionForm clientId={selId} onClose={() => setFormOpen(false)} onSaved={() => { setFormOpen(false); loadDetail(selId); loadList() }} />}
+      {formOpen && selId && <SessionForm clientId={selId} meetingId={formMeetingId} onClose={() => setFormOpen(false)} onSaved={() => { setFormOpen(false); loadDetail(selId); loadList() }} />}
     </div>
   )
 }
@@ -162,10 +164,15 @@ export default function MentorshipDashboard() {
 // ───────── Painel do cliente ─────────
 function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask }: {
   detail: Detail; sel: Mentee; tab: 'sessoes' | 'tarefas'; setTab: (t: 'sessoes' | 'tarefas') => void
-  onMove: (id: string, s: string) => void; onRegister: () => void; onAddTask: (what: string) => void
+  onMove: (id: string, s: string) => void; onRegister: (meetingId?: string) => void; onAddTask: (what: string) => void
 }) {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [newTask, setNewTask] = useState('')
+  const [viewCs, setViewCs] = useState<CaseStudy | null>(null)
+  // sessão registrada de uma reunião: por meetingId ou pela data (mesmo dia)
+  const sessionForMeeting = (mId: string, mDate: string) =>
+    detail.caseStudies.find(cs => cs.meetingId === mId) ||
+    detail.caseStudies.find(cs => new Date(cs.sessionDate).toDateString() === new Date(mDate).toDateString())
   const studies = detail.caseStudies
   const last = studies[0], prev = studies[1]
   const delta = (a: number | null, b: number | null) => (a == null || b == null || b === 0) ? null : ((a - b) / b) * 100
@@ -189,7 +196,7 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask }
             {sel.attention && <span style={{ marginLeft: 8, background: '#3a1414', color: '#ff5a5a', padding: '2px 8px', fontWeight: 700 }}>🔴 EM ATENÇÃO</span>}
           </div>
         </div>
-        <button onClick={onRegister} style={{ background: NEON, color: INK, border: 'none', padding: '10px 16px', fontFamily: mono, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ REGISTRAR SESSÃO</button>
+        <button onClick={() => onRegister()} style={{ background: NEON, color: INK, border: 'none', padding: '10px 16px', fontFamily: mono, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ REGISTRAR SESSÃO</button>
       </div>
 
       {/* Última reunião em destaque */}
@@ -258,12 +265,18 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask }
         <Panel title={`Reuniões (${detail.meetings?.filter(m => m.status === 'DONE').length ?? 0} realizadas)`}>
           <div style={{ maxHeight: 150, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
             {(detail.meetings ?? []).length === 0 && <div style={{ color: '#555', fontSize: 11 }}>Nenhuma reunião.</div>}
-            {(detail.meetings ?? []).map(m => (
-              <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, padding: '3px 0', borderBottom: `1px solid ${LINE}` }}>
-                <span style={{ color: m.status === 'DONE' ? FG : MUT }}>{m.status === 'DONE' ? '✓' : '○'} {m.title}</span>
-                <span style={{ color: MUT }}>{dt(m.date)}</span>
-              </div>
-            ))}
+            {(detail.meetings ?? []).map(m => {
+              const cs = sessionForMeeting(m.id, m.date)
+              return (
+                <div key={m.id} onClick={() => cs ? setViewCs(cs) : (m.status === 'DONE' ? onRegister(m.id) : undefined)}
+                  title={cs ? 'Ver registro da reunião' : (m.status === 'DONE' ? 'Registrar esta reunião' : '')}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, padding: '5px 4px', borderBottom: `1px solid ${LINE}`, cursor: m.status === 'DONE' ? 'pointer' : 'default', gap: 8 }}>
+                  <span style={{ color: m.status === 'DONE' ? FG : MUT, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.status === 'DONE' ? '✓' : '○'} {m.title}</span>
+                  {cs ? <span style={{ color: NEON, fontSize: 9, fontWeight: 700 }}>registro ›</span> : m.status === 'DONE' ? <span style={{ color: MUT, fontSize: 9 }}>+ registrar</span> : null}
+                  <span style={{ color: MUT, flexShrink: 0 }}>{dt(m.date)}</span>
+                </div>
+              )
+            })}
           </div>
         </Panel>
       </div>
@@ -334,6 +347,46 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask }
           })}
         </div>
       )}
+
+      {viewCs && <SessionView cs={viewCs} onClose={() => setViewCs(null)} />}
+    </div>
+  )
+}
+
+// ───────── Modal: registro de uma reunião ─────────
+function SessionView({ cs, onClose }: { cs: CaseStudy; onClose: () => void }) {
+  const row = (l: string, v: React.ReactNode) => v ? <div style={{ marginBottom: 8 }}><div style={{ color: NEON, fontSize: 9, textTransform: 'uppercase', marginBottom: 3 }}>{l}</div><div style={{ color: '#ddd', fontSize: 12, whiteSpace: 'pre-wrap', lineHeight: 1.55 }}>{v}</div></div> : null
+  const metrics = ([
+    ['Faturamento', brl(cs.faturamentoAno)], ['Ticket', brl(cs.ticketMedio)], ['Clientes', num(cs.numClientes)],
+    ['Vendas', num(cs.numVendas)], ['ROAS', cs.roas != null ? cs.roas + 'x' : '—'], ['IG', num(cs.seguidoresIg)],
+  ] as [string, string][]).filter(([, v]) => v !== '—')
+  return (
+    <div onClick={e => { if (e.target === e.currentTarget) onClose() }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 16, overflowY: 'auto' }}>
+      <div style={{ background: INK, border: `1px solid ${NEON}`, color: FG, width: '100%', maxWidth: 620, marginTop: 24 }}>
+        <div style={{ background: PANEL, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${LINE}` }}>
+          <span style={{ fontFamily: disp, fontSize: 14, fontWeight: 700 }}>REGISTRO · {dt(cs.sessionDate)}{cs.mentorName ? ` · ${cs.mentorName}` : ''}</span>
+          <button onClick={onClose} style={{ background: 'transparent', color: MUT, border: `1px solid ${LINE}`, borderRadius: 5, width: 24, height: 24, cursor: 'pointer' }}>✕</button>
+        </div>
+        <div style={{ padding: 16, fontFamily: mono }}>
+          {metrics.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: 8, marginBottom: 14 }}>
+              {metrics.map(([l, v]) => <div key={l} style={{ border: `1px solid ${LINE}`, padding: '6px 8px' }}><div style={{ fontSize: 8, color: MUT, textTransform: 'uppercase' }}>{l}</div><div style={{ fontSize: 13, fontWeight: 700, color: l === 'Faturamento' ? NEON : FG }}>{v}</div></div>)}
+            </div>
+          )}
+          {row('Principais pontos', cs.pontosPrincipais)}
+          {row('O que foi passado ao cliente', cs.oQueTrabalhou)}
+          {row('Próximos passos', cs.proximosPassos)}
+          {cs.vendasPorCanal && cs.vendasPorCanal.length > 0 && row('Vendas por canal', cs.vendasPorCanal.map(c => `${c.canal}: ${brl(c.valor)}`).join('  ·  '))}
+          {cs.customFields && cs.customFields.length > 0 && row('Campos extras', cs.customFields.map(c => `${c.label}: ${c.value}`).join('  ·  '))}
+          {cs.materiais && cs.materiais.length > 0 && (
+            <div style={{ marginBottom: 8 }}><div style={{ color: NEON, fontSize: 9, textTransform: 'uppercase', marginBottom: 4 }}>Materiais / anexos</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{cs.materiais.map((m, i) => <a key={i} href={m.url} target="_blank" rel="noreferrer" download={m.url?.startsWith('data:') ? m.label : undefined} style={{ background: PANEL, border: `1px solid ${LINE}`, color: NEON, padding: '5px 10px', fontSize: 10, textDecoration: 'none' }}>{m.url?.startsWith('data:') ? '📎' : '🔗'} {m.label}</a>)}</div>
+            </div>
+          )}
+          {cs.transcricao && <div><div style={{ color: MUT, fontSize: 9, textTransform: 'uppercase', marginBottom: 4 }}>Transcrição</div><div style={{ whiteSpace: 'pre-wrap', color: '#aaa', fontSize: 11, background: PANEL, padding: 10, border: `1px solid ${LINE}`, maxHeight: 300, overflowY: 'auto' }}>{cs.transcricao}</div></div>}
+          {!cs.pontosPrincipais && !cs.oQueTrabalhou && !cs.transcricao && metrics.length === 0 && <div style={{ color: MUT, fontSize: 12 }}>Registro sem detalhes.</div>}
+        </div>
+      </div>
     </div>
   )
 }
@@ -369,7 +422,7 @@ function EvolutionChart({ studies }: { studies: CaseStudy[] }) {
   )
 }
 
-function SessionForm({ clientId, onClose, onSaved }: { clientId: string; onClose: () => void; onSaved: () => void }) {
+function SessionForm({ clientId, meetingId, onClose, onSaved }: { clientId: string; meetingId?: string; onClose: () => void; onSaved: () => void }) {
   const [f, setF] = useState<Record<string, string>>({ sessionDate: new Date().toISOString().slice(0, 10) })
   const [channels, setChannels] = useState<Channel[]>([])
   const [customs, setCustoms] = useState<CustomField[]>([])
@@ -385,7 +438,7 @@ function SessionForm({ clientId, onClose, onSaved }: { clientId: string; onClose
       const study = await apiFetch<{ id: string }>('/api/mentorship/case-studies', {
         method: 'POST',
         body: JSON.stringify({
-          clientId, sessionDate: f.sessionDate,
+          clientId, meetingId, sessionDate: f.sessionDate,
           faturamentoAno: numOr(f.faturamentoAno), ticketMedio: numOr(f.ticketMedio), numVendas: numOr(f.numVendas),
           numClientes: numOr(f.numClientes), investimentoTrafego: numOr(f.investimentoTrafego), roas: numOr(f.roas), seguidoresIg: numOr(f.seguidoresIg),
           vendasPorCanal: channels.filter(c => c.canal), customFields: customs.filter(c => c.label), materiais: materiais.filter(m => m.label || m.url).map(m => ({ label: m.label || 'arquivo', url: m.url })),
