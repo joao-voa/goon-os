@@ -256,10 +256,11 @@ function MonthlyTable({ clientId, metrics, onReload }: { clientId: string; metri
   const s = (v: number | null) => v == null ? '' : String(v)
   const toRow = (m: MonthlyMetric): Row => ({ month: m.month, faturamento: s(m.faturamento), clientesAtivos: s(m.clientesAtivos), estoqueQtd: s(m.estoqueQtd), estoqueValor: s(m.estoqueValor), ticketMedio: s(m.ticketMedio), numVendas: s(m.numVendas), investimentoTrafego: s(m.investimentoTrafego), roas: s(m.roas), seguidoresIg: s(m.seguidoresIg) })
   const COLS: [keyof Row, string][] = [['faturamento', 'Faturamento (R$)'], ['clientesAtivos', 'Clientes ativos'], ['estoqueQtd', 'Estoque (peças)'], ['estoqueValor', 'Estoque (R$)'], ['ticketMedio', 'Ticket médio (R$)'], ['numVendas', 'Nº vendas'], ['investimentoTrafego', 'Invest. tráfego (R$)'], ['roas', 'ROAS (x)'], ['seguidoresIg', 'Seguidores IG']]
-  const [rows, setRows] = useState<Row[]>(() => metrics.map(toRow))
-  const monthsSig = metrics.map(m => m.month).join(',')
+  const sorted = metrics.slice().sort((a, b) => a.month.localeCompare(b.month)) // cronológico (mais antigo → recente)
+  const [rows, setRows] = useState<Row[]>(() => sorted.map(toRow))
+  const monthsSig = sorted.map(m => m.month).join(',')
   // ressincroniza só quando o conjunto de meses muda (add/del) — não durante edição de valores
-  useEffect(() => { setRows(metrics.map(toRow)) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [monthsSig])
+  useEffect(() => { setRows(sorted.map(toRow)) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [monthsSig])
   const [draftMonth, setDraftMonth] = useState('')
   const [saving, setSaving] = useState<string | null>(null)
   const numOr = (v: string) => { const t = v.trim(); if (!t) return null; const n = Number(t.replace(/[^\d.,-]/g, '').replace(',', '.')); return isNaN(n) ? null : n }
@@ -272,12 +273,27 @@ function MonthlyTable({ clientId, metrics, onReload }: { clientId: string; metri
       onReload()
     } catch { toast.error('Erro ao salvar mês') } finally { setSaving(null) }
   }
+  const ymOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  const shiftMonth = (ym: string, delta: number) => { const [y, m] = ym.split('-').map(Number); return ymOf(new Date(y, m - 1 + delta, 1)) }
+  async function createMonths(months: string[]) {
+    const missing = months.filter(m => !rows.some(r => r.month === m))
+    if (!missing.length) { toast.message('Esses meses já estão na tabela'); return }
+    setSaving('…')
+    try { await Promise.all(missing.map(m => apiFetch(`/api/mentorship/clients/${clientId}/monthly`, { method: 'PUT', body: JSON.stringify({ month: m }) }))); onReload() }
+    catch { toast.error('Erro ao gerar meses') } finally { setSaving(null) }
+  }
   async function addMonth() {
     if (!draftMonth) return
     if (rows.some(r => r.month === draftMonth)) { toast.error('Esse mês já está na tabela'); return }
-    try { await apiFetch(`/api/mentorship/clients/${clientId}/monthly`, { method: 'PUT', body: JSON.stringify({ month: draftMonth }) }); setDraftMonth(''); onReload() }
-    catch { toast.error('Erro ao adicionar mês') }
+    setDraftMonth(''); await createMonths([draftMonth])
   }
+  function seedRecent() {
+    const base = new Date()
+    const months = Array.from({ length: 6 }, (_, k) => ymOf(new Date(base.getFullYear(), base.getMonth() - (5 - k), 1)))
+    createMonths(months)
+  }
+  const earliest = rows.length ? rows[0].month : null
+  const latest = rows.length ? rows[rows.length - 1].month : null
   async function delMonth(month: string) {
     if (!confirm('Remover este mês?')) return
     try { await apiFetch(`/api/mentorship/clients/${clientId}/monthly/${month}`, { method: 'DELETE' }); onReload() } catch { toast.error('Erro ao remover') }
@@ -298,7 +314,7 @@ function MonthlyTable({ clientId, metrics, onReload }: { clientId: string; metri
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 && <tr><td colSpan={COLS.length + 2} style={{ padding: 14, color: MUT, textAlign: 'center' }}>Nenhum mês registrado ainda. Adicione um mês abaixo.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={COLS.length + 2} style={{ padding: 14, color: MUT, textAlign: 'center' }}>Nenhum mês ainda. Clique em “Gerar últimos 6 meses” abaixo pra começar.</td></tr>}
             {rows.map((r, i) => (
               <tr key={r.month} style={{ borderTop: `1px solid ${LINE}` }}>
                 <td style={{ padding: '5px 8px', fontWeight: 700, whiteSpace: 'nowrap', position: 'sticky', left: 0, background: PANEL }}>{mesLabel(r.month)}{saving === r.month && <span style={{ color: MUT, fontWeight: 400 }}> ·</span>}</td>
@@ -314,8 +330,17 @@ function MonthlyTable({ clientId, metrics, onReload }: { clientId: string; metri
         </table>
       </div>
       <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-        <input type="month" value={draftMonth} onChange={e => setDraftMonth(e.target.value)} style={{ background: INK, border: `1px solid ${LINE}`, color: FG, padding: '6px 8px', fontFamily: mono, fontSize: 11, colorScheme: 'dark' as React.CSSProperties['colorScheme'] }} />
-        <button onClick={addMonth} style={{ background: NEON, color: INK, border: 'none', padding: '6px 12px', fontFamily: mono, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>+ adicionar mês</button>
+        {rows.length === 0 ? (
+          <button onClick={seedRecent} style={{ background: NEON, color: INK, border: 'none', padding: '6px 14px', fontFamily: mono, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>+ Gerar últimos 6 meses</button>
+        ) : (
+          <>
+            <button onClick={() => earliest && createMonths([shiftMonth(earliest, -1)])} style={miniBtn}>◂ mês anterior</button>
+            <button onClick={() => latest && createMonths([shiftMonth(latest, 1)])} style={miniBtn}>próximo mês ▸</button>
+            <span style={{ width: 1, height: 18, background: LINE }} />
+            <input type="month" value={draftMonth} onChange={e => setDraftMonth(e.target.value)} style={{ background: INK, border: `1px solid ${LINE}`, color: FG, padding: '6px 8px', fontFamily: mono, fontSize: 11, colorScheme: 'dark' as React.CSSProperties['colorScheme'] }} />
+            <button onClick={addMonth} style={{ background: 'transparent', color: NEON, border: `1px solid ${NEON}`, padding: '6px 12px', fontFamily: mono, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>+ mês específico</button>
+          </>
+        )}
         <span style={{ fontSize: 10, color: MUT }}>edite os valores e clique fora do campo para salvar</span>
       </div>
     </Panel>
