@@ -10,13 +10,17 @@ export class MentorshipService {
 
   // ---------- Helpers ----------
 
-  /** mentor de um cliente: profile.mentorName ou o 1º PlanMentor (≠ Giulliano) do plano ativo */
-  private async deriveMentor(clientId: string): Promise<string | null> {
-    const pm = await this.prisma.planMentor.findFirst({
-      where: { plan: { clientId, status: 'ACTIVE' }, NOT: { mentorName: { contains: 'Giulliano' } } },
+  /** Mentor que conduz as sessões: TikTok (TTS/TTSG) → Carol; todo o resto → Giulliano. */
+  private mentorForProduct(code: string | null | undefined): string {
+    return code && ['TTS', 'TTSG'].includes(code) ? 'Carol Valladão' : 'Giulliano'
+  }
+  private async deriveMentor(clientId: string): Promise<string> {
+    const plan = await this.prisma.clientPlan.findFirst({
+      where: { clientId, status: 'ACTIVE' },
       orderBy: { value: 'desc' },
+      select: { product: { select: { code: true } } },
     })
-    return pm?.mentorName ?? null
+    return this.mentorForProduct(plan?.product.code)
   }
 
   private attention(overdueCount: number, daysSinceContact: number | null): boolean {
@@ -31,7 +35,7 @@ export class MentorshipService {
       where: { status: 'ACTIVE', plans: { some: { status: 'ACTIVE' } } },
       select: {
         id: true, companyName: true, responsible: true, segment: true,
-        plans: { where: { status: 'ACTIVE' }, take: 1, select: { product: { select: { code: true } }, mentors: { where: { NOT: { mentorName: { contains: 'Giulliano' } } }, orderBy: { value: 'desc' }, take: 1, select: { mentorName: true } } } },
+        plans: { where: { status: 'ACTIVE' }, take: 1, select: { product: { select: { code: true } } }, orderBy: { value: 'desc' } },
       },
       orderBy: { companyName: 'asc' },
     })
@@ -53,7 +57,7 @@ export class MentorshipService {
     const now = Date.now()
     let mentees = clients.map(c => {
       const p = profileMap.get(c.id)
-      const mentorName = p?.mentorName ?? c.plans[0]?.mentors[0]?.mentorName ?? null
+      const mentorName = p?.mentorName ?? this.mentorForProduct(c.plans[0]?.product?.code)
       const open = actions.filter(a => a.clientId === c.id)
       const overdue = open.filter(a => a.dueDate && a.dueDate.getTime() < now)
       const contactDates = [p?.lastContactAt, lastMeeting.get(c.id)].filter(Boolean) as Date[]

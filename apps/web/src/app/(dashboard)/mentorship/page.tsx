@@ -172,6 +172,28 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister }: {
         <button onClick={onRegister} style={{ background: NEON, color: INK, border: 'none', padding: '10px 16px', fontFamily: mono, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ REGISTRAR SESSÃO</button>
       </div>
 
+      {/* Última reunião em destaque */}
+      {last && (last.pontosPrincipais || last.oQueTrabalhou || last.proximosPassos || (last.materiais && last.materiais.length > 0)) && (
+        <div style={{ background: PANEL, border: `1px solid ${NEON}`, borderLeft: `3px solid ${NEON}`, padding: 16, marginBottom: 18 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <span style={{ fontSize: 9, color: NEON, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>★ Última reunião · {dt(last.sessionDate)}</span>
+            {last.materiais && last.materiais.length > 0 && <span style={{ fontSize: 10, color: MUT }}>{last.materiais.length} anexo(s)</span>}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, fontSize: 12, lineHeight: 1.55 }}>
+            {last.pontosPrincipais && <div><div style={{ color: NEON, fontSize: 9, textTransform: 'uppercase', marginBottom: 3 }}>Principais pontos</div><div style={{ whiteSpace: 'pre-wrap', color: '#ddd' }}>{last.pontosPrincipais}</div></div>}
+            {last.oQueTrabalhou && <div><div style={{ color: MUT, fontSize: 9, textTransform: 'uppercase', marginBottom: 3 }}>Passado ao cliente</div><div style={{ color: '#ddd' }}>{last.oQueTrabalhou}</div></div>}
+            {last.proximosPassos && <div><div style={{ color: MUT, fontSize: 9, textTransform: 'uppercase', marginBottom: 3 }}>Próximos passos</div><div style={{ color: '#ddd' }}>{last.proximosPassos}</div></div>}
+          </div>
+          {last.materiais && last.materiais.length > 0 && (
+            <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {last.materiais.map((m, i) => (
+                <a key={i} href={m.url} target="_blank" rel="noreferrer" download={m.url?.startsWith('data:') ? m.label : undefined} style={{ background: INK, border: `1px solid ${LINE}`, color: NEON, padding: '5px 10px', fontSize: 10, textDecoration: 'none' }}>{m.url?.startsWith('data:') ? '📎' : '🔗'} {m.label}</a>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 18 }}>
         {kpis.map(([label, val, a, b]) => {
           const dl = delta(a, b)
@@ -342,7 +364,7 @@ function SessionForm({ clientId, onClose, onSaved }: { clientId: string; onClose
           clientId, sessionDate: f.sessionDate,
           faturamentoAno: numOr(f.faturamentoAno), ticketMedio: numOr(f.ticketMedio), numVendas: numOr(f.numVendas),
           numClientes: numOr(f.numClientes), investimentoTrafego: numOr(f.investimentoTrafego), roas: numOr(f.roas), seguidoresIg: numOr(f.seguidoresIg),
-          vendasPorCanal: channels.filter(c => c.canal), customFields: customs.filter(c => c.label), materiais: materiais.filter(m => m.label),
+          vendasPorCanal: channels.filter(c => c.canal), customFields: customs.filter(c => c.label), materiais: materiais.filter(m => m.label || m.url).map(m => ({ label: m.label || 'arquivo', url: m.url })),
           pontosPrincipais: f.pontosPrincipais, oQueTrabalhou: f.oQueTrabalhou, proximosPassos: f.proximosPassos, transcricao: f.transcricao,
         }),
       })
@@ -389,6 +411,36 @@ function SessionForm({ clientId, onClose, onSaved }: { clientId: string; onClose
             </div>
           ))}
           <button onClick={() => setCustoms(cs => [...cs, { label: '', value: '' }])} style={dashBtn}>+ campo</button>
+
+          <div style={sec}>Materiais / anexos da reunião</div>
+          {materiais.map((m, i) => (
+            <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 4, alignItems: 'center' }}>
+              {m.url?.startsWith('data:') ? (
+                <span style={{ flex: 1, fontSize: 11, color: FG, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📎 {m.label}</span>
+              ) : (
+                <>
+                  <input value={m.label} onChange={e => setMateriais(ms => ms.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} placeholder="Nome" style={{ ...inp, flex: 1 }} />
+                  <input value={m.url ?? ''} onChange={e => setMateriais(ms => ms.map((x, j) => j === i ? { ...x, url: e.target.value } : x))} placeholder="https://..." style={{ ...inp, flex: 1 }} />
+                </>
+              )}
+              <button onClick={() => setMateriais(ms => ms.filter((_, j) => j !== i))} style={{ ...inp, width: 34, cursor: 'pointer' }}>✕</button>
+            </div>
+          ))}
+          <div style={{ display: 'flex', gap: 6 }}>
+            <label style={{ ...dashBtn, cursor: 'pointer' }}>
+              📎 Subir arquivo
+              <input type="file" style={{ display: 'none' }} onChange={e => {
+                const file = e.target.files?.[0]; if (!file) return
+                if (file.size > 4 * 1024 * 1024) { toast.error('Arquivo muito grande (máx 4MB)'); return }
+                const reader = new FileReader()
+                reader.onload = () => setMateriais(ms => [...ms, { label: file.name, url: reader.result as string }])
+                reader.readAsDataURL(file)
+                e.currentTarget.value = ''
+              }} />
+            </label>
+            <button onClick={() => setMateriais(ms => [...ms, { label: '', url: '' }])} style={dashBtn}>+ link</button>
+          </div>
+
           <div style={sec}>Registro da reunião</div>
           <div><label style={lbl}>Principais pontos discutidos</label><textarea value={f.pontosPrincipais ?? ''} onChange={e => set('pontosPrincipais', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} /></div>
           <div style={{ marginTop: 6 }}><label style={lbl}>O que foi passado ao cliente</label><textarea value={f.oQueTrabalhou ?? ''} onChange={e => set('oQueTrabalhou', e.target.value)} rows={2} style={{ ...inp, resize: 'vertical' }} /></div>
