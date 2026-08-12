@@ -190,7 +190,6 @@ function OverviewPanel({ onSelect }: { onSelect: (id: string) => void }) {
     ['Estoque total (peças)', num(t.estoqueQtd), false],
     ['Mentorados', String(t.mentees), false],
   ]
-  const maxMentor = Math.max(1, ...ov.byMentor.map(m => m.faturamentoMes))
   const monthlyStudies = ov.monthly.map(m => ({ sessionDate: m.month + '-01', faturamentoMes: m.faturamento })) as unknown as CaseStudy[]
   const mesLabel = (ym: string | null) => ym ? new Date(ym.slice(0, 7) + '-01').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }) : '—'
   return (
@@ -215,27 +214,6 @@ function OverviewPanel({ onSelect }: { onSelect: (id: string) => void }) {
         <Panel title="Evolução do faturamento somado (mês a mês)"><EvolutionChart studies={monthlyStudies} /></Panel>
       </div>
 
-      {/* Por mentor */}
-      {ov.byMentor.length > 0 && (
-        <div style={{ marginBottom: 18 }}>
-          <Panel title="Faturamento por mentor">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {ov.byMentor.map(m => (
-                <div key={m.mentor}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 4 }}>
-                    <span style={{ fontWeight: 700 }}>{m.mentor} <span style={{ color: MUT, fontWeight: 400 }}>· {m.mentees} cliente(s)</span></span>
-                    <span style={{ color: NEON, fontWeight: 700 }}>{brl(m.faturamentoMes)}</span>
-                  </div>
-                  <div style={{ height: 8, background: INK, border: `1px solid ${LINE}` }}>
-                    <div style={{ height: '100%', width: `${(m.faturamentoMes / maxMentor) * 100}%`, background: NEON }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Panel>
-        </div>
-      )}
-
       {/* Ranking de clientes */}
       <Panel title="Ranking de clientes (faturamento do mês)">
         <div style={{ overflowX: 'auto' }}>
@@ -244,7 +222,6 @@ function OverviewPanel({ onSelect }: { onSelect: (id: string) => void }) {
               <tr style={{ color: MUT, textAlign: 'left' }}>
                 <th style={{ padding: '6px 8px', fontWeight: 700 }}>#</th>
                 <th style={{ padding: '6px 8px', fontWeight: 700 }}>Cliente</th>
-                <th style={{ padding: '6px 8px', fontWeight: 700 }}>Mentor</th>
                 <th style={{ padding: '6px 8px', fontWeight: 700, textAlign: 'right' }}>Fat. mês</th>
                 <th style={{ padding: '6px 8px', fontWeight: 700, textAlign: 'right' }}>Clientes</th>
                 <th style={{ padding: '6px 8px', fontWeight: 700, textAlign: 'right' }}>Estoque R$</th>
@@ -257,7 +234,6 @@ function OverviewPanel({ onSelect }: { onSelect: (id: string) => void }) {
                   onMouseEnter={e => (e.currentTarget.style.background = PANEL)} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                   <td style={{ padding: '8px', color: MUT }}>{i + 1}</td>
                   <td style={{ padding: '8px', fontWeight: 700 }}>{c.company}</td>
-                  <td style={{ padding: '8px', color: MUT }}>{c.mentor}</td>
                   <td style={{ padding: '8px', textAlign: 'right', color: c.faturamentoMes != null ? NEON : MUT, fontWeight: 700 }}>{c.faturamentoMes != null ? brl(c.faturamentoMes) : 's/ dados'}</td>
                   <td style={{ padding: '8px', textAlign: 'right' }}>{num(c.clientesAtivos)}</td>
                   <td style={{ padding: '8px', textAlign: 'right' }}>{brl(c.estoqueValor)}</td>
