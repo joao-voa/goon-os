@@ -496,6 +496,23 @@ model SessionCaseStudy {
   @@index([sessionDate])
 }
 
+// Métrica mensal do cliente — preenchida/atualizada mês a mês (fonte de verdade dos números)
+model MonthlyMetric {
+  id             String   @id @default(cuid())
+  clientId       String
+  month          String   // "YYYY-MM"
+  faturamento    Float?   // R$ faturados no mês
+  clientesAtivos Int?     // clientes ativos no mês
+  estoqueQtd     Int?     // estoque em quantidade (peças)
+  estoqueValor   Float?   // estoque em valor (R$)
+  note           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([clientId, month])
+  @@index([clientId])
+}
+
 // Pendência / ação no formato: O QUE · QUEM · QUANDO · check
 model ActionItem {
   id           String    @id @default(cuid())

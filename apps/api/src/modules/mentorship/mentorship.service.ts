@@ -42,17 +42,20 @@ export class MentorshipService {
     const clientIds = clients.map(c => c.id)
     if (clientIds.length === 0) return { mentees: [], total: 0 }
 
-    const [profiles, actions, studies, meetings] = await Promise.all([
+    const [profiles, actions, studies, meetings, metrics] = await Promise.all([
       this.prisma.menteeProfile.findMany({ where: { clientId: { in: clientIds } } }),
       this.prisma.actionItem.findMany({ where: { clientId: { in: clientIds }, done: false } }),
       this.prisma.sessionCaseStudy.findMany({ where: { clientId: { in: clientIds } }, orderBy: { sessionDate: 'desc' } }),
       this.prisma.meeting.findMany({ where: { clientId: { in: clientIds }, status: 'DONE' }, select: { clientId: true, date: true }, orderBy: { date: 'desc' } }),
+      this.prisma.monthlyMetric.findMany({ where: { clientId: { in: clientIds } }, orderBy: { month: 'desc' } }),
     ])
     const profileMap = new Map(profiles.map(p => [p.clientId, p]))
     const lastMeeting = new Map<string, Date>()
     for (const m of meetings) if (m.clientId && !lastMeeting.has(m.clientId)) lastMeeting.set(m.clientId, m.date)
     const lastStudy = new Map<string, typeof studies[number]>()
     for (const s of studies) if (!lastStudy.has(s.clientId)) lastStudy.set(s.clientId, s)
+    const lastMetric = new Map<string, typeof metrics[number]>()
+    for (const m of metrics) if (!lastMetric.has(m.clientId)) lastMetric.set(m.clientId, m)
 
     const now = Date.now()
     let mentees = clients.map(c => {
@@ -64,6 +67,7 @@ export class MentorshipService {
       const lastContact = contactDates.length ? new Date(Math.max(...contactDates.map(d => d.getTime()))) : null
       const daysSinceContact = lastContact ? Math.floor((now - lastContact.getTime()) / DAY) : null
       const study = lastStudy.get(c.id)
+      const metric = lastMetric.get(c.id)
       return {
         clientId: c.id,
         company: c.companyName,
@@ -79,7 +83,7 @@ export class MentorshipService {
         daysSinceContact,
         enrolled: !!p,
         attention: this.attention(overdue.length, daysSinceContact),
-        lastMetrics: study ? { faturamentoMes: study.faturamentoMes, faturamentoAno: study.faturamentoAno, clientesAtivos: study.clientesAtivos, estoqueQtd: study.estoqueQtd, estoqueValor: study.estoqueValor, numVendas: study.numVendas, ticketMedio: study.ticketMedio, roas: study.roas, seguidoresIg: study.seguidoresIg, sessionDate: study.sessionDate } : null,
+        lastMetrics: (metric || study) ? { faturamentoMes: metric?.faturamento ?? study?.faturamentoMes ?? null, faturamentoAno: study?.faturamentoAno ?? null, clientesAtivos: metric?.clientesAtivos ?? study?.clientesAtivos ?? null, estoqueQtd: metric?.estoqueQtd ?? study?.estoqueQtd ?? null, estoqueValor: metric?.estoqueValor ?? study?.estoqueValor ?? null, numVendas: study?.numVendas ?? null, ticketMedio: study?.ticketMedio ?? null, roas: study?.roas ?? null, seguidoresIg: study?.seguidoresIg ?? null, sessionDate: study?.sessionDate ?? null } : null,
       }
     })
 
@@ -102,40 +106,32 @@ export class MentorshipService {
       select: { id: true, companyName: true, responsible: true, plans: { where: { status: 'ACTIVE' }, take: 1, orderBy: { value: 'desc' }, select: { product: { select: { code: true } } } } },
     })
     const clientIds = clients.map(c => c.id)
-    const [profiles, studies] = await Promise.all([
+    const [profiles, metrics] = await Promise.all([
       this.prisma.menteeProfile.findMany({ where: { clientId: { in: clientIds } } }),
-      clientIds.length ? this.prisma.sessionCaseStudy.findMany({ where: { clientId: { in: clientIds } }, orderBy: { sessionDate: 'desc' } }) : Promise.resolve([]),
+      clientIds.length ? this.prisma.monthlyMetric.findMany({ where: { clientId: { in: clientIds } }, orderBy: { month: 'desc' } }) : Promise.resolve([]),
     ])
     const profileMap = new Map(profiles.map(p => [p.clientId, p]))
     const mentorOf = (c: typeof clients[number]) => profileMap.get(c.id)?.mentorName ?? this.mentorForProduct(c.plans[0]?.product?.code)
 
-    // último estudo por cliente (studies em ordem desc → primeiro = mais recente)
-    const lastStudy = new Map<string, typeof studies[number]>()
-    for (const s of studies) if (!lastStudy.has(s.clientId)) lastStudy.set(s.clientId, s)
+    // última métrica por cliente (metrics em ordem de mês desc → primeira = mês mais recente)
+    const lastMetric = new Map<string, typeof metrics[number]>()
+    for (const m of metrics) if (!lastMetric.has(m.clientId)) lastMetric.set(m.clientId, m)
 
-    // série mensal somada: por cliente pega o valor da sessão mais recente de cada mês, depois soma entre clientes
-    const perClientMonth = new Map<string, number>()
-    for (const s of studies) {
-      if (s.faturamentoMes == null) continue
-      const d = new Date(s.sessionDate)
-      const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-      const key = `${s.clientId}|${month}`
-      if (!perClientMonth.has(key)) perClientMonth.set(key, s.faturamentoMes)
-    }
+    // série mensal somada de faturamento entre todos os clientes
     const monthlyMap = new Map<string, number>()
-    for (const [key, val] of perClientMonth) {
-      const month = key.split('|')[1]
-      monthlyMap.set(month, (monthlyMap.get(month) ?? 0) + val)
+    for (const m of metrics) {
+      if (m.faturamento == null) continue
+      monthlyMap.set(m.month, (monthlyMap.get(m.month) ?? 0) + m.faturamento)
     }
     const monthly = [...monthlyMap.entries()].map(([month, faturamento]) => ({ month, faturamento })).sort((a, b) => a.month.localeCompare(b.month))
 
-    // totais a partir do último estudo de cada cliente
+    // totais a partir da última métrica de cada cliente
     let faturamentoMes = 0, clientesAtivos = 0, estoqueQtd = 0, estoqueValor = 0, comDados = 0
     const byMentorMap = new Map<string, { mentor: string; faturamentoMes: number; mentees: number }>()
     const rows = clients.map(c => {
-      const st = lastStudy.get(c.id)
+      const st = lastMetric.get(c.id)
       const mentor = mentorOf(c)
-      const fm = st?.faturamentoMes ?? null
+      const fm = st?.faturamento ?? null
       if (fm != null) { faturamentoMes += fm; comDados++ }
       if (st?.clientesAtivos != null) clientesAtivos += st.clientesAtivos
       if (st?.estoqueQtd != null) estoqueQtd += st.estoqueQtd
@@ -143,7 +139,7 @@ export class MentorshipService {
       const mb = byMentorMap.get(mentor) ?? { mentor, faturamentoMes: 0, mentees: 0 }
       mb.faturamentoMes += fm ?? 0; mb.mentees++
       byMentorMap.set(mentor, mb)
-      return { clientId: c.id, company: c.companyName, responsible: c.responsible ?? null, mentor, faturamentoMes: fm, clientesAtivos: st?.clientesAtivos ?? null, estoqueValor: st?.estoqueValor ?? null, sessionDate: st?.sessionDate ?? null }
+      return { clientId: c.id, company: c.companyName, responsible: c.responsible ?? null, mentor, faturamentoMes: fm, clientesAtivos: st?.clientesAtivos ?? null, estoqueValor: st?.estoqueValor ?? null, month: st?.month ?? null }
     }).sort((a, b) => (b.faturamentoMes ?? -1) - (a.faturamentoMes ?? -1))
 
     return {
@@ -169,7 +165,7 @@ export class MentorshipService {
   // ---------- Detalhe do mentorado (jornada) ----------
 
   async getClientDetail(clientId: string) {
-    const [profile, client, studies, actions, meetings] = await Promise.all([
+    const [profile, client, studies, actions, meetings, monthlyMetrics] = await Promise.all([
       this.prisma.menteeProfile.findUnique({ where: { clientId } }),
       this.prisma.client.findUnique({
         where: { id: clientId },
@@ -182,6 +178,7 @@ export class MentorshipService {
       this.prisma.sessionCaseStudy.findMany({ where: { clientId }, orderBy: { sessionDate: 'desc' } }),
       this.prisma.actionItem.findMany({ where: { clientId }, orderBy: [{ done: 'asc' }, { dueDate: 'asc' }] }),
       this.prisma.meeting.findMany({ where: { clientId }, orderBy: { date: 'desc' }, take: 20, select: { id: true, title: true, type: true, date: true, status: true, notes: true } }),
+      this.prisma.monthlyMetric.findMany({ where: { clientId }, orderBy: { month: 'asc' } }),
     ])
     if (!client) throw new NotFoundException('Cliente não encontrado')
     // mentor derivado do split se não houver perfil
@@ -206,7 +203,31 @@ export class MentorshipService {
       caseStudies: studies,
       actionItems: actions,
       meetings,
+      monthlyMetrics,
     }
+  }
+
+  /** upsert de métrica mensal (faturamento/clientes/estoque) — chave clientId+month */
+  async upsertMonthlyMetric(clientId: string, dto: { month: string; faturamento?: number | null; clientesAtivos?: number | null; estoqueQtd?: number | null; estoqueValor?: number | null; note?: string | null }) {
+    const data = {
+      faturamento: dto.faturamento ?? null, clientesAtivos: dto.clientesAtivos ?? null,
+      estoqueQtd: dto.estoqueQtd ?? null, estoqueValor: dto.estoqueValor ?? null, note: dto.note ?? null,
+    }
+    const metric = await this.prisma.monthlyMetric.upsert({
+      where: { clientId_month: { clientId, month: dto.month } },
+      create: { clientId, month: dto.month, ...data },
+      update: data,
+    })
+    // garante perfil + marca contato
+    let profile = await this.prisma.menteeProfile.findUnique({ where: { clientId } })
+    if (!profile) profile = await this.prisma.menteeProfile.create({ data: { clientId, mentorName: await this.deriveMentor(clientId) } })
+    await this.prisma.menteeProfile.update({ where: { clientId }, data: { updatedAt: new Date() } })
+    return metric
+  }
+
+  async deleteMonthlyMetric(clientId: string, month: string) {
+    await this.prisma.monthlyMetric.deleteMany({ where: { clientId, month } })
+    return { ok: true }
   }
 
   /** clientes ativos ainda NÃO em acompanhamento (pra inscrever) */

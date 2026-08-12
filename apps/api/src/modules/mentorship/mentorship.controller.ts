@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, HttpCode } from '@nestjs/common'
+import { Controller, Get, Post, Put, Patch, Delete, Body, Param, Query, UseGuards, HttpCode } from '@nestjs/common'
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import { MentorshipService } from './mentorship.service'
 
@@ -52,6 +52,16 @@ export class MentorshipController {
   @HttpCode(201)
   createCaseStudy(@Body() dto: Parameters<MentorshipService['createCaseStudy']>[0]) {
     return this.service.createCaseStudy(dto)
+  }
+
+  @Put('clients/:clientId/monthly')
+  upsertMonthly(@Param('clientId') clientId: string, @Body() dto: { month: string; faturamento?: number | null; clientesAtivos?: number | null; estoqueQtd?: number | null; estoqueValor?: number | null; note?: string | null }) {
+    return this.service.upsertMonthlyMetric(clientId, dto)
+  }
+
+  @Delete('clients/:clientId/monthly/:month')
+  deleteMonthly(@Param('clientId') clientId: string, @Param('month') month: string) {
+    return this.service.deleteMonthlyMetric(clientId, month)
   }
 
   @Post('action-items')

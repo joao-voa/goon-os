@@ -23,6 +23,7 @@ interface CaseStudy {
   situacaoAtual: string | null; oQueTrabalhou: string | null; proximosPassos: string | null; transcricao: string | null; pontosPrincipais: string | null
 }
 interface Action { id: string; what: string; who: string | null; dueDate: string | null; done: boolean; status: string }
+interface MonthlyMetric { id: string; month: string; faturamento: number | null; clientesAtivos: number | null; estoqueQtd: number | null; estoqueValor: number | null; note: string | null }
 interface Detail {
   profile: { mentorName: string | null; status: string; mainPains: string | null; goal: string | null }
   client?: {
@@ -33,6 +34,7 @@ interface Detail {
   } | null
   attention: boolean; caseStudies: CaseStudy[]; actionItems: Action[]
   meetings?: { id: string; title: string; type?: string; date: string; status: string }[]
+  monthlyMetrics?: MonthlyMetric[]
 }
 
 // ───────── helpers ─────────
@@ -162,7 +164,7 @@ export default function MentorshipDashboard() {
             Carregando…
           </div>
         ) : (
-          <ClientPanel key={sel.clientId} detail={detail} sel={sel} tab={tab} setTab={setTab} onMove={moveAction} onRegister={openForm} onAddTask={addTask} />
+          <ClientPanel key={sel.clientId} detail={detail} sel={sel} tab={tab} setTab={setTab} onMove={moveAction} onRegister={openForm} onAddTask={addTask} onReload={() => { loadDetail(selId); loadList() }} />
         )}
       </main>
 
@@ -176,7 +178,7 @@ interface Overview {
   totals: { faturamentoMes: number; clientesAtivos: number; estoqueQtd: number; estoqueValor: number; mentees: number; comDados: number }
   byMentor: { mentor: string; faturamentoMes: number; mentees: number }[]
   monthly: { month: string; faturamento: number }[]
-  clients: { clientId: string; company: string; responsible: string | null; mentor: string; faturamentoMes: number | null; clientesAtivos: number | null; estoqueValor: number | null; sessionDate: string | null }[]
+  clients: { clientId: string; company: string; responsible: string | null; mentor: string; faturamentoMes: number | null; clientesAtivos: number | null; estoqueValor: number | null; month: string | null }[]
 }
 function OverviewPanel({ onSelect }: { onSelect: (id: string) => void }) {
   const [ov, setOv] = useState<Overview | null>(null)
@@ -191,7 +193,7 @@ function OverviewPanel({ onSelect }: { onSelect: (id: string) => void }) {
     ['Mentorados', String(t.mentees), false],
   ]
   const monthlyStudies = ov.monthly.map(m => ({ sessionDate: m.month + '-01', faturamentoMes: m.faturamento })) as unknown as CaseStudy[]
-  const mesLabel = (ym: string | null) => ym ? new Date(ym.slice(0, 7) + '-01').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }) : '—'
+  const mesLabel = (ym: string | null) => ym ? new Date(ym.slice(0, 7) + '-01T12:00:00').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }) : '—'
   return (
     <div>
       <div style={{ marginBottom: 18 }}>
@@ -237,7 +239,7 @@ function OverviewPanel({ onSelect }: { onSelect: (id: string) => void }) {
                   <td style={{ padding: '8px', textAlign: 'right', color: c.faturamentoMes != null ? NEON : MUT, fontWeight: 700 }}>{c.faturamentoMes != null ? brl(c.faturamentoMes) : 's/ dados'}</td>
                   <td style={{ padding: '8px', textAlign: 'right' }}>{num(c.clientesAtivos)}</td>
                   <td style={{ padding: '8px', textAlign: 'right' }}>{brl(c.estoqueValor)}</td>
-                  <td style={{ padding: '8px', textAlign: 'right', color: MUT }}>{mesLabel(c.sessionDate)}</td>
+                  <td style={{ padding: '8px', textAlign: 'right', color: MUT }}>{mesLabel(c.month)}</td>
                 </tr>
               ))}
             </tbody>
@@ -248,10 +250,83 @@ function OverviewPanel({ onSelect }: { onSelect: (id: string) => void }) {
   )
 }
 
+// ───────── Tabela de faturamento mês a mês (editável) ─────────
+function MonthlyTable({ clientId, metrics, onReload }: { clientId: string; metrics: MonthlyMetric[]; onReload: () => void }) {
+  type Row = { month: string; faturamento: string; clientesAtivos: string; estoqueQtd: string; estoqueValor: string }
+  const s = (v: number | null) => v == null ? '' : String(v)
+  const toRow = (m: MonthlyMetric): Row => ({ month: m.month, faturamento: s(m.faturamento), clientesAtivos: s(m.clientesAtivos), estoqueQtd: s(m.estoqueQtd), estoqueValor: s(m.estoqueValor) })
+  const [rows, setRows] = useState<Row[]>(() => metrics.map(toRow))
+  const monthsSig = metrics.map(m => m.month).join(',')
+  // ressincroniza só quando o conjunto de meses muda (add/del) — não durante edição de valores
+  useEffect(() => { setRows(metrics.map(toRow)) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [monthsSig])
+  const [draftMonth, setDraftMonth] = useState('')
+  const [saving, setSaving] = useState<string | null>(null)
+  const numOr = (v: string) => { const t = v.trim(); if (!t) return null; const n = Number(t.replace(/[^\d.,-]/g, '').replace(',', '.')); return isNaN(n) ? null : n }
+  const upd = (i: number, k: keyof Row, v: string) => setRows(rs => rs.map((r, j) => j === i ? { ...r, [k]: v } : r))
+
+  async function saveRow(r: Row) {
+    setSaving(r.month)
+    try {
+      await apiFetch(`/api/mentorship/clients/${clientId}/monthly`, { method: 'PUT', body: JSON.stringify({ month: r.month, faturamento: numOr(r.faturamento), clientesAtivos: numOr(r.clientesAtivos), estoqueQtd: numOr(r.estoqueQtd), estoqueValor: numOr(r.estoqueValor) }) })
+      onReload()
+    } catch { toast.error('Erro ao salvar mês') } finally { setSaving(null) }
+  }
+  async function addMonth() {
+    if (!draftMonth) return
+    if (rows.some(r => r.month === draftMonth)) { toast.error('Esse mês já está na tabela'); return }
+    try { await apiFetch(`/api/mentorship/clients/${clientId}/monthly`, { method: 'PUT', body: JSON.stringify({ month: draftMonth }) }); setDraftMonth(''); onReload() }
+    catch { toast.error('Erro ao adicionar mês') }
+  }
+  async function delMonth(month: string) {
+    if (!confirm('Remover este mês?')) return
+    try { await apiFetch(`/api/mentorship/clients/${clientId}/monthly/${month}`, { method: 'DELETE' }); onReload() } catch { toast.error('Erro ao remover') }
+  }
+  const mesLabel = (ym: string) => new Date(ym + '-01T12:00:00').toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
+  const cell: React.CSSProperties = { width: '100%', background: INK, border: `1px solid ${LINE}`, color: FG, padding: '5px 7px', fontFamily: mono, fontSize: 11, outline: 'none', textAlign: 'right' }
+  const th: React.CSSProperties = { padding: '4px 8px', fontWeight: 700, textAlign: 'right' }
+
+  return (
+    <Panel title="Faturamento mês a mês">
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+          <thead>
+            <tr style={{ color: MUT }}>
+              <th style={{ ...th, textAlign: 'left' }}>Mês</th>
+              <th style={th}>Faturamento (R$)</th>
+              <th style={th}>Clientes ativos</th>
+              <th style={th}>Estoque (peças)</th>
+              <th style={th}>Estoque (R$)</th>
+              <th style={{ ...th, width: 30 }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 && <tr><td colSpan={6} style={{ padding: 14, color: MUT, textAlign: 'center' }}>Nenhum mês registrado ainda. Adicione um mês abaixo.</td></tr>}
+            {rows.map((r, i) => (
+              <tr key={r.month} style={{ borderTop: `1px solid ${LINE}` }}>
+                <td style={{ padding: '5px 8px', fontWeight: 700, whiteSpace: 'nowrap' }}>{mesLabel(r.month)}{saving === r.month && <span style={{ color: MUT, fontWeight: 400 }}> · salvando…</span>}</td>
+                <td style={{ padding: '4px 6px' }}><input value={r.faturamento} onChange={e => upd(i, 'faturamento', e.target.value)} onBlur={() => saveRow(rows[i])} placeholder="—" style={{ ...cell, color: NEON, fontWeight: 700 }} /></td>
+                <td style={{ padding: '4px 6px' }}><input value={r.clientesAtivos} onChange={e => upd(i, 'clientesAtivos', e.target.value)} onBlur={() => saveRow(rows[i])} placeholder="—" style={cell} /></td>
+                <td style={{ padding: '4px 6px' }}><input value={r.estoqueQtd} onChange={e => upd(i, 'estoqueQtd', e.target.value)} onBlur={() => saveRow(rows[i])} placeholder="—" style={cell} /></td>
+                <td style={{ padding: '4px 6px' }}><input value={r.estoqueValor} onChange={e => upd(i, 'estoqueValor', e.target.value)} onBlur={() => saveRow(rows[i])} placeholder="—" style={cell} /></td>
+                <td style={{ padding: '4px 6px', textAlign: 'center' }}><button onClick={() => delMonth(r.month)} title="Remover mês" style={{ background: 'transparent', border: 'none', color: MUT, cursor: 'pointer', fontSize: 12 }}>✕</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <input type="month" value={draftMonth} onChange={e => setDraftMonth(e.target.value)} style={{ background: INK, border: `1px solid ${LINE}`, color: FG, padding: '6px 8px', fontFamily: mono, fontSize: 11, colorScheme: 'dark' as React.CSSProperties['colorScheme'] }} />
+        <button onClick={addMonth} style={{ background: NEON, color: INK, border: 'none', padding: '6px 12px', fontFamily: mono, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>+ adicionar mês</button>
+        <span style={{ fontSize: 10, color: MUT }}>edite os valores e clique fora do campo para salvar</span>
+      </div>
+    </Panel>
+  )
+}
+
 // ───────── Painel do cliente ─────────
-function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask }: {
+function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask, onReload }: {
   detail: Detail; sel: Mentee; tab: 'sessoes' | 'tarefas'; setTab: (t: 'sessoes' | 'tarefas') => void
-  onMove: (id: string, s: string) => void; onRegister: (meetingId?: string) => void; onAddTask: (what: string) => void
+  onMove: (id: string, s: string) => void; onRegister: (meetingId?: string) => void; onAddTask: (what: string) => void; onReload: () => void
 }) {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [newTask, setNewTask] = useState('')
@@ -262,12 +337,15 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask }
     detail.caseStudies.find(cs => new Date(cs.sessionDate).toDateString() === new Date(mDate).toDateString())
   const studies = detail.caseStudies
   const last = studies[0], prev = studies[1]
+  // métricas mensais (fonte de verdade dos números) — desc por mês
+  const metrics = (detail.monthlyMetrics ?? []).slice().sort((a, b) => b.month.localeCompare(a.month))
+  const lastM = metrics[0], prevM = metrics[1]
   const delta = (a: number | null, b: number | null) => (a == null || b == null || b === 0) ? null : ((a - b) / b) * 100
   const kpis: [string, string, number | null, number | null][] = [
-    ['Fat. do Mês', brl(last?.faturamentoMes ?? null), last?.faturamentoMes ?? null, prev?.faturamentoMes ?? null],
-    ['Clientes Ativos', num(last?.clientesAtivos ?? null), last?.clientesAtivos ?? null, prev?.clientesAtivos ?? null],
-    ['Estoque (peças)', num(last?.estoqueQtd ?? null), last?.estoqueQtd ?? null, prev?.estoqueQtd ?? null],
-    ['Estoque (R$)', brl(last?.estoqueValor ?? null), last?.estoqueValor ?? null, prev?.estoqueValor ?? null],
+    ['Fat. do Mês', brl(lastM?.faturamento ?? null), lastM?.faturamento ?? null, prevM?.faturamento ?? null],
+    ['Clientes Ativos', num(lastM?.clientesAtivos ?? null), lastM?.clientesAtivos ?? null, prevM?.clientesAtivos ?? null],
+    ['Estoque (peças)', num(lastM?.estoqueQtd ?? null), lastM?.estoqueQtd ?? null, prevM?.estoqueQtd ?? null],
+    ['Estoque (R$)', brl(lastM?.estoqueValor ?? null), lastM?.estoqueValor ?? null, prevM?.estoqueValor ?? null],
     ['Ticket Médio', brl(last?.ticketMedio ?? null), last?.ticketMedio ?? null, prev?.ticketMedio ?? null],
     ['Nº Vendas', num(last?.numVendas ?? null), last?.numVendas ?? null, prev?.numVendas ?? null],
     ['ROAS', last?.roas != null ? last.roas + 'x' : '—', last?.roas ?? null, prev?.roas ?? null],
@@ -316,15 +394,20 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask }
           return (
             <div key={label} style={{ background: PANEL, border: `1px solid ${LINE}`, padding: '14px 16px' }}>
               <div style={{ fontSize: 9, color: MUT, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
-              <div style={{ fontFamily: disp, fontSize: 22, fontWeight: 700, marginTop: 4, color: label === 'Faturamento' ? NEON : FG }}>{val}</div>
+              <div style={{ fontFamily: disp, fontSize: 22, fontWeight: 700, marginTop: 4, color: label === 'Fat. do Mês' ? NEON : FG }}>{val}</div>
               {dl != null && <div style={{ fontSize: 10, marginTop: 2, color: dl >= 0 ? NEON : '#ff5a5a' }}>{dl >= 0 ? '▲' : '▼'} {Math.abs(dl).toFixed(0)}% vs anterior</div>}
             </div>
           )
         })}
       </div>
 
+      {/* Faturamento mês a mês — tabela editável (fonte de verdade dos números) */}
+      <div style={{ marginBottom: 18 }}>
+        <MonthlyTable clientId={sel.clientId} metrics={metrics} onReload={onReload} />
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 14, marginBottom: 18 }}>
-        <Panel title="Evolução do faturamento (mês a mês)"><EvolutionChart studies={studies} /></Panel>
+        <Panel title="Evolução do faturamento (mês a mês)"><EvolutionChart studies={metrics.map(m => ({ sessionDate: m.month + '-01T12:00:00', faturamentoMes: m.faturamento })) as unknown as CaseStudy[]} /></Panel>
         <Panel title="Contexto da mentoria">
           <div style={{ fontSize: 12, lineHeight: 1.6 }}>
             <div style={{ marginBottom: 8 }}><span style={{ color: MUT }}>Dores:</span> {detail.profile.mainPains || <span style={{ color: '#555' }}>não preenchido</span>}</div>
@@ -386,7 +469,7 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask }
             <div key={cs.id} style={{ background: PANEL, border: `1px solid ${LINE}`, marginBottom: 8 }}>
               <div onClick={() => setExpanded(expanded === cs.id ? null : cs.id)} style={{ display: 'flex', justifyContent: 'space-between', padding: '11px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
                 <span>{expanded === cs.id ? '▾' : '▸'} {dt(cs.sessionDate)}{cs.mentorName ? ` · ${cs.mentorName}` : ''}</span>
-                <span style={{ color: NEON }}>{brl(cs.faturamentoMes ?? cs.faturamentoAno)}</span>
+                <span style={{ color: MUT, fontWeight: 400 }}>{cs.ticketMedio != null ? `ticket ${brl(cs.ticketMedio)}` : ''}</span>
               </div>
               {expanded === cs.id && (
                 <div style={{ padding: '12px 14px 14px', fontSize: 11, lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: 6, borderTop: `1px solid ${LINE}` }}>
@@ -539,8 +622,6 @@ function SessionForm({ clientId, meetingId, onClose, onSaved }: { clientId: stri
         method: 'POST',
         body: JSON.stringify({
           clientId, meetingId, sessionDate: f.sessionDate,
-          faturamentoMes: numOr(f.faturamentoMes), faturamentoAno: numOr(f.faturamentoAno),
-          clientesAtivos: numOr(f.clientesAtivos), estoqueQtd: numOr(f.estoqueQtd), estoqueValor: numOr(f.estoqueValor),
           ticketMedio: numOr(f.ticketMedio), numVendas: numOr(f.numVendas),
           investimentoTrafego: numOr(f.investimentoTrafego), roas: numOr(f.roas), seguidoresIg: numOr(f.seguidoresIg),
           vendasPorCanal: channels.filter(c => c.canal), customFields: customs.filter(c => c.label), materiais: materiais.filter(m => m.label || m.url).map(m => ({ label: m.label || 'arquivo', url: m.url })),
@@ -566,9 +647,10 @@ function SessionForm({ clientId, meetingId, onClose, onSaved }: { clientId: stri
         </div>
         <div style={{ padding: 16 }}>
           <div><label style={lbl}>Data da sessão</label><input type="date" value={f.sessionDate} onChange={e => set('sessionDate', e.target.value)} style={{ ...inp, colorScheme: 'dark' as React.CSSProperties['colorScheme'] }} /></div>
-          <div style={sec}>Métricas do negócio</div>
+          <div style={sec}>Métricas de marketing / vendas da sessão</div>
+          <div style={{ fontSize: 10, color: MUT, marginBottom: 8 }}>Faturamento, clientes ativos e estoque agora ficam na tabela “Faturamento mês a mês” da ficha do cliente.</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {[['faturamentoMes', 'Faturamento do mês (R$)'], ['clientesAtivos', 'Clientes ativos'], ['estoqueQtd', 'Estoque (peças)'], ['estoqueValor', 'Estoque (R$)'], ['ticketMedio', 'Ticket médio (R$)'], ['numVendas', 'Nº de vendas'], ['investimentoTrafego', 'Invest. tráfego (R$)'], ['roas', 'ROAS (x)'], ['seguidoresIg', 'Seguidores IG'], ['faturamentoAno', 'Faturamento anual (R$, opc.)']].map(([k, l]) => (
+            {[['ticketMedio', 'Ticket médio (R$)'], ['numVendas', 'Nº de vendas'], ['investimentoTrafego', 'Invest. tráfego (R$)'], ['roas', 'ROAS (x)'], ['seguidoresIg', 'Seguidores IG']].map(([k, l]) => (
               <div key={k}><label style={lbl}>{l}</label><input value={f[k] ?? ''} onChange={e => set(k, e.target.value)} style={inp} /></div>
             ))}
           </div>
