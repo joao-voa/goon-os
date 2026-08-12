@@ -80,7 +80,7 @@ export default function MentorshipDashboard() {
     apiFetch<Detail>(`/api/mentorship/clients/${id}`).then(setDetail).catch(() => setDetail(null))
   }, [])
   useEffect(() => { if (selId) loadDetail(selId); else setDetail(null) }, [selId, loadDetail])
-  useEffect(() => { if (!selId && mentees.length) setSelId(mentees[0].clientId) }, [mentees, selId])
+  // abre na Visão Geral (selId = null); usuário escolhe o cliente na lista
 
   const mentors = [...new Set(mentees.map(m => m.mentorName).filter(Boolean))] as string[]
   const totAtt = mentees.filter(m => m.attention).length
@@ -120,6 +120,13 @@ export default function MentorshipDashboard() {
           </div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
+          <button onClick={() => setSelId(null)} style={{
+            width: '100%', textAlign: 'left', background: selId === null ? PANEL : 'transparent', border: 'none',
+            borderLeft: `3px solid ${selId === null ? NEON : 'transparent'}`, padding: '12px 14px', cursor: 'pointer', color: FG,
+            display: 'flex', alignItems: 'center', gap: 8, borderBottom: `1px solid ${LINE}`, fontFamily: mono, fontWeight: 700, fontSize: 12,
+          }}>
+            <span style={{ fontSize: 14 }}>◱</span> VISÃO GERAL
+          </button>
           {mentees.length === 0 && <div style={{ padding: 20, fontSize: 11, color: MUT, textAlign: 'center' }}>Nenhum mentorado.<br />Inscreva um cliente abaixo.</div>}
           {mentees.map(m => {
             const active = m.clientId === selId
@@ -148,9 +155,11 @@ export default function MentorshipDashboard() {
 
       {/* ══ PAINEL (direita) ══ */}
       <main style={{ flex: 1, padding: 24, overflowY: 'auto', height: 'calc(100vh - 56px)' }}>
-        {!sel || !detail ? (
+        {selId === null ? (
+          <OverviewPanel onSelect={setSelId} />
+        ) : !sel || !detail ? (
           <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: MUT, fontFamily: disp, fontSize: 16 }}>
-            {mentees.length ? 'Selecione um cliente' : 'Nenhum mentorado ainda'}
+            Carregando…
           </div>
         ) : (
           <ClientPanel key={sel.clientId} detail={detail} sel={sel} tab={tab} setTab={setTab} onMove={moveAction} onRegister={openForm} onAddTask={addTask} />
@@ -158,6 +167,107 @@ export default function MentorshipDashboard() {
       </main>
 
       {formOpen && selId && <SessionForm clientId={selId} meetingId={formMeetingId} onClose={() => setFormOpen(false)} onSaved={() => { setFormOpen(false); loadDetail(selId); loadList() }} />}
+    </div>
+  )
+}
+
+// ───────── Visão Geral (todos os clientes, faturamento somado) ─────────
+interface Overview {
+  totals: { faturamentoMes: number; clientesAtivos: number; estoqueQtd: number; estoqueValor: number; mentees: number; comDados: number }
+  byMentor: { mentor: string; faturamentoMes: number; mentees: number }[]
+  monthly: { month: string; faturamento: number }[]
+  clients: { clientId: string; company: string; responsible: string | null; mentor: string; faturamentoMes: number | null; clientesAtivos: number | null; estoqueValor: number | null; sessionDate: string | null }[]
+}
+function OverviewPanel({ onSelect }: { onSelect: (id: string) => void }) {
+  const [ov, setOv] = useState<Overview | null>(null)
+  useEffect(() => { apiFetch<Overview>('/api/mentorship/overview').then(setOv).catch(() => setOv(null)) }, [])
+  if (!ov) return <div style={{ color: MUT, fontFamily: disp, fontSize: 15, padding: 40 }}>Carregando visão geral…</div>
+  const t = ov.totals
+  const kpis: [string, string, boolean][] = [
+    ['Faturamento somado (mês)', brl(t.faturamentoMes), true],
+    ['Clientes ativos (total)', num(t.clientesAtivos), false],
+    ['Estoque total (R$)', brl(t.estoqueValor), false],
+    ['Estoque total (peças)', num(t.estoqueQtd), false],
+    ['Mentorados', String(t.mentees), false],
+  ]
+  const maxMentor = Math.max(1, ...ov.byMentor.map(m => m.faturamentoMes))
+  const monthlyStudies = ov.monthly.map(m => ({ sessionDate: m.month + '-01', faturamentoMes: m.faturamento })) as unknown as CaseStudy[]
+  const mesLabel = (ym: string | null) => ym ? new Date(ym.slice(0, 7) + '-01').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }) : '—'
+  return (
+    <div>
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ fontFamily: disp, fontSize: 28, fontWeight: 700, letterSpacing: '-0.01em' }}>Visão Geral</div>
+        <div style={{ fontSize: 11, color: MUT, marginTop: 4 }}>{t.mentees} clientes ativos · {t.comDados} com dados de faturamento neste mês</div>
+      </div>
+
+      {/* KPIs somados */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 18 }}>
+        {kpis.map(([l, v, hi]) => (
+          <div key={l} style={{ background: PANEL, border: `1px solid ${hi ? NEON : LINE}`, padding: '14px 16px' }}>
+            <div style={{ fontSize: 9, color: MUT, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{l}</div>
+            <div style={{ fontFamily: disp, fontSize: 24, fontWeight: 700, color: hi ? NEON : FG, marginTop: 6 }}>{v}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Evolução somada */}
+      <div style={{ marginBottom: 18 }}>
+        <Panel title="Evolução do faturamento somado (mês a mês)"><EvolutionChart studies={monthlyStudies} /></Panel>
+      </div>
+
+      {/* Por mentor */}
+      {ov.byMentor.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <Panel title="Faturamento por mentor">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {ov.byMentor.map(m => (
+                <div key={m.mentor}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 4 }}>
+                    <span style={{ fontWeight: 700 }}>{m.mentor} <span style={{ color: MUT, fontWeight: 400 }}>· {m.mentees} cliente(s)</span></span>
+                    <span style={{ color: NEON, fontWeight: 700 }}>{brl(m.faturamentoMes)}</span>
+                  </div>
+                  <div style={{ height: 8, background: INK, border: `1px solid ${LINE}` }}>
+                    <div style={{ height: '100%', width: `${(m.faturamentoMes / maxMentor) * 100}%`, background: NEON }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </div>
+      )}
+
+      {/* Ranking de clientes */}
+      <Panel title="Ranking de clientes (faturamento do mês)">
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+            <thead>
+              <tr style={{ color: MUT, textAlign: 'left' }}>
+                <th style={{ padding: '6px 8px', fontWeight: 700 }}>#</th>
+                <th style={{ padding: '6px 8px', fontWeight: 700 }}>Cliente</th>
+                <th style={{ padding: '6px 8px', fontWeight: 700 }}>Mentor</th>
+                <th style={{ padding: '6px 8px', fontWeight: 700, textAlign: 'right' }}>Fat. mês</th>
+                <th style={{ padding: '6px 8px', fontWeight: 700, textAlign: 'right' }}>Clientes</th>
+                <th style={{ padding: '6px 8px', fontWeight: 700, textAlign: 'right' }}>Estoque R$</th>
+                <th style={{ padding: '6px 8px', fontWeight: 700, textAlign: 'right' }}>Atualizado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ov.clients.map((c, i) => (
+                <tr key={c.clientId} onClick={() => onSelect(c.clientId)} style={{ cursor: 'pointer', borderTop: `1px solid ${LINE}` }}
+                  onMouseEnter={e => (e.currentTarget.style.background = PANEL)} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                  <td style={{ padding: '8px', color: MUT }}>{i + 1}</td>
+                  <td style={{ padding: '8px', fontWeight: 700 }}>{c.company}</td>
+                  <td style={{ padding: '8px', color: MUT }}>{c.mentor}</td>
+                  <td style={{ padding: '8px', textAlign: 'right', color: c.faturamentoMes != null ? NEON : MUT, fontWeight: 700 }}>{c.faturamentoMes != null ? brl(c.faturamentoMes) : 's/ dados'}</td>
+                  <td style={{ padding: '8px', textAlign: 'right' }}>{num(c.clientesAtivos)}</td>
+                  <td style={{ padding: '8px', textAlign: 'right' }}>{brl(c.estoqueValor)}</td>
+                  <td style={{ padding: '8px', textAlign: 'right', color: MUT }}>{mesLabel(c.sessionDate)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
     </div>
   )
 }

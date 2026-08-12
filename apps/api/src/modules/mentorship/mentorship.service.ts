@@ -95,6 +95,65 @@ export class MentorshipService {
     return { mentees, total: mentees.length }
   }
 
+  /** Visão geral consolidada de todos os clientes ativos (faturamento somado, série mensal, ranking) */
+  async getOverview() {
+    const clients = await this.prisma.client.findMany({
+      where: { status: 'ACTIVE', plans: { some: { status: 'ACTIVE' } } },
+      select: { id: true, companyName: true, responsible: true, plans: { where: { status: 'ACTIVE' }, take: 1, orderBy: { value: 'desc' }, select: { product: { select: { code: true } } } } },
+    })
+    const clientIds = clients.map(c => c.id)
+    const [profiles, studies] = await Promise.all([
+      this.prisma.menteeProfile.findMany({ where: { clientId: { in: clientIds } } }),
+      clientIds.length ? this.prisma.sessionCaseStudy.findMany({ where: { clientId: { in: clientIds } }, orderBy: { sessionDate: 'desc' } }) : Promise.resolve([]),
+    ])
+    const profileMap = new Map(profiles.map(p => [p.clientId, p]))
+    const mentorOf = (c: typeof clients[number]) => profileMap.get(c.id)?.mentorName ?? this.mentorForProduct(c.plans[0]?.product?.code)
+
+    // último estudo por cliente (studies em ordem desc → primeiro = mais recente)
+    const lastStudy = new Map<string, typeof studies[number]>()
+    for (const s of studies) if (!lastStudy.has(s.clientId)) lastStudy.set(s.clientId, s)
+
+    // série mensal somada: por cliente pega o valor da sessão mais recente de cada mês, depois soma entre clientes
+    const perClientMonth = new Map<string, number>()
+    for (const s of studies) {
+      if (s.faturamentoMes == null) continue
+      const d = new Date(s.sessionDate)
+      const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      const key = `${s.clientId}|${month}`
+      if (!perClientMonth.has(key)) perClientMonth.set(key, s.faturamentoMes)
+    }
+    const monthlyMap = new Map<string, number>()
+    for (const [key, val] of perClientMonth) {
+      const month = key.split('|')[1]
+      monthlyMap.set(month, (monthlyMap.get(month) ?? 0) + val)
+    }
+    const monthly = [...monthlyMap.entries()].map(([month, faturamento]) => ({ month, faturamento })).sort((a, b) => a.month.localeCompare(b.month))
+
+    // totais a partir do último estudo de cada cliente
+    let faturamentoMes = 0, clientesAtivos = 0, estoqueQtd = 0, estoqueValor = 0, comDados = 0
+    const byMentorMap = new Map<string, { mentor: string; faturamentoMes: number; mentees: number }>()
+    const rows = clients.map(c => {
+      const st = lastStudy.get(c.id)
+      const mentor = mentorOf(c)
+      const fm = st?.faturamentoMes ?? null
+      if (fm != null) { faturamentoMes += fm; comDados++ }
+      if (st?.clientesAtivos != null) clientesAtivos += st.clientesAtivos
+      if (st?.estoqueQtd != null) estoqueQtd += st.estoqueQtd
+      if (st?.estoqueValor != null) estoqueValor += st.estoqueValor
+      const mb = byMentorMap.get(mentor) ?? { mentor, faturamentoMes: 0, mentees: 0 }
+      mb.faturamentoMes += fm ?? 0; mb.mentees++
+      byMentorMap.set(mentor, mb)
+      return { clientId: c.id, company: c.companyName, responsible: c.responsible ?? null, mentor, faturamentoMes: fm, clientesAtivos: st?.clientesAtivos ?? null, estoqueValor: st?.estoqueValor ?? null, sessionDate: st?.sessionDate ?? null }
+    }).sort((a, b) => (b.faturamentoMes ?? -1) - (a.faturamentoMes ?? -1))
+
+    return {
+      totals: { faturamentoMes, clientesAtivos, estoqueQtd, estoqueValor, mentees: clients.length, comDados },
+      byMentor: [...byMentorMap.values()].sort((a, b) => b.faturamentoMes - a.faturamentoMes),
+      monthly,
+      clients: rows,
+    }
+  }
+
   async getDashboardKpis() {
     const cockpit = await this.getCockpit()
     const m = cockpit.mentees

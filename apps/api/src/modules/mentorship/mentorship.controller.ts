@@ -17,6 +17,11 @@ export class MentorshipController {
     return this.service.getDashboardKpis()
   }
 
+  @Get('overview')
+  overview() {
+    return this.service.getOverview()
+  }
+
   @Get('available-clients')
   available() {
     return this.service.getAvailableClients()
