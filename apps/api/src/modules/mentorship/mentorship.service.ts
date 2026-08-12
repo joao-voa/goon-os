@@ -83,7 +83,7 @@ export class MentorshipService {
         daysSinceContact,
         enrolled: !!p,
         attention: this.attention(overdue.length, daysSinceContact),
-        lastMetrics: (metric || study) ? { faturamentoMes: metric?.faturamento ?? study?.faturamentoMes ?? null, faturamentoAno: study?.faturamentoAno ?? null, clientesAtivos: metric?.clientesAtivos ?? study?.clientesAtivos ?? null, estoqueQtd: metric?.estoqueQtd ?? study?.estoqueQtd ?? null, estoqueValor: metric?.estoqueValor ?? study?.estoqueValor ?? null, numVendas: study?.numVendas ?? null, ticketMedio: study?.ticketMedio ?? null, roas: study?.roas ?? null, seguidoresIg: study?.seguidoresIg ?? null, sessionDate: study?.sessionDate ?? null } : null,
+        lastMetrics: (metric || study) ? { faturamentoMes: metric?.faturamento ?? study?.faturamentoMes ?? null, faturamentoAno: study?.faturamentoAno ?? null, clientesAtivos: metric?.clientesAtivos ?? study?.clientesAtivos ?? null, estoqueQtd: metric?.estoqueQtd ?? study?.estoqueQtd ?? null, estoqueValor: metric?.estoqueValor ?? study?.estoqueValor ?? null, numVendas: metric?.numVendas ?? study?.numVendas ?? null, ticketMedio: metric?.ticketMedio ?? study?.ticketMedio ?? null, roas: metric?.roas ?? study?.roas ?? null, seguidoresIg: metric?.seguidoresIg ?? study?.seguidoresIg ?? null, sessionDate: study?.sessionDate ?? null } : null,
       }
     })
 
@@ -208,10 +208,13 @@ export class MentorshipService {
   }
 
   /** upsert de métrica mensal (faturamento/clientes/estoque) — chave clientId+month */
-  async upsertMonthlyMetric(clientId: string, dto: { month: string; faturamento?: number | null; clientesAtivos?: number | null; estoqueQtd?: number | null; estoqueValor?: number | null; note?: string | null }) {
+  async upsertMonthlyMetric(clientId: string, dto: { month: string; faturamento?: number | null; clientesAtivos?: number | null; estoqueQtd?: number | null; estoqueValor?: number | null; ticketMedio?: number | null; numVendas?: number | null; investimentoTrafego?: number | null; roas?: number | null; seguidoresIg?: number | null; note?: string | null }) {
     const data = {
       faturamento: dto.faturamento ?? null, clientesAtivos: dto.clientesAtivos ?? null,
-      estoqueQtd: dto.estoqueQtd ?? null, estoqueValor: dto.estoqueValor ?? null, note: dto.note ?? null,
+      estoqueQtd: dto.estoqueQtd ?? null, estoqueValor: dto.estoqueValor ?? null,
+      ticketMedio: dto.ticketMedio ?? null, numVendas: dto.numVendas ?? null,
+      investimentoTrafego: dto.investimentoTrafego ?? null, roas: dto.roas ?? null, seguidoresIg: dto.seguidoresIg ?? null,
+      note: dto.note ?? null,
     }
     const metric = await this.prisma.monthlyMetric.upsert({
       where: { clientId_month: { clientId, month: dto.month } },

@@ -505,6 +505,11 @@ model MonthlyMetric {
   clientesAtivos Int?     // clientes ativos no mês
   estoqueQtd     Int?     // estoque em quantidade (peças)
   estoqueValor   Float?   // estoque em valor (R$)
+  ticketMedio    Float?   // R$
+  numVendas      Int?     // pedidos no mês
+  investimentoTrafego Float? // R$
+  roas           Float?   // x
+  seguidoresIg   Int?     // seguidores Instagram
   note           String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

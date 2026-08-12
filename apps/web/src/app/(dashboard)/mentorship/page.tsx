@@ -23,7 +23,7 @@ interface CaseStudy {
   situacaoAtual: string | null; oQueTrabalhou: string | null; proximosPassos: string | null; transcricao: string | null; pontosPrincipais: string | null
 }
 interface Action { id: string; what: string; who: string | null; dueDate: string | null; done: boolean; status: string }
-interface MonthlyMetric { id: string; month: string; faturamento: number | null; clientesAtivos: number | null; estoqueQtd: number | null; estoqueValor: number | null; note: string | null }
+interface MonthlyMetric { id: string; month: string; faturamento: number | null; clientesAtivos: number | null; estoqueQtd: number | null; estoqueValor: number | null; ticketMedio: number | null; numVendas: number | null; investimentoTrafego: number | null; roas: number | null; seguidoresIg: number | null; note: string | null }
 interface Detail {
   profile: { mentorName: string | null; status: string; mainPains: string | null; goal: string | null }
   client?: {
@@ -252,9 +252,10 @@ function OverviewPanel({ onSelect }: { onSelect: (id: string) => void }) {
 
 // ───────── Tabela de faturamento mês a mês (editável) ─────────
 function MonthlyTable({ clientId, metrics, onReload }: { clientId: string; metrics: MonthlyMetric[]; onReload: () => void }) {
-  type Row = { month: string; faturamento: string; clientesAtivos: string; estoqueQtd: string; estoqueValor: string }
+  type Row = { month: string; faturamento: string; clientesAtivos: string; estoqueQtd: string; estoqueValor: string; ticketMedio: string; numVendas: string; investimentoTrafego: string; roas: string; seguidoresIg: string }
   const s = (v: number | null) => v == null ? '' : String(v)
-  const toRow = (m: MonthlyMetric): Row => ({ month: m.month, faturamento: s(m.faturamento), clientesAtivos: s(m.clientesAtivos), estoqueQtd: s(m.estoqueQtd), estoqueValor: s(m.estoqueValor) })
+  const toRow = (m: MonthlyMetric): Row => ({ month: m.month, faturamento: s(m.faturamento), clientesAtivos: s(m.clientesAtivos), estoqueQtd: s(m.estoqueQtd), estoqueValor: s(m.estoqueValor), ticketMedio: s(m.ticketMedio), numVendas: s(m.numVendas), investimentoTrafego: s(m.investimentoTrafego), roas: s(m.roas), seguidoresIg: s(m.seguidoresIg) })
+  const COLS: [keyof Row, string][] = [['faturamento', 'Faturamento (R$)'], ['clientesAtivos', 'Clientes ativos'], ['estoqueQtd', 'Estoque (peças)'], ['estoqueValor', 'Estoque (R$)'], ['ticketMedio', 'Ticket médio (R$)'], ['numVendas', 'Nº vendas'], ['investimentoTrafego', 'Invest. tráfego (R$)'], ['roas', 'ROAS (x)'], ['seguidoresIg', 'Seguidores IG']]
   const [rows, setRows] = useState<Row[]>(() => metrics.map(toRow))
   const monthsSig = metrics.map(m => m.month).join(',')
   // ressincroniza só quando o conjunto de meses muda (add/del) — não durante edição de valores
@@ -267,7 +268,7 @@ function MonthlyTable({ clientId, metrics, onReload }: { clientId: string; metri
   async function saveRow(r: Row) {
     setSaving(r.month)
     try {
-      await apiFetch(`/api/mentorship/clients/${clientId}/monthly`, { method: 'PUT', body: JSON.stringify({ month: r.month, faturamento: numOr(r.faturamento), clientesAtivos: numOr(r.clientesAtivos), estoqueQtd: numOr(r.estoqueQtd), estoqueValor: numOr(r.estoqueValor) }) })
+      await apiFetch(`/api/mentorship/clients/${clientId}/monthly`, { method: 'PUT', body: JSON.stringify({ month: r.month, faturamento: numOr(r.faturamento), clientesAtivos: numOr(r.clientesAtivos), estoqueQtd: numOr(r.estoqueQtd), estoqueValor: numOr(r.estoqueValor), ticketMedio: numOr(r.ticketMedio), numVendas: numOr(r.numVendas), investimentoTrafego: numOr(r.investimentoTrafego), roas: numOr(r.roas), seguidoresIg: numOr(r.seguidoresIg) }) })
       onReload()
     } catch { toast.error('Erro ao salvar mês') } finally { setSaving(null) }
   }
@@ -291,23 +292,21 @@ function MonthlyTable({ clientId, metrics, onReload }: { clientId: string; metri
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
           <thead>
             <tr style={{ color: MUT }}>
-              <th style={{ ...th, textAlign: 'left' }}>Mês</th>
-              <th style={th}>Faturamento (R$)</th>
-              <th style={th}>Clientes ativos</th>
-              <th style={th}>Estoque (peças)</th>
-              <th style={th}>Estoque (R$)</th>
+              <th style={{ ...th, textAlign: 'left', position: 'sticky', left: 0, background: PANEL }}>Mês</th>
+              {COLS.map(([k, l]) => <th key={k} style={{ ...th, whiteSpace: 'nowrap' }}>{l}</th>)}
               <th style={{ ...th, width: 30 }}></th>
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 && <tr><td colSpan={6} style={{ padding: 14, color: MUT, textAlign: 'center' }}>Nenhum mês registrado ainda. Adicione um mês abaixo.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={COLS.length + 2} style={{ padding: 14, color: MUT, textAlign: 'center' }}>Nenhum mês registrado ainda. Adicione um mês abaixo.</td></tr>}
             {rows.map((r, i) => (
               <tr key={r.month} style={{ borderTop: `1px solid ${LINE}` }}>
-                <td style={{ padding: '5px 8px', fontWeight: 700, whiteSpace: 'nowrap' }}>{mesLabel(r.month)}{saving === r.month && <span style={{ color: MUT, fontWeight: 400 }}> · salvando…</span>}</td>
-                <td style={{ padding: '4px 6px' }}><input value={r.faturamento} onChange={e => upd(i, 'faturamento', e.target.value)} onBlur={() => saveRow(rows[i])} placeholder="—" style={{ ...cell, color: NEON, fontWeight: 700 }} /></td>
-                <td style={{ padding: '4px 6px' }}><input value={r.clientesAtivos} onChange={e => upd(i, 'clientesAtivos', e.target.value)} onBlur={() => saveRow(rows[i])} placeholder="—" style={cell} /></td>
-                <td style={{ padding: '4px 6px' }}><input value={r.estoqueQtd} onChange={e => upd(i, 'estoqueQtd', e.target.value)} onBlur={() => saveRow(rows[i])} placeholder="—" style={cell} /></td>
-                <td style={{ padding: '4px 6px' }}><input value={r.estoqueValor} onChange={e => upd(i, 'estoqueValor', e.target.value)} onBlur={() => saveRow(rows[i])} placeholder="—" style={cell} /></td>
+                <td style={{ padding: '5px 8px', fontWeight: 700, whiteSpace: 'nowrap', position: 'sticky', left: 0, background: PANEL }}>{mesLabel(r.month)}{saving === r.month && <span style={{ color: MUT, fontWeight: 400 }}> ·</span>}</td>
+                {COLS.map(([k]) => (
+                  <td key={k} style={{ padding: '4px 6px', minWidth: 92 }}>
+                    <input value={r[k]} onChange={e => upd(i, k, e.target.value)} onBlur={() => saveRow(rows[i])} placeholder="—" style={k === 'faturamento' ? { ...cell, color: NEON, fontWeight: 700 } : cell} />
+                  </td>
+                ))}
                 <td style={{ padding: '4px 6px', textAlign: 'center' }}><button onClick={() => delMonth(r.month)} title="Remover mês" style={{ background: 'transparent', border: 'none', color: MUT, cursor: 'pointer', fontSize: 12 }}>✕</button></td>
               </tr>
             ))}
@@ -346,10 +345,10 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask, 
     ['Clientes Ativos', num(lastM?.clientesAtivos ?? null), lastM?.clientesAtivos ?? null, prevM?.clientesAtivos ?? null],
     ['Estoque (peças)', num(lastM?.estoqueQtd ?? null), lastM?.estoqueQtd ?? null, prevM?.estoqueQtd ?? null],
     ['Estoque (R$)', brl(lastM?.estoqueValor ?? null), lastM?.estoqueValor ?? null, prevM?.estoqueValor ?? null],
-    ['Ticket Médio', brl(last?.ticketMedio ?? null), last?.ticketMedio ?? null, prev?.ticketMedio ?? null],
-    ['Nº Vendas', num(last?.numVendas ?? null), last?.numVendas ?? null, prev?.numVendas ?? null],
-    ['ROAS', last?.roas != null ? last.roas + 'x' : '—', last?.roas ?? null, prev?.roas ?? null],
-    ['Seguidores IG', num(last?.seguidoresIg ?? null), last?.seguidoresIg ?? null, prev?.seguidoresIg ?? null],
+    ['Ticket Médio', brl(lastM?.ticketMedio ?? last?.ticketMedio ?? null), lastM?.ticketMedio ?? last?.ticketMedio ?? null, prevM?.ticketMedio ?? prev?.ticketMedio ?? null],
+    ['Nº Vendas', num(lastM?.numVendas ?? last?.numVendas ?? null), lastM?.numVendas ?? last?.numVendas ?? null, prevM?.numVendas ?? prev?.numVendas ?? null],
+    ['ROAS', (lastM?.roas ?? last?.roas) != null ? (lastM?.roas ?? last?.roas) + 'x' : '—', lastM?.roas ?? last?.roas ?? null, prevM?.roas ?? prev?.roas ?? null],
+    ['Seguidores IG', num(lastM?.seguidoresIg ?? last?.seguidoresIg ?? null), lastM?.seguidoresIg ?? last?.seguidoresIg ?? null, prevM?.seguidoresIg ?? prev?.seguidoresIg ?? null],
   ]
   const openTasks = detail.actionItems.filter(a => a.status !== 'DONE').length
 

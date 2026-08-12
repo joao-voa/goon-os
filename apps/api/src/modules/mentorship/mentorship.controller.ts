@@ -55,7 +55,7 @@ export class MentorshipController {
   }
 
   @Put('clients/:clientId/monthly')
-  upsertMonthly(@Param('clientId') clientId: string, @Body() dto: { month: string; faturamento?: number | null; clientesAtivos?: number | null; estoqueQtd?: number | null; estoqueValor?: number | null; note?: string | null }) {
+  upsertMonthly(@Param('clientId') clientId: string, @Body() dto: { month: string; faturamento?: number | null; clientesAtivos?: number | null; estoqueQtd?: number | null; estoqueValor?: number | null; ticketMedio?: number | null; numVendas?: number | null; investimentoTrafego?: number | null; roas?: number | null; seguidoresIg?: number | null; note?: string | null }) {
     return this.service.upsertMonthlyMetric(clientId, dto)
   }
 
