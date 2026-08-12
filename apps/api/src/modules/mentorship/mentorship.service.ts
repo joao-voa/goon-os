@@ -26,57 +26,60 @@ export class MentorshipService {
   // ---------- Cockpit / board ----------
 
   async getCockpit(params: { status?: string; mentor?: string; attention?: string; q?: string } = {}) {
-    const profiles = await this.prisma.menteeProfile.findMany({
-      where: {
-        status: params.status || undefined,
-        mentorName: params.mentor || undefined,
+    // TODOS os clientes ativos (com plano ativo) — não exige inscrição.
+    const clients = await this.prisma.client.findMany({
+      where: { status: 'ACTIVE', plans: { some: { status: 'ACTIVE' } } },
+      select: {
+        id: true, companyName: true, responsible: true, segment: true,
+        plans: { where: { status: 'ACTIVE' }, take: 1, select: { product: { select: { code: true } }, mentors: { where: { NOT: { mentorName: { contains: 'Giulliano' } } }, orderBy: { value: 'desc' }, take: 1, select: { mentorName: true } } } },
       },
-      orderBy: { enrolledAt: 'desc' },
+      orderBy: { companyName: 'asc' },
     })
-    const clientIds = profiles.map(p => p.clientId)
+    const clientIds = clients.map(c => c.id)
     if (clientIds.length === 0) return { mentees: [], total: 0 }
 
-    const [clients, actions, studies, meetings] = await Promise.all([
-      this.prisma.client.findMany({
-        where: { id: { in: clientIds } },
-        select: { id: true, companyName: true, responsible: true, segment: true, plans: { where: { status: 'ACTIVE' }, take: 1, select: { product: { select: { code: true } } } } },
-      }),
+    const [profiles, actions, studies, meetings] = await Promise.all([
+      this.prisma.menteeProfile.findMany({ where: { clientId: { in: clientIds } } }),
       this.prisma.actionItem.findMany({ where: { clientId: { in: clientIds }, done: false } }),
       this.prisma.sessionCaseStudy.findMany({ where: { clientId: { in: clientIds } }, orderBy: { sessionDate: 'desc' } }),
       this.prisma.meeting.findMany({ where: { clientId: { in: clientIds }, status: 'DONE' }, select: { clientId: true, date: true }, orderBy: { date: 'desc' } }),
     ])
-    const clientMap = new Map(clients.map(c => [c.id, c]))
+    const profileMap = new Map(profiles.map(p => [p.clientId, p]))
     const lastMeeting = new Map<string, Date>()
     for (const m of meetings) if (m.clientId && !lastMeeting.has(m.clientId)) lastMeeting.set(m.clientId, m.date)
     const lastStudy = new Map<string, typeof studies[number]>()
     for (const s of studies) if (!lastStudy.has(s.clientId)) lastStudy.set(s.clientId, s)
 
     const now = Date.now()
-    let mentees = profiles.map(p => {
-      const c = clientMap.get(p.clientId)
-      const open = actions.filter(a => a.clientId === p.clientId)
+    let mentees = clients.map(c => {
+      const p = profileMap.get(c.id)
+      const mentorName = p?.mentorName ?? c.plans[0]?.mentors[0]?.mentorName ?? null
+      const open = actions.filter(a => a.clientId === c.id)
       const overdue = open.filter(a => a.dueDate && a.dueDate.getTime() < now)
-      const contactDates = [p.lastContactAt, lastMeeting.get(p.clientId)].filter(Boolean) as Date[]
+      const contactDates = [p?.lastContactAt, lastMeeting.get(c.id)].filter(Boolean) as Date[]
       const lastContact = contactDates.length ? new Date(Math.max(...contactDates.map(d => d.getTime()))) : null
       const daysSinceContact = lastContact ? Math.floor((now - lastContact.getTime()) / DAY) : null
-      const study = lastStudy.get(p.clientId)
+      const study = lastStudy.get(c.id)
       return {
-        clientId: p.clientId,
-        company: c?.companyName ?? '(cliente removido)',
-        responsible: c?.responsible ?? null,
-        segment: c?.segment ?? null,
-        tier: c?.plans[0]?.product?.code ?? null,
-        mentorName: p.mentorName,
-        status: p.status,
-        color: p.color,
+        clientId: c.id,
+        company: c.companyName,
+        responsible: c.responsible ?? null,
+        segment: c.segment ?? null,
+        tier: c.plans[0]?.product?.code ?? null,
+        mentorName,
+        status: p?.status ?? 'ACTIVE',
+        color: p?.color ?? null,
         openActions: open.length,
         overdueActions: overdue.length,
         lastContact,
         daysSinceContact,
+        enrolled: !!p,
         attention: this.attention(overdue.length, daysSinceContact),
         lastMetrics: study ? { faturamentoAno: study.faturamentoAno, numVendas: study.numVendas, ticketMedio: study.ticketMedio, roas: study.roas, seguidoresIg: study.seguidoresIg, sessionDate: study.sessionDate } : null,
       }
     })
+
+    if (params.mentor) mentees = mentees.filter(m => m.mentorName === params.mentor)
 
     if (params.attention === 'true') mentees = mentees.filter(m => m.attention)
     if (params.q) {
@@ -103,20 +106,40 @@ export class MentorshipService {
   // ---------- Detalhe do mentorado (jornada) ----------
 
   async getClientDetail(clientId: string) {
-    const profile = await this.prisma.menteeProfile.findUnique({ where: { clientId } })
-    if (!profile) throw new NotFoundException('Cliente não está em acompanhamento')
-    const [client, studies, actions, meetings] = await Promise.all([
-      this.prisma.client.findUnique({ where: { id: clientId }, select: { id: true, companyName: true, responsible: true, email: true, whatsapp: true, phone: true, segment: true, plans: { where: { status: 'ACTIVE' }, select: { product: { select: { code: true, name: true } } } } } }),
+    const [profile, client, studies, actions, meetings] = await Promise.all([
+      this.prisma.menteeProfile.findUnique({ where: { clientId } }),
+      this.prisma.client.findUnique({
+        where: { id: clientId },
+        select: {
+          id: true, companyName: true, tradeName: true, cnpj: true, responsible: true, email: true, whatsapp: true, phone: true,
+          segment: true, city: true, state: true, estimatedRevenue: true, mainPains: true, strategicGoals: true, createdAt: true,
+          plans: { where: { status: 'ACTIVE' }, select: { value: true, installments: true, product: { select: { code: true, name: true } } } },
+        },
+      }),
       this.prisma.sessionCaseStudy.findMany({ where: { clientId }, orderBy: { sessionDate: 'desc' } }),
       this.prisma.actionItem.findMany({ where: { clientId }, orderBy: [{ done: 'asc' }, { dueDate: 'asc' }] }),
       this.prisma.meeting.findMany({ where: { clientId }, orderBy: { date: 'desc' }, take: 20, select: { id: true, title: true, type: true, date: true, status: true, notes: true } }),
     ])
+    if (!client) throw new NotFoundException('Cliente não encontrado')
+    // mentor derivado do split se não houver perfil
+    const mentorName = profile?.mentorName ?? await this.deriveMentor(clientId)
     const now = Date.now()
     const openOverdue = actions.filter(a => !a.done && a.dueDate && a.dueDate.getTime() < now).length
+    const lastMeeting = meetings.find(m => m.status === 'DONE')?.date ?? null
+    const lastContact = profile?.lastContactAt ?? lastMeeting ?? null
     return {
-      profile,
-      client,
-      attention: this.attention(openOverdue, profile.lastContactAt ? Math.floor((now - profile.lastContactAt.getTime()) / DAY) : null),
+      profile: {
+        mentorName,
+        status: profile?.status ?? 'ACTIVE',
+        mainPains: profile?.mainPains ?? client.mainPains ?? null,
+        goal: profile?.goal ?? client.strategicGoals ?? null,
+        enrolled: !!profile,
+      },
+      client: {
+        ...client,
+        plan: client.plans[0] ? { value: Number(client.plans[0].value), installments: client.plans[0].installments, code: client.plans[0].product.code, name: client.plans[0].product.name } : null,
+      },
+      attention: this.attention(openOverdue, lastContact ? Math.floor((now - new Date(lastContact).getTime()) / DAY) : null),
       caseStudies: studies,
       actionItems: actions,
       meetings,
@@ -167,8 +190,8 @@ export class MentorshipService {
     materiais?: Array<{ label: string; url?: string }>
     situacaoAtual?: string; oQueTrabalhou?: string; proximosPassos?: string; transcricao?: string; pontosPrincipais?: string
   }) {
-    const profile = await this.prisma.menteeProfile.findUnique({ where: { clientId: dto.clientId } })
-    if (!profile) throw new NotFoundException('Cliente não está em acompanhamento')
+    let profile = await this.prisma.menteeProfile.findUnique({ where: { clientId: dto.clientId } })
+    if (!profile) profile = await this.prisma.menteeProfile.create({ data: { clientId: dto.clientId, mentorName: dto.mentorName ?? await this.deriveMentor(dto.clientId) } })
     const sessionDate = dto.sessionDate ? new Date(dto.sessionDate) : new Date()
     const study = await this.prisma.sessionCaseStudy.create({
       data: {
@@ -193,7 +216,7 @@ export class MentorshipService {
 
   async createActionItem(dto: { clientId: string; what: string; who?: string; dueDate?: string; caseStudyId?: string }) {
     const profile = await this.prisma.menteeProfile.findUnique({ where: { clientId: dto.clientId } })
-    if (!profile) throw new NotFoundException('Cliente não está em acompanhamento')
+    if (!profile) await this.prisma.menteeProfile.create({ data: { clientId: dto.clientId, mentorName: await this.deriveMentor(dto.clientId) } })
     return this.prisma.actionItem.create({
       data: { clientId: dto.clientId, what: dto.what, who: dto.who ?? null, dueDate: dto.dueDate ? new Date(dto.dueDate) : null, caseStudyId: dto.caseStudyId ?? null },
     })

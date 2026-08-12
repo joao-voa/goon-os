@@ -24,9 +24,14 @@ interface CaseStudy {
 interface Action { id: string; what: string; who: string | null; dueDate: string | null; done: boolean; status: string }
 interface Detail {
   profile: { mentorName: string | null; status: string; mainPains: string | null; goal: string | null }
-  client?: { companyName: string; responsible: string | null; segment: string | null } | null
+  client?: {
+    companyName: string; tradeName?: string | null; cnpj?: string | null; responsible: string | null
+    email?: string | null; whatsapp?: string | null; phone?: string | null; segment: string | null
+    city?: string | null; state?: string | null; estimatedRevenue?: string | null; createdAt?: string
+    plan?: { value: number; installments: number | null; code: string; name: string } | null
+  } | null
   attention: boolean; caseStudies: CaseStudy[]; actionItems: Action[]
-  meetings?: { id: string; title: string; date: string; status: string }[]
+  meetings?: { id: string; title: string; type?: string; date: string; status: string }[]
 }
 
 // ───────── helpers ─────────
@@ -49,7 +54,6 @@ export default function MentorshipDashboard() {
   const [q, setQ] = useState('')
   const [mentorF, setMentorF] = useState('')
   const [attF, setAttF] = useState(false)
-  const [enrollOpen, setEnrollOpen] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const [tab, setTab] = useState<'sessoes' | 'tarefas'>('sessoes')
 
@@ -117,7 +121,7 @@ export default function MentorshipDashboard() {
             )
           })}
         </div>
-        <button onClick={() => setEnrollOpen(true)} style={{ margin: 12, background: NEON, color: INK, border: 'none', padding: '10px', fontFamily: mono, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ INSCREVER CLIENTE</button>
+        <div style={{ margin: 12, fontSize: 9, color: '#555', textAlign: 'center', lineHeight: 1.5 }}>Todos os clientes ativos aparecem aqui.<br />Selecione um pra ver a ficha completa.</div>
       </aside>
 
       {/* ══ PAINEL (direita) ══ */}
@@ -131,7 +135,6 @@ export default function MentorshipDashboard() {
         )}
       </main>
 
-      {enrollOpen && <EnrollModal onClose={() => setEnrollOpen(false)} onDone={id => { setEnrollOpen(false); loadList(); if (id) setSelId(id) }} />}
       {formOpen && selId && <SessionForm clientId={selId} onClose={() => setFormOpen(false)} onSaved={() => { setFormOpen(false); loadDetail(selId); loadList() }} />}
     </div>
   )
@@ -188,6 +191,37 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister }: {
           <div style={{ fontSize: 12, lineHeight: 1.6 }}>
             <div style={{ marginBottom: 8 }}><span style={{ color: MUT }}>Dores:</span> {detail.profile.mainPains || <span style={{ color: '#555' }}>não preenchido</span>}</div>
             <div><span style={{ color: MUT }}>Objetivo:</span> {detail.profile.goal || <span style={{ color: '#555' }}>não preenchido</span>}</div>
+          </div>
+        </Panel>
+      </div>
+
+      {/* Ficha do cliente + reuniões */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 14, marginBottom: 18 }}>
+        <Panel title="Ficha do cliente">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', fontSize: 11 }}>
+            {[
+              ['Programa', detail.client?.plan ? `${detail.client.plan.code} · ${brl(detail.client.plan.value)}` : '—'],
+              ['CNPJ', detail.client?.cnpj || '—'],
+              ['Responsável', detail.client?.responsible || '—'],
+              ['Segmento', detail.client?.segment || '—'],
+              ['E-mail', detail.client?.email || '—'],
+              ['WhatsApp', detail.client?.whatsapp || detail.client?.phone || '—'],
+              ['Cidade', [detail.client?.city, detail.client?.state].filter(Boolean).join('/') || '—'],
+              ['Fat. estimado', detail.client?.estimatedRevenue || '—'],
+            ].map(([l, v]) => (
+              <div key={l}><div style={{ color: MUT, fontSize: 9, textTransform: 'uppercase' }}>{l}</div><div style={{ color: FG, wordBreak: 'break-word' }}>{v}</div></div>
+            ))}
+          </div>
+        </Panel>
+        <Panel title={`Reuniões (${detail.meetings?.filter(m => m.status === 'DONE').length ?? 0} realizadas)`}>
+          <div style={{ maxHeight: 150, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {(detail.meetings ?? []).length === 0 && <div style={{ color: '#555', fontSize: 11 }}>Nenhuma reunião.</div>}
+            {(detail.meetings ?? []).map(m => (
+              <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, padding: '3px 0', borderBottom: `1px solid ${LINE}` }}>
+                <span style={{ color: m.status === 'DONE' ? FG : MUT }}>{m.status === 'DONE' ? '✓' : '○'} {m.title}</span>
+                <span style={{ color: MUT }}>{dt(m.date)}</span>
+              </div>
+            ))}
           </div>
         </Panel>
       </div>
@@ -286,37 +320,6 @@ function EvolutionChart({ studies }: { studies: CaseStudy[] }) {
       <text x={pad} y={12} fill={MUT} fontSize="9" fontFamily={mono}>{brl(maxY)}</text>
       <text x={pad} y={H - 2} fill={MUT} fontSize="9" fontFamily={mono}>{brl(minY)}</text>
     </svg>
-  )
-}
-
-function EnrollModal({ onClose, onDone }: { onClose: () => void; onDone: (id?: string) => void }) {
-  const [list, setList] = useState<{ id: string; company: string; responsible: string | null; tier: string | null }[]>([])
-  const [sel, setSel] = useState(''); const [mentor, setMentor] = useState(''); const [saving, setSaving] = useState(false)
-  useEffect(() => { apiFetch<typeof list>('/api/mentorship/available-clients').then(setList).catch(() => {}) }, [])
-  async function save() {
-    if (!sel) { toast.error('Selecione um cliente'); return }
-    setSaving(true)
-    try { await apiFetch('/api/mentorship/enroll', { method: 'POST', body: JSON.stringify({ clientId: sel, mentorName: mentor || undefined }) }); toast.success('Inscrito'); onDone(sel) }
-    catch { toast.error('Erro') } finally { setSaving(false) }
-  }
-  const inp: React.CSSProperties = { width: '100%', background: PANEL, border: `1px solid ${LINE}`, color: FG, padding: '8px 10px', fontFamily: mono, fontSize: 12, outline: 'none' }
-  return (
-    <div onClick={e => { if (e.target === e.currentTarget) onClose() }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ background: INK, border: `1px solid ${LINE}`, color: FG, width: '100%', maxWidth: 420, padding: 20 }}>
-        <div style={{ fontFamily: disp, fontSize: 16, fontWeight: 700, marginBottom: 14 }}>Inscrever cliente na mentoria</div>
-        <label style={{ fontSize: 9, color: MUT, textTransform: 'uppercase' }}>Cliente</label>
-        <select value={sel} onChange={e => setSel(e.target.value)} style={{ ...inp, marginTop: 4, marginBottom: 12 }}>
-          <option value="" style={{ background: INK }}>Selecione...</option>
-          {list.map(c => <option key={c.id} value={c.id} style={{ background: INK }}>{c.company}{c.tier ? ` (${c.tier})` : ''}</option>)}
-        </select>
-        <label style={{ fontSize: 9, color: MUT, textTransform: 'uppercase' }}>Mentor (opcional)</label>
-        <input value={mentor} onChange={e => setMentor(e.target.value)} style={{ ...inp, marginTop: 4 }} placeholder="Ex: Carol, Giulliano..." />
-        <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
-          <button onClick={onClose} style={{ flex: 1, border: `1px solid ${LINE}`, background: 'transparent', color: FG, padding: 10, fontFamily: mono, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Cancelar</button>
-          <button onClick={save} disabled={saving} style={{ flex: 1, border: 'none', background: NEON, color: INK, padding: 10, fontFamily: mono, fontSize: 12, fontWeight: 700, cursor: saving ? 'wait' : 'pointer' }}>{saving ? '...' : 'Inscrever'}</button>
-        </div>
-      </div>
-    </div>
   )
 }
 
