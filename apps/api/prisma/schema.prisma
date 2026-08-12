@@ -476,10 +476,16 @@ model SessionCaseStudy {
   investimentoTrafego Float?  // R$
   roas               Float?   // x
   seguidoresIg       Int?     // seguidores Instagram
+  numClientes        Int?     // nº de clientes/compradores da marca
+  vendasPorCanal     Json?    // [{ canal, valor }] — canais flexíveis
+  customFields       Json?    // [{ label, value }] — campos extras adicionados pelo usuário
+  materiais          Json?    // [{ label, url }] — materiais entregues na sessão
   // notas
   situacaoAtual      String?
   oQueTrabalhou      String?
   proximosPassos     String?
+  transcricao        String?  // transcrição da reunião
+  pontosPrincipais   String?  // principais pontos discutidos
   createdAt          DateTime @default(now())
 
   @@index([clientId])
@@ -495,6 +501,7 @@ model ActionItem {
   who          String?   // QUEM (responsável)
   dueDate      DateTime? // QUANDO
   done         Boolean   @default(false)
+  status       String    @default("TODO") // TODO | DOING | DONE (mini-kanban)
   completedAt  DateTime?
   createdAt    DateTime  @default(now())
 

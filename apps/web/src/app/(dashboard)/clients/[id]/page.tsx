@@ -856,6 +856,7 @@ export default function ClientDetailPage() {
       if (hash === '#contrato') setActiveTab(1)
       else if (hash === '#financeiro') setActiveTab(2)
       else if (hash === '#pendencias') setActiveTab(3)
+      else if (hash === '#mentoria' || hash === '#trackrecord') setActiveTab(5)
     }
   }, [])
 

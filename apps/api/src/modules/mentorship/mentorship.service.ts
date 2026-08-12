@@ -161,7 +161,11 @@ export class MentorshipService {
   async createCaseStudy(dto: {
     clientId: string; meetingId?: string; sessionDate?: string; mentorName?: string
     faturamentoAno?: number; numVendas?: number; ticketMedio?: number; investimentoTrafego?: number; roas?: number; seguidoresIg?: number
-    situacaoAtual?: string; oQueTrabalhou?: string; proximosPassos?: string
+    numClientes?: number
+    vendasPorCanal?: Array<{ canal: string; valor: number }>
+    customFields?: Array<{ label: string; value: string }>
+    materiais?: Array<{ label: string; url?: string }>
+    situacaoAtual?: string; oQueTrabalhou?: string; proximosPassos?: string; transcricao?: string; pontosPrincipais?: string
   }) {
     const profile = await this.prisma.menteeProfile.findUnique({ where: { clientId: dto.clientId } })
     if (!profile) throw new NotFoundException('Cliente não está em acompanhamento')
@@ -172,7 +176,12 @@ export class MentorshipService {
         mentorName: dto.mentorName ?? profile.mentorName,
         faturamentoAno: dto.faturamentoAno ?? null, numVendas: dto.numVendas ?? null, ticketMedio: dto.ticketMedio ?? null,
         investimentoTrafego: dto.investimentoTrafego ?? null, roas: dto.roas ?? null, seguidoresIg: dto.seguidoresIg ?? null,
+        numClientes: dto.numClientes ?? null,
+        vendasPorCanal: dto.vendasPorCanal ? (dto.vendasPorCanal as object) : undefined,
+        customFields: dto.customFields ? (dto.customFields as object) : undefined,
+        materiais: dto.materiais ? (dto.materiais as object) : undefined,
         situacaoAtual: dto.situacaoAtual ?? null, oQueTrabalhou: dto.oQueTrabalhou ?? null, proximosPassos: dto.proximosPassos ?? null,
+        transcricao: dto.transcricao ?? null, pontosPrincipais: dto.pontosPrincipais ?? null,
       },
     })
     // registrar contato
@@ -190,12 +199,22 @@ export class MentorshipService {
     })
   }
 
-  async updateActionItem(id: string, dto: { what?: string; who?: string; dueDate?: string; done?: boolean }) {
+  async updateActionItem(id: string, dto: { what?: string; who?: string; dueDate?: string; done?: boolean; status?: string }) {
     const data: Record<string, unknown> = {}
     if (dto.what !== undefined) data.what = dto.what
     if (dto.who !== undefined) data.who = dto.who
     if (dto.dueDate !== undefined) data.dueDate = dto.dueDate ? new Date(dto.dueDate) : null
-    if (dto.done !== undefined) { data.done = dto.done; data.completedAt = dto.done ? new Date() : null }
+    if (dto.status !== undefined) {
+      data.status = dto.status
+      // mantém o boolean 'done' em sincronia com o kanban
+      data.done = dto.status === 'DONE'
+      data.completedAt = dto.status === 'DONE' ? new Date() : null
+    }
+    if (dto.done !== undefined) {
+      data.done = dto.done
+      data.completedAt = dto.done ? new Date() : null
+      if (data.status === undefined) data.status = dto.done ? 'DONE' : 'TODO'
+    }
     return this.prisma.actionItem.update({ where: { id }, data })
   }
 

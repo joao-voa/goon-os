@@ -56,7 +56,7 @@ export class MentorshipController {
   }
 
   @Patch('action-items/:id')
-  updateAction(@Param('id') id: string, @Body() dto: { what?: string; who?: string; dueDate?: string; done?: boolean }) {
+  updateAction(@Param('id') id: string, @Body() dto: { what?: string; who?: string; dueDate?: string; done?: boolean; status?: string }) {
     return this.service.updateActionItem(id, dto)
   }
 

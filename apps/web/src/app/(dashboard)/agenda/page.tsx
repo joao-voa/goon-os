@@ -457,7 +457,10 @@ export default function AgendaPage() {
                     <strong>{m.client?.companyName ?? m.title}</strong>
                     {m.mentorName && <span style={{ color: '#888', marginLeft: 6 }}>• {m.mentorName}</span>}
                   </div>
-                  <span style={{ color: '#555', fontSize: 10 }}>{new Date(m.date).toLocaleDateString('pt-BR')}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {m.clientId && <a href={`/clients/${m.clientId}#trackrecord`} title="Trackrecord da mentoria" style={{ background: '#0A0A0C', color: 'white', padding: '2px 7px', fontSize: 9, fontWeight: 700, textDecoration: 'none', borderRadius: 3 }}>+ SESSÃO</a>}
+                    <span style={{ color: '#555', fontSize: 10 }}>{new Date(m.date).toLocaleDateString('pt-BR')}</span>
+                  </div>
                 </div>
               ))}
               {meetings.filter(m => m.status === 'DONE').length === 0 && (
