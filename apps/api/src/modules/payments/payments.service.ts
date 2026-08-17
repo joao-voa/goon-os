@@ -68,6 +68,93 @@ export class PaymentsService {
     }
   }
 
+  /**
+   * Carteira de recebíveis (futuro), fora da carteira de recuperação.
+   * Contratos (planos ativos) classificados por SAÚDE (em dia × atrasado)
+   * e por VIGÊNCIA (vigente × encerrado a renovar). Recuperação excluída de tudo.
+   */
+  async getReceivables() {
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+    // Recebíveis futuros: parcelas PENDING a vencer, sem carteira de recuperação
+    const [futuros, activePlans] = await Promise.all([
+      this.prisma.payment.findMany({
+        where: { status: 'PENDING', dueDate: { gte: today }, ...NOT_CARTEIRA_CLIENT_FILTER },
+        select: { value: true, dueDate: true },
+      }),
+      this.prisma.clientPlan.findMany({
+        where: { status: 'ACTIVE' },
+        select: { id: true, clientId: true, value: true, endDate: true, product: { select: { code: true, name: true } }, client: { select: { companyName: true, leadStage: true } } },
+      }),
+    ])
+
+    // recebíveis futuros por mês
+    let futTotal = 0
+    const byMonthMap = new Map<string, { total: number; count: number }>()
+    for (const p of futuros) {
+      const v = Number(p.value); futTotal += v
+      const key = `${p.dueDate.getFullYear()}-${String(p.dueDate.getMonth() + 1).padStart(2, '0')}`
+      const cur = byMonthMap.get(key) ?? { total: 0, count: 0 }
+      cur.total += v; cur.count++; byMonthMap.set(key, cur)
+    }
+    const byMonth = [...byMonthMap.entries()].map(([month, x]) => ({ month, ...x })).sort((a, b) => a.month.localeCompare(b.month))
+
+    // pagamentos dos clientes com plano ativo (pra saúde) + detectar quem está em recuperação
+    const clientIds = [...new Set(activePlans.map(p => p.clientId))]
+    const payments = clientIds.length ? await this.prisma.payment.findMany({
+      where: { clientId: { in: clientIds }, status: { not: 'CANCELLED' } },
+      select: { clientId: true, clientPlanId: true, status: true, dueDate: true, value: true, inCarteira: true },
+    }) : []
+
+    const recovery = new Set<string>()
+    for (const p of activePlans) if (p.client.leadStage === 'RECUPERAR') recovery.add(p.clientId)
+    for (const pay of payments) if (pay.inCarteira) recovery.add(pay.clientId)
+
+    const plans = activePlans.filter(p => !recovery.has(p.clientId))
+    const isOver = (pay: typeof payments[number]) => pay.status === 'OVERDUE' || (pay.status === 'PENDING' && pay.dueDate.getTime() < today.getTime())
+    const planOverdue = (plan: typeof plans[number]) => {
+      const own = payments.filter(x => x.clientPlanId === plan.id)
+      const pool = own.length ? own : payments.filter(x => x.clientId === plan.clientId)
+      return pool.filter(isOver)
+    }
+
+    const emDia: typeof plans = [], atrasados: { company: string; code: string; value: number; overdue: number; overdueCount: number }[] = []
+    for (const p of plans) {
+      const over = planOverdue(p)
+      if (over.length === 0) { emDia.push(p); continue }
+      atrasados.push({ company: p.client.companyName, code: p.product.code, value: Number(p.value), overdue: over.reduce((s, x) => s + Number(x.value), 0), overdueCount: over.length })
+    }
+    atrasados.sort((a, b) => b.overdue - a.overdue)
+
+    const vigentes = plans.filter(p => !p.endDate || p.endDate.getTime() >= today.getTime())
+    const encerrados = plans.filter(p => p.endDate && p.endDate.getTime() < today.getTime())
+      .map(p => ({ company: p.client.companyName, code: p.product.code, value: Number(p.value), endDate: p.endDate! }))
+      .sort((a, b) => a.endDate.getTime() - b.endDate.getTime())
+
+    const sumV = (arr: { value: number }[]) => arr.reduce((s, x) => s + x.value, 0)
+    return {
+      futuros: { total: futTotal, count: futuros.length, byMonth },
+      saude: {
+        emDia: emDia.length,
+        emDiaValor: emDia.reduce((s, p) => s + Number(p.value), 0),
+        atrasados: atrasados.length,
+        atrasadosValor: sumV(atrasados),
+        atrasadoAReceber: atrasados.reduce((s, a) => s + a.overdue, 0),
+        listaAtrasados: atrasados,
+      },
+      vigencia: {
+        vigentes: vigentes.length,
+        vigentesValor: vigentes.reduce((s, p) => s + Number(p.value), 0),
+        encerrados: encerrados.length,
+        encerradosValor: sumV(encerrados),
+        listaEncerrados: encerrados,
+      },
+      recuperacaoExcluidos: recovery.size,
+      totalContratos: plans.length,
+    }
+  }
+
   async findAll(params: {
     clientId?: string
     status?: string

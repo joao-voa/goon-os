@@ -22,6 +22,11 @@ export class PaymentsController {
     return this.paymentsService.getKpis()
   }
 
+  @Get('api/payments/receivables')
+  getReceivables() {
+    return this.paymentsService.getReceivables()
+  }
+
   @Get('api/payments')
   findAll(
     @Query('clientId') clientId?: string,

@@ -8,9 +8,11 @@ const ExpensesPage = dynamic(() => import('../expenses/page'), { ssr: false })
 const CommissionsPage = dynamic(() => import('../commissions/page'), { ssr: false })
 const CashflowPage = dynamic(() => import('../cashflow/page'), { ssr: false })
 const PersonAccountsPage = dynamic(() => import('../person-accounts/page'), { ssr: false })
+const ReceivablesContent = dynamic(() => import('./ReceivablesContent'), { ssr: false })
 
 const TABS = [
   { key: 'fluxo', label: 'FLUXO DE CAIXA' },
+  { key: 'recebiveis', label: 'RECEBIVEIS' },
   { key: 'pagamentos', label: 'PAGAMENTOS' },
   { key: 'despesas', label: 'DESPESAS' },
   { key: 'comissoes', label: 'COMISSOES' },
@@ -47,6 +49,7 @@ export default function FinanceiroPage() {
         <div style={{ flex: 1, borderBottom: '1px solid #e2e8f0' }} />
       </div>
 
+      {activeTab === 'recebiveis' && <ReceivablesContent />}
       {activeTab === 'pagamentos' && <PaymentsContent />}
       {activeTab === 'despesas' && <ExpensesPage />}
       {activeTab === 'comissoes' && <CommissionsPage />}
