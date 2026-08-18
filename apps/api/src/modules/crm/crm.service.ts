@@ -1014,10 +1014,26 @@ export class CrmService {
   async getSalesByMonth(year: number) {
     const start = new Date(year, 0, 1)
     const end = new Date(year + 1, 0, 1)
-    const closed = await this.prisma.client.findMany({
-      where: { leadStage: 'FECHADO', closedAt: { gte: start, lt: end } },
-      select: { companyName: true, saleValue: true, closedAt: true, salesRep: true, suggestedProduct: true },
-      orderBy: { closedAt: 'asc' },
+    // Fonte de verdade: cada ciclo de ClientPlan (não-cancelado) é uma venda,
+    // datada pelo startDate. Isso captura clientes que entraram sem passar pelo
+    // funil do CRM (ex: mentoria) e renovações/ciclos novos (cycleNumber >= 2),
+    // que a antiga fonte (Client.closedAt/saleValue, 1 por cliente) não via.
+    // Clientes em RECUPERAR/PERDIDO (churn/distrato) não contam como venda,
+    // mesmo com plano ainda ACTIVE (mantido ativo para a cobrança do distrato).
+    const plans = await this.prisma.clientPlan.findMany({
+      where: {
+        startDate: { gte: start, lt: end },
+        status: { not: 'CANCELLED' },
+        client: { leadStage: { notIn: ['RECUPERAR', 'PERDIDO'] } },
+      },
+      select: {
+        value: true,
+        startDate: true,
+        cycleNumber: true,
+        product: { select: { code: true } },
+        client: { select: { companyName: true, salesRep: true } },
+      },
+      orderBy: { startDate: 'asc' },
     })
 
     const months = Array.from({ length: 12 }, (_, m) => ({
@@ -1028,18 +1044,18 @@ export class CrmService {
       deals: [] as Array<{ companyName: string; value: number; date: string; salesRep: string | null; product: string | null }>,
     }))
 
-    for (const c of closed) {
-      if (!c.closedAt) continue
-      const m = c.closedAt.getMonth()
-      const v = Number(c.saleValue ?? 0)
+    for (const pl of plans) {
+      const m = pl.startDate.getMonth()
+      const v = Number(pl.value ?? 0)
+      const isRenewal = (pl.cycleNumber ?? 1) >= 2
       months[m].count++
       months[m].total += v
       months[m].deals.push({
-        companyName: c.companyName,
+        companyName: pl.client.companyName,
         value: v,
-        date: c.closedAt.toISOString(),
-        salesRep: c.salesRep,
-        product: c.suggestedProduct,
+        date: pl.startDate.toISOString(),
+        salesRep: pl.client.salesRep,
+        product: isRenewal ? `${pl.product.code} · renovação` : pl.product.code,
       })
     }
 
