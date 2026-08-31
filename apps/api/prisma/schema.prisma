@@ -82,6 +82,7 @@ model Client {
   commissions  Commission[]
   interactions LeadInteraction[]
   meetings     Meeting[]
+  documents    ClientDocument[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -90,6 +91,27 @@ model Client {
   @@index([createdAt])
   @@index([leadStage])
   @@index([salesRep])
+}
+
+// Documentos anexados ao cliente (ex: contrato assinado). O arquivo é
+// guardado em base64 no campo `data` (@db.Text) — self-contained, sem storage
+// externo. `data` só é buscado no download; listagem traz só metadados.
+model ClientDocument {
+  id        String   @id @default(cuid())
+  clientId  String
+  type      String   @default("SIGNED_CONTRACT") // SIGNED_CONTRACT, OTHER
+  filename  String
+  mimeType  String   @default("application/pdf")
+  size      Int      @default(0) // bytes do arquivo original
+  data      String   @db.Text // conteúdo em base64
+  notes     String?
+
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([clientId])
+  @@index([type])
 }
 
 model Meeting {

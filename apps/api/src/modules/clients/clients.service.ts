@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
 import { CreateClientDto } from './dto/create-client.dto'
@@ -243,5 +243,79 @@ export class ClientsService {
     })
 
     return updated
+  }
+
+  // ---- Documentos do cliente (ex: contrato assinado) ----
+
+  // Lista metadados dos documentos (sem o base64, que é pesado).
+  async listDocuments(clientId: string) {
+    const client = await this.prisma.client.findUnique({ where: { id: clientId } })
+    if (!client) throw new NotFoundException(`Client ${clientId} not found`)
+    return this.prisma.clientDocument.findMany({
+      where: { clientId },
+      select: { id: true, type: true, filename: true, mimeType: true, size: true, notes: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
+  async addDocument(
+    clientId: string,
+    dto: { filename: string; data: string; mimeType?: string; size?: number; type?: string; notes?: string },
+  ) {
+    const client = await this.prisma.client.findUnique({ where: { id: clientId } })
+    if (!client) throw new NotFoundException(`Client ${clientId} not found`)
+    if (!dto.data) throw new BadRequestException('Arquivo (base64) obrigatório')
+
+    // Limite de 3MB no arquivo original: o base64 (~1,37x) tem que caber no
+    // body de 4,5MB que o serverless do Vercel aceita.
+    const MAX = 3 * 1024 * 1024
+    const bytes = dto.size ?? Math.floor((dto.data.length * 3) / 4)
+    if (bytes > MAX) {
+      throw new BadRequestException('Arquivo maior que 3MB. Comprima o PDF ou use um link externo.')
+    }
+
+    const doc = await this.prisma.clientDocument.create({
+      data: {
+        clientId,
+        filename: dto.filename,
+        data: dto.data,
+        mimeType: dto.mimeType ?? 'application/pdf',
+        size: bytes,
+        type: dto.type ?? 'SIGNED_CONTRACT',
+        notes: dto.notes,
+      },
+      select: { id: true, type: true, filename: true, mimeType: true, size: true, notes: true, createdAt: true },
+    })
+
+    await this.activityLog.log({
+      clientId,
+      entityType: 'CLIENT',
+      entityId: clientId,
+      action: 'DOCUMENT_ADDED',
+      description: `Documento anexado: ${dto.filename}`,
+    })
+
+    return doc
+  }
+
+  // Retorna o documento COM o base64 (para download).
+  async getDocument(clientId: string, docId: string) {
+    const doc = await this.prisma.clientDocument.findFirst({ where: { id: docId, clientId } })
+    if (!doc) throw new NotFoundException(`Documento ${docId} não encontrado`)
+    return doc
+  }
+
+  async removeDocument(clientId: string, docId: string) {
+    const doc = await this.prisma.clientDocument.findFirst({ where: { id: docId, clientId } })
+    if (!doc) throw new NotFoundException(`Documento ${docId} não encontrado`)
+    await this.prisma.clientDocument.delete({ where: { id: docId } })
+    await this.activityLog.log({
+      clientId,
+      entityType: 'CLIENT',
+      entityId: clientId,
+      action: 'DOCUMENT_REMOVED',
+      description: `Documento removido: ${doc.filename}`,
+    })
+    return { success: true }
   }
 }

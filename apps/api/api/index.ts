@@ -4,6 +4,7 @@
 import 'reflect-metadata'
 import { NestFactory } from '@nestjs/core'
 import { ValidationPipe } from '@nestjs/common'
+import type { NestExpressApplication } from '@nestjs/platform-express'
 import type { IncomingMessage, ServerResponse } from 'http'
 import { AppModule } from '../src/app.module'
 import { GlobalExceptionFilter } from '../src/filters/http-exception.filter'
@@ -14,7 +15,11 @@ let cachedInstance: ExpressInstance | null = null
 let bootstrapPromise: Promise<ExpressInstance> | null = null
 
 async function bootstrap(): Promise<ExpressInstance> {
-  const app = await NestFactory.create(AppModule, { logger: ['error', 'warn'] })
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: ['error', 'warn'] })
+
+  // Body até 5MB (upload de PDF de contrato em base64). Padrão é 100kb.
+  app.useBodyParser('json', { limit: '5mb' })
+  app.useBodyParser('urlencoded', { limit: '5mb', extended: true })
 
   app.enableCors({
     origin: [

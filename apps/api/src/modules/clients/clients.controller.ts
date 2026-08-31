@@ -11,7 +11,9 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Res,
 } from '@nestjs/common'
+import type { Response } from 'express'
 import { ClientsService } from './clients.service'
 import { CreateClientDto } from './dto/create-client.dto'
 import { UpdateClientDto } from './dto/update-client.dto'
@@ -69,5 +71,39 @@ export class ClientsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.clientsService.remove(id)
+  }
+
+  // ---- Documentos do cliente (contrato assinado etc.) ----
+
+  @Get(':id/documents')
+  listDocuments(@Param('id') id: string) {
+    return this.clientsService.listDocuments(id)
+  }
+
+  @Post(':id/documents')
+  @HttpCode(HttpStatus.CREATED)
+  addDocument(
+    @Param('id') id: string,
+    @Body() dto: { filename: string; data: string; mimeType?: string; size?: number; type?: string; notes?: string },
+  ) {
+    return this.clientsService.addDocument(id, dto)
+  }
+
+  @Get(':id/documents/:docId/download')
+  async downloadDocument(
+    @Param('id') id: string,
+    @Param('docId') docId: string,
+    @Res() res: Response,
+  ) {
+    const doc = await this.clientsService.getDocument(id, docId)
+    const buffer = Buffer.from(doc.data, 'base64')
+    res.setHeader('Content-Type', doc.mimeType)
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(doc.filename)}"`)
+    res.send(buffer)
+  }
+
+  @Delete(':id/documents/:docId')
+  removeDocument(@Param('id') id: string, @Param('docId') docId: string) {
+    return this.clientsService.removeDocument(id, docId)
   }
 }

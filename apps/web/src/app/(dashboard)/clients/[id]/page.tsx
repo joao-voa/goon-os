@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { toast } from 'sonner'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, API_URL } from '@/lib/api'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 import { ClientMentorship } from '@/components/ClientMentorship'
 import {
@@ -770,6 +770,11 @@ export default function ClientDetailPage() {
   const [showNewPendency, setShowNewPendency] = useState(false)
   const [resolvingId, setResolvingId] = useState<string | null>(null)
 
+  // Documentos (contrato assinado etc.)
+  const [documents, setDocuments] = useState<Array<{ id: string; type: string; filename: string; mimeType: string; size: number; notes: string | null; createdAt: string }>>([])
+  const [loadingDocuments, setLoadingDocuments] = useState(false)
+  const [uploadingDoc, setUploadingDoc] = useState(false)
+
   // Meetings / Cadence
   const [clientMeetings, setClientMeetings] = useState<Array<{ id: string; title: string; type: string; date: string; duration: number; mentorName: string | null; notes: string | null; status: string }>>([])
   const [cadence, setCadence] = useState<{ lastMeeting: { date: string; type: string; title: string } | null; nextMeeting: { date: string; type: string; title: string } | null; daysSinceLastMeeting: number | null; totalDone: number; totalScheduled: number; totalNoShow: number; health: string } | null>(null)
@@ -818,6 +823,68 @@ export default function ClientDetailPage() {
     } catch { /* silent */ } finally { setLoadingPendencies(false) }
   }, [id])
 
+  const fetchDocuments = useCallback(async () => {
+    setLoadingDocuments(true)
+    try {
+      const data = await apiFetch<Array<{ id: string; type: string; filename: string; mimeType: string; size: number; notes: string | null; createdAt: string }>>(`/api/clients/${id}/documents`)
+      setDocuments(Array.isArray(data) ? data : [])
+    } catch { /* silent */ } finally { setLoadingDocuments(false) }
+  }, [id])
+
+  const handleUploadDocument = useCallback(async (file: File) => {
+    if (!file) return
+    if (file.size > 3 * 1024 * 1024) {
+      toast.error('[ERRO] Arquivo maior que 3MB. Comprima o PDF ou use um link externo.')
+      return
+    }
+    setUploadingDoc(true)
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result))
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+      const base64 = dataUrl.split(',')[1] ?? ''
+      await apiFetch(`/api/clients/${id}/documents`, {
+        method: 'POST',
+        body: JSON.stringify({ filename: file.name, data: base64, mimeType: file.type || 'application/pdf', size: file.size, type: 'SIGNED_CONTRACT' }),
+      })
+      toast.success('[OK] Documento anexado')
+      fetchDocuments()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Falha ao anexar')
+    } finally { setUploadingDoc(false) }
+  }, [id, fetchDocuments])
+
+  const handleDownloadDocument = useCallback(async (docId: string, filename: string) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+      const res = await fetch(`${API_URL}/api/clients/${id}/documents/${docId}/download`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (!res.ok) throw new Error('Falha no download')
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url; a.download = filename; a.click()
+      window.URL.revokeObjectURL(url)
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Falha no download')
+    }
+  }, [id])
+
+  const handleDeleteDocument = useCallback(async (docId: string, filename: string) => {
+    if (!confirm(`Remover o documento "${filename}"?`)) return
+    try {
+      await apiFetch(`/api/clients/${id}/documents/${docId}`, { method: 'DELETE' })
+      toast.success('[OK] Documento removido')
+      fetchDocuments()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Falha ao remover')
+    }
+  }, [id, fetchDocuments])
+
   const loadMentors = useCallback(async (planId: string) => {
     try {
       const data = await apiFetch<Array<{ id: string; mentorName: string; value: number; notes: string | null }>>(`/api/plans/${planId}/mentors`)
@@ -847,7 +914,8 @@ export default function ClientDetailPage() {
     fetchContracts()
     fetchPayments()
     fetchPendencies()
-  }, [fetchClient, fetchPlans, fetchContracts, fetchPayments, fetchPendencies])
+    fetchDocuments()
+  }, [fetchClient, fetchPlans, fetchContracts, fetchPayments, fetchPendencies, fetchDocuments])
 
   // Check URL hash for tab param
   useEffect(() => {
@@ -1514,6 +1582,44 @@ export default function ClientDetailPage() {
                         </div>
                       )
                     })}
+                  </div>
+                )}
+              </div>
+
+              {/* Documentos assinados */}
+              <div style={{ marginTop: 28 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1 }}>Contrato Assinado / Documentos</div>
+                  <label className="goon-btn-ghost" style={{ fontSize: 11, cursor: uploadingDoc ? 'wait' : 'pointer' }}>
+                    {uploadingDoc ? 'Enviando...' : '+ Anexar PDF'}
+                    <input type="file" accept="application/pdf,image/*" style={{ display: 'none' }} disabled={uploadingDoc}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadDocument(f); e.target.value = '' }} />
+                  </label>
+                </div>
+                {loadingDocuments ? (
+                  <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 13 }}>Carregando documentos...</p>
+                ) : documents.length === 0 ? (
+                  <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 13 }}>Nenhum documento anexado. Anexe o contrato assinado (PDF até 3MB).</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {documents.map(doc => (
+                      <div key={doc.id} style={{ padding: '14px 16px', background: 'var(--retro-gray)', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, background: 'black', color: 'white', fontFamily: 'var(--font-sans)', fontSize: 8, fontWeight: 800, flexShrink: 0 }}>PDF</span>
+                          <div style={{ minWidth: 0 }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'black', fontSize: 13, wordBreak: 'break-all' }}>{doc.filename}</span>
+                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', marginTop: 2, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              <span>{(doc.size / 1024).toFixed(0)} KB</span>
+                              <span>{fmtDate(doc.createdAt)}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <button className="goon-btn-ghost" style={{ fontSize: 11 }} onClick={() => handleDownloadDocument(doc.id, doc.filename)}>Baixar</button>
+                          <button className="goon-btn-ghost" style={{ fontSize: 11, color: '#c00' }} onClick={() => handleDeleteDocument(doc.id, doc.filename)}>Remover</button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
