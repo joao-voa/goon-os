@@ -147,7 +147,7 @@ const fmtBRL = (n?: number | null) =>
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n)
     : '—'
 
-const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString('pt-BR') : '—')
+const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '—')
 
 function relativeTime(dateStr: string): string {
   const date = new Date(dateStr)
@@ -162,7 +162,7 @@ function relativeTime(dateStr: string): string {
   if (diffHours < 24) return `${diffHours}h`
   if (diffDays === 1) return '1d'
   if (diffDays < 30) return `${diffDays}d`
-  return date.toLocaleDateString('pt-BR')
+  return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' })
 }
 
 function statusLabel(status: string) {
@@ -564,7 +564,7 @@ function CreateContractModal({ clientId, plans, onClose, onCreated }: CreateCont
     ? {
         Produto: selectedPlan.product?.name ?? '',
         Valor: fmtBRL(selectedPlan.value),
-        Início: new Date(selectedPlan.startDate).toLocaleDateString('pt-BR'),
+        Início: new Date(selectedPlan.startDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
         Duração: selectedPlan.cycleDuration ? `${selectedPlan.cycleDuration} meses` : '—',
       }
     : {}
@@ -1158,12 +1158,12 @@ export default function ClientDetailPage() {
                   <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14 }}>
                     {cadence?.daysSinceLastMeeting !== null ? `${cadence?.daysSinceLastMeeting}d atras` : 'Nenhuma'}
                   </div>
-                  {cadence?.lastMeeting && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 2 }}>{new Date(cadence.lastMeeting.date).toLocaleDateString('pt-BR')}</div>}
+                  {cadence?.lastMeeting && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 2 }}>{new Date(cadence.lastMeeting.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</div>}
                 </div>
                 <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', padding: '14px 16px' }}>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666', marginBottom: 4 }}>Proxima Reuniao</div>
                   <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14 }}>
-                    {cadence?.nextMeeting ? new Date(cadence.nextMeeting.date).toLocaleDateString('pt-BR') : 'Nao agendada'}
+                    {cadence?.nextMeeting ? new Date(cadence.nextMeeting.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Nao agendada'}
                   </div>
                   {cadence?.nextMeeting && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 2 }}>{cadence.nextMeeting.title}</div>}
                 </div>
@@ -1187,7 +1187,7 @@ export default function ClientDetailPage() {
                           <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: days < 0 ? '#cc0000' : days <= 30 ? '#e6a800' : '#006600' }}>
                             {days < 0 ? 'VENCIDO' : `${days}d restantes`}
                           </div>
-                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 2 }}>Ate {end.toLocaleDateString('pt-BR')}</div>
+                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 2 }}>Ate {end.toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</div>
                         </>
                       )
                     })()}

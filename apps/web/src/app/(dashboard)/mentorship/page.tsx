@@ -47,7 +47,7 @@ interface Billing {
 // ───────── helpers ─────────
 const brl = (v: number | null) => v == null ? '—' : v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 const num = (v: number | null) => v == null ? '—' : v.toLocaleString('pt-BR')
-const dt = (d: string | null) => d ? new Date(d).toLocaleDateString('pt-BR') : '—'
+const dt = (d: string | null) => d ? new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '—'
 const NEON = '#C7F900', INK = '#0A0A0C', PANEL = '#141418', LINE = '#2A2A30', FG = '#F2F2F2', MUT = '#8b8b94'
 const disp = 'var(--font-display)', mono = 'var(--font-mono)'
 const KANBAN: [string, string, string][] = [['TODO', 'A Fazer', '#64748b'], ['DOING', 'Fazendo', '#e6a800'], ['DONE', 'Feito', NEON]]

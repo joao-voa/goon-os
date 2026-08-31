@@ -158,7 +158,7 @@ const fmtBRL = (n?: number | null) =>
 
 function fmtDate(iso: string): string {
   const d = new Date(iso)
-  return d.toLocaleDateString('pt-BR')
+  return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' })
 }
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────

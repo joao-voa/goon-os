@@ -39,7 +39,7 @@ const fmtBRL = (n?: number | null) =>
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n)
     : 'R$ 0'
 
-const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR')
+const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
 
 function isDueSoon(dueDateStr: string): boolean {
   const due = new Date(dueDateStr)
@@ -480,7 +480,7 @@ export default function PaymentsPage() {
     : 100
 
   const handlePay = async (id: string) => {
-    const dateStr = prompt('Data do pagamento (DD/MM/AAAA):', new Date().toLocaleDateString('pt-BR'))
+    const dateStr = prompt('Data do pagamento (DD/MM/AAAA):', new Date().toLocaleDateString('pt-BR', { timeZone: 'UTC' }))
     if (!dateStr) return
     const parts = dateStr.split('/')
     if (parts.length !== 3) { toast.error('Data invalida. Use DD/MM/AAAA'); return }

@@ -10,7 +10,9 @@ const fmtBRL = (n: unknown) =>
     maximumFractionDigits: 2,
   }).format(Number(n))
 
-const fmtDate = (d: unknown) => new Date(d as string).toLocaleDateString('pt-BR')
+// timeZone UTC: as datas de vigência são salvas em UTC meia-noite (dia-cheio).
+// Formatar em UTC garante o dia correto no contrato independente do fuso do servidor.
+const fmtDate = (d: unknown) => new Date(d as string).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
 
 function addMonths(date: Date, months: number): Date {
   const result = new Date(date)

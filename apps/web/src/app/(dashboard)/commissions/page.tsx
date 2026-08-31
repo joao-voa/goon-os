@@ -318,8 +318,8 @@ export default function CommissionsPage() {
             <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#4A78FF' }}>Proximo Fechamento</div>
             <div style={{ fontSize: 20, color: 'black', marginTop: 4 }}>{fmt(summary.closing.amount)}</div>
             <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>{summary.closing.count} comissoes</div>
-            <div style={{ fontSize: 10, color: '#666' }}>Corte: {new Date(summary.closing.cutoffDate).toLocaleDateString('pt-BR')}</div>
-            <div style={{ fontSize: 11, color: '#4A78FF', fontWeight: 900, marginTop: 4 }}>Pagamento: {new Date(summary.closing.paymentDate).toLocaleDateString('pt-BR')}</div>
+            <div style={{ fontSize: 10, color: '#666' }}>Corte: {new Date(summary.closing.cutoffDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</div>
+            <div style={{ fontSize: 11, color: '#4A78FF', fontWeight: 900, marginTop: 4 }}>Pagamento: {new Date(summary.closing.paymentDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</div>
           </div>
           <div style={{ background: 'white', padding: '12px 20px', border: '3px solid #888', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700, flex: '1 1 200px' }}>
             <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#888' }}>A Pagar Futuro</div>
@@ -396,7 +396,7 @@ export default function CommissionsPage() {
                 <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmt(c.baseValue)}</td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>{c.percentage}%</td>
                 <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700 }}>{fmt(c.value)}</td>
-                <td style={{ padding: '8px 12px', textAlign: 'center' }}>{new Date(c.payment.dueDate).toLocaleDateString('pt-BR')}</td>
+                <td style={{ padding: '8px 12px', textAlign: 'center' }}>{new Date(c.payment.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                   <span style={{ background: STATUS_COLORS[c.status] ?? '#888', color: 'white', padding: '2px 8px', fontSize: 10, fontWeight: 700 }}>{STATUS_LABELS[c.status] ?? c.status}</span>
                 </td>
@@ -675,7 +675,7 @@ export default function CommissionsPage() {
                                 <div style={{ padding: '4px 0 8px 16px' }}>
                                   {(m as any).installments.map((inst: { date: string; value: number; status: string }, idx: number) => (
                                     <div key={idx} style={{ display: 'flex', gap: 12, padding: '2px 0', fontFamily: 'var(--font-mono)', fontSize: 10, color: '#64748b' }}>
-                                      <span style={{ minWidth: 75 }}>{new Date(inst.date).toLocaleDateString('pt-BR')}</span>
+                                      <span style={{ minWidth: 75 }}>{new Date(inst.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
                                       <span style={{ minWidth: 70, textAlign: 'right' }}>{fmt(inst.value)}</span>
                                       <span style={{ background: inst.status === 'PAID' ? '#dcfce7' : '#fef3c7', color: inst.status === 'PAID' ? '#166534' : '#92400e', padding: '0 6px', borderRadius: 100, fontSize: 9 }}>{inst.status === 'PAID' ? 'PAGO' : inst.status}</span>
                                     </div>

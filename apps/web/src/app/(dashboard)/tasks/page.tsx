@@ -67,7 +67,7 @@ function TaskCard({ task, onClick }: { task: Task; onClick: () => void }) {
         {task.assignee && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#4A78FF' }}>{task.assignee}</span>}
         {task.dueDate && (
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: isOverdue ? '#cc0000' : '#888', fontWeight: isOverdue ? 700 : 400 }}>
-            {new Date(task.dueDate).toLocaleDateString('pt-BR')}
+            {new Date(task.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
           </span>
         )}
       </div>

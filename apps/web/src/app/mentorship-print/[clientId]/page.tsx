@@ -13,7 +13,7 @@ interface Detail {
 
 const brl = (v: number | null) => v == null ? '—' : v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 const num = (v: number | null) => v == null ? '—' : v.toLocaleString('pt-BR')
-const dt = (d: string | null) => d ? new Date(d).toLocaleDateString('pt-BR') : '—'
+const dt = (d: string | null) => d ? new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '—'
 
 export default function PrintPage() {
   const clientId = useParams().clientId as string

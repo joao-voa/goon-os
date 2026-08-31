@@ -51,7 +51,7 @@ const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curren
 const fmtFull = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('pt-BR')
+  return new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
 }
 
 export default function PersonAccountsPage() {

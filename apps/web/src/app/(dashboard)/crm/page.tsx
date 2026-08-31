@@ -245,7 +245,7 @@ function CloseDealModal({
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, background: '#f0f0f0', padding: '8px 12px', border: '1px solid #ccc' }}>
               {entry > 0 && <div>Entrada: R$ {entry.toFixed(2)} <span style={{ color: '#666' }}>(1/{installments})</span></div>}
               {entry > 0 ? '+ ' : ''}{regularCount}x de R$ {installmentVal.toFixed(2)}
-              <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>Total: {installments}x &middot; 1a parcela regular: {new Date(firstInstallmentDate + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
+              <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>Total: {installments}x &middot; 1a parcela regular: {new Date(firstInstallmentDate + 'T12:00:00').toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</div>
               {wasAdvanced && parseFloat(advanceValue) > 0 && (
                 <div style={{ fontSize: 10, color: '#4A78FF', marginTop: 2 }}>Adiantado: R$ {parseFloat(advanceValue).toFixed(2)}</div>
               )}
@@ -699,7 +699,7 @@ function LeadDetailModal({
   }
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-  const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR')
+  const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
   const fmtTime = (d: string) => {
     const date = new Date(d)
     return `${date.toLocaleDateString('pt-BR')} ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
@@ -1471,7 +1471,7 @@ export default function CrmPage() {
                               try { await apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ status: 'NO_SHOW' }) }); toast.success('Marcada como no-show'); loadCommercialMeetings() } catch { toast.error('Erro') }
                             }} style={{ background: '#f59e0b', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FALTOU</button>
                             <button onClick={() => {
-                              const newDate = prompt('Nova data (DD/MM/AAAA):', new Date(m.date).toLocaleDateString('pt-BR'))
+                              const newDate = prompt('Nova data (DD/MM/AAAA):', new Date(m.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }))
                               if (!newDate) return
                               const parts = newDate.split('/')
                               if (parts.length !== 3) { toast.error('Data invalida'); return }

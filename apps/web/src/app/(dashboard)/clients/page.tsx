@@ -717,7 +717,7 @@ export default function ClientsPage() {
                       const end = new Date(plan.endDate)
                       const days = Math.ceil((end.getTime() - Date.now()) / (1000*60*60*24))
                       const color = days < 0 ? '#cc0000' : days <= 30 ? '#ff6600' : '#006600'
-                      return <span style={{ color, fontWeight: 700 }}>{days < 0 ? 'Vencido' : end.toLocaleDateString('pt-BR')}</span>
+                      return <span style={{ color, fontWeight: 700 }}>{days < 0 ? 'Vencido' : end.toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
                     })()}
                   </td>
                   <td style={{ textAlign: 'center' }}>

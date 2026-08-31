@@ -85,7 +85,7 @@ export default function SalesPage() {
                 <div style={{ padding: '4px 4px 12px 62px' }}>
                   {m.deals.slice().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((d, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontFamily: 'var(--font-mono)', fontSize: 11, color: '#444', borderBottom: '1px solid #f5f5f5' }}>
-                      <span>{new Date(d.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} · <strong>{d.companyName}</strong>{d.product ? ` · ${d.product}` : ''}{d.salesRep ? ` · ${d.salesRep}` : ''}</span>
+                      <span>{new Date(d.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} · <strong>{d.companyName}</strong>{d.product ? ` · ${d.product}` : ''}{d.salesRep ? ` · ${d.salesRep}` : ''}</span>
                       <span style={{ fontWeight: 700 }}>{fmtBRL(d.value)}</span>
                     </div>
                   ))}

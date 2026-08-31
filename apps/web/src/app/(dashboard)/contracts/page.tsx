@@ -60,7 +60,7 @@ const fmtBRL = (n?: number | null) =>
     : '—'
 
 const fmtDate = (d?: string | null) =>
-  d ? new Date(d).toLocaleDateString('pt-BR') : '—'
+  d ? new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '—'
 
 function daysUntil(dateStr?: string | null): number {
   if (!dateStr) return 999
@@ -317,7 +317,7 @@ function ContractDetailModal({ contract, onClose, onRefresh }: DetailModalProps)
             <SignatureBadge isSigned={contract.isSigned} signatureDate={contract.signatureDate} />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555' }}>v{contract.version}</span>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555' }}>
-              {new Date(contract.createdAt).toLocaleDateString('pt-BR')}
+              {new Date(contract.createdAt).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
             </span>
           </div>
 

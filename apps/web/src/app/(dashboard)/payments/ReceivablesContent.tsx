@@ -13,7 +13,7 @@ interface Receivables {
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 const mesLabel = (ym: string) => new Date(ym + '-01T12:00:00').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
-const dt = (d: string) => new Date(d).toLocaleDateString('pt-BR')
+const dt = (d: string) => new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
 
 const CARD: React.CSSProperties = { border: '1px solid #e2e8f0', background: 'white', padding: 16, boxShadow: '2px 2px 0 rgba(0,0,0,0.06)' }
 const H: React.CSSProperties = { fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, margin: '0 0 12px' }

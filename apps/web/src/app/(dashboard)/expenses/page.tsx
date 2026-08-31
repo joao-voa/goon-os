@@ -235,7 +235,7 @@ export default function ExpensesPage() {
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>{CATEGORY_LABELS[e.category] ?? e.category}</td>
                 <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700 }}>{fmt(e.value)}</td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>{RECURRENCE_LABELS[e.recurrence] ?? e.recurrence}</td>
-                <td style={{ padding: '8px 12px', textAlign: 'center' }}>{new Date(e.dueDate).toLocaleDateString('pt-BR')}</td>
+                <td style={{ padding: '8px 12px', textAlign: 'center' }}>{new Date(e.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                   <span style={{ background: e.status === 'PAGO' ? '#006600' : '#e6a800', color: 'white', padding: '2px 8px', fontSize: 10, fontWeight: 700 }}>{e.status}</span>
                 </td>

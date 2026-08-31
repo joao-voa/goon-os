@@ -32,7 +32,7 @@ interface Pendency {
 const fmtDateTime = (d: string) => {
   const dt = new Date(d)
   return (
-    dt.toLocaleDateString('pt-BR') +
+    dt.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) +
     ' ' +
     dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
   )
@@ -671,14 +671,14 @@ export default function PendenciesPage() {
                             const days = Math.floor((Date.now() - new Date(pay.dueDate).getTime()) / (1000*60*60*24))
                             return (
                               <tr key={pay.id} style={{ borderBottom: '1px solid #eee', background: '#fff', fontSize: 11 }}>
-                                <td style={{ padding: '6px 12px 6px 28px', color: '#555' }}>Parcela {pay.installment} · venc {new Date(pay.dueDate).toLocaleDateString('pt-BR')} · <span style={{ color: '#cc0000', fontWeight: 700 }}>{days}d atraso</span></td>
+                                <td style={{ padding: '6px 12px 6px 28px', color: '#555' }}>Parcela {pay.installment} · venc {new Date(pay.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} · <span style={{ color: '#cc0000', fontWeight: 700 }}>{days}d atraso</span></td>
                                 <td />
                                 <td style={{ textAlign: 'center', color: '#888' }}>{pay.inCarteira ? 'A Recuperar' : ''}</td>
                                 <td style={{ padding: '6px 12px', textAlign: 'right' }}>{fmtBRL(pay.value)}</td>
                                 <td style={{ padding: '6px 12px', textAlign: 'center' }}>
                                   <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                                     <button onClick={async () => {
-                                      const dateStr = prompt('Data do pagamento (DD/MM/AAAA):', new Date().toLocaleDateString('pt-BR'))
+                                      const dateStr = prompt('Data do pagamento (DD/MM/AAAA):', new Date().toLocaleDateString('pt-BR', { timeZone: 'UTC' }))
                                       if (!dateStr) return
                                       const parts = dateStr.split('/'); if (parts.length !== 3) { toast.error('Data invalida'); return }
                                       const paidDate = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10), 12)
@@ -733,12 +733,12 @@ export default function PendenciesPage() {
                         </td>
                         <td style={{ padding: '8px 12px', textAlign: 'center' }}>{pay.installment}</td>
                         <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmtBRL(pay.value)}</td>
-                        <td style={{ padding: '8px 12px', textAlign: 'center' }}>{new Date(pay.dueDate).toLocaleDateString('pt-BR')}</td>
+                        <td style={{ padding: '8px 12px', textAlign: 'center' }}>{new Date(pay.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
                         <td style={{ padding: '8px 12px', textAlign: 'center', color: '#cc0000', fontWeight: 700 }}>{days}d</td>
                         <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                             <button onClick={async () => {
-                              const dateStr = prompt('Data do pagamento (DD/MM/AAAA):', new Date().toLocaleDateString('pt-BR'))
+                              const dateStr = prompt('Data do pagamento (DD/MM/AAAA):', new Date().toLocaleDateString('pt-BR', { timeZone: 'UTC' }))
                               if (!dateStr) return
                               const parts = dateStr.split('/')
                               if (parts.length !== 3) { toast.error('Data invalida'); return }
@@ -799,8 +799,8 @@ export default function PendenciesPage() {
                     </div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555', marginTop: 2 }}>
                       {plan.expired
-                        ? <span style={{ color: '#cc0000', fontWeight: 700 }}>Vencido ha {Math.abs(plan.daysLeft)} dias ({new Date(plan.contractEndDate).toLocaleDateString('pt-BR')})</span>
-                        : <span style={{ color: plan.daysLeft <= 30 ? '#e6a800' : '#006600' }}>Vence em {plan.daysLeft} dias ({new Date(plan.contractEndDate).toLocaleDateString('pt-BR')})</span>
+                        ? <span style={{ color: '#cc0000', fontWeight: 700 }}>Vencido ha {Math.abs(plan.daysLeft)} dias ({new Date(plan.contractEndDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })})</span>
+                        : <span style={{ color: plan.daysLeft <= 30 ? '#e6a800' : '#006600' }}>Vence em {plan.daysLeft} dias ({new Date(plan.contractEndDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })})</span>
                       }
                     </div>
                   </div>
