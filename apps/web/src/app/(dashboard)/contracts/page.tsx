@@ -606,7 +606,7 @@ function ContractCard({ contract, onClick }: { contract: Contract; onClick: () =
 }
 
 // ---- Main Page ----
-export default function ContractsPage() {
+function GeneratedContractsView() {
   const isMobile = useIsMobile()
   const searchParams = useSearchParams()
   const [contracts, setContracts] = useState<Contract[]>([])
@@ -1109,6 +1109,140 @@ export default function ContractsPage() {
           onClose={() => setSelected(null)}
           onRefresh={handleRefresh}
         />
+      )}
+    </div>
+  )
+}
+
+// ---- Nova aba: Por Cliente (lista de clientes + contrato de cada um) ----
+
+interface OverviewDoc { id: string; type: string; filename: string; mimeType: string; size: number; createdAt: string }
+interface OverviewClient { id: string; companyName: string; responsible: string; status: string; hasContract: boolean; documents: OverviewDoc[] }
+
+function ClientContractsView() {
+  const [rows, setRows] = useState<OverviewClient[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [onlyMissing, setOnlyMissing] = useState(false)
+
+  const fetchOverview = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await apiFetch<OverviewClient[]>(`/api/clients/contracts/overview`)
+      setRows(Array.isArray(data) ? data : [])
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao carregar')
+    } finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => { fetchOverview() }, [fetchOverview])
+
+  const download = async (clientId: string, docId: string, filename: string) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+      const res = await fetch(`${API_URL}/api/clients/${clientId}/documents/${docId}/download`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      if (!res.ok) throw new Error('Falha no download')
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a'); a.href = url; a.download = filename; a.click()
+      window.URL.revokeObjectURL(url)
+    } catch (err: unknown) { toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Falha no download') }
+  }
+
+  const q = search.trim().toLowerCase()
+  let filtered = rows
+  if (q) filtered = filtered.filter(r => r.companyName.toLowerCase().includes(q) || (r.responsible ?? '').toLowerCase().includes(q))
+  if (onlyMissing) filtered = filtered.filter(r => r.documents.length === 0)
+  const withContract = rows.filter(r => r.documents.length > 0).length
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', margin: 0 }}>
+          {'>'} {withContract} com contrato · {rows.length - withContract} sem
+        </p>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setOnlyMissing(v => !v)}
+            style={{ padding: '6px 12px', border: '1px solid #e2e8f0', background: onlyMissing ? '#f59e0b' : 'white', color: onlyMissing ? 'black' : '#555', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700 }}
+          >
+            Só sem contrato
+          </button>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar cliente..."
+            style={{ padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12, minWidth: 200 }}
+          />
+        </div>
+      </div>
+
+      {loading ? (
+        <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 13 }}>Carregando...</p>
+      ) : filtered.length === 0 ? (
+        <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 13 }}>Nenhum cliente encontrado.</p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {filtered.map(c => (
+            <div key={c.id} style={{ padding: '12px 16px', background: 'white', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <a href={`/clients/${c.id}#contrato`} style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'black', fontSize: 13, textDecoration: 'none' }}>
+                  {c.companyName}
+                </a>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', marginTop: 2 }}>{c.responsible}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                {c.documents.length === 0 ? (
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#b45309', background: '#fef3c7', padding: '4px 8px', border: '1px solid #fcd34d' }}>Sem contrato</span>
+                ) : (
+                  c.documents.map(d => (
+                    <button
+                      key={d.id}
+                      onClick={() => download(c.id, d.id, d.filename)}
+                      title={d.filename}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 10px', border: '1px solid #e2e8f0', background: 'var(--retro-gray)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, maxWidth: 260 }}
+                    >
+                      <span style={{ fontWeight: 800, fontSize: 8, background: 'black', color: 'white', padding: '2px 4px' }}>
+                        {d.mimeType.includes('pdf') ? 'PDF' : d.mimeType.includes('image') ? 'IMG' : 'DOC'}
+                      </span>
+                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.filename}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ---- Wrapper com abas ----
+
+export default function ContractsPage() {
+  const [tab, setTab] = useState<'clientes' | 'gerados'>('clientes')
+  const tabBtn = (active: boolean): React.CSSProperties => ({
+    padding: '8px 16px', border: 'none', borderBottom: active ? '2px solid black' : '2px solid transparent',
+    background: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 800,
+    textTransform: 'uppercase', letterSpacing: 1, color: active ? 'black' : '#999',
+  })
+  return (
+    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '1px solid #e2e8f0' }}>
+        <button style={tabBtn(tab === 'clientes')} onClick={() => setTab('clientes')}>Por Cliente</button>
+        <button style={tabBtn(tab === 'gerados')} onClick={() => setTab('gerados')}>Contratos Gerados</button>
+      </div>
+      {tab === 'clientes' ? (
+        <div>
+          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 800, color: 'black', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 1 }}>
+            Contratos por Cliente
+          </h1>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', margin: '0 0 16px' }}>Cada cliente e o contrato assinado dele. Clique no nome para abrir a ficha.</p>
+          <ClientContractsView />
+        </div>
+      ) : (
+        <GeneratedContractsView />
       )}
     </div>
   )

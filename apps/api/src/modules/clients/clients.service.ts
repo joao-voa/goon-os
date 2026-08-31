@@ -247,6 +247,39 @@ export class ClientsService {
 
   // ---- Documentos do cliente (ex: contrato assinado) ----
 
+  // Visão geral: todos os clientes ativos OU com documento, cada um com seus
+  // documentos (metadados). Alimenta a aba "Por Cliente" da tela de Contratos.
+  async contractsOverview() {
+    const clients = await this.prisma.client.findMany({
+      where: {
+        OR: [
+          { status: 'ACTIVE' },
+          { hasContract: true },
+          { documents: { some: {} } },
+        ],
+      },
+      select: {
+        id: true,
+        companyName: true,
+        responsible: true,
+        status: true,
+        hasContract: true,
+        documents: {
+          select: { id: true, type: true, filename: true, mimeType: true, size: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+      orderBy: { companyName: 'asc' },
+    })
+    // Com contrato primeiro, depois os sem — ambos em ordem alfabética.
+    return clients.sort((a, b) => {
+      const ad = a.documents.length > 0 ? 0 : 1
+      const bd = b.documents.length > 0 ? 0 : 1
+      if (ad !== bd) return ad - bd
+      return a.companyName.localeCompare(b.companyName)
+    })
+  }
+
   // Lista metadados dos documentos (sem o base64, que é pesado).
   async listDocuments(clientId: string) {
     const client = await this.prisma.client.findUnique({ where: { id: clientId } })

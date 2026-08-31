@@ -75,6 +75,12 @@ export class ClientsController {
 
   // ---- Documentos do cliente (contrato assinado etc.) ----
 
+  // Precisa vir ANTES de ':id/documents' pra não colidir com o param :id.
+  @Get('contracts/overview')
+  contractsOverview() {
+    return this.clientsService.contractsOverview()
+  }
+
   @Get(':id/documents')
   listDocuments(@Param('id') id: string) {
     return this.clientsService.listDocuments(id)
