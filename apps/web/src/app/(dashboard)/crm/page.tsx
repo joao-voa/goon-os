@@ -1444,8 +1444,8 @@ export default function CrmPage() {
                       const mStyle: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-mono)', fontSize: 7, padding: '1px 3px', marginTop: 1, background: '#16a34a', color: 'white', borderRadius: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', opacity: m.status === 'DONE' ? 0.6 : 1, textDecoration: 'none', cursor: 'pointer' }
                       const mLabel = `${new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} ${m.client?.companyName ?? m.title}`
                       return m.client?.id ? (
-                        <a key={m.id} href={`/clients/${m.client.id}`} target="_blank" rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
+                        <a key={m.id} href="#"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); const lead = leads.find(l => l.id === m.client!.id); if (lead) setDetailLead(lead) }}
                           title={`Abrir ${m.client.companyName}`} style={mStyle}>{mLabel}</a>
                       ) : (
                         <div key={m.id} style={mStyle}>{mLabel}</div>
@@ -1473,7 +1473,8 @@ export default function CrmPage() {
                     <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #eee', gap: 8 }}>
                       <div style={{ flex: 1 }}>
                         {m.client?.id ? (
-                          <a href={`/clients/${m.client.id}`} target="_blank" rel="noopener noreferrer"
+                          <a href="#"
+                            onClick={(e) => { e.preventDefault(); const lead = leads.find(l => l.id === m.client!.id); if (lead) setDetailLead(lead) }}
                             style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}
                           >{m.client.companyName}</a>
                         ) : (
