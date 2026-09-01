@@ -32,6 +32,11 @@ const STAGE_LABELS: Record<string, string> = {
   QUALIFICADO: 'Em Contato', // legado
 }
 
+// Normalizadores para dedup robusto de leads (ignoram formatação/acento/caixa).
+const normDigits = (s?: string | null) => (s ? s.replace(/\D/g, '').replace(/^0+/, '').slice(-11) : '')
+const normText = (s?: string | null) => (s ? s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '') : '')
+const normEmailLc = (s?: string | null) => (s ? s.trim().toLowerCase() : '')
+
 @Injectable()
 export class CrmService {
   constructor(
@@ -754,6 +759,22 @@ export class CrmService {
     let skipped = 0
     const errors: string[] = []
 
+    // Pré-carrega TODOS os clientes existentes (qualquer stage, inclusive
+    // PERDIDO/FECHADO) e indexa por telefone/whatsapp/nome/email normalizados.
+    // Assim uma variação de formatação ("(51) 9..." vs "5199..." ou
+    // "Test Brand" vs "TestBrand") não escapa e re-entra como novo.
+    const existentes = await this.prisma.client.findMany({
+      select: { phone: true, whatsapp: true, companyName: true, email: true },
+    })
+    const seenPhones = new Set<string>()
+    const seenNames = new Set<string>()
+    const seenEmails = new Set<string>()
+    for (const c of existentes) {
+      for (const ph of [normDigits(c.phone), normDigits(c.whatsapp)]) if (ph.length >= 10) seenPhones.add(ph)
+      const n = normText(c.companyName); if (n) seenNames.add(n)
+      const e = normEmailLc(c.email); if (e) seenEmails.add(e)
+    }
+
     for (const sheet of SHEETS) {
       try {
         const response = await fetch(sheet.url)
@@ -795,24 +816,30 @@ export class CrmService {
               continue
             }
 
-            // Check duplicate by email, whatsapp, or companyName
-            const orConditions: Array<Record<string, unknown>> = []
-            if (lead.email) orConditions.push({ email: lead.email })
-            if (lead.whatsapp) orConditions.push({ whatsapp: lead.whatsapp })
-            if (lead.companyName) orConditions.push({ companyName: lead.companyName })
-
-            if (orConditions.length > 0) {
-              const existing = await this.prisma.client.findFirst({
-                where: { OR: orConditions },
-              })
-              if (existing) {
-                skipped++
-                continue
-              }
+            // Dedup normalizado: telefone/whatsapp (só dígitos), nome (sem
+            // acento/espaço/caixa) e email (minúsculo). Cobre re-entrada de
+            // lead antigo com formatação diferente e duplicata dentro do sync.
+            const lPh = normDigits(lead.phone)
+            const lWa = normDigits(lead.whatsapp)
+            const lName = normText(lead.companyName)
+            const lEmail = normEmailLc(lead.email)
+            const isDup =
+              (lPh.length >= 10 && seenPhones.has(lPh)) ||
+              (lWa.length >= 10 && seenPhones.has(lWa)) ||
+              (lName && seenNames.has(lName)) ||
+              (lEmail && seenEmails.has(lEmail))
+            if (isDup) {
+              skipped++
+              continue
             }
 
             await this.prisma.client.create({ data: lead })
             imported++
+            // registra os identificadores pra não duplicar no mesmo sync
+            if (lPh.length >= 10) seenPhones.add(lPh)
+            if (lWa.length >= 10) seenPhones.add(lWa)
+            if (lName) seenNames.add(lName)
+            if (lEmail) seenEmails.add(lEmail)
           } catch {
             skipped++
           }
