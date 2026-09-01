@@ -1441,7 +1441,15 @@ export default function CrmPage() {
                       {dayMeetings.length > 0 && <span style={{ background: '#16a34a', color: 'white', borderRadius: '50%', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8 }}>{dayMeetings.length}</span>}
                     </div>
                     {dayMeetings.slice(0, 2).map(m => (
-                      <div key={m.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 7, padding: '1px 3px', marginTop: 1, background: '#16a34a', color: 'white', borderRadius: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', opacity: m.status === 'DONE' ? 0.6 : 1 }}>
+                      <div key={m.id}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const lead = m.client?.id ? leads.find(l => l.id === m.client!.id) : null
+                          if (lead) setDetailLead(lead)
+                          else setComSelectedDate(comSelectedDate === dateStr ? null : dateStr)
+                        }}
+                        title={m.client?.companyName ? `Abrir ${m.client.companyName}` : undefined}
+                        style={{ fontFamily: 'var(--font-mono)', fontSize: 7, padding: '1px 3px', marginTop: 1, background: '#16a34a', color: 'white', borderRadius: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', opacity: m.status === 'DONE' ? 0.6 : 1, cursor: 'pointer' }}>
                         {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} {m.client?.companyName ?? m.title}
                       </div>
                     ))}
@@ -1466,7 +1474,10 @@ export default function CrmPage() {
                   ) : dayMeetings.map(m => (
                     <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #eee', gap: 8 }}>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>{m.client?.companyName ?? m.title}</div>
+                        <div
+                          onClick={() => { const lead = m.client?.id ? leads.find(l => l.id === m.client!.id) : null; if (lead) setDetailLead(lead) }}
+                          style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: m.client?.id ? 'pointer' : 'default', textDecoration: m.client?.id ? 'underline' : 'none' }}
+                        >{m.client?.companyName ?? m.title}</div>
                         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555' }}>
                           {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {m.duration}min{m.mentorName && <> • {m.mentorName}</>}
                         </div>
