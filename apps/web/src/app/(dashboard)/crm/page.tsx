@@ -1132,8 +1132,6 @@ export default function CrmPage() {
   }, [crmTab, comMonth, comYear])
 
   useEffect(() => { loadCommercialMeetings() }, [loadCommercialMeetings])
-  const [salesRepFilter, setSalesRepFilter] = useState('')
-  const [cardResponsibleFilter, setCardResponsibleFilter] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [faturamentoFilter, setFaturamentoFilter] = useState('ALL')
   const [crmView, setCrmView] = useState<'kanban' | 'dashboard'>('kanban')
@@ -1228,8 +1226,6 @@ export default function CrmPage() {
   }
 
   const activeLeads = leads.filter(l => {
-    if (salesRepFilter && l.salesRep !== salesRepFilter) return false
-    if (cardResponsibleFilter && l.cardResponsible !== cardResponsibleFilter) return false
     if (faturamentoFilter && faturamentoFilter !== 'ALL') {
       if (faturamentoFilter === 'ICP') { if (!l.isICP) return false }
       else if (faturamentoFilter === 'FORA') { if (l.isICP || l.faturamentoBand === 'NAO_INFORMADO') return false }
@@ -1567,36 +1563,6 @@ export default function CrmPage() {
 
       {/* Filter Chips */}
       <div style={{ display: 'flex', gap: 16, marginBottom: 12, flexWrap: 'wrap' }}>
-        {/* Vendor */}
-        {(() => {
-          const reps = [...new Set(leads.map(l => l.salesRep).filter(Boolean))] as string[]
-          if (reps.length === 0) return null
-          return (
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Vendedor:</span>
-              <button onClick={() => setSalesRepFilter('')} style={{
-                padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
-                background: salesRepFilter === '' ? 'black' : 'white', color: salesRepFilter === '' ? 'white' : 'black',
-              }}>TODOS</button>
-              {reps.map(rep => (
-                <button key={rep} onClick={() => setSalesRepFilter(salesRepFilter === rep ? '' : rep)} style={{
-                  padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
-                  background: salesRepFilter === rep ? 'black' : 'white', color: salesRepFilter === rep ? 'white' : 'black',
-                }}>{rep}</button>
-              ))}
-            </div>
-          )
-        })()}
-        {/* Responsavel */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Responsavel:</span>
-          {['', 'JOAO', 'SOCIAL_SELLING', 'CLOSER'].map(val => (
-            <button key={val} onClick={() => setCardResponsibleFilter(cardResponsibleFilter === val ? '' : val)} style={{
-              padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
-              background: cardResponsibleFilter === val ? 'black' : 'white', color: cardResponsibleFilter === val ? 'white' : 'black',
-            }}>{val === '' ? 'TODOS' : val === 'JOAO' ? 'JOÃO' : val === 'SOCIAL_SELLING' ? 'SOCIAL SELLING' : 'CLOSER'}</button>
-          ))}
-        </div>
         {/* Faturamento — por faixa (recorte) */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Faturamento:</span>
