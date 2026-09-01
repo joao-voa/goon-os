@@ -96,24 +96,6 @@ function DraggableCard({ item, onClick }: { item: LeadItem; onClick: (item: Lead
             {sourceLabel}
           </span>
         )}
-        {item.salesRep && (
-          <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: 9, background: '#dbeafe',
-            padding: '2px 6px', border: '1px solid #93c5fd',
-          }}>
-            {item.salesRep}
-          </span>
-        )}
-        {item.cardResponsible && (
-          <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700,
-            background: item.cardResponsible === 'CLOSER' ? '#fef3c7' : '#e0e7ff',
-            padding: '2px 6px', border: '1px solid ' + (item.cardResponsible === 'CLOSER' ? '#f59e0b' : '#818cf8'),
-            color: item.cardResponsible === 'CLOSER' ? '#92400e' : '#3730a3',
-          }}>
-            {item.cardResponsible === 'SOCIAL_SELLING' ? 'SS' : 'CL'}
-          </span>
-        )}
         {item.saleValue && (
           <span style={{
             fontFamily: 'var(--font-mono)', fontSize: 9, background: '#dcfce7',
