@@ -1,18 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   DndContext,
   DragOverlay,
   PointerSensor,
+  TouchSensor,
   closestCorners,
   useSensor,
   useSensors,
+  useDroppable,
   type DragStartEvent,
+  type DragOverEvent,
   type DragEndEvent,
 } from '@dnd-kit/core'
-import { useDroppable } from '@dnd-kit/core'
-import { useDraggable } from '@dnd-kit/core'
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { LEAD_STAGE_LABELS, LEAD_STAGE_COLORS, LEAD_SOURCE_LABELS, PRODUCT_COLORS } from '@/lib/constants'
 
 interface LeadItem {
@@ -41,31 +49,15 @@ interface CrmKanbanBoardProps {
   items: LeadItem[]
   stages: readonly string[]
   onStageChange: (id: string, toStage: string) => Promise<void>
+  onReorder: (id: string, toStage: string, orderedIds: string[]) => Promise<void> | void
   onCardClick: (item: LeadItem) => void
 }
 
-function DraggableCard({ item, onClick }: { item: LeadItem; onClick: (item: LeadItem) => void }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: item.id })
-
+// Conteúdo visual do card (compartilhado entre o sortable e o overlay)
+function CardBody({ item }: { item: LeadItem }) {
   const sourceLabel = item.leadSource ? (LEAD_SOURCE_LABELS[item.leadSource] ?? item.leadSource) : null
-
   return (
-    <div
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      onClick={() => onClick(item)}
-      style={{
-        background: 'white',
-        border: '1px solid #e2e8f0',
-        boxShadow: isDragging ? 'none' : '0 2px 4px rgba(0,0,0,0.05)',
-        padding: '10px 12px',
-        cursor: isDragging ? 'grabbing' : 'grab',
-        opacity: isDragging ? 0.4 : 1,
-        userSelect: 'none',
-        marginBottom: 8,
-      }}
-    >
+    <>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, marginBottom: 4 }}>
         {item.companyName}
       </div>
@@ -89,40 +81,53 @@ function DraggableCard({ item, onClick }: { item: LeadItem; onClick: (item: Lead
       )}
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
         {sourceLabel && (
-          <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: 9, background: '#e0e0e0',
-            padding: '2px 6px', border: '1px solid #999',
-          }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, background: '#e0e0e0', padding: '2px 6px', border: '1px solid #999' }}>
             {sourceLabel}
           </span>
         )}
         {item.saleValue && (
-          <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: 9, background: '#dcfce7',
-            padding: '2px 6px', border: '1px solid #86efac', fontWeight: 700,
-          }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, background: '#dcfce7', padding: '2px 6px', border: '1px solid #86efac', fontWeight: 700 }}>
             R$ {item.saleValue.toLocaleString('pt-BR')}
           </span>
         )}
         {item.productCode && (
-          <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700,
-            background: PRODUCT_COLORS[item.productCode] ?? '#888',
-            color: 'white', padding: '2px 6px', border: '1px solid #e2e8f0',
-          }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, background: PRODUCT_COLORS[item.productCode] ?? '#888', color: 'white', padding: '2px 6px', border: '1px solid #e2e8f0' }}>
             {item.productCode}
           </span>
         )}
         {!item.productCode && item.suggestedProduct && (
-          <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700,
-            background: 'white', color: PRODUCT_COLORS[item.suggestedProduct] ?? '#888',
-            padding: '2px 6px', border: '1px dashed ' + (PRODUCT_COLORS[item.suggestedProduct] ?? '#888'),
-          }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, background: 'white', color: PRODUCT_COLORS[item.suggestedProduct] ?? '#888', padding: '2px 6px', border: '1px dashed ' + (PRODUCT_COLORS[item.suggestedProduct] ?? '#888') }}>
             {item.suggestedProduct} ?
           </span>
         )}
       </div>
+    </>
+  )
+}
+
+function SortableCard({ item, onClick }: { item: LeadItem; onClick: (item: LeadItem) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      onClick={() => onClick(item)}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        touchAction: 'none',
+        background: 'white',
+        border: '1px solid #e2e8f0',
+        boxShadow: isDragging ? 'none' : '0 2px 4px rgba(0,0,0,0.05)',
+        padding: '10px 12px',
+        cursor: isDragging ? 'grabbing' : 'grab',
+        opacity: isDragging ? 0.4 : 1,
+        userSelect: 'none',
+        marginBottom: 8,
+      }}
+    >
+      <CardBody item={item} />
     </div>
   )
 }
@@ -142,7 +147,6 @@ function DroppableColumn({
 
   return (
     <div
-      ref={setNodeRef}
       style={{
         minWidth: 260,
         maxWidth: 300,
@@ -161,50 +165,104 @@ function DroppableColumn({
         justifyContent: 'space-between', alignItems: 'center',
       }}>
         <span>{label}</span>
-        <span style={{
-          background: 'rgba(255,255,255,0.3)', padding: '2px 8px',
-          fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
-        }}>
+        <span style={{ background: 'rgba(255,255,255,0.3)', padding: '2px 8px', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700 }}>
           {items.length}
         </span>
       </div>
-      <div style={{ padding: 8, overflowY: 'auto', flex: 1 }}>
-        {items.map(item => (
-          <DraggableCard key={item.id} item={item} onClick={onCardClick} />
-        ))}
-        {items.length === 0 && (
-          <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: 11, color: '#999',
-            textAlign: 'center', padding: 20,
-          }}>
-            Nenhum lead
-          </div>
-        )}
-      </div>
+      <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
+        <div ref={setNodeRef} style={{ padding: 8, overflowY: 'auto', flex: 1, minHeight: 60 }}>
+          {items.map(item => (
+            <SortableCard key={item.id} item={item} onClick={onCardClick} />
+          ))}
+          {items.length === 0 && (
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#999', textAlign: 'center', padding: 20 }}>
+              Nenhum lead
+            </div>
+          )}
+        </div>
+      </SortableContext>
     </div>
   )
 }
 
-export default function CrmKanbanBoard({ items, stages, onStageChange, onCardClick }: CrmKanbanBoardProps) {
+export default function CrmKanbanBoard({ items, stages, onStageChange, onReorder, onCardClick }: CrmKanbanBoardProps) {
+  const [cols, setCols] = useState<Record<string, LeadItem[]>>({})
+  const colsRef = useRef<Record<string, LeadItem[]>>({})
   const [activeId, setActiveId] = useState<string | null>(null)
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
-  const activeItem = activeId ? items.find(i => i.id === activeId) ?? null : null
+  // Sincroniza colunas a partir das props (já vêm ordenadas por kanbanOrder)
+  useEffect(() => {
+    const grouped: Record<string, LeadItem[]> = {}
+    stages.forEach(s => { grouped[s] = [] })
+    items.forEach(it => { (grouped[it.leadStage] ??= []).push(it) })
+    setCols(grouped)
+    colsRef.current = grouped
+  }, [items, stages])
 
-  function handleDragStart(event: DragStartEvent) {
-    setActiveId(event.active.id as string)
+  const setColsSynced = (next: Record<string, LeadItem[]>) => {
+    colsRef.current = next
+    setCols(next)
   }
 
-  function handleDragEnd(event: DragEndEvent) {
-    setActiveId(null)
-    const { active, over } = event
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 6 } }),
+  )
+
+  const findContainer = (id: string): string | undefined => {
+    if (id in colsRef.current) return id // soltou sobre a coluna (vazia)
+    return Object.keys(colsRef.current).find(s => colsRef.current[s].some(i => i.id === id))
+  }
+
+  const activeItem = activeId
+    ? Object.values(colsRef.current).flat().find(i => i.id === activeId) ?? null
+    : null
+
+  function handleDragStart(e: DragStartEvent) {
+    setActiveId(e.active.id as string)
+  }
+
+  // Move o card entre colunas em tempo real (preview fluido)
+  function handleDragOver(e: DragOverEvent) {
+    const { active, over } = e
     if (!over) return
-    const itemId = active.id as string
-    const toStage = over.id as string
-    const item = items.find(i => i.id === itemId)
-    if (item && item.leadStage !== toStage) {
-      onStageChange(itemId, toStage)
+    const from = findContainer(active.id as string)
+    const to = findContainer(over.id as string)
+    if (!from || !to || from === to) return
+    const cur = colsRef.current
+    const fromItems = cur[from]
+    const toItems = cur[to]
+    const moved = fromItems.find(i => i.id === active.id)
+    if (!moved) return
+    let overIdx = toItems.findIndex(i => i.id === over.id)
+    if (overIdx === -1) overIdx = toItems.length
+    setColsSynced({
+      ...cur,
+      [from]: fromItems.filter(i => i.id !== active.id),
+      [to]: [...toItems.slice(0, overIdx), { ...moved, leadStage: to }, ...toItems.slice(overIdx)],
+    })
+  }
+
+  function handleDragEnd(e: DragEndEvent) {
+    const { active, over } = e
+    setActiveId(null)
+    if (!over) return
+    const finalStage = findContainer(active.id as string)
+    if (!finalStage) return
+    const cur = colsRef.current
+    const arr = cur[finalStage]
+    const oldIdx = arr.findIndex(i => i.id === active.id)
+    const newIdx = arr.findIndex(i => i.id === over.id)
+    const reordered = oldIdx !== -1 && newIdx !== -1 && oldIdx !== newIdx ? arrayMove(arr, oldIdx, newIdx) : arr
+    setColsSynced({ ...cur, [finalStage]: reordered })
+
+    const original = items.find(i => i.id === active.id)
+    // Ir pra "Ganho" abre o fluxo de fechamento (não persiste ordem aqui)
+    if (finalStage === 'FECHADO' && original && original.leadStage !== 'FECHADO') {
+      onStageChange(active.id as string, 'FECHADO')
+      return
     }
+    onReorder(active.id as string, finalStage, reordered.map(i => i.id))
   }
 
   return (
@@ -212,6 +270,7 @@ export default function CrmKanbanBoard({ items, stages, onStageChange, onCardCli
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 12 }}>
@@ -219,7 +278,7 @@ export default function CrmKanbanBoard({ items, stages, onStageChange, onCardCli
           <DroppableColumn
             key={stage}
             stage={stage}
-            items={items.filter(i => i.leadStage === stage)}
+            items={cols[stage] ?? []}
             onCardClick={onCardClick}
           />
         ))}
@@ -227,15 +286,10 @@ export default function CrmKanbanBoard({ items, stages, onStageChange, onCardCli
       <DragOverlay>
         {activeItem && (
           <div style={{
-            background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.08)',
-            padding: '10px 12px', transform: 'rotate(3deg)', opacity: 0.95,
+            background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.15)',
+            padding: '10px 12px', transform: 'rotate(2deg)', cursor: 'grabbing',
           }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700 }}>
-              {activeItem.companyName}
-            </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555' }}>
-              {activeItem.responsible}
-            </div>
+            <CardBody item={activeItem} />
           </div>
         )}
       </DragOverlay>

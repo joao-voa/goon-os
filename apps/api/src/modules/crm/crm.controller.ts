@@ -96,6 +96,11 @@ export class CrmController {
     return this.service.changeStage(id, dto.toStage)
   }
 
+  @Patch('reorder')
+  reorder(@Body() dto: { id: string; toStage: string; orderedIds: string[] }) {
+    return this.service.reorder(dto)
+  }
+
   @Post(':id/close')
   @HttpCode(HttpStatus.OK)
   closeDeal(

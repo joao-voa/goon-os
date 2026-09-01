@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
+import { Prisma } from '@prisma/client'
 import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
 import { PaymentsService } from '../payments/payments.service'
@@ -78,13 +79,14 @@ export class CrmService {
         stageChangedAt: true,
         createdAt: true,
         closedAt: true,
+        kanbanOrder: true,
         plans: {
           where: { status: 'ACTIVE' },
           take: 1,
           include: { product: { select: { code: true } } },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ kanbanOrder: 'asc' }, { createdAt: 'desc' }],
     })
 
     return leads.map(lead => {
@@ -146,6 +148,34 @@ export class CrmService {
     })
 
     return updated
+  }
+
+  // Reordena os cards do kanban: atualiza a ordem manual (kanbanOrder) da coluna
+  // alvo e, se o card mudou de coluna, o leadStage. FECHADO não passa por aqui
+  // (o front abre o fluxo de fechamento).
+  async reorder(dto: { id: string; toStage: string; orderedIds: string[] }) {
+    const { id, toStage, orderedIds } = dto
+    const client = await this.prisma.client.findUnique({ where: { id }, select: { leadStage: true } })
+    if (!client) throw new NotFoundException(`Cliente ${id} não encontrado`)
+
+    const ops: Prisma.PrismaPromise<unknown>[] = []
+    if (toStage && client.leadStage !== toStage && toStage !== 'FECHADO') {
+      ops.push(
+        this.prisma.client.update({
+          where: { id },
+          data: {
+            leadStage: toStage,
+            stageChangedAt: new Date(),
+            status: toStage === 'PERDIDO' ? 'INACTIVE' : 'PROSPECT',
+          },
+        }),
+      )
+    }
+    orderedIds.forEach((cid, idx) => {
+      ops.push(this.prisma.client.update({ where: { id: cid }, data: { kanbanOrder: idx } }))
+    })
+    await this.prisma.$transaction(ops)
+    return { success: true }
   }
 
   async closeDeal(

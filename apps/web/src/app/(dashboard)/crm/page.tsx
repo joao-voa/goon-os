@@ -1190,6 +1190,21 @@ export default function CrmPage() {
     }
   }
 
+  // Persiste a nova ordem/coluna após arrastar um card no kanban.
+  // O board já é otimista; só sincronizamos o backend e recarregamos.
+  async function handleReorder(id: string, toStage: string, orderedIds: string[]) {
+    try {
+      await apiFetch('/api/crm/reorder', {
+        method: 'PATCH',
+        body: JSON.stringify({ id, toStage, orderedIds }),
+      })
+      fetchLeads()
+    } catch {
+      toast.error('Erro ao reordenar')
+      fetchLeads()
+    }
+  }
+
   async function handleCloseDeal(data: {
     saleValue: number
     paymentMethod: string
@@ -1655,6 +1670,7 @@ export default function CrmPage() {
         items={activeLeads}
         stages={PIPELINE_STAGES}
         onStageChange={handleStageChange}
+        onReorder={handleReorder}
         onCardClick={(item) => {
           setDetailLead(item as unknown as LeadItem)
         }}
