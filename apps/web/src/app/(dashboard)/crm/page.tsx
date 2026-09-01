@@ -1190,6 +1190,16 @@ export default function CrmPage() {
     }
   }
 
+  // Abre o card do lead a partir de uma reunião da agenda.
+  // Se o lead estiver no pipeline carregado, abre o popup; senão abre a ficha.
+  function openLeadFromMeeting(clientId?: string | null): boolean {
+    if (!clientId) return false
+    const lead = leads.find(l => l.id === clientId)
+    if (lead) { setDetailLead(lead); return true }
+    window.location.href = `/clients/${clientId}`
+    return true
+  }
+
   // Persiste a nova ordem/coluna após arrastar um card no kanban.
   // O board já é otimista; só sincronizamos o backend e recarregamos.
   async function handleReorder(id: string, toStage: string, orderedIds: string[]) {
@@ -1444,9 +1454,7 @@ export default function CrmPage() {
                       <div key={m.id}
                         onClick={(e) => {
                           e.stopPropagation()
-                          const lead = m.client?.id ? leads.find(l => l.id === m.client!.id) : null
-                          if (lead) setDetailLead(lead)
-                          else setComSelectedDate(comSelectedDate === dateStr ? null : dateStr)
+                          if (!openLeadFromMeeting(m.client?.id)) setComSelectedDate(comSelectedDate === dateStr ? null : dateStr)
                         }}
                         title={m.client?.companyName ? `Abrir ${m.client.companyName}` : undefined}
                         style={{ fontFamily: 'var(--font-mono)', fontSize: 7, padding: '1px 3px', marginTop: 1, background: '#16a34a', color: 'white', borderRadius: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', opacity: m.status === 'DONE' ? 0.6 : 1, cursor: 'pointer' }}>
@@ -1475,7 +1483,7 @@ export default function CrmPage() {
                     <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #eee', gap: 8 }}>
                       <div style={{ flex: 1 }}>
                         <div
-                          onClick={() => { const lead = m.client?.id ? leads.find(l => l.id === m.client!.id) : null; if (lead) setDetailLead(lead) }}
+                          onClick={() => openLeadFromMeeting(m.client?.id)}
                           style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: m.client?.id ? 'pointer' : 'default', textDecoration: m.client?.id ? 'underline' : 'none' }}
                         >{m.client?.companyName ?? m.title}</div>
                         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555' }}>
