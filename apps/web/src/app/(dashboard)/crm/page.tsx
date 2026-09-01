@@ -1690,6 +1690,7 @@ export default function CrmPage() {
       />
       </>
       )}
+      </>}
 
       {detailLead && (
         <LeadDetailModal
@@ -1724,7 +1725,6 @@ export default function CrmPage() {
           onConfirm={handleCloseDeal}
         />
       )}
-      </>}
       {showNewLead && (
         <NewLeadModal
           onClose={() => setShowNewLead(false)}
