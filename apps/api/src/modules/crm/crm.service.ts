@@ -11,24 +11,24 @@ const SYNC_CUTOFF = new Date('2026-07-21T00:00:00Z')
 
 const VALID_LEAD_STAGES = [
   'NOVO',
-  'RECUPERAR',
-  'FUP',
-  'QUALIFICADO',
-  'REUNIAO_AGENDADA',
-  'PROPOSTA_ENVIADA',
+  'FUP', // "Em Contato"
+  'REUNIAO_AGENDADA', // "Agendado"
   'EM_NEGOCIACAO',
-  'FECHADO',
   'PERDIDO',
+  'FECHADO', // "Ganho"
 ]
 
 const STAGE_LABELS: Record<string, string> = {
   NOVO: 'Novo',
-  FOLLOW_UP: 'Conexao',
-  FUP: 'Conexao',
-  EM_NEGOCIACAO: 'Proposta / Negociacao',
-  PROPOSTA_ENVIADA: 'Proposta / Negociacao',
-  FECHADO: 'Fechado',
+  FOLLOW_UP: 'Em Contato',
+  FUP: 'Em Contato',
+  REUNIAO_AGENDADA: 'Agendado',
+  EM_NEGOCIACAO: 'Em Negociação',
+  PROPOSTA_ENVIADA: 'Em Negociação', // legado
+  FECHADO: 'Ganho',
   PERDIDO: 'Perdido',
+  RECUPERAR: 'Perdido', // legado — migrado para PERDIDO
+  QUALIFICADO: 'Em Contato', // legado
 }
 
 @Injectable()
@@ -624,7 +624,7 @@ export class CrmService {
   }
 
   // ===== Faturamento / ICP helpers =====
-  static readonly PIPE = ['NOVO', 'FUP', 'QUALIFICADO', 'REUNIAO_AGENDADA', 'EM_NEGOCIACAO', 'FECHADO']
+  static readonly PIPE = ['NOVO', 'FUP', 'REUNIAO_AGENDADA', 'EM_NEGOCIACAO', 'FECHADO']
   static readonly ICP_THRESHOLD = 100000 // R$/mês
 
   /** Best-effort parse of messy free-text monthly revenue into a number (R$/mês). Returns null when unparseable. */

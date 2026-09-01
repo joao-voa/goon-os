@@ -108,39 +108,37 @@ export const CONTRACT_STATUS_COLORS: Record<string, string> = {
 
 export const LEAD_STAGES = [
   'NOVO',
-  'RECUPERAR',
-  'FUP',
-  'QUALIFICADO',
-  'REUNIAO_AGENDADA',
+  'FUP', // "Em Contato"
+  'REUNIAO_AGENDADA', // "Agendado"
   'EM_NEGOCIACAO',
-  'FECHADO',
   'PERDIDO',
+  'FECHADO', // "Ganho"
 ] as const
 
 export const LEAD_STAGE_LABELS: Record<string, string> = {
   NOVO: 'Novo',
-  RECUPERAR: 'Recuperar',
-  FUP: 'Conexao',
-  QUALIFICADO: 'Qualificado',
-  REUNIAO_AGENDADA: 'Reuniao Agendada',
-  EM_NEGOCIACAO: 'Proposta / Negociacao',
-  PROPOSTA_ENVIADA: 'Proposta / Negociacao', // legado — mesclado em EM_NEGOCIACAO
-  FECHADO: 'Fechado Ganho',
-  PERDIDO: 'Fechado Perdido',
-  FOLLOW_UP: 'Conexao',
+  FUP: 'Em Contato',
+  REUNIAO_AGENDADA: 'Agendado',
+  EM_NEGOCIACAO: 'Em Negociação',
+  PROPOSTA_ENVIADA: 'Em Negociação', // legado — mesclado em EM_NEGOCIACAO
+  PERDIDO: 'Perdido',
+  FECHADO: 'Ganho',
+  FOLLOW_UP: 'Em Contato',
+  QUALIFICADO: 'Em Contato', // legado
+  RECUPERAR: 'Perdido', // legado — migrado para PERDIDO
 }
 
 export const LEAD_STAGE_COLORS: Record<string, string> = {
   NOVO: '#4A78FF',
-  RECUPERAR: '#ec4899',
   FUP: '#06b6d4',
-  QUALIFICADO: '#8b5cf6',
   REUNIAO_AGENDADA: '#0ea5e9',
   EM_NEGOCIACAO: '#f97316',
-  PROPOSTA_ENVIADA: '#e6a800',
-  FECHADO: '#22c55e',
   PERDIDO: '#cc0000',
+  FECHADO: '#22c55e',
+  PROPOSTA_ENVIADA: '#f97316',
   FOLLOW_UP: '#06b6d4',
+  QUALIFICADO: '#06b6d4',
+  RECUPERAR: '#cc0000',
 }
 
 export const LEAD_SOURCE_LABELS: Record<string, string> = {

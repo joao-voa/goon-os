@@ -36,7 +36,7 @@ export function getNextClosingCutoff(now: Date): Date {
  */
 export const NOT_CARTEIRA_CLIENT_FILTER = {
   client: {
-    leadStage: { not: 'RECUPERAR' },
+    leadStage: { notIn: ['RECUPERAR', 'PERDIDO'] as string[] },
     payments: { none: { inCarteira: true } },
   },
-} as const
+}
