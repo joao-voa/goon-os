@@ -1190,14 +1190,6 @@ export default function CrmPage() {
     }
   }
 
-  // Abre o card do lead a partir de uma reunião da agenda: ficha completa do
-  // cliente em nova aba (100% confiável, preserva a agenda aberta).
-  function openLeadFromMeeting(clientId?: string | null): boolean {
-    if (!clientId) return false
-    window.open(`/clients/${clientId}`, '_blank')
-    return true
-  }
-
   // Persiste a nova ordem/coluna após arrastar um card no kanban.
   // O board já é otimista; só sincronizamos o backend e recarregamos.
   async function handleReorder(id: string, toStage: string, orderedIds: string[]) {
@@ -1448,17 +1440,17 @@ export default function CrmPage() {
                       <span>{day}</span>
                       {dayMeetings.length > 0 && <span style={{ background: '#16a34a', color: 'white', borderRadius: '50%', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8 }}>{dayMeetings.length}</span>}
                     </div>
-                    {dayMeetings.slice(0, 2).map(m => (
-                      <div key={m.id}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (!openLeadFromMeeting(m.client?.id)) setComSelectedDate(comSelectedDate === dateStr ? null : dateStr)
-                        }}
-                        title={m.client?.companyName ? `Abrir ${m.client.companyName}` : undefined}
-                        style={{ fontFamily: 'var(--font-mono)', fontSize: 7, padding: '1px 3px', marginTop: 1, background: '#16a34a', color: 'white', borderRadius: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', opacity: m.status === 'DONE' ? 0.6 : 1, cursor: 'pointer' }}>
-                        {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} {m.client?.companyName ?? m.title}
-                      </div>
-                    ))}
+                    {dayMeetings.slice(0, 2).map(m => {
+                      const mStyle: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-mono)', fontSize: 7, padding: '1px 3px', marginTop: 1, background: '#16a34a', color: 'white', borderRadius: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', opacity: m.status === 'DONE' ? 0.6 : 1, textDecoration: 'none', cursor: 'pointer' }
+                      const mLabel = `${new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} ${m.client?.companyName ?? m.title}`
+                      return m.client?.id ? (
+                        <a key={m.id} href={`/clients/${m.client.id}`} target="_blank" rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          title={`Abrir ${m.client.companyName}`} style={mStyle}>{mLabel}</a>
+                      ) : (
+                        <div key={m.id} style={mStyle}>{mLabel}</div>
+                      )
+                    })}
                   </div>
                 )
               })}
@@ -1480,10 +1472,13 @@ export default function CrmPage() {
                   ) : dayMeetings.map(m => (
                     <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #eee', gap: 8 }}>
                       <div style={{ flex: 1 }}>
-                        <div
-                          onClick={() => openLeadFromMeeting(m.client?.id)}
-                          style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: m.client?.id ? 'pointer' : 'default', textDecoration: m.client?.id ? 'underline' : 'none' }}
-                        >{m.client?.companyName ?? m.title}</div>
+                        {m.client?.id ? (
+                          <a href={`/clients/${m.client.id}`} target="_blank" rel="noopener noreferrer"
+                            style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}
+                          >{m.client.companyName}</a>
+                        ) : (
+                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>{m.title}</div>
+                        )}
                         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555' }}>
                           {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {m.duration}min{m.mentorName && <> • {m.mentorName}</>}
                         </div>
