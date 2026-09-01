@@ -1190,13 +1190,11 @@ export default function CrmPage() {
     }
   }
 
-  // Abre o card do lead a partir de uma reunião da agenda.
-  // Se o lead estiver no pipeline carregado, abre o popup; senão abre a ficha.
+  // Abre o card do lead a partir de uma reunião da agenda: ficha completa do
+  // cliente em nova aba (100% confiável, preserva a agenda aberta).
   function openLeadFromMeeting(clientId?: string | null): boolean {
     if (!clientId) return false
-    const lead = leads.find(l => l.id === clientId)
-    if (lead) { setDetailLead(lead); return true }
-    window.location.href = `/clients/${clientId}`
+    window.open(`/clients/${clientId}`, '_blank')
     return true
   }
 
