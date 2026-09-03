@@ -15,6 +15,7 @@ const VALID_LEAD_STAGES = [
   'FUP', // "Em Contato"
   'REUNIAO_AGENDADA', // "Agendado"
   'EM_NEGOCIACAO',
+  'REPESCAGEM',
   'PERDIDO',
   'FECHADO', // "Ganho"
 ]
@@ -26,6 +27,7 @@ const STAGE_LABELS: Record<string, string> = {
   REUNIAO_AGENDADA: 'Agendado',
   EM_NEGOCIACAO: 'Em Negociação',
   PROPOSTA_ENVIADA: 'Em Negociação', // legado
+  REPESCAGEM: 'Repescagem',
   FECHADO: 'Ganho',
   PERDIDO: 'Perdido',
   RECUPERAR: 'Perdido', // legado — migrado para PERDIDO

@@ -111,6 +111,7 @@ export const LEAD_STAGES = [
   'FUP', // "Em Contato"
   'REUNIAO_AGENDADA', // "Agendado"
   'EM_NEGOCIACAO',
+  'REPESCAGEM',
   'PERDIDO',
   'FECHADO', // "Ganho"
 ] as const
@@ -121,6 +122,7 @@ export const LEAD_STAGE_LABELS: Record<string, string> = {
   REUNIAO_AGENDADA: 'Agendado',
   EM_NEGOCIACAO: 'Em Negociação',
   PROPOSTA_ENVIADA: 'Em Negociação', // legado — mesclado em EM_NEGOCIACAO
+  REPESCAGEM: 'Repescagem',
   PERDIDO: 'Perdido',
   FECHADO: 'Ganho',
   FOLLOW_UP: 'Em Contato',
@@ -133,6 +135,7 @@ export const LEAD_STAGE_COLORS: Record<string, string> = {
   FUP: '#06b6d4',
   REUNIAO_AGENDADA: '#0ea5e9',
   EM_NEGOCIACAO: '#f97316',
+  REPESCAGEM: '#a855f7',
   PERDIDO: '#cc0000',
   FECHADO: '#22c55e',
   PROPOSTA_ENVIADA: '#f97316',
