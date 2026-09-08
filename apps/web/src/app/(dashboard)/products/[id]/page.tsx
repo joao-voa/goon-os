@@ -563,7 +563,7 @@ export default function ProductDetailPage() {
                     <tbody>
                       {clients.map(client => {
                         const plan = (client.plans ?? []).find(p => p.product.code === product.code)
-                        const contract = client.contracts[0]
+                        const contract = client.contracts?.[0]
                         const planMentors = plan ? (mentors[plan.id] ?? []) : []
                         const totalMentors = planMentors.reduce((s, m) => s + m.value, 0)
                         return (

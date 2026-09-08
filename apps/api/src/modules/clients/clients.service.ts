@@ -83,6 +83,11 @@ export class ClientsService {
             take: 1,
             select: { id: true, status: true, endDate: true, product: { select: { id: true, code: true, name: true } } },
           },
+          contracts: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { id: true, status: true, isSigned: true, signatureDate: true },
+          },
         },
       }),
       this.prisma.client.count({ where }),
