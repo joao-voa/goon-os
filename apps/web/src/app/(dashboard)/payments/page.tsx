@@ -7,7 +7,6 @@ const PaymentsContent = dynamic(() => import('./PaymentsContent'), { ssr: false 
 const ExpensesPage = dynamic(() => import('../expenses/page'), { ssr: false })
 const CommissionsPage = dynamic(() => import('../commissions/page'), { ssr: false })
 const CashflowPage = dynamic(() => import('../cashflow/page'), { ssr: false })
-const PersonAccountsPage = dynamic(() => import('../person-accounts/page'), { ssr: false })
 const ReceivablesContent = dynamic(() => import('./ReceivablesContent'), { ssr: false })
 
 const TABS = [
@@ -16,7 +15,6 @@ const TABS = [
   { key: 'pagamentos', label: 'PAGAMENTOS' },
   { key: 'despesas', label: 'DESPESAS' },
   { key: 'comissoes', label: 'COMISSOES' },
-  { key: 'contas', label: 'CONTAS PESSOAS' },
 ] as const
 
 type TabKey = typeof TABS[number]['key']
@@ -54,7 +52,6 @@ export default function FinanceiroPage() {
       {activeTab === 'despesas' && <ExpensesPage />}
       {activeTab === 'comissoes' && <CommissionsPage />}
       {activeTab === 'fluxo' && <CashflowPage />}
-      {activeTab === 'contas' && <PersonAccountsPage />}
     </div>
   )
 }

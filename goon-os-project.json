@@ -1,0 +1,139 @@
+{
+  "project": {
+    "name": "GOON OS",
+    "description": "Sistema de gestão empresarial da GOON (agência AURA 360): CRM/funil de vendas, clientes e planos, financeiro (pagamentos, comissões, despesas, fluxo de caixa), contratos, mentoria e agenda.",
+    "type": "monorepo",
+    "language": "TypeScript",
+    "repository": "github.com/joao-voa/goon-os"
+  },
+  "stack": {
+    "monorepo": "Turborepo",
+    "api": {
+      "path": "apps/api",
+      "framework": "NestJS 11",
+      "orm": "Prisma 6",
+      "database": "PostgreSQL (Neon serverless)",
+      "prismaNotes": "Usa driverAdapters + queryCompiler (WASM) via @prisma/adapter-neon (PrismaNeon + neonConfig.webSocketConstructor = ws). Conexao HTTP/WS na porta 443. Nao usar engine binario nativo."
+    },
+    "web": {
+      "path": "apps/web",
+      "framework": "Next.js 16 (App Router)",
+      "react": "19",
+      "typescript": "5.7",
+      "dragAndDrop": "@dnd-kit/core + @dnd-kit/sortable",
+      "apiUrlEnv": "NEXT_PUBLIC_API_URL (inlined no build; trocar exige redeploy do web)"
+    }
+  },
+  "deploy": {
+    "platform": "Vercel",
+    "team": "joao-voas-projects",
+    "web": {
+      "project": "goon-os-web",
+      "url": "https://goon-os-web.vercel.app",
+      "trigger": "auto-deploy no push da main (root dir apps/web)"
+    },
+    "api": {
+      "project": "goon-os-api",
+      "url": "https://goon-os-api.vercel.app",
+      "runtime": "serverless (apps/api/api/index.ts + vercel.json rewrite /(.*) -> /api)",
+      "trigger": "auto-deploy no push da main (root dir apps/api)",
+      "build": "npx prisma generate",
+      "healthcheck": "GET /health -> 200"
+    },
+    "notes": [
+      "Alteracoes so de dados (scripts no Neon) valem na hora, sem deploy.",
+      "Deploy manual por CLI de dentro de apps/api NAO funciona (root dir duplica path). Usar git push.",
+      "Render pertence ao ImobiSaaS, NAO ao GOON.",
+      "NUNCA usar prisma db push --force-reset/--accept-data-loss em banco com dados. Mudanca aditiva: npx prisma db push --skip-generate + npx prisma generate."
+    ]
+  },
+  "dataModel": {
+    "schemaFile": "apps/api/prisma/schema.prisma",
+    "keyModels": {
+      "User": "Acesso. role (admin/gestao/comercial/analitico), allowedModules (JSON array de paths ex [\"/crm\"]), isActive, mustChangePassword.",
+      "Client": "Lead E cliente na mesma tabela. leadStage, leadSource, salesRep, cardResponsible, saleValue, cnpj (unique), responsible, endereco, hasContract, isClientActive, mentorshipEnded, kanbanOrder.",
+      "ClientDocument": "Documentos do cliente (contrato assinado). Arquivo em base64 no campo data @db.Text (sem storage externo). Fonte do hasContract.",
+      "ClientPlan": "FONTE DE VERDADE DE VENDAS. value, paymentType, installments, cycleDuration, cycleNumber (renovacao >=2), startDate/endDate, paymentDay, status (ACTIVE/CANCELLED/COMPLETED).",
+      "PlanMentor": "Splits por plano. mentorName, value = TOTAL do split ao longo do contrato (realizacao mes a mes).",
+      "Payment": "Parcelas. installment/totalInstallments, value, dueDate, status (PENDING/PAID/OVERDUE/CANCELLED/SCHEDULED), paidValue, inCarteira (carteira de cobranca), observation.",
+      "Contract": "Contrato gerado. templateType, dynamicFields (JSON), PDF/DOCX, isSigned. Templates: GE/GI/GS.",
+      "outros": ["Commission", "Expense", "Onboarding", "Pendency", "ActivityLog", "AuditLog", "Meeting", "Task", "LeadInteraction", "MenteeProfile", "SessionCaseStudy", "MonthlyMetric", "ActionItem", "FlowTemplate", "Person", "PersonTransaction", "Product"]
+    }
+  },
+  "products": {
+    "GE": "GOON ELITE",
+    "GI": "GOON INFINITY",
+    "TTS": "TIK TOK SCALE",
+    "TTSG": "TIKTOK SCALE GRUPO",
+    "GA": "GOON ADVISOR",
+    "GS": "GOON SCALE",
+    "AURA": "Consultoria AURA 360"
+  },
+  "modules": {
+    "api": ["activity-log", "admin", "audit", "cashflow", "clients", "commissions", "contracts", "crm", "dashboard", "expenses", "meetings", "mentorship", "onboarding", "payments", "pendencies", "person-accounts", "plans", "products", "tasks"],
+    "web": ["home", "crm", "clients", "sales", "contracts", "payments", "commissions", "expenses", "cashflow", "products", "onboarding", "tasks", "agenda", "pendencies", "mentorship", "person-accounts", "admin", "audit"]
+  },
+  "businessRules": {
+    "vendas": {
+      "source": "ClientPlan (cada ciclo nao-cancelado = 1 venda, datada por startDate, valor = plan.value)",
+      "renovacao": "cycleNumber >= 2 conta como venda nova",
+      "excluidos": "clientes RECUPERAR/PERDIDO e planos CANCELLED ficam fora",
+      "endpoint": "GET /api/crm/sales-by-month?year=&product= (retorna meses + byProgram com valor e quantidade por programa)",
+      "acesso": "tela /sales exclusiva do dono (canSeeSales)"
+    },
+    "pipelineCRM": {
+      "ordem": ["Novo (NOVO)", "Em Contato (FUP)", "Agendado (REUNIAO_AGENDADA)", "Em Negociacao (EM_NEGOCIACAO)", "Repescagem (REPESCAGEM)", "Perdido (PERDIDO)", "Ganho (FECHADO)"],
+      "nota": "codigos internos preservados (FECHADO = venda ganha). Arrastar pra Ganho abre fluxo de fechamento. Kanban tem ordenacao manual (kanbanOrder) via PATCH /api/crm/reorder."
+    },
+    "tiktokScale": {
+      "padrao": "venda = 2 meses garantidos = 2x R$2.500 = R$5.000",
+      "estrutura": "adesao (paga na entrada) + 1a mensalidade (~1 mes depois no dia de vencimento) + vigencia 2 meses",
+      "cancelamento": "30 dias de antecedencia",
+      "renovacao": "sem renovacao automatica (confirmar a cada ciclo)"
+    },
+    "splitsMentores": {
+      "aplicacao": "GI/TTS a partir de 08/08/2026",
+      "formula": "imposto 6% -> liquido = valor*0.94; Joao 10% do liquido = valor*0.094; resto 50/50 Carol/Giu = valor*0.423 cada",
+      "realizacao": "guardado como total no PlanMentor, realizado mes a mes",
+      "fernandoVaz": "removido dos splits e das despesas de mentoria a partir de 08/08/2026"
+    },
+    "carteiraCobranca": {
+      "codigo_98_98": "parcela FUTURA de cliente em churn",
+      "codigo_99_99": "parcela ANTIGA nao paga",
+      "flag": "inCarteira = true -> sai do fluxo futuro e dos recebiveis",
+      "filtro": "NOT_CARTEIRA_CLIENT_FILTER (apps/api/src/shared/constants.ts) exclui leadStage RECUPERAR/PERDIDO ou cliente com qualquer parcela inCarteira"
+    },
+    "datas": {
+      "regra": "datas de dia-cheio (vencimento/vigencia) salvas em UTC meia-noite; exibicao SEMPRE com timeZone: 'UTC' (helper fmtDate em apps/web/src/lib/format.ts) pra nao aparecer 1 dia antes no fuso do Brasil",
+      "excecao": "timestamps reais de reuniao ficam em horario local"
+    },
+    "dedupLeads": {
+      "sync": "syncFromSheets normaliza telefone (digitos), nome (sem acento/espaco/caixa) e email (minusculo) e compara contra todos os stages (inclusive PERDIDO) -> evita duplicata e re-entrada",
+      "manual": "criacao manual de lead NAO dedupa"
+    },
+    "documentos": {
+      "storage": "base64 no banco (ClientDocument.data)",
+      "limite": "~3MB por arquivo pela tela (teto body serverless Vercel 4.5MB; body limit subido pra 5MB)",
+      "telaContratos": "aba com visao 'Por Cliente' (lista + download) e 'Contratos Gerados' (templates GE/GI/GS)"
+    },
+    "comissoesMentoria": {
+      "comissao": "10% pro Time de Vendas (Serginho divide internamente); desconta dos mentores (Giulliano absorve)",
+      "joaoAfonso": "entra como mentor em cliente novo (10% do liquido); splits por cliente variam",
+      "mentoria": "GE individual+grupo, GI so grupo, TTS/AURA individual"
+    },
+    "acesso": {
+      "rotas": "bloqueadas por allowedModules (JSON no User). Ex so-CRM: allowedModules ['/crm'], role comercial",
+      "senhaPadrao": "aura360 (troca no 1o login) salvo se definida explicitamente",
+      "vendas": "tela exclusiva do dono (canSeeSales)"
+    }
+  },
+  "endpoints": {
+    "crm": ["GET /api/crm/pipeline", "PATCH /api/crm/:id/stage", "POST /api/crm/:id/close", "PATCH /api/crm/reorder", "GET /api/crm/sales-by-month?year=&product=", "POST /api/crm/sync-sheets"],
+    "clients": ["GET/POST /api/clients/:id/documents", "GET /api/clients/:id/documents/:docId/download", "GET /api/clients/contracts/overview"]
+  },
+  "workflow": {
+    "dados": "correcoes/cadastros/churn -> script tsx direto no Neon (de dentro de apps/api)",
+    "codigo": "editar -> tsc --noEmit (api + web) e/ou next build -> commit + push (auto-deploy) -> confirmar API por /health 200",
+    "cuidado": "ao mexer em stage/venda/split, preservar codigos internos e convencoes (98/98, 99/99, split 6%/10%/50-50, TTS 2 meses)"
+  }
+}
