@@ -1,8 +1,8 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common'
 import { OWNER_EMAIL } from './owner.guard'
 
-// Acesso ao módulo Vendas: dono (João) + conta de teste (temporário).
-export const SALES_EMAILS = [OWNER_EMAIL.toLowerCase(), 'teste@teste.com']
+// Acesso ao módulo Vendas: dono (João) + Giulliano (sócio) + conta de teste.
+export const SALES_EMAILS = [OWNER_EMAIL.toLowerCase(), 'pugagiulliano@gmail.com', 'teste@teste.com']
 
 @Injectable()
 export class SalesGuard implements CanActivate {
