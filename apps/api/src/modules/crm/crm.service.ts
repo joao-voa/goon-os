@@ -1070,7 +1070,7 @@ export class CrmService {
   }
 
   /** Vendas por mês (contratos fechados por closedAt) — valor total do contrato. */
-  async getSalesByMonth(year: number) {
+  async getSalesByMonth(year: number, product?: string) {
     const start = new Date(year, 0, 1)
     const end = new Date(year + 1, 0, 1)
     // Fonte de verdade: cada ciclo de ClientPlan (não-cancelado) é uma venda,
@@ -1095,15 +1095,29 @@ export class CrmService {
       orderBy: { startDate: 'asc' },
     })
 
+    // Totalizador por programa (sempre sobre o ano inteiro, independe do filtro)
+    const progMap = new Map<string, { code: string; count: number; total: number }>()
+    for (const pl of plans) {
+      const code = pl.product.code
+      const cur = progMap.get(code) ?? { code, count: 0, total: 0 }
+      cur.count++
+      cur.total += Number(pl.value ?? 0)
+      progMap.set(code, cur)
+    }
+    const byProgram = [...progMap.values()].sort((a, b) => b.total - a.total)
+
+    // Filtro por programa aplica só na visão mensal (barras/deals)
+    const filtered = product ? plans.filter(pl => pl.product.code === product) : plans
+
     const months = Array.from({ length: 12 }, (_, m) => ({
       month: m + 1,
       label: new Date(year, m, 1).toLocaleString('pt-BR', { month: 'short' }),
       count: 0,
       total: 0,
-      deals: [] as Array<{ companyName: string; value: number; date: string; salesRep: string | null; product: string | null }>,
+      deals: [] as Array<{ companyName: string; value: number; date: string; salesRep: string | null; product: string | null; productCode: string }>,
     }))
 
-    for (const pl of plans) {
+    for (const pl of filtered) {
       const m = pl.startDate.getMonth()
       const v = Number(pl.value ?? 0)
       const isRenewal = (pl.cycleNumber ?? 1) >= 2
@@ -1115,12 +1129,13 @@ export class CrmService {
         date: pl.startDate.toISOString(),
         salesRep: pl.client.salesRep,
         product: isRenewal ? `${pl.product.code} · renovação` : pl.product.code,
+        productCode: pl.product.code,
       })
     }
 
     const totalYear = months.reduce((s, m) => s + m.total, 0)
     const countYear = months.reduce((s, m) => s + m.count, 0)
-    return { year, months, totalYear, countYear }
+    return { year, months, totalYear, countYear, byProgram }
   }
 
   async createLead(dto: {

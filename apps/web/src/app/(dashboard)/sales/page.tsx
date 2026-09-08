@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
 import { useAuth } from '@/hooks/useAuth'
-import { canSeeSales } from '@/lib/constants'
+import { canSeeSales, PRODUCT_COLORS } from '@/lib/constants'
 
-interface Deal { companyName: string; value: number; date: string; salesRep: string | null; product: string | null }
+interface Deal { companyName: string; value: number; date: string; salesRep: string | null; product: string | null; productCode: string }
 interface MonthSales { month: number; label: string; count: number; total: number; deals: Deal[] }
-interface SalesData { year: number; totalYear: number; countYear: number; months: MonthSales[] }
+interface ProgramTotal { code: string; count: number; total: number }
+interface SalesData { year: number; totalYear: number; countYear: number; months: MonthSales[]; byProgram: ProgramTotal[] }
 
 const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 
@@ -17,10 +18,13 @@ export default function SalesPage() {
   const [year, setYear] = useState(new Date().getFullYear())
   const [data, setData] = useState<SalesData | null>(null)
   const [expanded, setExpanded] = useState<number | null>(null)
+  const [productFilter, setProductFilter] = useState('')
 
   useEffect(() => {
-    if (isOwner) apiFetch<SalesData>(`/api/crm/sales-by-month?year=${year}`).then(setData).catch(() => {})
-  }, [isOwner, year])
+    if (!isOwner) return
+    const qs = `year=${year}${productFilter ? `&product=${productFilter}` : ''}`
+    apiFetch<SalesData>(`/api/crm/sales-by-month?${qs}`).then(setData).catch(() => {})
+  }, [isOwner, year, productFilter])
 
   if (authLoading) return null
   if (!isOwner) {
@@ -52,7 +56,7 @@ export default function SalesPage() {
       {/* KPIs do ano */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 20 }}>
         {[
-          { label: 'Total no Ano', value: fmtBRL(data?.totalYear ?? 0), accent: '#0A0A0C' },
+          { label: productFilter ? `Total ${productFilter}` : 'Total no Ano', value: fmtBRL(data?.totalYear ?? 0), accent: '#0A0A0C' },
           { label: 'Contratos', value: String(data?.countYear ?? 0), accent: '#4A78FF' },
           { label: 'Ticket Médio', value: fmtBRL(avgTicket), accent: '#16a34a' },
           { label: 'Meses com Venda', value: String(activeMonths.length), accent: '#7c3aed' },
@@ -64,12 +68,49 @@ export default function SalesPage() {
         ))}
       </div>
 
+      {/* Totalizador por programa (clicável = filtro) */}
+      <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white', marginBottom: 20 }}>
+        <div style={{ background: '#0A0A0C', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>POR PROGRAMA {year}</span>
+          {productFilter && (
+            <button onClick={() => setProductFilter('')} style={{ background: 'white', color: 'black', border: 'none', cursor: 'pointer', padding: '3px 10px', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>✕ LIMPAR FILTRO</button>
+          )}
+        </div>
+        <div style={{ padding: 12, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
+          {(data?.byProgram ?? []).length === 0 && (
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', padding: 8 }}>Sem vendas em {year}.</div>
+          )}
+          {(data?.byProgram ?? []).map(pg => {
+            const on = productFilter === pg.code
+            const color = PRODUCT_COLORS[pg.code] ?? '#888'
+            return (
+              <button
+                key={pg.code}
+                onClick={() => setProductFilter(on ? '' : pg.code)}
+                style={{
+                  textAlign: 'left', cursor: 'pointer', padding: '10px 12px', background: on ? '#0A0A0C' : 'white',
+                  border: `1px solid ${on ? '#0A0A0C' : '#e2e8f0'}`, borderLeft: `4px solid ${color}`,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 800, color: on ? 'white' : 'black' }}>{pg.code}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: on ? '#bbb' : '#888' }}>{pg.count}x</span>
+                </div>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: on ? 'white' : color, marginTop: 2 }}>{fmtBRL(pg.total)}</div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       {/* Barras por mês */}
       <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
-        <div style={{ background: '#0A0A0C', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 12 }}>EVOLUÇÃO MENSAL</div>
+        <div style={{ background: '#0A0A0C', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 12 }}>
+          EVOLUÇÃO MENSAL{productFilter ? ` · ${productFilter}` : ''}
+        </div>
         <div style={{ padding: 12 }}>
           {activeMonths.length === 0 && (
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', textAlign: 'center', padding: 24 }}>Nenhuma venda em {year}.</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', textAlign: 'center', padding: 24 }}>Nenhuma venda{productFilter ? ` de ${productFilter}` : ''} em {year}.</div>
           )}
           {data?.months.map(m => m.count > 0 && (
             <div key={m.month} style={{ borderBottom: '1px solid #eee' }}>

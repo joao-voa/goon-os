@@ -42,8 +42,8 @@ export class CrmController {
 
   @Get('sales-by-month')
   @UseGuards(SalesGuard)
-  getSalesByMonth(@Query('year') year?: string) {
-    return this.service.getSalesByMonth(year ? parseInt(year, 10) : new Date().getFullYear())
+  getSalesByMonth(@Query('year') year?: string, @Query('product') product?: string) {
+    return this.service.getSalesByMonth(year ? parseInt(year, 10) : new Date().getFullYear(), product || undefined)
   }
 
   @Post('sync-sheets')
