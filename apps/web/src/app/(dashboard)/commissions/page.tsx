@@ -160,6 +160,7 @@ export default function CommissionsPage() {
   const [activeTab, setActiveTab] = useState<'comissoes' | 'mentorias'>('comissoes')
   const [mentorFilter, setMentorFilter] = useState('')
   const [expandedView, setExpandedView] = useState(false)
+  const [hideCarteira, setHideCarteira] = useState(false)
   const now = new Date()
   const [month, setMonth] = useState<number | null>(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
@@ -215,7 +216,7 @@ export default function CommissionsPage() {
     }
   })
 
-  const [mentorsList, setMentorsList] = useState<Array<{ id: string; mentorName: string; value: number; notes: string | null; client: string; product: string; productName: string; planValue: number; monthlyBreakdown: Record<string, number> }>>([])
+  const [mentorsList, setMentorsList] = useState<Array<{ id: string; mentorName: string; value: number; notes: string | null; client: string; product: string; productName: string; planValue: number; monthlyBreakdown: Record<string, number>; inCarteira?: boolean }>>([])
   const [mentorExpenses, setMentorExpenses] = useState<Array<{ id: string; description: string; value: number; paidValue: number; status: string; dueDate: string; category: string }>>([])
 
   const loadMentorExpenses = useCallback(async () => {
@@ -234,7 +235,7 @@ export default function CommissionsPage() {
     apiFetch<{ salesReps: string[] }>('/api/crm/suggestions')
       .then(res => setSalesRepSuggestions(res.salesReps || []))
       .catch(() => {})
-    apiFetch<Array<{ id: string; mentorName: string; value: number; notes: string | null; client: string; product: string; productName: string; planValue: number; monthlyBreakdown: Record<string, number> }>>('/api/mentors')
+    apiFetch<Array<{ id: string; mentorName: string; value: number; notes: string | null; client: string; product: string; productName: string; planValue: number; monthlyBreakdown: Record<string, number>; inCarteira?: boolean }>>('/api/mentors')
       .then(setMentorsList)
       .catch(() => {})
     loadMentorExpenses()
@@ -257,6 +258,10 @@ export default function CommissionsPage() {
   }
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
+  // Lista de mentorias visível: opcionalmente sem clientes em carteira de cobrança (churn)
+  const visibleMentors = hideCarteira ? mentorsList.filter(m => !m.inCarteira) : mentorsList
+  const carteiraCount = mentorsList.filter(m => m.inCarteira).length
 
   return (
     <div style={{ padding: 24 }}>
@@ -442,8 +447,8 @@ export default function CommissionsPage() {
         <div>
           {/* KPI Cards */}
           {(() => {
-            const totalMentorias = mentorsList.reduce((s, m) => s + m.value, 0)
-            const mentorNames = [...new Set(mentorsList.map(m => m.mentorName))]
+            const totalMentorias = visibleMentors.reduce((s, m) => s + m.value, 0)
+            const mentorNames = [...new Set(visibleMentors.map(m => m.mentorName))]
             // Calculate paid amounts per mentor from expenses
             const paidByMentor: Record<string, number> = {}
             for (const exp of mentorExpenses) {
@@ -477,10 +482,10 @@ export default function CommissionsPage() {
                     <div style={{ fontSize: 10 }}>Pago: {fmt(totalPaid)} | Saldo: {fmt(totalMentorias - totalPaid)}</div>
                   </div>
                   {mentorNames.map(name => {
-                    const mentorTotal = mentorsList.filter(m => m.mentorName === name).reduce((s, m) => s + m.value, 0)
+                    const mentorTotal = visibleMentors.filter(m => m.mentorName === name).reduce((s, m) => s + m.value, 0)
                     const mentorPaid = paidByMentor[name] ?? 0
                     const mentorSaldo = mentorTotal - mentorPaid
-                    const mentorClients = [...new Set(mentorsList.filter(m => m.mentorName === name).map(m => m.client))]
+                    const mentorClients = [...new Set(visibleMentors.filter(m => m.mentorName === name).map(m => m.client))]
                     return (
                       <div key={name} onClick={() => setMentorFilter(mentorFilter === name ? '' : name)} style={{ background: mentorFilter === name ? '#4A78FF' : 'white', color: mentorFilter === name ? 'white' : 'inherit', padding: '12px 20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700, cursor: 'pointer' }}>
                         <div style={{ fontSize: 10, textTransform: 'uppercase', color: mentorFilter === name ? 'white' : '#4A78FF' }}>{name}</div>
@@ -546,7 +551,7 @@ export default function CommissionsPage() {
                   // Aggregate all mentors by month
                   const monthlyAll: Record<string, Record<string, number>> = {}
                   const monthTotals: Record<string, number> = {}
-                  const filteredMentors = mentorFilter ? mentorsList.filter(m => m.mentorName === mentorFilter) : mentorsList
+                  const filteredMentors = mentorFilter ? visibleMentors.filter(m => m.mentorName === mentorFilter) : visibleMentors
                   for (const m of filteredMentors) {
                     for (const [month, val] of Object.entries(m.monthlyBreakdown)) {
                       if (!monthlyAll[month]) monthlyAll[month] = {}
@@ -579,12 +584,20 @@ export default function CommissionsPage() {
                     <div style={{ marginBottom: 24 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                         <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12 }}>VISAO MENSAL</div>
-                        <button onClick={() => setExpandedView(!expandedView)} style={{
-                          padding: '4px 12px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
-                          background: expandedView ? 'black' : 'white', color: expandedView ? 'white' : 'black',
-                        }}>
-                          {expandedView ? 'RESUMIDA' : 'COMPLETA'}
-                        </button>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <button onClick={() => setHideCarteira(!hideCarteira)} title={hideCarteira ? 'Mostrando sem carteira de cobrança' : 'Incluindo carteira de cobrança'} style={{
+                            padding: '4px 12px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+                            background: hideCarteira ? '#C7F900' : 'white', color: 'black',
+                          }}>
+                            {hideCarteira ? `SEM CARTEIRA ✓${carteiraCount ? ` (−${carteiraCount})` : ''}` : `OCULTAR CARTEIRA${carteiraCount ? ` (${carteiraCount})` : ''}`}
+                          </button>
+                          <button onClick={() => setExpandedView(!expandedView)} style={{
+                            padding: '4px 12px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+                            background: expandedView ? 'black' : 'white', color: expandedView ? 'white' : 'black',
+                          }}>
+                            {expandedView ? 'RESUMIDA' : 'COMPLETA'}
+                          </button>
+                        </div>
                       </div>
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
@@ -645,9 +658,9 @@ export default function CommissionsPage() {
 
                 {/* Group by client */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {[...new Set((mentorFilter ? mentorsList.filter(m => m.mentorName === mentorFilter) : mentorsList).map(m => m.client + '||' + m.product))].map(key => {
+                  {[...new Set((mentorFilter ? visibleMentors.filter(m => m.mentorName === mentorFilter) : visibleMentors).map(m => m.client + '||' + m.product))].map(key => {
                     const [clientName, productCode] = key.split('||')
-                    const clientMentors = (mentorFilter ? mentorsList.filter(m => m.mentorName === mentorFilter) : mentorsList).filter(m => m.client === clientName && m.product === productCode)
+                    const clientMentors = (mentorFilter ? visibleMentors.filter(m => m.mentorName === mentorFilter) : visibleMentors).filter(m => m.client === clientName && m.product === productCode)
                     const clientTotal = clientMentors.reduce((s, m) => s + m.value, 0)
                     const planValue = clientMentors[0]?.planValue ?? 0
                     const product = clientMentors[0]?.product ?? ''
@@ -697,7 +710,7 @@ export default function CommissionsPage() {
                   })}
                 </div>
 
-                {mentorsList.length === 0 && (
+                {visibleMentors.length === 0 && (
                   <div style={{ textAlign: 'center', padding: 40, fontFamily: 'var(--font-mono)', color: '#888' }}>
                     Nenhuma mentoria atribuida. Atribua mentores nos planos dos clientes fechados.
                   </div>

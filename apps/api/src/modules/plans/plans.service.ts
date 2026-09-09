@@ -206,8 +206,17 @@ export class PlansService {
       id: string; mentorName: string; value: number; notes: string | null;
       createdAt: Date; client: string; clientId: string; product: string;
       productName: string; planValue: number; monthlyBreakdown: Record<string, number>;
+      inCarteira: boolean;
       installments?: Array<{ date: string; value: number; status: string }>;
     }> = []
+
+    // Clientes em carteira de cobrança (têm alguma parcela inCarteira): permite
+    // esconder churn da visão de mentorias via toggle no front.
+    const carteiraClients = await this.prisma.client.findMany({
+      where: { payments: { some: { inCarteira: true } } },
+      select: { id: true },
+    })
+    const carteiraSet = new Set(carteiraClients.map(c => c.id))
 
     // Group mentors by plan to calculate Giulliano's remaining share
     const planMap = new Map<string, typeof mentors>()
@@ -254,6 +263,7 @@ export class PlansService {
         productName: m.plan.product.name,
         planValue,
         monthlyBreakdown,
+        inCarteira: carteiraSet.has(m.plan.client.id),
         installments,
       })
     }
@@ -290,6 +300,7 @@ export class PlansService {
         productName: plan.product.name,
         planValue,
         monthlyBreakdown,
+        inCarteira: carteiraSet.has(plan.client.id),
       })
     }
 
