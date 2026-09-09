@@ -5,7 +5,28 @@ import { PrismaService } from '../../prisma/prisma.service'
 export class PersonAccountsService {
   constructor(private prisma: PrismaService) {}
 
+  // Splits de mentoria de clientes em CARTEIRA DE COBRANÇA que ainda não foram
+  // pagos (status ≠ PAGO) correspondem a parcelas que não vão cair — logo o
+  // mentor não recebe esse valor. Esses lançamentos são desconsiderados na
+  // visão de pagamento por pessoa. Retorna os sourceId (id da despesa) a excluir.
+  private async carteiraMentorSourceIds(): Promise<Set<string>> {
+    const carteira = await this.prisma.client.findMany({
+      where: { payments: { some: { inCarteira: true } } },
+      select: { companyName: true },
+    })
+    const names = carteira.map(c => c.companyName.toLowerCase())
+    if (names.length === 0) return new Set<string>()
+    const exps = await this.prisma.expense.findMany({
+      where: { category: 'MENTORIA', status: { not: 'PAGO' } },
+      select: { id: true, description: true },
+    })
+    return new Set(
+      exps.filter(e => names.some(n => e.description.toLowerCase().includes(n))).map(e => e.id),
+    )
+  }
+
   async findAll() {
+    const excluded = await this.carteiraMentorSourceIds()
     const persons = await this.prisma.person.findMany({
       where: { isActive: true },
       orderBy: { name: 'asc' },
@@ -18,8 +39,9 @@ export class PersonAccountsService {
     })
 
     return persons.map(p => {
-      const debits = p.transactions.filter(t => t.type === 'DEBIT')
-      const credits = p.transactions.filter(t => t.type === 'CREDIT')
+      const txns = p.transactions.filter(t => !(t.sourceId && excluded.has(t.sourceId)))
+      const debits = txns.filter(t => t.type === 'DEBIT')
+      const credits = txns.filter(t => t.type === 'CREDIT')
       const totalDebits = debits.reduce((s, t) => s + Number(t.value), 0)
       const totalCredits = credits.reduce((s, t) => s + Number(t.value), 0)
 
@@ -63,17 +85,21 @@ export class PersonAccountsService {
       where.date = { gte: start, lt: end }
     }
 
-    const transactions = await this.prisma.personTransaction.findMany({
+    const excluded = await this.carteiraMentorSourceIds()
+
+    const transactionsRaw = await this.prisma.personTransaction.findMany({
       where,
       orderBy: { date: 'asc' },
     })
+    const transactions = transactionsRaw.filter(t => !(t.sourceId && excluded.has(t.sourceId)))
 
     const allTx = await this.prisma.personTransaction.findMany({
       where: { personId },
-      select: { type: true, value: true },
+      select: { type: true, value: true, sourceId: true },
     })
-    const totalDebits = allTx.filter(t => t.type === 'DEBIT').reduce((s, t) => s + Number(t.value), 0)
-    const totalCredits = allTx.filter(t => t.type === 'CREDIT').reduce((s, t) => s + Number(t.value), 0)
+    const allTxFiltered = allTx.filter(t => !(t.sourceId && excluded.has(t.sourceId)))
+    const totalDebits = allTxFiltered.filter(t => t.type === 'DEBIT').reduce((s, t) => s + Number(t.value), 0)
+    const totalCredits = allTxFiltered.filter(t => t.type === 'CREDIT').reduce((s, t) => s + Number(t.value), 0)
 
     return {
       person: { ...person, aliases: person.aliases ? JSON.parse(person.aliases) : [] },
@@ -248,7 +274,13 @@ export class PersonAccountsService {
       },
     })
 
+    // Não gerar lançamento para split de mentoria de cliente em carteira que
+    // ainda não foi pago (parcela que não vai cair — mentor não recebe).
+    const carteiraExcluded = await this.carteiraMentorSourceIds()
+
     for (const e of expenses) {
+      if (carteiraExcluded.has(e.id)) continue
+
       const match = e.description.match(/Mentoria\s+(.+?)\s+—/)
       if (!match) continue
 
@@ -296,10 +328,11 @@ export class PersonAccountsService {
   }
 
   async getSummary() {
+    const excluded = await this.carteiraMentorSourceIds()
     const persons = await this.prisma.person.findMany({
       where: { isActive: true },
       include: {
-        transactions: { select: { type: true, value: true } },
+        transactions: { select: { type: true, value: true, sourceId: true } },
       },
     })
 
@@ -308,8 +341,9 @@ export class PersonAccountsService {
     const byType: Record<string, { owed: number; paid: number }> = {}
 
     for (const p of persons) {
-      const debits = p.transactions.filter(t => t.type === 'DEBIT').reduce((s, t) => s + Number(t.value), 0)
-      const credits = p.transactions.filter(t => t.type === 'CREDIT').reduce((s, t) => s + Number(t.value), 0)
+      const txns = p.transactions.filter(t => !(t.sourceId && excluded.has(t.sourceId)))
+      const debits = txns.filter(t => t.type === 'DEBIT').reduce((s, t) => s + Number(t.value), 0)
+      const credits = txns.filter(t => t.type === 'CREDIT').reduce((s, t) => s + Number(t.value), 0)
       totalOwed += debits
       totalPaid += credits
       if (!byType[p.type]) byType[p.type] = { owed: 0, paid: 0 }
