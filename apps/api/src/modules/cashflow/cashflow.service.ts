@@ -25,7 +25,9 @@ export class CashflowService {
     // Fetch all data for the year in 3 queries
     const [payments, expenses, commissions] = await this.prisma.$transaction([
       this.prisma.payment.findMany({
-        where: { dueDate: { gte: yearStart, lt: yearEnd } },
+        // Parcelas em carteira de cobrança (98/98, 99/99 — churn) ficam FORA do
+        // fluxo de caixa, independente do status (inclusive as que venceram).
+        where: { dueDate: { gte: yearStart, lt: yearEnd }, inCarteira: false },
         select: { dueDate: true, paidAt: true, value: true, status: true, client: { select: { id: true, companyName: true } } },
       }),
       this.prisma.expense.findMany({

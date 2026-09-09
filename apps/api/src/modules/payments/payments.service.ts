@@ -28,9 +28,9 @@ export class PaymentsService {
         _sum: { value: true },
         _count: true,
       }),
-      // Total vencido
+      // Total vencido (exclui parcelas em carteira de cobrança / churn)
       this.prisma.payment.aggregate({
-        where: { status: 'OVERDUE' },
+        where: { status: 'OVERDUE', inCarteira: false },
         _sum: { value: true },
         _count: true,
       }),
@@ -166,7 +166,9 @@ export class PaymentsService {
   }) {
     const { clientId, status, product, month, year, page = 1, limit = 20 } = params
 
-    const where: Record<string, unknown> = {}
+    // Parcelas em carteira de cobrança (98/98, 99/99 — churn) não aparecem no
+    // Financeiro > Pagamentos nem no fluxo: são desconsideradas.
+    const where: Record<string, unknown> = { inCarteira: false }
     if (clientId) where.clientId = clientId
     if (status) where.status = status
     if (product) {
