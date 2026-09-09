@@ -266,7 +266,7 @@ export default function CommissionsPage() {
   return (
     <div style={{ padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-        <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 20, margin: 0 }}>COMISSOES & MENTORIAS</h1>
+        <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 20, margin: 0 }}>COMISSOES & REPASSES</h1>
         {activeTab === 'comissoes' && (
           <button onClick={() => setShowCreateModal(true)} style={{ padding: '8px 16px', border: '1px solid #e2e8f0', background: '#f59e0b', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
             + CRIAR COMISSAO
@@ -286,7 +286,7 @@ export default function CommissionsPage() {
             marginBottom: activeTab === tab ? -2 : 0, zIndex: activeTab === tab ? 1 : 0,
             color: activeTab === tab ? 'black' : '#888',
           }}>
-            {tab === 'comissoes' ? 'COMISSOES' : `MENTORIAS (${mentorsList.length})`}
+            {tab === 'comissoes' ? 'COMISSOES' : `REPASSES (${mentorsList.length})`}
           </button>
         ))}
         <div style={{ flex: 1, borderBottom: '1px solid #e2e8f0' }} />
@@ -477,7 +477,7 @@ export default function CommissionsPage() {
               <>
                 <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
                   <div style={{ background: '#0A0A0C', color: 'white', padding: '12px 20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-                    <div style={{ fontSize: 10, textTransform: 'uppercase' }}>Total Mentorias</div>
+                    <div style={{ fontSize: 10, textTransform: 'uppercase' }}>Total Repasses</div>
                     <div style={{ fontSize: 18 }}>{fmt(totalMentorias)}</div>
                     <div style={{ fontSize: 10 }}>Pago: {fmt(totalPaid)} | Saldo: {fmt(totalMentorias - totalPaid)}</div>
                   </div>
