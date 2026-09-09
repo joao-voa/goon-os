@@ -160,7 +160,7 @@ export default function CommissionsPage() {
   const [activeTab, setActiveTab] = useState<'comissoes' | 'mentorias'>('comissoes')
   const [mentorFilter, setMentorFilter] = useState('')
   const [expandedView, setExpandedView] = useState(false)
-  const [hideCarteira, setHideCarteira] = useState(false)
+  const [hideCarteira, setHideCarteira] = useState(true)
   const now = new Date()
   const [month, setMonth] = useState<number | null>(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
