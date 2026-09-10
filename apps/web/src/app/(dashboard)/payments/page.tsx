@@ -7,11 +7,13 @@ const PaymentsContent = dynamic(() => import('./PaymentsContent'), { ssr: false 
 const ExpensesPage = dynamic(() => import('../expenses/page'), { ssr: false })
 const CommissionsPage = dynamic(() => import('../commissions/page'), { ssr: false })
 const CashflowPage = dynamic(() => import('../cashflow/page'), { ssr: false })
-const GiulhanoContent = dynamic(() => import('./GiulhanoContent'), { ssr: false })
+const PartnerCashflow = dynamic(() => import('./PartnerCashflow'), { ssr: false })
 
 const TABS = [
   { key: 'fluxo', label: 'Fluxo de Caixa' },
   { key: 'giulliano', label: 'Fluxo Giulliano' },
+  { key: 'carol', label: 'Fluxo Carol' },
+  { key: 'joao', label: 'Fluxo João' },
   { key: 'pagamentos', label: 'Pagamentos' },
   { key: 'despesas', label: 'Despesas' },
   { key: 'comissoes', label: 'Comissões & Repasses' },
@@ -47,7 +49,9 @@ export default function FinanceiroPage() {
       </div>
 
       {activeTab === 'fluxo' && <CashflowPage />}
-      {activeTab === 'giulliano' && <GiulhanoContent />}
+      {activeTab === 'giulliano' && <PartnerCashflow partnerKey="giulliano" />}
+      {activeTab === 'carol' && <PartnerCashflow partnerKey="carol" />}
+      {activeTab === 'joao' && <PartnerCashflow partnerKey="joao" />}
       {activeTab === 'pagamentos' && <PaymentsContent />}
       {activeTab === 'despesas' && <ExpensesPage />}
       {activeTab === 'comissoes' && <CommissionsPage />}
