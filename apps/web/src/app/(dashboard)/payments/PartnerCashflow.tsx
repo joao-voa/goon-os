@@ -7,7 +7,7 @@ interface Layers { impostos: number; custoOperacao: number; distribuicao: number
 interface MonthData { month: number; year: number; entradas: { total: number }; layers: Layers }
 interface Totals { entradas: number; impostos: number; custoOperacao: number; distribuicao: number; pessoalGiu: number }
 interface CashflowData { year: number; months: MonthData[]; totals: Totals }
-interface Mentor { mentorName: string; monthlyBreakdown: Record<string, number>; inCarteira?: boolean }
+interface Mentor { mentorName: string; client: string; product?: string; monthlyBreakdown: Record<string, number>; inCarteira?: boolean }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 const fmtK = (v: number) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1).replace('.', ',')}M` : v >= 1000 ? `${Math.round(v / 1000)}k` : `${Math.round(v)}`
@@ -225,12 +225,26 @@ export default function PartnerCashflow({ partnerKey }: { partnerKey: 'giulliano
               </button>
               {open && (
                 <div style={{ padding: '2px 20px 14px' }}>
-                  {/* ENTRADA — geral, sem detalhar por cliente */}
+                  {/* ENTRADA — repasse total + detalhe cliente a cliente */}
                   <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.greenDk, fontWeight: 700, margin: '4px 0 2px' }}>Entrada</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${C.bg}` }}>
-                    <span style={{ fontSize: 13, color: C.ink }}>Repasse da operação <span style={{ color: C.dim, fontSize: 11 }}>(total do mês)</span></span>
+                    <span style={{ fontSize: 13, color: C.ink, fontWeight: 700 }}>Repasse da operação <span style={{ color: C.dim, fontSize: 11, fontWeight: 400 }}>(total do mês)</span></span>
                     <span style={{ ...num, fontSize: 13, color: C.greenDk, fontWeight: 700 }}>{fmt(rep)}</span>
                   </div>
+                  {(() => {
+                    const monthKey = `${year}-${String(m.month).padStart(2, '0')}`
+                    const detalhe = (mentors ?? [])
+                      .filter(mt => cfg.regex.test(mt.mentorName) && !mt.inCarteira && (mt.monthlyBreakdown[monthKey] ?? 0) !== 0)
+                      .map(mt => ({ client: mt.client, product: mt.product, value: mt.monthlyBreakdown[monthKey] }))
+                      .sort((a, b) => b.value - a.value)
+                    if (detalhe.length === 0) return null
+                    return detalhe.map((d, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '5px 0 5px 16px', borderBottom: `1px solid ${C.bg}` }}>
+                        <span style={{ fontSize: 12, color: C.mid }}>{d.client}{d.product ? <span style={{ color: C.dim }}> · {d.product}</span> : null}</span>
+                        <span style={{ ...num, fontSize: 12, color: C.greenDk }}>{fmt(d.value)}</span>
+                      </div>
+                    ))
+                  })()}
                   {/* SAÍDAS — detalhadas */}
                   <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.red, fontWeight: 700, margin: '12px 0 2px' }}>Saídas</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${C.bg}` }}>
