@@ -132,8 +132,10 @@ export default function ExpensesPage() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }
-  const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 13 }
+  const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 5 }
+  const selStyle: React.CSSProperties = { padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 13, background: '#fff', cursor: 'pointer' }
+  const darkBtn: React.CSSProperties = { background: '#0f172a', color: 'white', border: 'none', borderRadius: 6, boxShadow: '0 1px 2px rgba(0,0,0,0.06)', padding: '9px 16px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600 }
 
   const sortedExpenses = [...expenses].sort((a, b) => {
     if (!sortField) return 0
@@ -149,33 +151,34 @@ export default function ExpensesPage() {
 
   return (
     <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 20 }}>DESPESAS</h1>
-        <button onClick={() => { setEditId(null); setForm(emptyForm); setShowModal(true) }} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '8px 16px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>+ NOVA DESPESA</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Despesas</h1>
+        <button onClick={() => { setEditId(null); setForm(emptyForm); setShowModal(true) }} style={{ background: '#C7F900', color: '#0f172a', border: 'none', borderRadius: 6, boxShadow: '0 1px 2px rgba(0,0,0,0.06)', padding: '9px 16px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700 }}>+ Nova despesa</button>
       </div>
 
       {/* KPI Strip */}
       {summary && (
         <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-          <div style={{ background: '#f59e0b', color: 'white', padding: '12px 20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-            <div style={{ fontSize: 10, textTransform: 'uppercase' }}>Previsto</div>
-            <div style={{ fontSize: 18 }}>{fmt(summary.totalPrevisto)}</div>
-          </div>
-          <div style={{ background: '#16a34a', color: 'white', padding: '12px 20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-            <div style={{ fontSize: 10, textTransform: 'uppercase' }}>Pago</div>
-            <div style={{ fontSize: 18 }}>{fmt(summary.totalPago)}</div>
-          </div>
+          {[
+            { l: 'Previsto', v: summary.totalPrevisto, c: '#f59e0b' },
+            { l: 'Pago', v: summary.totalPago, c: '#16a34a' },
+          ].map(k => (
+            <div key={k.l} style={{ background: '#fff', border: '1px solid #e2e8f0', borderTop: `3px solid ${k.c}`, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)', padding: '14px 20px', minWidth: 150 }}>
+              <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', fontWeight: 600 }}>{k.l}</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontVariantNumeric: 'tabular-nums', fontSize: 22, fontWeight: 700, color: k.c, marginTop: 4 }}>{fmt(k.v)}</div>
+            </div>
+          ))}
           {summary.byCategory.map(c => {
-            const color = CATEGORY_COLORS[c.category] ?? '#888'
+            const color = CATEGORY_COLORS[c.category] ?? '#94a3b8'
             const isActive = categoryFilter === c.category
             return (
               <div key={c.category} onClick={() => setCategoryFilter(isActive ? '' : c.category)} style={{
-                background: isActive ? color : 'white', color: isActive ? 'white' : 'inherit',
-                borderLeft: `4px solid ${color}`, padding: '12px 20px', border: `2px solid ${isActive ? color : 'black'}`,
-                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700, cursor: 'pointer',
+                background: isActive ? color : '#fff', color: isActive ? 'white' : '#0f172a',
+                border: `1px solid ${isActive ? color : '#e2e8f0'}`, borderLeft: `3px solid ${color}`, borderRadius: 10,
+                boxShadow: '0 1px 2px rgba(0,0,0,0.04)', padding: '14px 18px', cursor: 'pointer', minWidth: 120,
               }}>
-                <div style={{ fontSize: 10, textTransform: 'uppercase' }}>{CATEGORY_LABELS[c.category] ?? c.category}</div>
-                <div style={{ fontSize: 14 }}>{fmt(c.total)}</div>
+                <div style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, color: isActive ? 'rgba(255,255,255,0.85)' : '#64748b' }}>{CATEGORY_LABELS[c.category] ?? c.category}</div>
+                <div style={{ fontFamily: 'var(--font-sans)', fontVariantNumeric: 'tabular-nums', fontSize: 16, fontWeight: 700, marginTop: 3 }}>{fmt(c.total)}</div>
               </div>
             )
           })}
@@ -186,14 +189,14 @@ export default function ExpensesPage() {
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div>
           <label style={labelStyle}>Categoria</label>
-          <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+          <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={selStyle}>
             <option value="">Todas categorias</option>
             {CATEGORIES.map(c => <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>)}
           </select>
         </div>
         <div>
           <label style={labelStyle}>Status</label>
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={selStyle}>
             <option value="">Todos status</option>
             <option value="PREVISTO">Previsto</option>
             <option value="PAGO">Pago</option>
@@ -201,7 +204,7 @@ export default function ExpensesPage() {
         </div>
         <div>
           <label style={labelStyle}>Mes</label>
-          <select value={month} onChange={e => setMonth(parseInt(e.target.value))} style={{ padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+          <select value={month} onChange={e => setMonth(parseInt(e.target.value))} style={selStyle}>
             {Array.from({ length: 12 }, (_, i) => (
               <option key={i + 1} value={i + 1}>{new Date(2000, i).toLocaleString('pt-BR', { month: 'long' })}</option>
             ))}
@@ -209,14 +212,14 @@ export default function ExpensesPage() {
         </div>
         <div>
           <label style={labelStyle}>Ano</label>
-          <input type="number" value={year} onChange={e => setYear(parseInt(e.target.value))} style={{ width: 80, padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }} />
+          <input type="number" value={year} onChange={e => setYear(parseInt(e.target.value))} style={{ ...selStyle, width: 90 }} />
         </div>
-        <button onClick={() => loadData()} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '8px 16px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>APLICAR</button>
+        <button onClick={() => loadData()} style={darkBtn}>Aplicar</button>
       </div>
 
       {/* Table */}
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-sans)', fontSize: 12.5 }}>
           <thead>
             <tr style={{ background: '#0A0A0C', color: 'white', textTransform: 'uppercase' }}>
               <th onClick={() => toggleSort('description')} style={{ padding: '8px 12px', textAlign: 'left', cursor: 'pointer' }}>Descricao{sortField === 'description' ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>

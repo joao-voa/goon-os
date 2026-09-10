@@ -84,25 +84,23 @@ function ProgramSelector({ active, onChange }: { active: string; onChange: (v: s
       {programs.map(p => {
         const isActive = active === p.code
         const bg = isActive
-          ? (p.code === '' ? 'black' : (PRODUCT_COLORS[p.code] ?? 'black'))
-          : '#e0e0e0'
+          ? (p.code === '' ? '#0f172a' : (PRODUCT_COLORS[p.code] ?? '#0f172a'))
+          : '#fff'
         return (
           <button
             key={p.code}
             onClick={() => onChange(p.code)}
             style={{
               background: bg,
-              color: isActive ? 'white' : 'black',
-              border: '1px solid #e2e8f0',
-              boxShadow: isActive ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
-              padding: '8px 16px',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              fontWeight: 700,
-              textTransform: 'uppercase' as const,
+              color: isActive ? 'white' : '#64748b',
+              border: `1px solid ${isActive ? bg : '#e2e8f0'}`,
+              borderRadius: 100,
+              padding: '7px 16px',
+              fontFamily: 'var(--font-sans)',
+              fontSize: 12,
+              fontWeight: isActive ? 700 : 500,
               cursor: 'pointer',
-              transform: isActive ? 'translate(2px,2px)' : 'none',
-              transition: 'transform 0.1s, box-shadow 0.1s',
+              transition: 'all 0.15s',
             }}
             title={p.code ? PRODUCT_NAMES[p.code] : 'Todos os programas'}
           >
@@ -111,7 +109,7 @@ function ProgramSelector({ active, onChange }: { active: string; onChange: (v: s
         )
       })}
       {active && (
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', alignSelf: 'center', marginLeft: 4 }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: '#94a3b8', alignSelf: 'center', marginLeft: 4 }}>
           — {PRODUCT_NAMES[active]}
         </span>
       )}
@@ -136,21 +134,24 @@ function KpiCard({
       style={{
         background: 'white',
         border: '1px solid #e2e8f0',
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
-        padding: '16px 20px',
+        borderTop: `3px solid ${accent}`,
+        borderRadius: 12,
+        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+        padding: '16px 18px',
         display: 'flex',
         flexDirection: 'column',
-        gap: 6,
+        gap: 4,
         minWidth: 0,
       }}
     >
       <span
         style={{
           fontFamily: 'var(--font-sans)',
-          fontSize: 8,
+          fontSize: 11,
+          fontWeight: 600,
           textTransform: 'uppercase',
-          letterSpacing: 1,
-          color: '#555',
+          letterSpacing: '0.05em',
+          color: '#64748b',
         }}
       >
         {label}
@@ -158,15 +159,16 @@ function KpiCard({
       <span
         style={{
           fontFamily: 'var(--font-sans)',
-          fontSize: 14,
+          fontVariantNumeric: 'tabular-nums',
+          fontSize: 22,
+          fontWeight: 700,
           color: accent,
-          letterSpacing: 1,
         }}
       >
         {value}
       </span>
       {sub && (
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#777' }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: '#94a3b8' }}>
           {sub}
         </span>
       )}
@@ -520,11 +522,11 @@ export default function PaymentsPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700, color: 'black', margin: 0, textTransform: 'uppercase', letterSpacing: 1 }}>
-            Financeiro
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: '#0f172a', margin: 0 }}>
+            Pagamentos
           </h1>
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', margin: '4px 0 0 0' }}>
-            {'>'} {total} pagamento{total !== 1 ? 's' : ''} no total
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: '#64748b', margin: '2px 0 0 0' }}>
+            {total} pagamento{total !== 1 ? 's' : ''} no total
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -569,29 +571,26 @@ export default function PaymentsPage() {
       {/* Info Banner */}
       <div
         style={{
-          background: 'white',
-          border: '2px solid var(--warning)',
-          boxShadow: '4px 4px 0px 0px var(--warning)',
+          background: '#fffbeb',
+          border: '1px solid #fde68a',
+          borderRadius: 10,
           padding: '12px 16px',
           marginBottom: 20,
           display: 'flex',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           gap: 10,
         }}
       >
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 9, color: 'var(--warning)', whiteSpace: 'nowrap', lineHeight: 1.8 }}>
-          [ℹ ATENÇÃO]
-        </span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', lineHeight: 1.6 }}>
-          O prazo financeiro pode diferir da vigência do contrato.
-          Acompanhe ambos os prazos na tabela abaixo.
+        <span style={{ fontSize: 14 }}>ℹ️</span>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12.5, color: '#92400e', lineHeight: 1.5 }}>
+          O prazo financeiro pode diferir da vigência do contrato. Acompanhe ambos na tabela abaixo.
         </span>
       </div>
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div>
-          <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, display: 'block', marginBottom: 4 }}>
+          <label style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.04em', display: 'block', marginBottom: 5 }}>
             Buscar
           </label>
           <input
@@ -603,7 +602,7 @@ export default function PaymentsPage() {
           />
         </div>
         <div>
-          <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, display: 'block', marginBottom: 4 }}>
+          <label style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.04em', display: 'block', marginBottom: 5 }}>
             Status
           </label>
           <select
@@ -620,7 +619,7 @@ export default function PaymentsPage() {
           </select>
         </div>
         <div>
-          <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, display: 'block', marginBottom: 4 }}>
+          <label style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.04em', display: 'block', marginBottom: 5 }}>
             Mes
           </label>
           <select className="goon-select" value={monthFilter ?? ''} onChange={e => { setMonthFilter(e.target.value ? parseInt(e.target.value, 10) : null); setPage(1) }}>
@@ -631,7 +630,7 @@ export default function PaymentsPage() {
           </select>
         </div>
         <div>
-          <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, display: 'block', marginBottom: 4 }}>
+          <label style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.04em', display: 'block', marginBottom: 5 }}>
             Ano
           </label>
           <input type="number" className="goon-input" style={{ width: 80 }} value={yearFilter} onChange={e => { setYearFilter(parseInt(e.target.value, 10)); setPage(1) }} />
