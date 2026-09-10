@@ -221,27 +221,33 @@ export default function CashflowPage() {
           <div style={{ ...card, padding: '18px 22px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Comparativo mensal</span>
-              <div style={{ display: 'flex', gap: 14, fontSize: 11, color: C.mid }}>
+              <div style={{ display: 'flex', gap: 14, fontSize: 11, color: C.mid, flexWrap: 'wrap' }}>
                 <span><i style={{ display: 'inline-block', width: 9, height: 9, background: C.green, borderRadius: 2, marginRight: 5 }} />Entra</span>
+                <span><i style={{ display: 'inline-block', width: 9, height: 9, background: '#e57373', borderRadius: 2, marginRight: 5 }} />Imposto</span>
                 <span><i style={{ display: 'inline-block', width: 9, height: 9, background: C.slate, borderRadius: 2, marginRight: 5 }} />Custo</span>
                 <span><i style={{ display: 'inline-block', width: 9, height: 9, background: C.neon, borderRadius: 2, marginRight: 5 }} />Distribuição</span>
               </div>
             </div>
             {(() => {
-              const barMax = Math.max(...data.months.map(m => Math.max(m.entradas.total, m.layers.custoOperacao + m.layers.distribuicao)), 1)
+              // Saída total do resultado = imposto + custo + distribuição (o que reduz o resultado)
+              const barMax = Math.max(...data.months.map(m => Math.max(m.entradas.total, m.layers.impostos + m.layers.custoOperacao + m.layers.distribuicao)), 1)
               return (
                 <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', minHeight: 170, overflowX: 'auto', paddingBottom: 4 }}>
                   {data.months.map(m => {
                     const entH = (m.entradas.total / barMax) * 140
+                    const impH = (m.layers.impostos / barMax) * 140
                     const custoH = (m.layers.custoOperacao / barMax) * 140
                     const distH = (m.layers.distribuicao / barMax) * 140
                     const isCur = m.month === new Date().getMonth() + 1 && year === new Date().getFullYear()
+                    const saidaTotal = m.layers.impostos + m.layers.custoOperacao + m.layers.distribuicao
+                    const result = m.entradas.total - saidaTotal
                     return (
-                      <button key={m.month} onClick={() => { setSelMonth(m.month - 1); setLevel('mes') }} title={`Entra ${fmt(m.entradas.total)} · Custo ${fmt(m.layers.custoOperacao)} · Distribuição ${fmt(m.layers.distribuicao)}`} style={{ flex: 1, minWidth: 52, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 0', borderRadius: 6 }}>
+                      <button key={m.month} onClick={() => { setSelMonth(m.month - 1); setLevel('mes') }} title={`Entra ${fmt(m.entradas.total)} · Imposto ${fmt(m.layers.impostos)} · Custo ${fmt(m.layers.custoOperacao)} · Distribuição ${fmt(m.layers.distribuicao)} · Resultado ${fmt(result)}`} style={{ flex: 1, minWidth: 52, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 0', borderRadius: 6 }}>
                         <span style={{ ...num, fontSize: 9.5, fontWeight: 700, color: m.entradas.total > 0 ? C.greenDk : 'transparent', minHeight: 12 }}>{m.entradas.total > 0 ? fmtK(m.entradas.total) : ''}</span>
                         <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 145 }}>
                           <div style={{ width: 14, height: Math.max(entH, m.entradas.total > 0 ? 2 : 0), background: C.green, borderRadius: '3px 3px 0 0' }} />
                           <div style={{ display: 'flex', flexDirection: 'column-reverse', height: 145, justifyContent: 'flex-start' }}>
+                            <div style={{ width: 14, height: Math.max(impH, m.layers.impostos > 0 ? 2 : 0), background: '#e57373', borderRadius: (custoH + distH) > 0 ? 0 : '3px 3px 0 0' }} />
                             <div style={{ width: 14, height: Math.max(custoH, m.layers.custoOperacao > 0 ? 2 : 0), background: C.slate, borderRadius: distH > 0 ? 0 : '3px 3px 0 0' }} />
                             <div style={{ width: 14, height: Math.max(distH, m.layers.distribuicao > 0 ? 2 : 0), background: C.neon, borderRadius: '3px 3px 0 0' }} />
                           </div>
