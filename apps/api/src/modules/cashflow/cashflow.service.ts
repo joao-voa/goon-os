@@ -56,6 +56,9 @@ export class CashflowService {
       entradas: { received: 0, pending: 0, overdue: 0, total: 0, overdueClients: [] as Array<{ id: string; companyName: string; value: number }> },
       saidas: { previsto: 0, pago: 0, total: 0, byCategory: {} as Record<string, number>, items: [] as Array<{ description: string; category: string; value: number; status: string }> },
       comissoes: { pending: 0, paid: 0, total: 0 },
+      // Camadas de gestão: separa custo real da operação, distribuição (repasses)
+      // e o pessoal do Giulliano — que não é da empresa.
+      layers: { impostos: 0, custoOperacao: 0, distribuicao: 0, pessoalGiu: 0 },
       saldo: 0,
       saldoProjetado: 0,
     }))
@@ -82,10 +85,20 @@ export class CashflowService {
       const m = new Date(e.dueDate).getMonth()
       const val = Number(e.value)
       const cat = (e as any).category ?? 'OUTRO'
+      const desc = (e as any).description ?? ''
       if (e.status === 'PAGO') months[m].saidas.pago += val
       else if (e.status === 'PREVISTO') months[m].saidas.previsto += val
       months[m].saidas.byCategory[cat] = (months[m].saidas.byCategory[cat] ?? 0) + val
-      months[m].saidas.items.push({ description: (e as any).description ?? '', category: cat, value: val, status: e.status })
+      months[m].saidas.items.push({ description: desc, category: cat, value: val, status: e.status })
+
+      // Camada de gestão da despesa:
+      //  IMPOSTOS → impostos · MENTORIA → distribuição (repasse) ·
+      //  PESSOAL+Giulliano → pessoal Giu · resto → custo da operação
+      const layer = cat === 'IMPOSTOS' ? 'impostos'
+        : cat === 'MENTORIA' ? 'distribuicao'
+        : (cat === 'PESSOAL' && /giulliano/i.test(desc)) ? 'pessoalGiu'
+        : 'custoOperacao'
+      months[m].layers[layer] += val
     }
 
     // Distribute commissions into months (by createdAt for pending, paidAt for paid)
@@ -120,8 +133,12 @@ export class CashflowService {
         comissoesPaid: acc.comissoesPaid + m.comissoes.paid,
         saldo: acc.saldo + m.saldo,
         saldoProjetado: acc.saldoProjetado + m.saldoProjetado,
+        impostos: acc.impostos + m.layers.impostos,
+        custoOperacao: acc.custoOperacao + m.layers.custoOperacao,
+        distribuicao: acc.distribuicao + m.layers.distribuicao,
+        pessoalGiu: acc.pessoalGiu + m.layers.pessoalGiu,
       }),
-      { entradas: 0, entradasReceived: 0, saidas: 0, saidasPago: 0, comissoes: 0, comissoesPaid: 0, saldo: 0, saldoProjetado: 0 },
+      { entradas: 0, entradasReceived: 0, saidas: 0, saidasPago: 0, comissoes: 0, comissoesPaid: 0, saldo: 0, saldoProjetado: 0, impostos: 0, custoOperacao: 0, distribuicao: 0, pessoalGiu: 0 },
     )
 
     return { year, months, totals }
