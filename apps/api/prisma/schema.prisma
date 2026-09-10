@@ -568,3 +568,17 @@ model FlowTemplate {
   items       Json     // [{ what, who, offsetDays }]
   createdAt   DateTime @default(now())
 }
+
+// Meta de vendas por mês (faturamento em R$ e quantidade de vendas)
+model SalesGoal {
+  id          String   @id @default(cuid())
+  year        Int
+  month       Int      // 1-12
+  targetValue Decimal  @default(0) @db.Decimal(12, 2)
+  targetCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([year, month])
+  @@index([year])
+}

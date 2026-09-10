@@ -1070,6 +1070,44 @@ export class CrmService {
   }
 
   /** Vendas por mês (contratos fechados por closedAt) — valor total do contrato. */
+  // ---- Metas de vendas (R$ e quantidade) ----
+  async getGoals(year: number) {
+    const goals = await this.prisma.salesGoal.findMany({ where: { year } })
+    const map = new Map(goals.map(g => [g.month, g]))
+    const months = Array.from({ length: 12 }, (_, i) => {
+      const g = map.get(i + 1)
+      return { month: i + 1, targetValue: g ? Number(g.targetValue) : 0, targetCount: g?.targetCount ?? 0 }
+    })
+    return {
+      year,
+      months,
+      totalValue: months.reduce((s, m) => s + m.targetValue, 0),
+      totalCount: months.reduce((s, m) => s + m.targetCount, 0),
+    }
+  }
+
+  async setGoals(dto: { year: number; month?: number; targetValue?: number; targetCount?: number; applyAll?: boolean }) {
+    const { year, month, targetValue = 0, targetCount = 0, applyAll } = dto
+    const data = { targetValue, targetCount }
+    if (applyAll) {
+      for (let m = 1; m <= 12; m++) {
+        await this.prisma.salesGoal.upsert({
+          where: { year_month: { year, month: m } },
+          create: { year, month: m, ...data },
+          update: data,
+        })
+      }
+      return { ok: true, applied: 12 }
+    }
+    if (!month) throw new BadRequestException('Informe o mês ou applyAll')
+    await this.prisma.salesGoal.upsert({
+      where: { year_month: { year, month } },
+      create: { year, month, ...data },
+      update: data,
+    })
+    return { ok: true }
+  }
+
   async getSalesByMonth(year: number, product?: string) {
     const start = new Date(year, 0, 1)
     const end = new Date(year + 1, 0, 1)
