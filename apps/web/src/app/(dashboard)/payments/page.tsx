@@ -7,9 +7,11 @@ const PaymentsContent = dynamic(() => import('./PaymentsContent'), { ssr: false 
 const ExpensesPage = dynamic(() => import('../expenses/page'), { ssr: false })
 const CommissionsPage = dynamic(() => import('../commissions/page'), { ssr: false })
 const CashflowPage = dynamic(() => import('../cashflow/page'), { ssr: false })
+const GiulhanoContent = dynamic(() => import('./GiulhanoContent'), { ssr: false })
 
 const TABS = [
   { key: 'fluxo', label: 'Fluxo de Caixa' },
+  { key: 'giulliano', label: 'Fluxo Giulliano' },
   { key: 'pagamentos', label: 'Pagamentos' },
   { key: 'despesas', label: 'Despesas' },
   { key: 'comissoes', label: 'Comissões & Repasses' },
@@ -45,6 +47,7 @@ export default function FinanceiroPage() {
       </div>
 
       {activeTab === 'fluxo' && <CashflowPage />}
+      {activeTab === 'giulliano' && <GiulhanoContent />}
       {activeTab === 'pagamentos' && <PaymentsContent />}
       {activeTab === 'despesas' && <ExpensesPage />}
       {activeTab === 'comissoes' && <CommissionsPage />}

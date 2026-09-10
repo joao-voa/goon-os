@@ -54,7 +54,6 @@ export default function CashflowPage() {
   const [level, setLevel] = useState<'ano' | 'mes' | 'dia'>('ano')
   const [selMonth, setSelMonth] = useState(new Date().getMonth())
   const [selDay, setSelDay] = useState<number | null>(null)
-  const [showGiu, setShowGiu] = useState(false)
   const [dailyData, setDailyData] = useState<DayData[]>([])
 
   const loadData = useCallback(async () => {
@@ -119,7 +118,6 @@ export default function CashflowPage() {
 
   const lucro = scope.receita - scope.impostos - scope.custo
   const resultado = lucro - scope.distrib
-  const saldoFinal = resultado - (showGiu ? scope.giu : 0)
 
   const steps = [
     { label: 'Faturamento', value: scope.receita, kind: 'base' as const, hint: level === 'dia' ? 'Entrou no dia' : `Recebido ${fmt(scope.recebido)}` },
@@ -127,9 +125,7 @@ export default function CashflowPage() {
     { label: 'Custo da operação', value: -scope.custo, kind: 'out' as const, hint: 'Time, contabilidade, sistemas, comissões' },
     { label: 'Lucro da operação', value: lucro, kind: 'sub' as const, hint: 'Receita − impostos − custo' },
     { label: 'Distribuição', value: -scope.distrib, kind: 'out' as const, hint: 'Repasses aos sócios / mentores' },
-    { label: 'Resultado da empresa', value: resultado, kind: 'sub' as const, hint: 'Depois de distribuir' },
-    ...(showGiu ? [{ label: 'Pessoal Giulliano', value: -scope.giu, kind: 'out' as const, hint: 'Não é da empresa' }] : []),
-    { label: 'Saldo final', value: saldoFinal, kind: 'result' as const, hint: showGiu ? 'Depois de tudo' : 'Fora o pessoal do Giu' },
+    { label: 'Resultado da empresa', value: resultado, kind: 'result' as const, hint: 'O que a operação gera (o pessoal do Giu fica na aba dele)' },
   ]
 
   const card: React.CSSProperties = { background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }
@@ -169,10 +165,6 @@ export default function CashflowPage() {
               <button onClick={() => setSelMonth(m => m < 11 ? m + 1 : m)} disabled={selMonth === 11} style={{ border: 'none', background: 'transparent', cursor: selMonth === 11 ? 'default' : 'pointer', color: selMonth === 11 ? C.dim : C.mid, padding: '2px 8px', fontSize: 14 }}>›</button>
             </div>
           )}
-          <button onClick={() => setShowGiu(!showGiu)} style={{
-            padding: '7px 14px', borderRadius: 100, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600,
-            border: `1px solid ${showGiu ? C.neon : C.line}`, background: showGiu ? C.neon : '#fff', color: C.ink,
-          }}>{showGiu ? 'Mostrando pessoal Giu' : 'Ocultar pessoal Giu'}</button>
         </div>
       </div>
 
@@ -180,7 +172,7 @@ export default function CashflowPage() {
       <div style={{ ...card, overflow: 'hidden' }}>
         <div style={{ padding: '16px 22px', borderBottom: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Resultado — {scopeLabel}</span>
-          <span style={{ ...num, fontSize: 13, color: saldoFinal >= 0 ? C.greenDk : C.red, fontWeight: 700 }}>{saldoFinal >= 0 ? 'Positivo' : 'Negativo'}</span>
+          <span style={{ ...num, fontSize: 13, color: resultado >= 0 ? C.greenDk : C.red, fontWeight: 700 }}>{resultado >= 0 ? 'Positivo' : 'Negativo'}</span>
         </div>
         <div style={{ padding: '8px 0' }}>
           {steps.map((s, i) => {
@@ -190,7 +182,7 @@ export default function CashflowPage() {
               <div key={s.label} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
                 padding: s.kind === 'result' ? '16px 22px' : '11px 22px',
-                background: s.kind === 'result' ? (saldoFinal >= 0 ? 'rgba(199,249,0,0.10)' : 'rgba(220,38,38,0.05)') : 'transparent',
+                background: s.kind === 'result' ? (resultado >= 0 ? 'rgba(199,249,0,0.10)' : 'rgba(220,38,38,0.05)') : 'transparent',
                 borderTop: isTotal && i > 0 ? `1px solid ${C.line}` : 'none',
               }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -212,7 +204,7 @@ export default function CashflowPage() {
           { label: 'Faturamento', value: scope.receita, color: C.ink, sub: `Recebido ${fmt(scope.recebido)}` },
           { label: 'A receber', value: scope.aReceber, color: C.amber, sub: 'Pendente + vencido' },
           { label: 'Lucro da operação', value: lucro, color: C.greenDk, sub: 'Antes de distribuir' },
-          { label: 'Saldo final', value: saldoFinal, color: saldoFinal >= 0 ? C.greenDk : C.red, sub: showGiu ? 'Depois de tudo' : 'Fora pessoal Giu', hero: true },
+          { label: 'Resultado da empresa', value: resultado, color: resultado >= 0 ? C.greenDk : C.red, sub: 'O que a operação gera', hero: true },
         ].map(k => (
           <div key={k.label} style={{ ...card, padding: '16px 18px', borderTop: k.hero ? `3px solid ${C.neon}` : `1px solid ${C.line}` }}>
             <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.mid, fontWeight: 600 }}>{k.label}</div>
@@ -268,7 +260,7 @@ export default function CashflowPage() {
             <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.line}`, fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Meses <span style={{ color: C.dim, fontSize: 12, fontWeight: 400 }}>— clique para abrir</span></div>
             {data.months.map(m => {
               const mLucro = m.entradas.total - m.layers.impostos - m.layers.custoOperacao
-              const mResult = mLucro - m.layers.distribuicao - (showGiu ? m.layers.pessoalGiu : 0)
+              const mResult = mLucro - m.layers.distribuicao
               const has = m.entradas.total > 0 || m.saidas.total > 0
               return (
                 <button key={m.month} onClick={() => { setSelMonth(m.month - 1); setLevel('mes') }} style={{
