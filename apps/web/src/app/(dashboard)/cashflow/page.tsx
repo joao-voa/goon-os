@@ -28,6 +28,8 @@ interface CashflowData { year: number; months: MonthData[]; totals: Totals }
 interface DayData { day: number; entradas: number; saidas: number; layers: Layers; items: Array<{ type: 'entrada' | 'saida'; description: string; value: number; category?: string; status?: string }> }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+// Compacto para rótulos de gráfico: 147000 → "147k", 1231000 → "1,2M"
+const fmtK = (v: number) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1).replace('.', ',')}M` : v >= 1000 ? `${Math.round(v / 1000)}k` : `${Math.round(v)}`
 const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 const MONTH_FULL = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
@@ -243,7 +245,8 @@ export default function CashflowPage() {
                     const distH = (m.layers.distribuicao / barMax) * 140
                     const isCur = m.month === new Date().getMonth() + 1 && year === new Date().getFullYear()
                     return (
-                      <button key={m.month} onClick={() => { setSelMonth(m.month - 1); setLevel('mes') }} title={`Ver ${MONTH_FULL[m.month - 1]}`} style={{ flex: 1, minWidth: 46, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 0', borderRadius: 6 }}>
+                      <button key={m.month} onClick={() => { setSelMonth(m.month - 1); setLevel('mes') }} title={`Entra ${fmt(m.entradas.total)} · Custo ${fmt(m.layers.custoOperacao)} · Distribuição ${fmt(m.layers.distribuicao)}`} style={{ flex: 1, minWidth: 52, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 0', borderRadius: 6 }}>
+                        <span style={{ ...num, fontSize: 9.5, fontWeight: 700, color: m.entradas.total > 0 ? C.greenDk : 'transparent', minHeight: 12 }}>{m.entradas.total > 0 ? fmtK(m.entradas.total) : ''}</span>
                         <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 145 }}>
                           <div style={{ width: 14, height: Math.max(entH, m.entradas.total > 0 ? 2 : 0), background: C.green, borderRadius: '3px 3px 0 0' }} />
                           <div style={{ display: 'flex', flexDirection: 'column-reverse', height: 145, justifyContent: 'flex-start' }}>
