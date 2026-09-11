@@ -49,13 +49,13 @@ export class CrmController {
 
   @Get('goals')
   @UseGuards(SalesGuard)
-  getGoals(@Query('year') year?: string) {
-    return this.service.getGoals(year ? parseInt(year, 10) : new Date().getFullYear())
+  getGoals(@Query('year') year?: string, @Query('product') product?: string) {
+    return this.service.getGoals(year ? parseInt(year, 10) : new Date().getFullYear(), product || 'GERAL')
   }
 
   @Put('goals')
   @UseGuards(SalesGuard)
-  setGoals(@Body() dto: { year: number; month?: number; targetValue?: number; targetCount?: number; applyAll?: boolean }) {
+  setGoals(@Body() dto: { year: number; month?: number; product?: string; targetValue?: number; targetCount?: number; applyAll?: boolean }) {
     return this.service.setGoals(dto)
   }
 

@@ -1070,9 +1070,11 @@ export class CrmService {
   }
 
   /** Vendas por mês (contratos fechados por closedAt) — valor total do contrato. */
-  // ---- Metas de vendas (R$ e quantidade) ----
-  async getGoals(year: number) {
-    const goals = await this.prisma.salesGoal.findMany({ where: { year } })
+  // ---- Metas de vendas (R$ e quantidade, por produto) ----
+  //   product = 'GERAL' (meta total) ou código do programa (GE, GI, TTS...)
+  async getGoals(year: number, product = 'GERAL') {
+    const prod = product || 'GERAL'
+    const goals = await this.prisma.salesGoal.findMany({ where: { year, product: prod } })
     const map = new Map(goals.map(g => [g.month, g]))
     const months = Array.from({ length: 12 }, (_, i) => {
       const g = map.get(i + 1)
@@ -1080,20 +1082,22 @@ export class CrmService {
     })
     return {
       year,
+      product: prod,
       months,
       totalValue: months.reduce((s, m) => s + m.targetValue, 0),
       totalCount: months.reduce((s, m) => s + m.targetCount, 0),
     }
   }
 
-  async setGoals(dto: { year: number; month?: number; targetValue?: number; targetCount?: number; applyAll?: boolean }) {
+  async setGoals(dto: { year: number; month?: number; product?: string; targetValue?: number; targetCount?: number; applyAll?: boolean }) {
     const { year, month, targetValue = 0, targetCount = 0, applyAll } = dto
+    const product = dto.product || 'GERAL'
     const data = { targetValue, targetCount }
     if (applyAll) {
       for (let m = 1; m <= 12; m++) {
         await this.prisma.salesGoal.upsert({
-          where: { year_month: { year, month: m } },
-          create: { year, month: m, ...data },
+          where: { year_month_product: { year, month: m, product } },
+          create: { year, month: m, product, ...data },
           update: data,
         })
       }
@@ -1101,8 +1105,8 @@ export class CrmService {
     }
     if (!month) throw new BadRequestException('Informe o mês ou applyAll')
     await this.prisma.salesGoal.upsert({
-      where: { year_month: { year, month } },
-      create: { year, month, ...data },
+      where: { year_month_product: { year, month, product } },
+      create: { year, month, product, ...data },
       update: data,
     })
     return { ok: true }

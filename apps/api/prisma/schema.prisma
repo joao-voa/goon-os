@@ -574,11 +574,12 @@ model SalesGoal {
   id          String   @id @default(cuid())
   year        Int
   month       Int      // 1-12
+  product     String   @default("GERAL") // GERAL = meta total; ou código do programa (GE, GI, TTS...)
   targetValue Decimal  @default(0) @db.Decimal(12, 2)
   targetCount Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@unique([year, month])
+  @@unique([year, month, product])
   @@index([year])
 }

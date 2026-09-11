@@ -11,7 +11,12 @@ interface MonthSales { month: number; label: string; count: number; total: numbe
 interface ProgramTotal { code: string; count: number; total: number }
 interface SalesData { year: number; totalYear: number; countYear: number; months: MonthSales[]; byProgram: ProgramTotal[] }
 interface Goal { month: number; targetValue: number; targetCount: number }
-interface GoalsData { year: number; months: Goal[]; totalValue: number; totalCount: number }
+interface GoalsData { year: number; product: string; months: Goal[]; totalValue: number; totalCount: number }
+
+const META_PRODUCTS = [
+  { v: '', l: 'Geral (todos)' }, { v: 'GE', l: 'GE' }, { v: 'GI', l: 'GI' },
+  { v: 'TTS', l: 'TTS' }, { v: 'TTSG', l: 'TTS Grupo' }, { v: 'GA', l: 'GA' }, { v: 'GS', l: 'GS' }, { v: 'AURA', l: 'AURA' },
+]
 
 const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 const MONTH_FULL = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
@@ -59,8 +64,8 @@ export default function SalesPage() {
   const [saving, setSaving] = useState(false)
 
   const loadGoals = useCallback(() => {
-    apiFetch<GoalsData>(`/api/crm/goals?year=${year}`).then(setGoals).catch(() => {})
-  }, [year])
+    apiFetch<GoalsData>(`/api/crm/goals?year=${year}&product=${productFilter || 'GERAL'}`).then(setGoals).catch(() => {})
+  }, [year, productFilter])
 
   useEffect(() => {
     if (!isOwner) return
@@ -80,7 +85,7 @@ export default function SalesPage() {
     setSaving(true)
     try {
       await Promise.all(Object.entries(edits).map(([m, e]) =>
-        apiFetch('/api/crm/goals', { method: 'PUT', body: JSON.stringify({ year, month: parseInt(m), targetValue: parseFloat(e.v) || 0, targetCount: parseInt(e.c) || 0 }) })))
+        apiFetch('/api/crm/goals', { method: 'PUT', body: JSON.stringify({ year, month: parseInt(m), product: productFilter || 'GERAL', targetValue: parseFloat(e.v) || 0, targetCount: parseInt(e.c) || 0 }) })))
       toast.success('Metas salvas')
       loadGoals()
     } catch { toast.error('Erro ao salvar metas') } finally { setSaving(false) }
@@ -138,7 +143,7 @@ export default function SalesPage() {
           return (
             <div style={{ ...card, padding: '20px 16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Meta · quão perto estamos</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Meta{productFilter ? ` · ${productFilter}` : ''} · quão perto estamos</span>
                 <button onClick={() => setTab('meta')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: C.mid }}>ajustar metas ›</button>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8 }}>
@@ -220,10 +225,18 @@ export default function SalesPage() {
 
       {/* ===================== ABA META ===================== */}
       {tab === 'meta' && <>
+        {/* Seletor de produto */}
+        <div style={{ ...card, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Meta de <span style={{ color: productFilter ? (PRODUCT_COLORS[productFilter] ?? C.ink) : C.ink }}>{productFilter ? (META_PRODUCTS.find(p => p.v === productFilter)?.l ?? productFilter) : 'toda a operação'}</span></span>
+          <select value={productFilter} onChange={e => setProductFilter(e.target.value)} style={{ padding: '8px 12px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 13, background: '#fff', cursor: 'pointer' }}>
+            {META_PRODUCTS.map(p => <option key={p.v} value={p.v}>{p.l}</option>)}
+          </select>
+        </div>
+
         {/* Velocímetros do ano */}
         <div style={{ ...card, padding: '20px 16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
-          <Gauge label={`Ano ${year} · R$`} value={data?.totalYear ?? 0} target={goals?.totalValue ?? 0} kind="money" />
-          <Gauge label={`Ano ${year} · Vendas`} value={data?.countYear ?? 0} target={goals?.totalCount ?? 0} kind="count" />
+          <Gauge label={`Ano ${year}${productFilter ? ` · ${productFilter}` : ''} · R$`} value={data?.totalYear ?? 0} target={goals?.totalValue ?? 0} kind="money" />
+          <Gauge label={`Ano ${year}${productFilter ? ` · ${productFilter}` : ''} · Vendas`} value={data?.countYear ?? 0} target={goals?.totalCount ?? 0} kind="count" />
         </div>
 
         {/* Aplicar a todos */}
