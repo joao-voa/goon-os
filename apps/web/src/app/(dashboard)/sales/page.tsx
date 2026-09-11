@@ -131,6 +131,26 @@ export default function SalesPage() {
 
       {/* ===================== ABA VENDAS ===================== */}
       {tab === 'vendas' && <>
+        {/* Velocímetros (visão — edição na aba Meta) */}
+        {(() => {
+          const mS = data?.months.find(x => x.month === curMonth)
+          const mG = goals?.months.find(x => x.month === curMonth)
+          return (
+            <div style={{ ...card, padding: '20px 16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Meta · quão perto estamos</span>
+                <button onClick={() => setTab('meta')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: C.mid }}>ajustar metas ›</button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8 }}>
+                {year === nowYear && <Gauge label={`${MONTH_FULL[curMonth - 1]} · R$`} value={mS?.total ?? 0} target={mG?.targetValue ?? 0} kind="money" />}
+                {year === nowYear && <Gauge label={`${MONTH_FULL[curMonth - 1]} · Vendas`} value={mS?.count ?? 0} target={mG?.targetCount ?? 0} kind="count" />}
+                <Gauge label={`Ano ${year} · R$`} value={data?.totalYear ?? 0} target={goals?.totalValue ?? 0} kind="money" />
+                <Gauge label={`Ano ${year} · Vendas`} value={data?.countYear ?? 0} target={goals?.totalCount ?? 0} kind="count" />
+              </div>
+            </div>
+          )
+        })()}
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
           {[
             { label: productFilter ? `Total ${productFilter}` : 'Total no Ano', value: fmtBRL(data?.totalYear ?? 0), accent: C.ink },
