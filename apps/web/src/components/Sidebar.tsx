@@ -78,14 +78,6 @@ export function Sidebar({
     // Vendas: dono + conta de teste. Auditoria: só o dono.
     return [...base, ...(canSeeSales ? [SALES_ITEM] : []), ...(isOwner ? [AUDIT_ITEM] : [])]
   })()
-  const [openPendenciesCount, setOpenPendenciesCount] = useState(0)
-
-  useEffect(() => {
-    apiFetch<{ total: number }>('/api/pendencies?status=OPEN&limit=1')
-      .then(r => setOpenPendenciesCount(r.total ?? 0))
-      .catch(() => {})
-  }, [])
-
   const sidebarWidth = isMobile ? 260 : collapsed ? 64 : 260
   const isVisible = isMobile ? mobileOpen : true
 
@@ -166,19 +158,6 @@ export function Sidebar({
               >
                 <Icon size={18} style={{ flexShrink: 0 }} />
                 {(!collapsed || isMobile) && <span>{item.label}</span>}
-                {item.href === '/pendencies' && openPendenciesCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: 4,
-                    right: collapsed && !isMobile ? 4 : 10,
-                    background: '#ef4444', color: 'white',
-                    fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700,
-                    minWidth: 18, height: 18, borderRadius: 100,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '0 4px', lineHeight: 1,
-                  }}>
-                    {openPendenciesCount > 99 ? '99+' : openPendenciesCount}
-                  </span>
-                )}
               </a>
             )
           })}
