@@ -31,6 +31,7 @@ export class ClientsController {
     @Query('segment') segment?: string,
     @Query('product') product?: string,
     @Query('expired') expired?: string,
+    @Query('bucket') bucket?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('sort') sort?: string,
@@ -41,10 +42,16 @@ export class ClientsController {
       segment,
       product,
       expired,
+      bucket,
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
       sort: sort ?? 'companyName',
     })
+  }
+
+  @Get('buckets/counts')
+  bucketCounts(@Query('search') search?: string) {
+    return this.clientsService.bucketCounts(search)
   }
 
   @Post()

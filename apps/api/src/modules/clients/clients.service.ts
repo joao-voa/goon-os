@@ -11,17 +11,48 @@ export class ClientsService {
     private activityLog: ActivityLogService,
   ) {}
 
+  // Condições de cada segmento (bucket) da base de clientes.
+  //   ativos      = contrato ativo no prazo (plano ACTIVE, fim no futuro/aberto)
+  //   recorrentes = contrato vencido, mas com parcela futura (ainda paga)
+  //   base        = já teve plano, sem contrato ativo nem parcela futura
+  //   leads       = nunca teve plano (prospect)
+  private bucketConditions(bucket: string): object[] {
+    const now = new Date()
+    const activeInTerm = { plans: { some: { status: 'ACTIVE', OR: [{ endDate: { gte: now } }, { endDate: null }] } } }
+    const hasFuture = { payments: { some: { status: { in: ['PENDING', 'SCHEDULED'] }, dueDate: { gte: now } } } }
+    const hasPlan = { plans: { some: {} } }
+    switch (bucket) {
+      case 'ativos': return [activeInTerm]
+      case 'recorrentes': return [hasPlan, { NOT: activeInTerm }, hasFuture]
+      case 'base': return [hasPlan, { NOT: activeInTerm }, { NOT: hasFuture }]
+      case 'leads': return [{ NOT: hasPlan }]
+      default: return []
+    }
+  }
+
+  async bucketCounts(search?: string) {
+    const searchWhere = search
+      ? { OR: [{ companyName: { contains: search, mode: 'insensitive' as const } }, { responsible: { contains: search, mode: 'insensitive' as const } }, { cnpj: { contains: search, mode: 'insensitive' as const } }] }
+      : {}
+    const buckets = ['ativos', 'recorrentes', 'base', 'leads']
+    const counts = await this.prisma.$transaction(
+      buckets.map(b => this.prisma.client.count({ where: { AND: [searchWhere, ...this.bucketConditions(b)] } })),
+    )
+    return Object.fromEntries(buckets.map((b, i) => [b, counts[i]]))
+  }
+
   async findAll(params: {
     search?: string
     status?: string
     segment?: string
     product?: string
     expired?: string
+    bucket?: string
     page?: number
     limit?: number
     sort?: string
   }) {
-    const { search, status, segment, product, expired, page = 1, limit = 20, sort = 'companyName' } = params
+    const { search, status, segment, product, expired, bucket, page = 1, limit = 20, sort = 'companyName' } = params
 
     const where: Record<string, unknown> = {}
 
@@ -59,6 +90,11 @@ export class ClientsService {
         ],
       }
       where.AND = expired === 'true' ? [isExpired] : [{ NOT: isExpired }]
+    }
+
+    if (bucket) {
+      const existing = (where.AND as object[]) ?? []
+      where.AND = [...existing, ...this.bucketConditions(bucket)]
     }
 
     const validSortFields: Record<string, object> = {

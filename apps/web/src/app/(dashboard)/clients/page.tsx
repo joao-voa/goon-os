@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 import { useIsMobile } from '@/hooks/useMediaQuery'
@@ -119,7 +119,6 @@ function CreateClientModal({ onClose, onCreated }: CreateModalProps) {
     phone: '',
     email: '',
     whatsapp: '',
-    segment: '',
     status: 'ACTIVE',
   })
   const [showMore, setShowMore] = useState(false)
@@ -237,10 +236,6 @@ function CreateClientModal({ onClose, onCreated }: CreateModalProps) {
             <div style={fieldStyle}>
               <label className="goon-label">WhatsApp</label>
               <input className="goon-input" value={form.whatsapp ?? ''} onChange={e => set('whatsapp', e.target.value)} placeholder="(11) 99999-9999" />
-            </div>
-            <div style={fieldStyle}>
-              <label className="goon-label">Segmento</label>
-              <input className="goon-input" value={form.segment ?? ''} onChange={e => set('segment', e.target.value)} placeholder="Ex: Tecnologia, Varejo..." />
             </div>
             <div style={fieldStyle}>
               <label className="goon-label">Status</label>
@@ -385,18 +380,22 @@ function ClientCard({ client, onClick }: { client: Client; onClick: () => void }
       </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
         {productBadge(client.plans)}
-        {client.segment && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555' }}>{client.segment}</span>
-        )}
       </div>
     </div>
   )
 }
 
+// ---- Segmentos da base ----
+const SEGMENTS = [
+  { key: 'ativos', label: 'Clientes ativos', desc: 'Contrato ativo dentro do prazo' },
+  { key: 'recorrentes', label: 'Recorrentes', desc: 'Ainda pagando, mas com contrato vencido — a renovar' },
+  { key: 'base', label: 'Base de clientes', desc: 'Ex-clientes sem contrato ativo nem pagamentos' },
+  { key: 'leads', label: 'Leads', desc: 'Possíveis clientes (nunca fecharam)' },
+] as const
+
 // ---- Main Page ----
 export default function ClientsPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const isMobile = useIsMobile()
 
   const [clients, setClients] = useState<Client[]>([])
@@ -406,10 +405,9 @@ export default function ClientsPage() {
   const [showModal, setShowModal] = useState(false)
 
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') ?? '')
-  const [segmentFilter, setSegmentFilter] = useState('')
+  const [bucket, setBucket] = useState('ativos')
+  const [counts, setCounts] = useState<{ ativos: number; recorrentes: number; base: number; leads: number } | null>(null)
   const [programFilter, setProgramFilter] = useState('')
-  const [expiredFilter, setExpiredFilter] = useState('')
   const [sort, setSort] = useState('companyName')
 
   const [sortField, setSortField] = useState<string>('')
@@ -425,12 +423,14 @@ export default function ClientsPage() {
   }
 
   const filterLabelStyle: React.CSSProperties = {
-    fontFamily: 'var(--font-mono)',
-    fontSize: 9,
-    fontWeight: 700,
+    fontFamily: 'var(--font-sans)',
+    fontSize: 11,
+    fontWeight: 600,
+    color: '#64748b',
     textTransform: 'uppercase',
+    letterSpacing: '0.04em',
     display: 'block',
-    marginBottom: 4,
+    marginBottom: 5,
   }
 
   const sortedClients = [...clients].sort((a, b) => {
@@ -468,10 +468,8 @@ export default function ClientsPage() {
     try {
       const params = new URLSearchParams()
       if (debouncedSearch) params.set('search', debouncedSearch)
-      if (statusFilter) params.set('status', statusFilter)
-      if (segmentFilter) params.set('segment', segmentFilter)
+      if (bucket) params.set('bucket', bucket)
       if (programFilter) params.set('product', programFilter)
-      if (expiredFilter) params.set('expired', expiredFilter)
       params.set('page', String(page))
       params.set('limit', String(limit))
       params.set('sort', sort)
@@ -484,169 +482,77 @@ export default function ClientsPage() {
     } finally {
       setLoading(false)
     }
-  }, [debouncedSearch, statusFilter, segmentFilter, programFilter, expiredFilter, page, sort])
+  }, [debouncedSearch, bucket, programFilter, page, sort])
 
   useEffect(() => {
     fetchClients()
   }, [fetchClients])
 
+  // Contagem por segmento (respeita a busca)
+  useEffect(() => {
+    const p = new URLSearchParams()
+    if (debouncedSearch) p.set('search', debouncedSearch)
+    apiFetch<{ ativos: number; recorrentes: number; base: number; leads: number }>(`/api/clients/buckets/counts?${p}`).then(setCounts).catch(() => {})
+  }, [debouncedSearch, total])
+
   useEffect(() => {
     setPage(1)
-  }, [debouncedSearch, statusFilter, segmentFilter, programFilter, expiredFilter, sort])
+  }, [debouncedSearch, bucket, programFilter, sort])
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700, color: 'black', margin: 0, textTransform: 'uppercase', letterSpacing: 1 }}>
-            Clientes
-          </h1>
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', margin: '4px 0 0 0' }}>
-            {'>'} {total} cliente{total !== 1 ? 's' : ''} no total
-          </p>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: '#0f172a', margin: 0 }}>Clientes</h1>
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: '#64748b', margin: '2px 0 0 0' }}>{SEGMENTS.find(s => s.key === bucket)?.desc} · {total}</p>
         </div>
-        <button className="goon-btn-accent" onClick={() => setShowModal(true)}>
-          + Novo Cliente
-        </button>
+        <button className="goon-btn-accent" onClick={() => setShowModal(true)}>+ Novo Cliente</button>
+      </div>
+
+      {/* Segmentos */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '1px solid #e2e8f0', overflowX: 'auto' }}>
+        {SEGMENTS.map(s => {
+          const active = bucket === s.key
+          const n = counts ? counts[s.key] : null
+          return (
+            <button key={s.key} onClick={() => setBucket(s.key)} style={{
+              padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer',
+              fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: active ? 700 : 500,
+              color: active ? '#0f172a' : '#94a3b8', borderBottom: active ? '2px solid #C7F900' : '2px solid transparent',
+              marginBottom: -1, whiteSpace: 'nowrap',
+            }}>
+              {s.label}{n != null ? <span style={{ marginLeft: 6, fontSize: 11, color: active ? '#64748b' : '#cbd5e1', fontWeight: 600 }}>{n}</span> : null}
+            </button>
+          )
+        })}
       </div>
 
       {/* Filters */}
-      <div style={isMobile ? {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-        marginBottom: statusFilter ? 8 : 16,
-      } : {
-        display: 'flex',
-        gap: 10,
-        marginBottom: statusFilter ? 8 : 20,
-        flexWrap: 'wrap',
-        alignItems: 'flex-end',
-      }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div>
           <label style={filterLabelStyle}>Busca</label>
-          <input
-            className="goon-input"
-            style={isMobile ? { width: '100%' } : { maxWidth: 280 }}
-            placeholder="Buscar empresa, responsável..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+          <input className="goon-input" style={{ maxWidth: 300 }} placeholder="Buscar empresa, responsável..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        {/* Filter chips row — horizontally scrollable on mobile */}
-        <div style={isMobile ? {
-          display: 'flex',
-          gap: 8,
-          overflowX: 'auto',
-          WebkitOverflowScrolling: 'touch' as React.CSSProperties['WebkitOverflowScrolling'],
-          paddingBottom: 4,
-        } : {
-          display: 'flex',
-          gap: 10,
-          flexWrap: 'wrap',
-          alignItems: 'flex-end',
-        }}>
-          <div>
-            <label style={filterLabelStyle}>Status</label>
-            <select
-              className="goon-select"
-              style={isMobile ? { minWidth: 150, flexShrink: 0 } : { maxWidth: 180 }}
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
-            >
-              <option value="">Todos os status</option>
-              <option value="ACTIVE">Ativo</option>
-              <option value="PROSPECT">Prospect</option>
-              <option value="INACTIVE">Inativo</option>
-            </select>
-          </div>
-          <div>
-            <label style={filterLabelStyle}>Segmento</label>
-            <input
-              className="goon-input"
-              style={isMobile ? { minWidth: 150, flexShrink: 0 } : { maxWidth: 180 }}
-              placeholder="Filtrar segmento..."
-              value={segmentFilter}
-              onChange={e => setSegmentFilter(e.target.value)}
-            />
-          </div>
-          <div>
-            <label style={filterLabelStyle}>Programa</label>
-            <select
-              className="goon-select"
-              style={isMobile ? { minWidth: 150, flexShrink: 0 } : { maxWidth: 180 }}
-              value={programFilter}
-              onChange={e => setProgramFilter(e.target.value)}
-            >
-              <option value="">Todos os programas</option>
-              <option value="GE">GOON Elite</option>
-              <option value="GI">GOON Infinity</option>
-              <option value="GS">GOON Scale</option>
-              <option value="TTS">TikTok Scale</option>
-              <option value="TTSG">TikTok Scale Grupo</option>
-              <option value="AURA">AURA 360</option>
-            </select>
-          </div>
-          <div>
-            <label style={filterLabelStyle}>Contrato</label>
-            <select
-              className="goon-select"
-              style={isMobile ? { minWidth: 130, flexShrink: 0 } : { maxWidth: 150 }}
-              value={expiredFilter}
-              onChange={e => setExpiredFilter(e.target.value)}
-            >
-              <option value="">Todos</option>
-              <option value="false">Em dia</option>
-              <option value="true">Vencidos</option>
-            </select>
-          </div>
-          <div>
-            <label style={filterLabelStyle}>Ordenar</label>
-            <select
-              className="goon-select"
-              style={isMobile ? { minWidth: 180, flexShrink: 0 } : { maxWidth: 200 }}
-              value={sort}
-              onChange={e => setSort(e.target.value)}
-            >
-              <option value="companyName">Ordenar: Empresa</option>
-              <option value="createdAt">Ordenar: Mais recentes</option>
-            </select>
-          </div>
+        <div>
+          <label style={filterLabelStyle}>Programa</label>
+          <select className="goon-select" style={{ maxWidth: 190 }} value={programFilter} onChange={e => setProgramFilter(e.target.value)}>
+            <option value="">Todos os programas</option>
+            <option value="GE">GOON Elite</option>
+            <option value="GI">GOON Infinity</option>
+            <option value="TTS">TikTok Scale</option>
+            <option value="TTSG">TikTok Scale Grupo</option>
+            <option value="GA">GOON Advisor</option>
+          </select>
         </div>
-        <button
-          onClick={fetchClients}
-          style={{
-            background: 'black',
-            color: 'white',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 11,
-            fontWeight: 700,
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-            padding: '6px 16px',
-            cursor: 'pointer',
-            textTransform: 'uppercase',
-          }}
-        >
-          Aplicar
-        </button>
+        <div>
+          <label style={filterLabelStyle}>Ordenar</label>
+          <select className="goon-select" style={{ maxWidth: 190 }} value={sort} onChange={e => setSort(e.target.value)}>
+            <option value="companyName">Empresa</option>
+            <option value="createdAt">Mais recentes</option>
+          </select>
+        </div>
       </div>
-
-      {/* Active filter indicator */}
-      {statusFilter && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, padding: '6px 12px', background: '#C7F900', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', width: 'fit-content' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'black', textTransform: 'uppercase' }}>
-            Filtro ativo: status={statusFilter}
-          </span>
-          <button
-            onClick={() => setStatusFilter('')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: 'black', padding: '0 4px', lineHeight: 1 }}
-          >
-            ✕ limpar
-          </button>
-        </div>
-      )}
 
       {/* Loading */}
       {loading && (
