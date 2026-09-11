@@ -15,18 +15,16 @@ interface GoalsData { year: number; months: Goal[]; totalValue: number; totalCou
 
 const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 const MONTH_FULL = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
-const C = { ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0', neon: '#C7F900', green: '#16a34a', red: '#dc2626', amber: '#f59e0b' }
+const C = { ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0', bg: '#f8fafc', neon: '#C7F900', green: '#16a34a', red: '#dc2626', amber: '#f59e0b' }
 const num: React.CSSProperties = { fontFamily: 'var(--font-sans)', fontVariantNumeric: 'tabular-nums' }
-
-function gaugeColor(pct: number) { return pct >= 1 ? C.green : pct >= 0.6 ? C.amber : C.red }
+const gaugeColor = (pct: number) => pct >= 1 ? C.green : pct >= 0.6 ? C.amber : C.red
 
 // ---- Velocímetro (SVG semicírculo com ponteiro) ----
 function Gauge({ value, target, label, kind }: { value: number; target: number; label: string; kind: 'money' | 'count' }) {
   const pct = target > 0 ? value / target : 0
   const clamped = Math.max(0, Math.min(pct, 1))
   const color = gaugeColor(pct)
-  const angle = 180 - clamped * 180 // graus (180=esq, 0=dir)
-  const rad = (angle * Math.PI) / 180
+  const rad = ((180 - clamped * 180) * Math.PI) / 180
   const nx = 100 + 66 * Math.cos(rad)
   const ny = 100 - 66 * Math.sin(rad)
   const fmtV = (n: number) => kind === 'money' ? fmtBRL(n) : String(Math.round(n))
@@ -49,14 +47,15 @@ function Gauge({ value, target, label, kind }: { value: number; target: number; 
 export default function SalesPage() {
   const { user, loading: authLoading } = useAuth()
   const isOwner = canSeeSales(user?.email)
+  const [tab, setTab] = useState<'vendas' | 'meta'>('vendas')
   const [year, setYear] = useState(new Date().getFullYear())
   const [data, setData] = useState<SalesData | null>(null)
   const [goals, setGoals] = useState<GoalsData | null>(null)
   const [expanded, setExpanded] = useState<number | null>(null)
   const [productFilter, setProductFilter] = useState('')
-  const [metaMonth, setMetaMonth] = useState(new Date().getMonth() + 1)
-  const [editValue, setEditValue] = useState('')
-  const [editCount, setEditCount] = useState('')
+  const [edits, setEdits] = useState<Record<number, { v: string; c: string }>>({})
+  const [allV, setAllV] = useState('')
+  const [allC, setAllC] = useState('')
   const [saving, setSaving] = useState(false)
 
   const loadGoals = useCallback(() => {
@@ -70,23 +69,27 @@ export default function SalesPage() {
     loadGoals()
   }, [isOwner, year, productFilter, loadGoals])
 
-  // preenche o editor quando muda o mês/metas
   useEffect(() => {
-    const g = goals?.months.find(m => m.month === metaMonth)
-    setEditValue(g && g.targetValue ? String(g.targetValue) : '')
-    setEditCount(g && g.targetCount ? String(g.targetCount) : '')
-  }, [goals, metaMonth])
+    if (!goals) return
+    const e: Record<number, { v: string; c: string }> = {}
+    for (const g of goals.months) e[g.month] = { v: g.targetValue ? String(g.targetValue) : '', c: g.targetCount ? String(g.targetCount) : '' }
+    setEdits(e)
+  }, [goals])
 
-  async function saveMeta(applyAll: boolean) {
+  async function saveAll() {
     setSaving(true)
     try {
-      await apiFetch('/api/crm/goals', {
-        method: 'PUT',
-        body: JSON.stringify({ year, month: metaMonth, targetValue: parseFloat(editValue) || 0, targetCount: parseInt(editCount) || 0, applyAll }),
-      })
-      toast.success(applyAll ? 'Meta aplicada a todos os meses' : `Meta de ${MONTH_FULL[metaMonth - 1]} salva`)
+      await Promise.all(Object.entries(edits).map(([m, e]) =>
+        apiFetch('/api/crm/goals', { method: 'PUT', body: JSON.stringify({ year, month: parseInt(m), targetValue: parseFloat(e.v) || 0, targetCount: parseInt(e.c) || 0 }) })))
+      toast.success('Metas salvas')
       loadGoals()
-    } catch { toast.error('Erro ao salvar meta') } finally { setSaving(false) }
+    } catch { toast.error('Erro ao salvar metas') } finally { setSaving(false) }
+  }
+
+  function fillAll() {
+    const e: Record<number, { v: string; c: string }> = {}
+    for (let m = 1; m <= 12; m++) e[m] = { v: allV, c: allC }
+    setEdits(e)
   }
 
   if (authLoading) return null
@@ -97,10 +100,9 @@ export default function SalesPage() {
   const maxTotal = data ? Math.max(...data.months.map(m => m.total), 1) : 1
   const activeMonths = data ? data.months.filter(m => m.count > 0) : []
   const avgTicket = data && data.countYear > 0 ? data.totalYear / data.countYear : 0
-
-  const mesSales = data?.months.find(m => m.month === metaMonth)
-  const mesGoal = goals?.months.find(m => m.month === metaMonth)
   const card: React.CSSProperties = { background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }
+  const curMonth = new Date().getMonth() + 1
+  const nowYear = new Date().getFullYear()
 
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -116,108 +118,163 @@ export default function SalesPage() {
         </div>
       </div>
 
-      {/* ===== METAS / VELOCÍMETRO ===== */}
-      <div style={{ ...card, overflow: 'hidden' }}>
-        <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Meta · quão perto estamos</span>
-          <select value={metaMonth} onChange={e => setMetaMonth(parseInt(e.target.value))} style={{ padding: '6px 10px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 13, background: '#fff', cursor: 'pointer' }}>
-            {MONTH_FULL.map((mn, i) => <option key={i} value={i + 1}>{mn}</option>)}
-          </select>
+      {/* Sub-abas */}
+      <div style={{ display: 'flex', gap: 6, borderBottom: `1px solid ${C.line}` }}>
+        {(['vendas', 'meta'] as const).map(t => (
+          <button key={t} onClick={() => setTab(t)} style={{
+            padding: '9px 16px', border: 'none', background: 'transparent', cursor: 'pointer',
+            fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: tab === t ? 700 : 500,
+            color: tab === t ? C.ink : C.dim, borderBottom: tab === t ? `2px solid ${C.neon}` : '2px solid transparent', marginBottom: -1,
+          }}>{t === 'vendas' ? 'Vendas' : 'Meta'}</button>
+        ))}
+      </div>
+
+      {/* ===================== ABA VENDAS ===================== */}
+      {tab === 'vendas' && <>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
+          {[
+            { label: productFilter ? `Total ${productFilter}` : 'Total no Ano', value: fmtBRL(data?.totalYear ?? 0), accent: C.ink },
+            { label: 'Contratos', value: String(data?.countYear ?? 0), accent: '#4A78FF' },
+            { label: 'Ticket Médio', value: fmtBRL(avgTicket), accent: C.green },
+            { label: 'Meses com Venda', value: String(activeMonths.length), accent: '#7c3aed' },
+          ].map(k => (
+            <div key={k.label} style={{ ...card, borderTop: `3px solid ${k.accent}`, padding: '14px 16px' }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.mid }}>{k.label}</div>
+              <div style={{ ...num, fontSize: 22, fontWeight: 700, color: k.accent, marginTop: 4 }}>{k.value}</div>
+            </div>
+          ))}
         </div>
 
-        {/* Velocímetros: mês (R$ e qtd) + ano (R$ e qtd) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8, padding: '20px 16px' }}>
-          <Gauge label={`${MONTH_FULL[metaMonth - 1]} · R$`} value={mesSales?.total ?? 0} target={mesGoal?.targetValue ?? 0} kind="money" />
-          <Gauge label={`${MONTH_FULL[metaMonth - 1]} · Vendas`} value={mesSales?.count ?? 0} target={mesGoal?.targetCount ?? 0} kind="count" />
+        <div style={{ ...card, overflow: 'hidden' }}>
+          <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Por programa · {year}</span>
+            {productFilter && <button onClick={() => setProductFilter('')} style={{ background: '#f1f5f9', color: C.ink, border: 'none', borderRadius: 6, cursor: 'pointer', padding: '5px 12px', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600 }}>✕ limpar filtro</button>}
+          </div>
+          <div style={{ padding: 12, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
+            {(data?.byProgram ?? []).length === 0 && <div style={{ fontSize: 12, color: C.dim, padding: 8 }}>Sem vendas em {year}.</div>}
+            {(data?.byProgram ?? []).map(pg => {
+              const on = productFilter === pg.code
+              const color = PRODUCT_COLORS[pg.code] ?? C.dim
+              return (
+                <button key={pg.code} onClick={() => setProductFilter(on ? '' : pg.code)} style={{ textAlign: 'left', cursor: 'pointer', padding: '12px 14px', background: on ? C.ink : '#fff', border: `1px solid ${on ? C.ink : C.line}`, borderLeft: `4px solid ${color}`, borderRadius: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 800, color: on ? '#fff' : C.ink }}>{pg.code}</span>
+                    <span style={{ ...num, fontSize: 11, color: on ? '#94a3b8' : C.dim }}>{pg.count}x</span>
+                  </div>
+                  <div style={{ ...num, fontSize: 16, fontWeight: 700, color: on ? '#fff' : color, marginTop: 2 }}>{fmtBRL(pg.total)}</div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div style={{ ...card, overflow: 'hidden' }}>
+          <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.line}`, fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Evolução mensal{productFilter ? ` · ${productFilter}` : ''}</div>
+          <div style={{ padding: 12 }}>
+            {activeMonths.length === 0 && <div style={{ fontSize: 12, color: C.dim, textAlign: 'center', padding: 24 }}>Nenhuma venda{productFilter ? ` de ${productFilter}` : ''} em {year}.</div>}
+            {data?.months.map(m => m.count > 0 && (
+              <div key={m.month} style={{ borderBottom: `1px solid ${C.line}` }}>
+                <div onClick={() => setExpanded(expanded === m.month ? null : m.month)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 4px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 12.5 }}>
+                  <span style={{ width: 70, fontWeight: 700 }}>{expanded === m.month ? '▾' : '▸'} {m.label}</span>
+                  <div style={{ flex: 1, background: '#f1f5f9', height: 20, borderRadius: 4, position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ width: `${(m.total / maxTotal) * 100}%`, background: C.ink, height: '100%', transition: 'width 0.3s' }} />
+                  </div>
+                  <span style={{ width: 44, textAlign: 'center', color: C.dim, fontSize: 11 }}>{m.count}x</span>
+                  <span style={{ ...num, width: 120, textAlign: 'right', fontWeight: 700 }}>{fmtBRL(m.total)}</span>
+                </div>
+                {expanded === m.month && (
+                  <div style={{ padding: '4px 4px 12px 80px' }}>
+                    {m.deals.slice().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((d, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontFamily: 'var(--font-sans)', fontSize: 12, color: C.mid, borderBottom: '1px solid #f5f5f5' }}>
+                        <span>{new Date(d.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} · <strong style={{ color: C.ink }}>{d.companyName}</strong>{d.product ? ` · ${d.product}` : ''}{d.salesRep ? ` · ${d.salesRep}` : ''}</span>
+                        <span style={{ ...num, fontWeight: 700, color: C.ink }}>{fmtBRL(d.value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </>}
+
+      {/* ===================== ABA META ===================== */}
+      {tab === 'meta' && <>
+        {/* Velocímetros do ano */}
+        <div style={{ ...card, padding: '20px 16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
           <Gauge label={`Ano ${year} · R$`} value={data?.totalYear ?? 0} target={goals?.totalValue ?? 0} kind="money" />
           <Gauge label={`Ano ${year} · Vendas`} value={data?.countYear ?? 0} target={goals?.totalCount ?? 0} kind="count" />
         </div>
 
-        {/* Editor de meta */}
-        <div style={{ borderTop: `1px solid ${C.line}`, padding: '14px 20px', display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap', background: '#fafbfc' }}>
+        {/* Aplicar a todos */}
+        <div style={{ ...card, padding: '14px 20px', display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap', background: C.bg }}>
           <div>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 5 }}>Meta {MONTH_FULL[metaMonth - 1]} (R$)</label>
-            <input type="number" value={editValue} onChange={e => setEditValue(e.target.value)} placeholder="0" style={{ width: 150, padding: '8px 12px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 13 }} />
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 5 }}>Aplicar a todos — Meta R$</label>
+            <input type="number" value={allV} onChange={e => setAllV(e.target.value)} placeholder="0" style={{ width: 150, padding: '8px 12px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 13 }} />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 5 }}>Meta de vendas (qtd)</label>
-            <input type="number" value={editCount} onChange={e => setEditCount(e.target.value)} placeholder="0" style={{ width: 130, padding: '8px 12px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 13 }} />
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 5 }}>Meta vendas</label>
+            <input type="number" value={allC} onChange={e => setAllC(e.target.value)} placeholder="0" style={{ width: 120, padding: '8px 12px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 13 }} />
           </div>
-          <button onClick={() => saveMeta(false)} disabled={saving} style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 6, padding: '9px 16px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600 }}>Salvar mês</button>
-          <button onClick={() => saveMeta(true)} disabled={saving} style={{ background: C.neon, color: C.ink, border: 'none', borderRadius: 6, padding: '9px 16px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700 }}>Aplicar a todos os meses</button>
+          <button onClick={fillAll} style={{ background: '#fff', color: C.ink, border: `1px solid ${C.line}`, borderRadius: 6, padding: '9px 16px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600 }}>Preencher todos os meses</button>
+          <div style={{ flex: 1 }} />
+          <button onClick={saveAll} disabled={saving} style={{ background: C.neon, color: C.ink, border: 'none', borderRadius: 6, padding: '9px 20px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700 }}>{saving ? 'Salvando…' : 'Salvar metas'}</button>
         </div>
-      </div>
 
-      {/* KPIs do ano */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
-        {[
-          { label: productFilter ? `Total ${productFilter}` : 'Total no Ano', value: fmtBRL(data?.totalYear ?? 0), accent: C.ink },
-          { label: 'Contratos', value: String(data?.countYear ?? 0), accent: '#4A78FF' },
-          { label: 'Ticket Médio', value: fmtBRL(avgTicket), accent: C.green },
-          { label: 'Meses com Venda', value: String(activeMonths.length), accent: '#7c3aed' },
-        ].map(k => (
-          <div key={k.label} style={{ ...card, borderTop: `3px solid ${k.accent}`, padding: '14px 16px' }}>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.mid }}>{k.label}</div>
-            <div style={{ ...num, fontSize: 22, fontWeight: 700, color: k.accent, marginTop: 4 }}>{k.value}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Totalizador por programa (clicável = filtro) */}
-      <div style={{ ...card, overflow: 'hidden' }}>
-        <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Por programa · {year}</span>
-          {productFilter && (
-            <button onClick={() => setProductFilter('')} style={{ background: '#f1f5f9', color: C.ink, border: 'none', borderRadius: 6, cursor: 'pointer', padding: '5px 12px', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600 }}>✕ limpar filtro</button>
-          )}
-        </div>
-        <div style={{ padding: 12, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
-          {(data?.byProgram ?? []).length === 0 && <div style={{ fontSize: 12, color: C.dim, padding: 8 }}>Sem vendas em {year}.</div>}
-          {(data?.byProgram ?? []).map(pg => {
-            const on = productFilter === pg.code
-            const color = PRODUCT_COLORS[pg.code] ?? C.dim
-            return (
-              <button key={pg.code} onClick={() => setProductFilter(on ? '' : pg.code)} style={{ textAlign: 'left', cursor: 'pointer', padding: '12px 14px', background: on ? C.ink : '#fff', border: `1px solid ${on ? C.ink : C.line}`, borderLeft: `4px solid ${color}`, borderRadius: 8 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 800, color: on ? '#fff' : C.ink }}>{pg.code}</span>
-                  <span style={{ ...num, fontSize: 11, color: on ? '#94a3b8' : C.dim }}>{pg.count}x</span>
-                </div>
-                <div style={{ ...num, fontSize: 16, fontWeight: 700, color: on ? '#fff' : color, marginTop: 2 }}>{fmtBRL(pg.total)}</div>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Barras por mês */}
-      <div style={{ ...card, overflow: 'hidden' }}>
-        <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.line}`, fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Evolução mensal{productFilter ? ` · ${productFilter}` : ''}</div>
-        <div style={{ padding: 12 }}>
-          {activeMonths.length === 0 && <div style={{ fontSize: 12, color: C.dim, textAlign: 'center', padding: 24 }}>Nenhuma venda{productFilter ? ` de ${productFilter}` : ''} em {year}.</div>}
-          {data?.months.map(m => m.count > 0 && (
-            <div key={m.month} style={{ borderBottom: `1px solid ${C.line}` }}>
-              <div onClick={() => setExpanded(expanded === m.month ? null : m.month)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 4px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 12.5 }}>
-                <span style={{ width: 70, fontWeight: 700 }}>{expanded === m.month ? '▾' : '▸'} {m.label}</span>
-                <div style={{ flex: 1, background: '#f1f5f9', height: 20, borderRadius: 4, position: 'relative', overflow: 'hidden' }}>
-                  <div style={{ width: `${(m.total / maxTotal) * 100}%`, background: C.ink, height: '100%', transition: 'width 0.3s' }} />
-                </div>
-                <span style={{ width: 44, textAlign: 'center', color: C.dim, fontSize: 11 }}>{m.count}x</span>
-                <span style={{ ...num, width: 120, textAlign: 'right', fontWeight: 700 }}>{fmtBRL(m.total)}</span>
-              </div>
-              {expanded === m.month && (
-                <div style={{ padding: '4px 4px 12px 80px' }}>
-                  {m.deals.slice().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((d, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontFamily: 'var(--font-sans)', fontSize: 12, color: C.mid, borderBottom: '1px solid #f5f5f5' }}>
-                      <span>{new Date(d.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} · <strong style={{ color: C.ink }}>{d.companyName}</strong>{d.product ? ` · ${d.product}` : ''}{d.salesRep ? ` · ${d.salesRep}` : ''}</span>
-                      <span style={{ ...num, fontWeight: 700, color: C.ink }}>{fmtBRL(d.value)}</span>
-                    </div>
+        {/* Tabela de todos os meses */}
+        <div style={{ ...card, overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-sans)', fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: C.bg, color: C.mid }}>
+                  {['Mês', 'Meta R$', 'Vendido', '%', 'Meta vendas', 'Feitas', '%'].map((h, i) => (
+                    <th key={h} style={{ padding: '10px 14px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, borderBottom: `1px solid ${C.line}` }}>{h}</th>
                   ))}
-                </div>
-              )}
-            </div>
-          ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(mo => {
+                  const s = data?.months.find(x => x.month === mo)
+                  const e = edits[mo] ?? { v: '', c: '' }
+                  const metaV = parseFloat(e.v) || 0
+                  const metaC = parseInt(e.c) || 0
+                  const vend = s?.total ?? 0
+                  const feitas = s?.count ?? 0
+                  const pctV = metaV > 0 ? vend / metaV : 0
+                  const pctC = metaC > 0 ? feitas / metaC : 0
+                  const isCur = mo === curMonth && year === nowYear
+                  return (
+                    <tr key={mo} style={{ background: isCur ? 'rgba(199,249,0,0.07)' : 'transparent', borderBottom: `1px solid ${C.bg}` }}>
+                      <td style={{ padding: '8px 14px', fontWeight: isCur ? 800 : 600, color: C.ink }}>{MONTH_FULL[mo - 1]}</td>
+                      <td style={{ padding: '6px 14px', textAlign: 'right' }}>
+                        <input type="number" value={e.v} onChange={ev => setEdits(p => ({ ...p, [mo]: { ...e, v: ev.target.value } }))} placeholder="0" style={{ width: 110, padding: '6px 10px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 13, textAlign: 'right' }} />
+                      </td>
+                      <td style={{ ...num, padding: '8px 14px', textAlign: 'right', color: C.mid }}>{fmtBRL(vend)}</td>
+                      <td style={{ ...num, padding: '8px 14px', textAlign: 'right', fontWeight: 700, color: metaV > 0 ? gaugeColor(pctV) : C.dim }}>{metaV > 0 ? `${Math.round(pctV * 100)}%` : '—'}</td>
+                      <td style={{ padding: '6px 14px', textAlign: 'right' }}>
+                        <input type="number" value={e.c} onChange={ev => setEdits(p => ({ ...p, [mo]: { ...e, c: ev.target.value } }))} placeholder="0" style={{ width: 70, padding: '6px 10px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 13, textAlign: 'right' }} />
+                      </td>
+                      <td style={{ ...num, padding: '8px 14px', textAlign: 'right', color: C.mid }}>{feitas}</td>
+                      <td style={{ ...num, padding: '8px 14px', textAlign: 'right', fontWeight: 700, color: metaC > 0 ? gaugeColor(pctC) : C.dim }}>{metaC > 0 ? `${Math.round(pctC * 100)}%` : '—'}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+              <tfoot>
+                <tr style={{ background: C.bg, fontWeight: 800 }}>
+                  <td style={{ padding: '10px 14px', color: C.ink }}>Ano</td>
+                  <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: C.ink }}>{fmtBRL(goals?.totalValue ?? 0)}</td>
+                  <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: C.mid }}>{fmtBRL(data?.totalYear ?? 0)}</td>
+                  <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: (goals?.totalValue ?? 0) > 0 ? gaugeColor((data?.totalYear ?? 0) / (goals!.totalValue)) : C.dim }}>{(goals?.totalValue ?? 0) > 0 ? `${Math.round((data?.totalYear ?? 0) / goals!.totalValue * 100)}%` : '—'}</td>
+                  <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: C.ink }}>{goals?.totalCount ?? 0}</td>
+                  <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: C.mid }}>{data?.countYear ?? 0}</td>
+                  <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: (goals?.totalCount ?? 0) > 0 ? gaugeColor((data?.countYear ?? 0) / (goals!.totalCount)) : C.dim }}>{(goals?.totalCount ?? 0) > 0 ? `${Math.round((data?.countYear ?? 0) / goals!.totalCount * 100)}%` : '—'}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
-      </div>
+      </>}
     </div>
   )
 }
