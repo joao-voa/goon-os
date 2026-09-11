@@ -1,930 +1,276 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import {
-  Users,
-  TrendingUp,
-  AlertTriangle,
-  FileText,
-  AlertCircle,
-} from 'lucide-react'
+import React, { useState, useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
-import { useIsMobile } from '@/hooks/useMediaQuery'
-import { STAGE_LABELS, STAGE_COLORS, PRODUCT_COLORS, PRODUCT_NAMES } from '@/lib/constants'
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
-interface RevenueByProduct {
-  GE: number
-  GI: number
-  GS: number
-}
-
-interface KPIs {
-  totalActiveClients: number
-  newClientsThisMonth: number
-  totalRevenue: number
-  revenueByProduct: RevenueByProduct
-}
-
-interface FinancialKPIs {
-  totalReceivedMonth: number
-  totalReceivedAll: number
-  toReceiveMonth: number
-  totalPending: number
-  totalOverdue: number
-  overdueCount: number
-  averageTicket: number
-}
-
-interface Pendencies {
-  total: number
-  contractUnsigned: number
-  paymentOverdue: number
-  renewalPending: number
-}
-
-interface RenewalClient {
-  id: string
-  companyName: string
-  contractEndDate: string
-  daysLeft: number
-}
-
-interface Renewals {
-  count: number
-  clients: RenewalClient[]
-}
-
-interface PipelineStage {
-  stage: string
-  count: number
-}
-
-interface ContractStatusItem {
-  status: string
-  count: number
-}
-
-interface ActivityEntry {
-  id: string
-  description: string
-  createdAt: string
-  action: string
-  client?: { id: string; companyName: string } | null
-}
-
-interface FinancialConsolidation {
-  entradas: { receivedMonth: number; receivedAll: number; toReceiveMonth: number; pending: number; overdue: number }
-  saidas: { pagoMes: number; previstoMes: number; expenses: number; commissions: number }
-  netBalanceMonth: number
-  projectedBalanceMonth: number
-}
-
-interface NegotiationLead {
-  id: string
-  companyName: string
-  stage: string
-  value: number
-  salesRep: string | null
-}
-
-interface Negotiation {
-  total: number
-  count: number
-  leads: NegotiationLead[]
-}
-
+// ── Tipos (só o que o dashboard usa) ──────────────────────────────────────────
+interface Overdue { id: string; companyName: string; value: number }
 interface CashflowMonth {
   month: number
-  year: number
-  entradas: { received: number; pending: number; overdue: number; total: number }
-  saidas: { previsto: number; pago: number; total: number }
-  comissoes: { pending: number; paid: number; total: number }
-  saldo: number
-  saldoProjetado: number
+  entradas: { received: number; pending: number; overdue: number; total: number; overdueClients?: Overdue[] }
+  layers: { impostos: number; custoOperacao: number; distribuicao: number; pessoalGiu: number }
 }
-
 interface CashflowTotals {
-  entradas: number
-  entradasReceived: number
-  saidas: number
-  saidasPago: number
-  comissoes: number
-  comissoesPaid: number
-  saldo: number
-  saldoProjetado: number
+  entradas: number; entradasReceived: number
+  impostos: number; custoOperacao: number; distribuicao: number; pessoalGiu: number
 }
+interface CashflowData { year: number; months: CashflowMonth[]; totals: CashflowTotals }
 
-interface CashflowData {
-  year: number
-  months: CashflowMonth[]
-  totals: CashflowTotals
+interface Stats {
+  kpis: { totalActiveClients: number; newClientsThisMonth: number; totalRevenue: number }
+  financialKpis: { totalReceivedMonth: number; toReceiveMonth: number; totalPending: number; totalOverdue: number; overdueCount: number }
+  negotiation?: { total: number; count: number; leads: Array<{ id: string; companyName: string; stage: string; value: number }> }
+  pendencies: { total: number; contractUnsigned: number; paymentOverdue: number; renewalPending: number }
+  renewals: { count: number; clients: Array<{ id: string; companyName: string; daysLeft: number }> }
+  pipelineSummary: Array<{ stage: string; count: number }>
 }
+interface MonthSales { month: number; total: number; count: number }
+interface SalesData { totalYear: number; countYear: number; months: MonthSales[] }
+interface Goal { month: number; targetValue: number; targetCount: number }
+interface GoalsData { months: Goal[]; totalValue: number; totalCount: number }
+interface Buckets { ativos: number; recorrentes: number; base: number; leads: number }
 
-interface DashboardStats {
-  kpis: KPIs
-  financialKpis: FinancialKPIs
-  financialConsolidation?: FinancialConsolidation
-  negotiation?: Negotiation
-  pendencies: Pendencies
-  renewals: Renewals
-  pipelineSummary: PipelineStage[]
-  contractsStatus: ContractStatusItem[]
-  recentActivity: ActivityEntry[]
-}
+const fmtBRL = (n?: number | null) => n != null ? n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }) : 'R$ 0'
+const fmtK = (v: number) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1).replace('.', ',')}M` : v >= 1000 ? `${Math.round(v / 1000)}k` : `${Math.round(v)}`
+const MONTH_FULL = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+const MONTH_ABBR = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+const C = { ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0', bg: '#f8fafc', neon: '#C7F900', green: '#16a34a', greenDk: '#15803d', red: '#dc2626', amber: '#f59e0b', slate: '#475569', blue: '#4A78FF', purple: '#7c3aed' }
+const num: React.CSSProperties = { fontFamily: 'var(--font-sans)', fontVariantNumeric: 'tabular-nums' }
+const card: React.CSSProperties = { background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }
+const gaugeColor = (pct: number) => pct >= 1 ? C.green : pct >= 0.6 ? C.amber : C.red
 
-function timeAgo(date: string): string {
-  const diff = Date.now() - new Date(date).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'agora'
-  if (mins < 60) return `há ${mins}min`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `há ${hours}h`
-  return `há ${Math.floor(hours / 24)}d`
-}
+const STAGE_LABEL: Record<string, string> = { NOVO: 'Novo', FUP: 'Em contato', REUNIAO_AGENDADA: 'Agendado', EM_NEGOCIACAO: 'Em negociação', REPESCAGEM: 'Repescagem', PERDIDO: 'Perdido', FECHADO: 'Ganho' }
+const STAGE_COLOR: Record<string, string> = { NOVO: '#94a3b8', FUP: '#4A78FF', REUNIAO_AGENDADA: '#7c3aed', EM_NEGOCIACAO: '#f59e0b', REPESCAGEM: '#06b6d4', PERDIDO: '#dc2626', FECHADO: '#16a34a' }
+const PIPE_ORDER = ['NOVO', 'FUP', 'REUNIAO_AGENDADA', 'EM_NEGOCIACAO', 'REPESCAGEM', 'FECHADO']
 
-const fmtBRL = (n?: number | null) =>
-  n != null
-    ? new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-        maximumFractionDigits: 0,
-      }).format(n)
-    : 'R$ 0'
-
-function fmtDate(iso: string): string {
-  const d = new Date(iso)
-  return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' })
-}
-
-// ── Skeleton ─────────────────────────────────────────────────────────────────
-
-function Skeleton({ width, height }: { width?: string | number; height?: string | number }) {
+// ── Velocímetro ───────────────────────────────────────────────────────────────
+function Gauge({ value, target, label, sub }: { value: number; target: number; label: string; sub?: string }) {
+  const pct = target > 0 ? value / target : 0
+  const clamped = Math.max(0, Math.min(pct, 1))
+  const color = gaugeColor(pct)
+  const rad = ((180 - clamped * 180) * Math.PI) / 180
+  const nx = 100 + 66 * Math.cos(rad), ny = 100 - 66 * Math.sin(rad)
   return (
-    <div
-      className="goon-skeleton"
-      style={{ width: width ?? '100%', height: height ?? 16 }}
-    />
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.mid, marginBottom: 2 }}>{label}</div>
+      <svg viewBox="0 0 200 116" style={{ width: '100%', maxWidth: 230 }}>
+        <path d="M 12 100 A 88 88 0 0 1 188 100" fill="none" stroke="#eef2f6" strokeWidth="15" strokeLinecap="round" />
+        <path d="M 12 100 A 88 88 0 0 1 188 100" fill="none" stroke={color} strokeWidth="15" strokeLinecap="round" pathLength={100} strokeDasharray="100" strokeDashoffset={100 - clamped * 100} style={{ transition: 'stroke-dashoffset 0.6s ease, stroke 0.3s' }} />
+        <line x1="100" y1="100" x2={nx} y2={ny} stroke={C.ink} strokeWidth="3" strokeLinecap="round" style={{ transition: 'all 0.6s ease' }} />
+        <circle cx="100" cy="100" r="6" fill={C.ink} />
+        <text x="100" y="74" textAnchor="middle" style={{ fontFamily: 'var(--font-sans)', fontSize: 26, fontWeight: 800, fill: color }}>{target > 0 ? `${Math.round(pct * 100)}%` : '—'}</text>
+      </svg>
+      <div style={{ ...num, fontSize: 15, fontWeight: 800, color: C.ink, marginTop: -6 }}>{fmtBRL(value)}</div>
+      <div style={{ ...num, fontSize: 11.5, color: C.dim }}>{sub ?? (target > 0 ? `meta ${fmtBRL(target)}` : 'meta não definida')}</div>
+    </div>
   )
 }
 
-function LoadingSkeleton({ isMobile }: { isMobile: boolean }) {
-  const gap = isMobile ? 8 : 16
+function SectionHeader({ title, href, action }: { title: string; href?: string; action?: string }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap }}>
-      {/* Alert placeholders */}
-      <div style={{ display: 'flex', gap, flexWrap: 'wrap' }}>
-        {[0, 1, 2].map(i => (
-          <div key={i} style={{ flex: '1 1 200px', height: 64, background: '#c8c8c8', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }} />
+    <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>{title}</span>
+      {href && <a href={href} style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: C.mid, textDecoration: 'none' }}>{action ?? 'ver tudo'} ›</a>}
+    </div>
+  )
+}
+
+export default function DashboardPage() {
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [cf, setCf] = useState<CashflowData | null>(null)
+  const [sales, setSales] = useState<SalesData | null>(null)
+  const [goals, setGoals] = useState<GoalsData | null>(null)
+  const [buckets, setBuckets] = useState<Buckets | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const year = new Date().getFullYear()
+  const curMonth = new Date().getMonth() + 1
+
+  useEffect(() => {
+    apiFetch('/api/payments/check-overdue', { method: 'POST' }).catch(() => {})
+    Promise.all([
+      apiFetch<Stats>('/api/dashboard').catch(() => null),
+      apiFetch<CashflowData>(`/api/cashflow?year=${year}`).catch(() => null),
+      apiFetch<SalesData>(`/api/crm/sales-by-month?year=${year}`).catch(() => null),
+      apiFetch<GoalsData>(`/api/crm/goals?year=${year}&product=GERAL`).catch(() => null),
+      apiFetch<Buckets>('/api/clients/buckets/counts').catch(() => null),
+    ]).then(([s, c, sa, g, b]) => {
+      setStats(s); setCf(c); setSales(sa); setGoals(g); setBuckets(b); setLoading(false)
+    })
+  }, [year])
+
+  if (loading) return <div style={{ padding: 24, color: C.mid }}>Carregando visão geral…</div>
+
+  // ── Derivados ──
+  const mesSold = sales?.months.find(m => m.month === curMonth)?.total ?? 0
+  const mesMeta = goals?.months.find(m => m.month === curMonth)?.targetValue ?? 0
+  const anoSold = sales?.totalYear ?? 0
+  const anoMeta = goals?.totalValue ?? 0
+  const ativos = buckets?.ativos ?? stats?.kpis.totalActiveClients ?? 0
+
+  // Fluxo (camadas do ano)
+  const t = cf?.totals
+  const receita = t?.entradas ?? 0
+  const lucro = receita - (t?.impostos ?? 0) - (t?.custoOperacao ?? 0)
+  const resultado = lucro - (t?.distribuicao ?? 0)
+
+  // Inadimplência (fora carteira — vem do fluxo já corrigido)
+  const overdueMonths = cf?.months ?? []
+  const overdueTotal = overdueMonths.reduce((s, m) => s + m.entradas.overdue, 0)
+  const overdueMap = new Map<string, { name: string; value: number }>()
+  for (const m of overdueMonths) for (const o of (m.entradas.overdueClients ?? [])) {
+    const cur = overdueMap.get(o.id) ?? { name: o.companyName, value: 0 }
+    cur.value += o.value; overdueMap.set(o.id, cur)
+  }
+  const overdueList = [...overdueMap.values()].sort((a, b) => b.value - a.value).slice(0, 6)
+  const overdueCount = overdueMap.size
+
+  // CRM funil
+  const pipeMap = new Map((stats?.pipelineSummary ?? []).map(p => [p.stage, p.count]))
+  const pipeMax = Math.max(...PIPE_ORDER.map(s => pipeMap.get(s) ?? 0), 1)
+
+  // Faturamento do mês (recebido) + a receber
+  const cfMes = cf?.months.find(m => m.month === curMonth)
+  const receitaMes = cfMes?.entradas.total ?? stats?.financialKpis.totalReceivedMonth ?? 0
+  const aReceberMes = cfMes ? cfMes.entradas.pending : stats?.financialKpis.toReceiveMonth ?? 0
+
+  const kpis = [
+    { label: 'Clientes ativos', value: String(ativos), sub: 'contrato no prazo', accent: C.neon, href: '/clients' },
+    { label: `Vendas · ${MONTH_ABBR[curMonth - 1]}`, value: fmtBRL(mesSold), sub: mesMeta > 0 ? `${Math.round(mesSold / mesMeta * 100)}% da meta` : 'sem meta', accent: C.ink, href: '/sales' },
+    { label: 'A receber no mês', value: fmtBRL(aReceberMes), sub: 'parcelas pendentes', accent: C.amber, href: '/payments' },
+    { label: 'Inadimplência', value: fmtBRL(overdueTotal), sub: `${overdueCount} cliente${overdueCount !== 1 ? 's' : ''} vencido${overdueCount !== 1 ? 's' : ''}`, accent: C.red, href: '/pendencies' },
+  ]
+
+  const waterfall = [
+    { l: 'Faturamento', v: receita, kind: 'base' as const },
+    { l: 'Impostos', v: -(t?.impostos ?? 0), kind: 'out' as const },
+    { l: 'Custo da operação', v: -(t?.custoOperacao ?? 0), kind: 'out' as const },
+    { l: 'Lucro da operação', v: lucro, kind: 'sub' as const },
+    { l: 'Distribuição', v: -(t?.distribuicao ?? 0), kind: 'out' as const },
+    { l: 'Resultado da empresa', v: resultado, kind: 'result' as const },
+  ]
+
+  const barMax = Math.max(...(cf?.months ?? []).map(m => m.entradas.total), 1)
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 1200, margin: '0 auto' }}>
+      {/* Header */}
+      <div>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Visão geral</h1>
+        <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.mid, margin: '2px 0 0' }}>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })} · {MONTH_FULL[curMonth - 1]} de {year}</p>
+      </div>
+
+      {/* KPIs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+        {kpis.map(k => (
+          <a key={k.label} href={k.href} style={{ ...card, borderTop: `3px solid ${k.accent}`, padding: '16px 18px', textDecoration: 'none', display: 'block' }}>
+            <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.mid, fontWeight: 600 }}>{k.label}</div>
+            <div style={{ ...num, fontSize: 24, fontWeight: 700, color: k.accent === C.neon ? C.ink : k.accent, marginTop: 6 }}>{k.value}</div>
+            <div style={{ fontSize: 11.5, color: C.dim, marginTop: 2 }}>{k.sub}</div>
+          </a>
         ))}
       </div>
-      {/* KPI row 1 */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap }}>
-        {[0, 1, 2, 3].map(i => (
-          <div key={i} style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <Skeleton height={10} width="60%" />
-            <Skeleton height={24} width="40%" />
+
+      {/* Velocímetro + Fluxo */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16 }}>
+        {/* Vendas */}
+        <div style={{ ...card, overflow: 'hidden' }}>
+          <SectionHeader title="Vendas · meta" href="/sales" action="ajustar" />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: '18px 12px' }}>
+            <Gauge label={`Mês · ${MONTH_ABBR[curMonth - 1]}`} value={mesSold} target={mesMeta} />
+            <Gauge label={`Ano ${year}`} value={anoSold} target={anoMeta} />
           </div>
-        ))}
-      </div>
-      {/* KPI row 2 */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap }}>
-        {[0, 1, 2, 3].map(i => (
-          <div key={i} style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <Skeleton height={10} width="60%" />
-            <Skeleton height={24} width="40%" />
+          <div style={{ padding: '0 20px 14px', display: 'flex', justifyContent: 'space-between', fontSize: 12, color: C.mid }}>
+            <span>{sales?.months.find(m => m.month === curMonth)?.count ?? 0} vendas no mês</span>
+            <span>{sales?.countYear ?? 0} no ano</span>
           </div>
-        ))}
-      </div>
-      {/* Pipeline + Contracts */}
-      <div style={{ display: 'flex', gap, flexDirection: isMobile ? 'column' : 'row' }}>
-        <div style={{ flex: 1, background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', height: 200 }} />
-        <div style={{ flex: '0 0 240px', background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', height: 200 }} />
-      </div>
-      {/* Revenue by Product */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap }}>
-        {[0, 1, 2].map(i => (
-          <div key={i} style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '16px 20px', height: 80 }} />
-        ))}
-      </div>
-      {/* Activity */}
-      <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '20px 24px' }}>
-        <Skeleton height={12} width="40%" />
-        <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {[0, 1, 2, 3, 4].map(i => <Skeleton key={i} height={12} />)}
+        </div>
+
+        {/* Fluxo de caixa */}
+        <div style={{ ...card, overflow: 'hidden' }}>
+          <SectionHeader title={`Fluxo de caixa · ${year}`} href="/payments" action="abrir" />
+          <div style={{ padding: '6px 0' }}>
+            {waterfall.map((r, i) => (
+              <div key={r.l} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: r.kind === 'result' ? '12px 20px' : '8px 20px',
+                background: r.kind === 'result' ? (resultado >= 0 ? 'rgba(199,249,0,0.10)' : 'rgba(220,38,38,0.05)') : 'transparent',
+                borderTop: (r.kind === 'sub' || r.kind === 'result') && i > 0 ? `1px solid ${C.line}` : 'none',
+              }}>
+                <span style={{ fontSize: 13, fontWeight: r.kind === 'sub' || r.kind === 'result' || r.kind === 'base' ? 700 : 500, color: r.kind === 'out' ? C.mid : C.ink }}>{r.l}</span>
+                <span style={{ ...num, fontSize: r.kind === 'result' ? 18 : 14, fontWeight: r.kind === 'sub' || r.kind === 'result' || r.kind === 'base' ? 800 : 600, color: r.kind === 'result' ? (r.v >= 0 ? C.greenDk : C.red) : r.kind === 'out' ? C.red : C.ink }}>{r.v < 0 ? '−' : ''}{fmtBRL(Math.abs(r.v))}</span>
+              </div>
+            ))}
+          </div>
+          {/* mini barras entradas por mês */}
+          <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 44, padding: '0 20px 14px' }}>
+            {(cf?.months ?? []).map(m => {
+              const h = (m.entradas.total / barMax) * 38
+              const isCur = m.month === curMonth
+              return <div key={m.month} title={`${MONTH_ABBR[m.month - 1]} · ${fmtBRL(m.entradas.total)}`} style={{ flex: 1, height: Math.max(h, 2), background: isCur ? C.neon : '#dbe4ea', borderRadius: '2px 2px 0 0' }} />
+            })}
+          </div>
         </div>
       </div>
-    </div>
-  )
-}
 
-// ── Alert Card ────────────────────────────────────────────────────────────────
-
-interface AlertCardProps {
-  icon: string
-  count: number
-  label: string
-  bg: string
-  href: string
-  onDismiss: () => void
-}
-
-function AlertCard({ icon, count, label, bg, href, onDismiss }: AlertCardProps) {
-  const router = useRouter()
-  return (
-    <div
-      style={{
-        background: bg,
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
-        padding: '12px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        cursor: 'pointer',
-        flex: '1 1 220px',
-        position: 'relative',
-        transition: 'transform 0.1s, box-shadow 0.1s',
-      }}
-      onClick={() => router.push(href)}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLDivElement).style.transform = 'translate(-2px,-2px)'
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.08)'
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLDivElement).style.transform = ''
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.07)'
-      }}
-    >
-      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: 'white', flexShrink: 0 }}>
-        {icon}
-      </span>
-      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 18, color: 'white', flexShrink: 0, lineHeight: 1 }}>
-        {count}
-      </span>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'white', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', flex: 1 }}>
-        {label}
-      </span>
-      <button
-        onClick={e => { e.stopPropagation(); onDismiss() }}
-        style={{
-          background: 'rgba(0,0,0,0.3)',
-          border: '1px solid rgba(255,255,255,0.4)',
-          color: 'white',
-          cursor: 'pointer',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 12,
-          fontWeight: 700,
-          padding: '2px 8px',
-          lineHeight: 1.4,
-          flexShrink: 0,
-        }}
-        aria-label="Fechar"
-      >
-        ✕
-      </button>
-    </div>
-  )
-}
-
-// ── KPI Card ──────────────────────────────────────────────────────────────────
-
-interface KpiCardProps {
-  label: string
-  value: React.ReactNode
-  icon: React.ReactNode
-  accentColor: string
-  href?: string
-}
-
-function KpiCard({ label, value, icon, accentColor, href }: KpiCardProps) {
-  const router = useRouter()
-  return (
-    <div
-      style={{
-        background: 'white',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
-        padding: '20px 20px 20px 24px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-        position: 'relative',
-        overflow: 'hidden',
-        transition: 'transform 0.15s, box-shadow 0.15s',
-        cursor: href ? 'pointer' : 'default',
-      }}
-      onClick={href ? () => router.push(href) : undefined}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLDivElement).style.transform = 'translate(-2px,-2px)'
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.08)'
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLDivElement).style.transform = ''
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.07)'
-      }}
-    >
-      {/* Colored left accent */}
-      <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 4, background: accentColor }} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          {label}
-        </span>
-        <div style={{ width: 34, height: 34, border: '1px solid #e2e8f0', background: 'var(--retro-gray)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {icon}
-        </div>
-      </div>
-      <span style={{ fontFamily: 'var(--font-sans)', color: 'black', fontSize: 16, lineHeight: 1.3 }}>
-        {value}
-      </span>
-    </div>
-  )
-}
-
-// ── Renewal Section ───────────────────────────────────────────────────────────
-
-function RenewalSection({ renewals, isMobile }: { renewals: Renewals; isMobile: boolean }) {
-  const router = useRouter()
-  if (renewals.count === 0) return null
-  return (
-    <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }}>
-      <div
-        className="goon-card-header"
-        style={{ background: '#ff6600', backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '16px 16px' }}
-      >
-        ↺ CONTRATOS EM RENOVAÇÃO ({renewals.count})
-      </div>
-      <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {renewals.clients.map(client => (
-          <div
-            key={client.id}
-            style={{
-              borderLeft: '4px solid #ff6600',
-              paddingLeft: 14,
-              paddingTop: 10,
-              paddingBottom: 10,
-              paddingRight: 14,
-              border: '1px solid #ddd',
-              borderLeftWidth: 4,
-              borderLeftColor: '#ff6600',
-              display: 'flex',
-              flexDirection: isMobile ? 'column' : 'row',
-              justifyContent: 'space-between',
-              alignItems: isMobile ? 'flex-start' : 'center',
-              gap: 10,
-              background: '#fffdf9',
-            }}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 13, color: 'black' }}>
-                {client.companyName}
-              </span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555' }}>
-                {client.daysLeft < 0 ? (
-                  <strong style={{ color: '#cc0000' }}>Contrato vencido ha {Math.abs(client.daysLeft)} dias</strong>
-                ) : client.daysLeft === 0 ? (
-                  <strong style={{ color: '#cc0000' }}>Contrato vence hoje</strong>
-                ) : (
-                  <>Contrato vence em <strong style={{ color: client.daysLeft <= 7 ? '#cc0000' : '#ff6600' }}>{client.daysLeft} dias</strong></>
-                )}
-                {' '}({fmtDate(client.contractEndDate)})
-              </span>
+      {/* Inadimplentes + CRM */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16 }}>
+        {/* Inadimplentes */}
+        <div style={{ ...card, overflow: 'hidden' }}>
+          <SectionHeader title="Inadimplentes" href="/pendencies" action="ver pendências" />
+          <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'baseline', gap: 10, borderBottom: `1px solid ${C.line}` }}>
+            <span style={{ ...num, fontSize: 26, fontWeight: 800, color: C.red }}>{fmtBRL(overdueTotal)}</span>
+            <span style={{ fontSize: 12.5, color: C.mid }}>{overdueCount} cliente{overdueCount !== 1 ? 's' : ''} · fora carteira</span>
+          </div>
+          {overdueList.length === 0 && <div style={{ padding: '18px 20px', color: C.dim, fontSize: 13 }}>Nenhum inadimplente. 🎉</div>}
+          {overdueList.map((o, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 20px', borderTop: i > 0 ? `1px solid ${C.bg}` : 'none' }}>
+              <span style={{ fontSize: 13, color: C.ink }}>{o.name}</span>
+              <span style={{ ...num, fontSize: 13, fontWeight: 700, color: C.red }}>{fmtBRL(o.value)}</span>
             </div>
-            <button
-              className="goon-btn-secondary"
-              style={{ fontSize: 10, padding: '8px 14px', whiteSpace: 'nowrap' }}
-              onClick={() => router.push(`/clients/${client.id}`)}
-            >
-              CONTATAR
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+          ))}
+        </div>
 
-// ── Pipeline Summary ──────────────────────────────────────────────────────────
-
-function PipelineSummary({ data }: { data: PipelineStage[] }) {
-  const router = useRouter()
-  const maxCount = Math.max(...data.map(d => d.count), 1)
-  return (
-    <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', flex: 1, minWidth: 0 }}>
-      <div className="goon-card-header">PIPELINE ONBOARDING</div>
-      <div style={{ padding: '16px 20px' }}>
-        {data.length === 0 ? (
-          <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 12 }}>Nenhum onboarding ativo</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {data.map(item => {
-              const color = STAGE_COLORS[item.stage] ?? '#888'
-              const label = STAGE_LABELS[item.stage] ?? item.stage
-              const pct = Math.round((item.count / maxCount) * 100)
+        {/* CRM funil */}
+        <div style={{ ...card, overflow: 'hidden' }}>
+          <SectionHeader title="CRM · funil" href="/crm" action="abrir" />
+          <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 9 }}>
+            {PIPE_ORDER.map(stage => {
+              const n = pipeMap.get(stage) ?? 0
               return (
-                <div key={item.stage} style={{ cursor: 'pointer' }} onClick={() => router.push('/onboarding')}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 10, height: 10, background: color, border: '1px solid #e2e8f0', flexShrink: 0 }} />
-                      <span style={{ fontFamily: 'var(--font-mono)', color: 'black', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>
-                        {label}
-                      </span>
-                    </div>
-                    <span style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', padding: '1px 6px', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700 }}>
-                      {item.count}
-                    </span>
+                <div key={stage} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ width: 108, fontSize: 12.5, color: C.slate, fontWeight: 600 }}>{STAGE_LABEL[stage] ?? stage}</span>
+                  <div style={{ flex: 1, background: C.bg, height: 18, borderRadius: 5, overflow: 'hidden' }}>
+                    <div style={{ width: `${(n / pipeMax) * 100}%`, height: '100%', background: STAGE_COLOR[stage], borderRadius: 5, transition: 'width 0.4s' }} />
                   </div>
-                  <div style={{ height: 8, background: 'var(--retro-gray)', border: '1px solid #e2e8f0' }}>
-                    <div style={{ height: '100%', width: `${pct}%`, background: color, transition: 'width 0.4s ease' }} />
-                  </div>
+                  <span style={{ ...num, width: 30, textAlign: 'right', fontSize: 13, fontWeight: 700, color: C.ink }}>{n}</span>
                 </div>
               )
             })}
           </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ── Contracts Status ──────────────────────────────────────────────────────────
-
-function ContractsStatus({ data }: { data: ContractStatusItem[] }) {
-  const getCount = (status: string) => data.find(d => d.status === status)?.count ?? 0
-  const items = [
-    { label: 'Rascunho', status: 'DRAFT', color: '#c0c0c0', textColor: 'black' },
-    { label: 'Enviado', status: 'SENT', color: '#000080', textColor: 'white' },
-    { label: 'Assinado', status: 'SIGNED', color: '#006600', textColor: 'white' },
-  ]
-  return (
-    <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', flex: '0 0 240px' }}>
-      <div className="goon-card-header">STATUS CONTRATOS</div>
-      <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {items.map(item => (
-          <div
-            key={item.status}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', border: '1px solid #e2e8f0', background: 'var(--retro-gray)' }}
-          >
-            <span
-              style={{ background: item.color, color: item.textColor, border: '1px solid #e2e8f0', boxShadow: 'none', padding: '2px 8px', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }}
-            >
-              {item.label}
-            </span>
-            <span style={{ fontFamily: 'var(--font-sans)', color: 'black', fontSize: 16 }}>
-              {getCount(item.status)}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ── Revenue by Product ────────────────────────────────────────────────────────
-
-function RevenueProductCard({ code, value }: { code: string; value: number }) {
-  const router = useRouter()
-  const color = PRODUCT_COLORS[code] ?? 'black'
-  return (
-    <div
-      style={{
-        background: 'white',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
-        padding: '20px 24px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-        position: 'relative',
-        overflow: 'hidden',
-        transition: 'transform 0.15s, box-shadow 0.15s',
-        cursor: 'pointer',
-      }}
-      onClick={() => router.push('/products')}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLDivElement).style.transform = 'translate(-2px,-2px)'
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.08)'
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLDivElement).style.transform = ''
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.07)'
-      }}
-    >
-      <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 4, background: color }} />
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ background: color, color: 'white', border: '1px solid #e2e8f0', padding: '2px 10px', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700 }}>
-          {code}
-        </span>
-        <span style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 11 }}>{PRODUCT_NAMES[code]}</span>
-      </div>
-      <span style={{ fontFamily: 'var(--font-sans)', color: 'black', fontSize: 16, lineHeight: 1.3 }}>
-        {fmtBRL(value)}
-      </span>
-    </div>
-  )
-}
-
-// ── Recent Activity ───────────────────────────────────────────────────────────
-
-function RecentActivity({ data }: { data: ActivityEntry[] }) {
-  const router = useRouter()
-  const sliced = data.slice(0, 10)
-  return (
-    <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }}>
-      <div className="goon-card-header">ATIVIDADE RECENTE</div>
-      <div style={{ padding: '16px 20px', maxHeight: 340, overflowY: 'auto' }}>
-        {sliced.length === 0 ? (
-          <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 12 }}>Nenhuma atividade registrada</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {sliced.map((entry, idx) => (
-              <div
-                key={entry.id}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  padding: '8px 0',
-                  borderBottom: idx < sliced.length - 1 ? '1px solid #ddd' : 'none',
-                  gap: 12,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, flex: 1, minWidth: 0 }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#006600', fontWeight: 700, flexShrink: 0, marginTop: 2 }}>{'>'}</span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', color: 'black', fontSize: 12, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {entry.description}
-                    </span>
-                    {entry.client && (
-                      <span
-                        style={{ fontFamily: 'var(--font-mono)', color: 'var(--retro-blue)', fontSize: 10, cursor: 'pointer', textDecoration: 'underline' }}
-                        onClick={() => router.push(`/clients/${entry.client!.id}`)}
-                      >
-                        {entry.client.companyName}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <span style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 10, flexShrink: 0, paddingTop: 2 }}>
-                  [{timeAgo(entry.createdAt)}]
-                </span>
-              </div>
-            ))}
-            {/* Blinking cursor */}
-            <div style={{ paddingTop: 8 }}>
-              <span
-                style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'black', animation: 'blink 1s infinite' }}
-              >
-                █
-              </span>
+          {stats?.negotiation && stats.negotiation.count > 0 && (
+            <div style={{ padding: '12px 20px', borderTop: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fffbeb' }}>
+              <span style={{ fontSize: 12.5, color: '#92400e', fontWeight: 600 }}>Em negociação · {stats.negotiation.count}</span>
+              <span style={{ ...num, fontSize: 14, fontWeight: 800, color: '#92400e' }}>{fmtBRL(stats.negotiation.total)}</span>
             </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ── Financial Summary ─────────────────────────────────────────────────────────
-
-const STAGE_LABEL_MAP: Record<string, string> = {
-  NOVO_LEAD: 'Novo Lead',
-  CONTATO_FEITO: 'Contato Feito',
-  PROPOSTA_ENVIADA: 'Proposta Enviada',
-  NEGOCIACAO: 'Negociacao',
-}
-
-function NegotiationCard({ data, isMobile }: { data: Negotiation; isMobile: boolean }) {
-  const fmt = (n: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n)
-
-  return (
-    <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }}>
-      <div className="goon-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span>EM NEGOCIACAO</span>
-        <span style={{ fontSize: 11, fontFamily: 'var(--font-sans)', color: '#e6a800' }}>{fmt(data.total)} ({data.count} leads)</span>
-      </div>
-      {data.leads.length > 0 ? (
-        <div style={{ padding: '12px 16px' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <th style={{ padding: '4px 8px', textAlign: 'left', fontWeight: 700, textTransform: 'uppercase', fontSize: 9 }}>Empresa</th>
-                <th style={{ padding: '4px 8px', textAlign: 'center', fontWeight: 700, textTransform: 'uppercase', fontSize: 9 }}>Etapa</th>
-                {!isMobile && <th style={{ padding: '4px 8px', textAlign: 'left', fontWeight: 700, textTransform: 'uppercase', fontSize: 9 }}>Vendedor</th>}
-                <th style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700, textTransform: 'uppercase', fontSize: 9 }}>Valor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.leads.map(l => (
-                <tr key={l.id} style={{ borderBottom: '1px solid #ddd' }}>
-                  <td style={{ padding: '6px 8px' }}>{l.companyName}</td>
-                  <td style={{ padding: '6px 8px', textAlign: 'center' }}>
-                    <span style={{ background: '#f59e0b', color: 'white', padding: '1px 6px', fontSize: 9, fontWeight: 700 }}>{STAGE_LABEL_MAP[l.stage] ?? l.stage}</span>
-                  </td>
-                  {!isMobile && <td style={{ padding: '6px 8px' }}>{l.salesRep ?? '-'}</td>}
-                  <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(l.value)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div style={{ padding: '20px 16px', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888' }}>
-          Nenhum lead com valor em negociacao
-        </div>
-      )}
-    </div>
-  )
-}
-
-
-// ── Main Page ─────────────────────────────────────────────────────────────────
-
-export default function DashboardPage() {
-  const isMobile = useIsMobile()
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [cashflow, setCashflow] = useState<CashflowData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  // Alert dismiss state
-  const [showOverdue, setShowOverdue] = useState(true)
-  const [showRenewal, setShowRenewal] = useState(true)
-  const [showUnsigned, setShowUnsigned] = useState(true)
-
-  const gap = isMobile ? 8 : 16
-  const currentYear = new Date().getFullYear()
-
-  useEffect(() => {
-    apiFetch('/api/payments/check-overdue', { method: 'POST' }).catch(() => {})
-
-    Promise.all([
-      apiFetch<DashboardStats>('/api/dashboard'),
-      apiFetch<CashflowData>(`/api/cashflow?year=${currentYear}`),
-    ])
-      .then(([dashData, cfData]) => { setStats(dashData); setCashflow(cfData); setLoading(false) })
-      .catch(err => { setError(err.message ?? 'Erro ao carregar dashboard'); setLoading(false) })
-  }, [currentYear])
-
-  const signedContracts = stats?.contractsStatus.find(c => c.status === 'SIGNED')?.count ?? 0
-
-  // Cashflow-derived KPIs
-  const currentMonth = new Date().getMonth()
-  const mesAtual = cashflow?.months[currentMonth]
-  const aReceberAno = cashflow ? cashflow.totals.entradas - cashflow.totals.entradasReceived : 0
-  const aReceberMes = mesAtual ? mesAtual.entradas.pending + mesAtual.entradas.overdue : 0
-  const gastosAno = cashflow ? cashflow.totals.saidas + cashflow.totals.comissoes : 0
-  const aPagarAno = cashflow ? (cashflow.totals.saidas - cashflow.totals.saidasPago) + (cashflow.totals.comissoes - cashflow.totals.comissoesPaid) : 0
-  const gastosMes = mesAtual ? mesAtual.saidas.total + mesAtual.comissoes.total : 0
-  const aPagarMes = mesAtual ? mesAtual.saidas.previsto + mesAtual.comissoes.pending : 0
-
-  // Inadimplencia
-  const totalOverdue = stats?.financialKpis?.totalOverdue ?? 0
-  const overdueCount = stats?.financialKpis?.overdueCount ?? 0
-  const carteiraAno = cashflow?.totals.entradas ?? 0
-  const taxaInadimplencia = carteiraAno > 0 ? (totalOverdue / carteiraAno) * 100 : 0
-
-  // Resultado e Saldos
-  const saldoRealizadoMes = mesAtual ? mesAtual.saldo : 0
-  const saldoProjetadoMes = mesAtual ? mesAtual.saldoProjetado : 0
-  const saldoRealizadoAno = cashflow?.totals.saldo ?? 0
-  const saldoProjetadoAno = cashflow?.totals.saldoProjetado ?? 0
-
-  const cfCardStyle = (bg: string): React.CSSProperties => ({ background: bg, color: 'white', padding: '12px 16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700 })
-
-  return (
-    <div>
-      {/* Header */}
-      <div style={{ marginBottom: isMobile ? 16 : 24 }}>
-        <h1 style={{ fontFamily: 'var(--font-sans)', color: 'black', fontSize: isMobile ? 12 : 16, fontWeight: 700, margin: 0, textTransform: 'uppercase', letterSpacing: 1 }}>
-          Dashboard
-        </h1>
-        <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 12, marginTop: 6, marginBottom: 0 }}>
-          {'>'} Visão geral da operação
-        </p>
-      </div>
-
-      {/* Error */}
-      {error && (
-        <div style={{ background: '#fff0f0', border: '1px solid #fecaca', boxShadow: '4px 4px 0 var(--danger)', padding: '12px 16px', fontFamily: 'var(--font-mono)', color: 'var(--danger)', fontSize: 12, fontWeight: 700, marginBottom: 16 }}>
-          [ERRO] {error}
-        </div>
-      )}
-
-      {loading ? (
-        <LoadingSkeleton isMobile={isMobile} />
-      ) : stats ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap }}>
-
-          {/* ══ 1. VISÃO ESTRATÉGICA — Clientes + Ticket ══════════════════ */}
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap }}>
-            <KpiCard
-              label="Clientes Ativos"
-              value={
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span>{stats.kpis.totalActiveClients}</span>
-                  <span style={{ display: 'inline-block', width: 8, height: 8, background: '#C7F900', border: '1px solid #e2e8f0', borderRadius: '50%', animation: 'pulse 2s ease-in-out infinite' }} />
-                </div>
-              }
-              icon={<Users size={16} />}
-              accentColor="#ccff00"
-              href="/clients"
-            />
-            <KpiCard
-              label="Ticket Médio"
-              value={fmtBRL(stats.financialKpis?.averageTicket)}
-              icon={<TrendingUp size={16} />}
-              accentColor="black"
-              href="/payments"
-            />
-            <KpiCard
-              label="Novos este Mês"
-              value={stats.kpis.newClientsThisMonth}
-              icon={<Users size={16} />}
-              accentColor={stats.kpis.newClientsThisMonth > 0 ? '#ccff00' : 'black'}
-              href="/clients"
-            />
-            <KpiCard
-              label="Contratos Ativos"
-              value={signedContracts}
-              icon={<FileText size={16} />}
-              accentColor="black"
-              href="/contracts"
-            />
-          </div>
-
-          {/* ══ 2. FATURAMENTO — 8 KPI cards (igual fluxo de caixa) ══════ */}
-          {cashflow && (
-            <>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12 }}>
-                <div style={cfCardStyle('#1e293b')}>
-                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Faturamento Total (Ano)</div>
-                  <div style={{ fontSize: 18 }}>{fmtBRL(cashflow.totals.entradas)}</div>
-                  <div style={{ fontSize: 9, opacity: 0.7 }}>Todos os pagamentos {currentYear}</div>
-                </div>
-                <div style={cfCardStyle('#334155')}>
-                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Receber (Total)</div>
-                  <div style={{ fontSize: 18 }}>{fmtBRL(aReceberAno)}</div>
-                  <div style={{ fontSize: 9, opacity: 0.7 }}>Pendente + Vencido no ano</div>
-                </div>
-                <div style={cfCardStyle('#475569')}>
-                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Faturamento Previsto (Mes)</div>
-                  <div style={{ fontSize: 18 }}>{fmtBRL(mesAtual?.entradas.total ?? 0)}</div>
-                  <div style={{ fontSize: 9, opacity: 0.7 }}>Recebido: {fmtBRL(mesAtual?.entradas.received ?? 0)}</div>
-                </div>
-                <div style={cfCardStyle('#64748b')}>
-                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Receber (Mes)</div>
-                  <div style={{ fontSize: 18 }}>{fmtBRL(aReceberMes)}</div>
-                  <div style={{ fontSize: 9, opacity: 0.7 }}>Falta receber este mes</div>
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12 }}>
-                <div style={cfCardStyle('#1e293b')}>
-                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Gastos Total (Ano)</div>
-                  <div style={{ fontSize: 18 }}>{fmtBRL(gastosAno)}</div>
-                  <div style={{ fontSize: 9, opacity: 0.7 }}>Despesas + Comissoes {currentYear}</div>
-                </div>
-                <div style={cfCardStyle('#334155')}>
-                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Pagar (Total)</div>
-                  <div style={{ fontSize: 18 }}>{fmtBRL(aPagarAno)}</div>
-                  <div style={{ fontSize: 9, opacity: 0.7 }}>Previsto + Pendente no ano</div>
-                </div>
-                <div style={cfCardStyle('#475569')}>
-                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>Gastos Previstos (Mes)</div>
-                  <div style={{ fontSize: 18 }}>{fmtBRL(gastosMes)}</div>
-                  <div style={{ fontSize: 9, opacity: 0.7 }}>Pago: {fmtBRL(mesAtual ? mesAtual.saidas.pago + mesAtual.comissoes.paid : 0)}</div>
-                </div>
-                <div style={cfCardStyle('#64748b')}>
-                  <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8 }}>A Pagar (Mes)</div>
-                  <div style={{ fontSize: 18 }}>{fmtBRL(aPagarMes)}</div>
-                  <div style={{ fontSize: 9, opacity: 0.7 }}>Falta pagar este mes</div>
-                </div>
-              </div>
-            </>
           )}
+        </div>
+      </div>
 
-          {/* ══ 3. INADIMPLÊNCIA ══════════════════════════════════════════ */}
-          <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }}>
-            <div className="goon-card-header" style={{ background: overdueCount > 0 ? '#cc0000' : 'black' }}>INADIMPLENCIA</div>
-            <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 16 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Valor Vencido</span>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: totalOverdue > 0 ? '#cc0000' : '#006600' }}>{fmtBRL(totalOverdue)}</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Parcelas Vencidas</span>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: overdueCount > 0 ? '#cc0000' : 'black' }}>{overdueCount}</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Taxa Inadimplencia</span>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: taxaInadimplencia > 5 ? '#cc0000' : taxaInadimplencia > 0 ? '#e6a800' : '#006600' }}>{taxaInadimplencia.toFixed(1)}%</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>sobre total do ano</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Pendencias</span>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: (stats.pendencies?.total ?? 0) > 0 ? '#cc0000' : 'black' }}>{stats.pendencies?.total ?? 0}</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>total abertas</span>
-              </div>
-            </div>
-          </div>
-
-          {/* ══ 4. RESULTADO E SALDOS ═════════════════════════════════════ */}
-          <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }}>
-            <div className="goon-card-header">RESULTADO E SALDOS</div>
-            <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 16 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Saldo Realizado (Mes)</span>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: saldoRealizadoMes >= 0 ? '#006600' : '#cc0000' }}>{fmtBRL(saldoRealizadoMes)}</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>recebido - pago</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Saldo Projetado (Mes)</span>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: saldoProjetadoMes >= 0 ? '#006600' : '#cc0000' }}>{fmtBRL(saldoProjetadoMes)}</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>entradas - saidas previstas</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Resultado Realizado (Ano)</span>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: saldoRealizadoAno >= 0 ? '#006600' : '#cc0000' }}>{fmtBRL(saldoRealizadoAno)}</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>acumulado {currentYear}</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase' }}>Resultado Projetado (Ano)</span>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: saldoProjetadoAno >= 0 ? '#006600' : '#cc0000' }}>{fmtBRL(saldoProjetadoAno)}</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>projecao {currentYear}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* ══ 5. RECEITA POR PROGRAMA ═══════════════════════════════════ */}
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap }}>
-            {(['GE', 'GI', 'GS'] as const).map(code => (
-              <RevenueProductCard
-                key={code}
-                code={code}
-                value={stats.kpis.revenueByProduct[code] ?? 0}
-              />
+      {/* Renovações (se houver) */}
+      {stats?.renewals && stats.renewals.count > 0 && (
+        <div style={{ ...card, overflow: 'hidden' }}>
+          <SectionHeader title={`Renovações próximas · ${stats.renewals.count}`} href="/pendencies" action="ver" />
+          <div style={{ display: 'flex', gap: 10, padding: '14px 20px', flexWrap: 'wrap' }}>
+            {stats.renewals.clients.slice(0, 8).map(c => (
+              <a key={c.id} href={`/clients/${c.id}`} style={{ ...num, textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: 2, padding: '8px 14px', border: `1px solid ${C.line}`, borderRadius: 8, background: c.daysLeft < 0 ? '#fef2f2' : c.daysLeft <= 15 ? '#fffbeb' : '#fff' }}>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 700, color: C.ink }}>{c.companyName}</span>
+                <span style={{ fontSize: 11, color: c.daysLeft < 0 ? C.red : c.daysLeft <= 15 ? C.amber : C.mid }}>{c.daysLeft < 0 ? `vencido há ${Math.abs(c.daysLeft)}d` : `${c.daysLeft}d restantes`}</span>
+              </a>
             ))}
           </div>
-
-          {/* ══ 6. EM NEGOCIAÇÃO ══════════════════════════════════════════ */}
-          {stats.negotiation && stats.negotiation.count > 0 && (
-            <NegotiationCard data={stats.negotiation} isMobile={isMobile} />
-          )}
-
-          {/* ══ 7. OPERAÇÃO — pipeline + contratos ════════════════════════ */}
-          <div style={{ display: 'flex', gap, flexDirection: isMobile ? 'column' : 'row', alignItems: 'stretch' }}>
-            <PipelineSummary data={stats.pipelineSummary} />
-            <div style={isMobile ? {} : { flex: '0 0 260px' }}>
-              <ContractsStatus data={stats.contractsStatus} />
-            </div>
-          </div>
-
-          {/* ══ 8. ALERTAS — ações urgentes (só se houver) ════════════════ */}
-          {(() => {
-            const oCount = stats.pendencies?.paymentOverdue ?? stats.financialKpis?.overdueCount ?? 0
-            const renewalCount = stats.renewals?.count ?? 0
-            const unsignedCount = stats.pendencies?.contractUnsigned ?? 0
-            const hasAny = (oCount > 0 && showOverdue) || (renewalCount > 0 && showRenewal) || (unsignedCount > 0 && showUnsigned)
-            if (!hasAny) return null
-            return (
-              <div style={{ display: 'flex', gap, flexWrap: 'wrap' }}>
-                {oCount > 0 && showOverdue && (
-                  <AlertCard icon="▲" count={oCount} label="boletos vencidos" bg="#cc0000" href="/payments" onDismiss={() => setShowOverdue(false)} />
-                )}
-                {renewalCount > 0 && showRenewal && (
-                  <AlertCard icon="↺" count={renewalCount} label="em renovação" bg="#ff6600" href="/contracts?renewal=true" onDismiss={() => setShowRenewal(false)} />
-                )}
-                {unsignedCount > 0 && showUnsigned && (
-                  <AlertCard icon="✦" count={unsignedCount} label="contratos s/ assinatura" bg="#000080" href="/contracts" onDismiss={() => setShowUnsigned(false)} />
-                )}
-              </div>
-            )
-          })()}
-
-          {/* ══ 9. RENOVAÇÕES — se houver ═════════════════════════════════ */}
-          {stats.renewals && stats.renewals.count > 0 && (
-            <RenewalSection renewals={stats.renewals} isMobile={isMobile} />
-          )}
-
-          {/* ══ 10. ATIVIDADE RECENTE ═════════════════════════════════════ */}
-          <RecentActivity data={stats.recentActivity} />
         </div>
-      ) : null}
-
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 0.6; }
-          50% { opacity: 1; }
-        }
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-      `}</style>
+      )}
     </div>
   )
 }
