@@ -209,7 +209,6 @@ export default function SalesPage() {
             { label: productFilter ? `Total ${productFilter}` : 'Total no Ano', value: fmtBRL(data?.totalYear ?? 0), accent: C.ink },
             { label: 'Contratos', value: String(data?.countYear ?? 0), accent: '#4A78FF' },
             { label: 'Ticket Médio', value: fmtBRL(avgTicket), accent: C.green },
-            { label: 'Meses com Venda', value: String(activeMonths.length), accent: '#7c3aed' },
           ].map(k => (
             <div key={k.label} style={{ ...card, borderTop: `3px solid ${k.accent}`, padding: '14px 16px' }}>
               <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.mid }}>{k.label}</div>
