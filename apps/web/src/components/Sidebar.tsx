@@ -112,9 +112,8 @@ export function Sidebar({
           flexShrink: 0,
         }}>
           {(!collapsed || isMobile) && (
-            <a href="/home" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, textDecoration: 'none' }}>
+            <a href="/home" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
               <GoonLogo height={22} fill="#F2F2F2" />
-              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9, fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: '0.42em', paddingLeft: '0.42em' }}>ADVISOR</span>
             </a>
           )}
           {collapsed && !isMobile && (
