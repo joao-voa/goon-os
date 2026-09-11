@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -14,6 +14,12 @@ import {
 import { useDroppable } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { ONBOARDING_STAGES, STAGE_LABELS, STAGE_COLORS, PRODUCT_COLORS as PROD_COLORS } from '@/lib/constants'
+
+const C = {
+  ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0',
+  neon: '#C7F900', green: '#16a34a', red: '#dc2626', amber: '#f59e0b', slate: '#475569', bg: '#f8fafc',
+}
+const num: CSSProperties = { fontVariantNumeric: 'tabular-nums' }
 
 export interface OnboardingItem {
   id: string
@@ -47,16 +53,25 @@ function DraggableCard({
       {...attributes}
       onClick={() => onClick(item)}
       style={{
-        background: 'white',
-        border: '1px solid #e2e8f0',
-        boxShadow: isDragging ? 'none' : '0 2px 4px rgba(0,0,0,0.05)',
-        padding: '10px 12px',
+        background: '#fff',
+        border: `1px solid ${C.line}`,
+        borderRadius: 10,
+        boxShadow: isDragging ? 'none' : '0 1px 2px rgba(0,0,0,0.04)',
+        padding: '11px 13px',
         cursor: isDragging ? 'grabbing' : 'grab',
         opacity: isDragging ? 0.4 : 1,
         userSelect: 'none',
         marginBottom: 8,
-        transition: 'transform 0.1s, box-shadow 0.1s',
-        transform: isDragging ? 'rotate(2deg)' : 'none',
+        transition: 'box-shadow 0.15s, border-color 0.15s',
+      }}
+      onMouseEnter={e => {
+        if (isDragging) return
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.07)'
+        ;(e.currentTarget as HTMLDivElement).style.borderColor = '#cbd5e1'
+      }}
+      onMouseLeave={e => {
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 2px rgba(0,0,0,0.04)'
+        ;(e.currentTarget as HTMLDivElement).style.borderColor = C.line
       }}
     >
       <CardContent item={item} />
@@ -71,21 +86,21 @@ function CardContent({ item }: { item: OnboardingItem }) {
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12, color: 'black', lineHeight: 1.3, flex: 1, textTransform: 'uppercase' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 5 }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 13, color: C.ink, lineHeight: 1.3, flex: 1 }}>
           {item.client.companyName}
         </span>
         {productColor && item.productCode && (
           <span
             style={{
               background: productColor,
-              color: 'white',
-              border: '1px solid #e2e8f0',
-              padding: '1px 5px',
+              color: '#fff',
+              borderRadius: 6,
+              padding: '2px 6px',
               fontFamily: 'var(--font-sans)',
-              fontSize: 8,
+              fontSize: 9,
               fontWeight: 700,
-              marginLeft: 6,
+              letterSpacing: '0.02em',
               flexShrink: 0,
             }}
           >
@@ -93,20 +108,27 @@ function CardContent({ item }: { item: OnboardingItem }) {
           </span>
         )}
       </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', marginBottom: 6 }}>
+      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.mid, marginBottom: 8 }}>
         {item.client.responsible}
       </div>
       <div
         style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10,
-          color: daysWarning ? 'var(--danger)' : '#555',
-          fontWeight: daysWarning ? 700 : 400,
-          textTransform: 'uppercase',
+          ...num,
+          fontFamily: 'var(--font-sans)',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 5,
+          fontSize: 11,
+          color: daysWarning ? C.red : C.dim,
+          fontWeight: daysWarning ? 700 : 500,
+          background: daysWarning ? 'rgba(220,38,38,0.08)' : C.bg,
+          border: `1px solid ${daysWarning ? 'rgba(220,38,38,0.2)' : C.line}`,
+          borderRadius: 100,
+          padding: '2px 8px',
         }}
       >
-        {item.daysInStage === 0 ? '> hoje' : `> ${item.daysInStage}d`}
-        {daysWarning && ' [!]'}
+        {daysWarning && <span aria-hidden style={{ fontSize: 11 }}>!</span>}
+        {item.daysInStage === 0 ? 'Hoje' : `${item.daysInStage}d nesta etapa`}
       </div>
     </>
   )
@@ -129,10 +151,14 @@ function DroppableColumn({
   return (
     <div
       style={{
-        width: 220,
+        width: 240,
         flexShrink: 0,
         display: 'flex',
         flexDirection: 'column',
+        background: C.bg,
+        border: `1px solid ${C.line}`,
+        borderRadius: 12,
+        overflow: 'hidden',
       }}
     >
       {/* Column header */}
@@ -141,40 +167,39 @@ function DroppableColumn({
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          padding: '8px 10px',
-          marginBottom: 8,
-          background: 'black',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-          backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)',
-          backgroundSize: '12px 12px',
+          padding: '12px 14px',
+          background: '#fff',
+          borderBottom: `1px solid ${C.line}`,
           position: 'sticky',
           top: 0,
           zIndex: 10,
         }}
       >
         <div
-          style={{ width: 10, height: 10, background: color, border: '1px solid white', flexShrink: 0 }}
+          style={{ width: 8, height: 8, background: color, borderRadius: 100, flexShrink: 0 }}
         />
         <span
           style={{
-            fontFamily: 'var(--font-sans)',
-            fontSize: 8,
-            color: 'white',
+            fontFamily: 'var(--font-display)',
+            fontSize: 13,
+            fontWeight: 700,
+            color: C.ink,
             flex: 1,
-            lineHeight: 1.4,
-            textTransform: 'uppercase',
+            lineHeight: 1.3,
+            letterSpacing: '-0.01em',
           }}
         >
           {label}
         </span>
         <span
           style={{
-            background: color,
-            color: 'white',
-            border: '1px solid white',
-            padding: '1px 6px',
-            fontFamily: 'var(--font-mono)',
+            ...num,
+            background: C.bg,
+            color: C.mid,
+            border: `1px solid ${C.line}`,
+            borderRadius: 100,
+            padding: '1px 8px',
+            fontFamily: 'var(--font-sans)',
             fontSize: 11,
             fontWeight: 700,
             flexShrink: 0,
@@ -190,9 +215,10 @@ function DroppableColumn({
         style={{
           flex: 1,
           minHeight: 300,
-          padding: '4px',
-          border: isOver ? '2px dashed black' : '2px dashed rgba(0,0,0,0.2)',
-          background: isOver ? 'rgba(0,0,0,0.05)' : 'transparent',
+          padding: 10,
+          border: `2px solid ${isOver ? C.neon : 'transparent'}`,
+          background: isOver ? 'rgba(199,249,0,0.10)' : 'transparent',
+          borderRadius: 10,
           transition: 'border-color 0.15s, background 0.15s',
         }}
       >
@@ -203,12 +229,11 @@ function DroppableColumn({
           <div
             style={{
               textAlign: 'center',
-              fontFamily: 'var(--font-mono)',
-              color: '#aaa',
-              fontSize: 11,
-              padding: '20px 0',
-              textTransform: 'uppercase',
-              letterSpacing: 1,
+              fontFamily: 'var(--font-sans)',
+              color: C.dim,
+              fontSize: 12,
+              fontWeight: 500,
+              padding: '24px 0',
             }}
           >
             Sem clientes
@@ -291,13 +316,13 @@ export default function KanbanBoard({ items, onStageChange, onCardClick }: Kanba
         {activeItem && (
           <div
             style={{
-              width: 212,
-              background: 'white',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
-              padding: '10px 12px',
-              transform: 'rotate(2deg)',
-              opacity: 0.95,
+              width: 220,
+              background: '#fff',
+              border: `1px solid ${C.neon}`,
+              borderRadius: 10,
+              boxShadow: '0 12px 24px -6px rgba(15,23,42,0.18)',
+              padding: '11px 13px',
+              opacity: 0.98,
             }}
           >
             <CardContent item={activeItem} />

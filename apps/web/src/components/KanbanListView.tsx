@@ -1,8 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { ONBOARDING_STAGES, STAGE_LABELS, STAGE_COLORS, PRODUCT_COLORS } from '@/lib/constants'
 import type { OnboardingItem } from './KanbanBoard'
+
+const C = {
+  ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0',
+  neon: '#C7F900', green: '#16a34a', red: '#dc2626', amber: '#f59e0b', slate: '#475569', bg: '#f8fafc',
+}
+const num: CSSProperties = { fontVariantNumeric: 'tabular-nums' }
 
 interface KanbanListViewProps {
   items: OnboardingItem[]
@@ -33,28 +39,20 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
         <button
           onClick={() => setActiveStage(null)}
           style={{
+            ...num,
             flexShrink: 0,
-            padding: '6px 12px',
+            padding: '0 14px',
             minHeight: 44,
-            border: '1px solid #e2e8f0',
-            background: activeStage === null ? 'black' : 'var(--retro-gray)',
-            color: activeStage === null ? 'white' : 'black',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 11,
+            borderRadius: 100,
+            border: `1px solid ${activeStage === null ? C.ink : C.line}`,
+            background: activeStage === null ? C.ink : '#fff',
+            color: activeStage === null ? '#fff' : C.slate,
+            fontFamily: 'var(--font-sans)',
+            fontSize: 13,
             fontWeight: 700,
             cursor: 'pointer',
             whiteSpace: 'nowrap',
-            textTransform: 'uppercase',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-            transition: 'transform 0.1s, box-shadow 0.1s',
-          }}
-          onMouseEnter={e => {
-            (e.currentTarget as HTMLButtonElement).style.transform = 'translate(1px, 1px)'
-            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = 'none'
-          }}
-          onMouseLeave={e => {
-            (e.currentTarget as HTMLButtonElement).style.transform = ''
-            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'
+            transition: 'background 0.12s, border-color 0.12s, color 0.12s',
           }}
         >
           Todas ({items.length})
@@ -70,30 +68,21 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
               onClick={() => setActiveStage(stage)}
               style={{
                 flexShrink: 0,
-                padding: '6px 12px',
+                padding: '0 14px',
                 minHeight: 44,
-                border: '1px solid #e2e8f0',
-                background: isActive ? 'black' : 'var(--retro-gray)',
-                color: isActive ? 'white' : 'black',
-                fontFamily: 'var(--font-mono)',
-                fontSize: 11,
+                borderRadius: 100,
+                border: `1px solid ${isActive ? C.ink : C.line}`,
+                background: isActive ? C.ink : '#fff',
+                color: isActive ? '#fff' : C.slate,
+                fontFamily: 'var(--font-sans)',
+                fontSize: 13,
                 fontWeight: 700,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
-                textTransform: 'uppercase',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 6,
-                transition: 'transform 0.1s, box-shadow 0.1s',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.transform = 'translate(1px, 1px)'
-                ;(e.currentTarget as HTMLButtonElement).style.boxShadow = 'none'
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.transform = ''
-                ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'
+                gap: 7,
+                transition: 'background 0.12s, border-color 0.12s, color 0.12s',
               }}
             >
               <span
@@ -101,7 +90,7 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
                   width: 8,
                   height: 8,
                   background: color,
-                  border: '1px solid rgba(0,0,0,0.4)',
+                  borderRadius: 100,
                   display: 'inline-block',
                   flexShrink: 0,
                 }}
@@ -109,11 +98,13 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
               {STAGE_LABELS[stage] ?? stage}
               <span
                 style={{
-                  background: isActive ? 'white' : 'black',
-                  color: isActive ? 'black' : 'white',
-                  padding: '0 5px',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10,
+                  ...num,
+                  background: isActive ? 'rgba(255,255,255,0.18)' : C.bg,
+                  color: isActive ? '#fff' : C.mid,
+                  borderRadius: 100,
+                  padding: '1px 7px',
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: 11,
                   fontWeight: 700,
                 }}
               >
@@ -129,12 +120,11 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
         <div
           style={{
             textAlign: 'center',
-            fontFamily: 'var(--font-mono)',
-            color: '#555',
-            fontSize: 13,
+            fontFamily: 'var(--font-sans)',
+            color: C.dim,
+            fontSize: 14,
+            fontWeight: 500,
             padding: '40px 0',
-            textTransform: 'uppercase',
-            letterSpacing: 1,
           }}
         >
           Nenhum cliente nesta etapa
@@ -143,12 +133,7 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {filtered.map((item) => {
             const color = STAGE_COLORS[item.currentStage] ?? '#888'
-            const codeColors: Record<string, string> = {
-              GE: 'var(--retro-blue)',
-              GI: 'var(--success)',
-              GS: 'var(--warning)',
-            }
-            const productColor = item.productCode ? (codeColors[item.productCode] ?? '#888') : null
+            const productColor = item.productCode ? (PRODUCT_COLORS[item.productCode] ?? '#888') : null
             const daysWarning = item.daysInStage > 14
 
             return (
@@ -157,25 +142,27 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
                 onClick={() => onCardClick(item)}
                 style={{
                   display: 'flex',
-                  alignItems: 'flex-start',
+                  alignItems: 'stretch',
                   gap: 12,
-                  padding: '14px 12px',
+                  padding: '14px 14px',
                   minHeight: 44,
-                  background: 'white',
-                  border: '1px solid #e2e8f0',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                  background: '#fff',
+                  border: `1px solid ${C.line}`,
+                  borderRadius: 10,
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
                   cursor: 'pointer',
                   textAlign: 'left',
                   width: '100%',
-                  transition: 'transform 0.1s, box-shadow 0.1s',
+                  overflow: 'hidden',
+                  transition: 'box-shadow 0.15s, border-color 0.15s',
                 }}
                 onMouseEnter={e => {
-                  (e.currentTarget as HTMLButtonElement).style.transform = 'translate(-1px, -1px)'
-                  ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '4px 4px 0px 0px #000'
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.07)'
+                  ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#cbd5e1'
                 }}
                 onMouseLeave={e => {
-                  (e.currentTarget as HTMLButtonElement).style.transform = ''
-                  ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)'
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 2px rgba(0,0,0,0.04)'
+                  ;(e.currentTarget as HTMLButtonElement).style.borderColor = C.line
                 }}
               >
                 {/* Stage color indicator */}
@@ -184,23 +171,23 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
                     width: 4,
                     alignSelf: 'stretch',
                     background: color,
+                    borderRadius: 100,
                     flexShrink: 0,
                   }}
                 />
 
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 4 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 3 }}>
                     <span
                       style={{
-                        fontFamily: 'var(--font-mono)',
+                        fontFamily: 'var(--font-sans)',
                         fontWeight: 700,
-                        fontSize: 13,
-                        color: 'black',
+                        fontSize: 14,
+                        color: C.ink,
                         flex: 1,
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        textTransform: 'uppercase',
                       }}
                     >
                       {item.client.companyName}
@@ -209,12 +196,13 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
                       <span
                         style={{
                           background: productColor,
-                          color: 'white',
-                          border: '1px solid #e2e8f0',
-                          padding: '1px 6px',
+                          color: '#fff',
+                          borderRadius: 6,
+                          padding: '2px 6px',
                           fontFamily: 'var(--font-sans)',
-                          fontSize: 8,
+                          fontSize: 9,
                           fontWeight: 700,
+                          letterSpacing: '0.02em',
                           flexShrink: 0,
                         }}
                       >
@@ -223,36 +211,47 @@ export default function KanbanListView({ items, onCardClick }: KanbanListViewPro
                     )}
                   </div>
 
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', marginBottom: 6 }}>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.mid, marginBottom: 8 }}>
                     {item.client.responsible}
                   </div>
 
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                     <span
                       style={{
-                        background: 'black',
-                        color: 'white',
-                        border: '1px solid #e2e8f0',
-                        padding: '1px 6px',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 10,
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        background: C.bg,
+                        color: C.slate,
+                        border: `1px solid ${C.line}`,
+                        borderRadius: 100,
+                        padding: '2px 9px',
+                        fontFamily: 'var(--font-sans)',
+                        fontSize: 11,
+                        fontWeight: 600,
                       }}
                     >
+                      <span style={{ width: 7, height: 7, borderRadius: 100, background: color, display: 'inline-block' }} />
                       {STAGE_LABELS[item.currentStage] ?? item.currentStage}
                     </span>
                     <span
                       style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 10,
-                        color: daysWarning ? 'var(--danger)' : '#555',
-                        fontWeight: daysWarning ? 700 : 400,
-                        textTransform: 'uppercase',
+                        ...num,
+                        fontFamily: 'var(--font-sans)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        fontSize: 11,
+                        color: daysWarning ? C.red : C.dim,
+                        fontWeight: daysWarning ? 700 : 500,
+                        background: daysWarning ? 'rgba(220,38,38,0.08)' : 'transparent',
+                        border: `1px solid ${daysWarning ? 'rgba(220,38,38,0.2)' : 'transparent'}`,
+                        borderRadius: 100,
+                        padding: daysWarning ? '2px 8px' : '2px 0',
                       }}
                     >
-                      {item.daysInStage === 0 ? 'hoje' : `${item.daysInStage}d`}
-                      {daysWarning && ' [!]'}
+                      {daysWarning && <span aria-hidden>!</span>}
+                      {item.daysInStage === 0 ? 'Hoje' : `${item.daysInStage}d`}
                     </span>
                   </div>
                 </div>

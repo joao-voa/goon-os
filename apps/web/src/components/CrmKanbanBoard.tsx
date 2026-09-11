@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, type CSSProperties } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -53,50 +53,54 @@ interface CrmKanbanBoardProps {
   onCardClick: (item: LeadItem) => void
 }
 
+// Paleta do design system (tema claro + neon)
+const C = { ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0', bg: '#f8fafc', neon: '#C7F900', green: '#16a34a', red: '#dc2626', amber: '#f59e0b', slate: '#475569' }
+const num: CSSProperties = { fontFamily: 'var(--font-sans)', fontVariantNumeric: 'tabular-nums' }
+
 // Conteúdo visual do card (compartilhado entre o sortable e o overlay)
 function CardBody({ item }: { item: LeadItem }) {
   const sourceLabel = item.leadSource ? (LEAD_SOURCE_LABELS[item.leadSource] ?? item.leadSource) : null
   return (
     <>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, marginBottom: 4 }}>
+      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, color: C.ink, marginBottom: 3, lineHeight: 1.3 }}>
         {item.companyName}
       </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#555', marginBottom: 2 }}>
+      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.mid, marginBottom: 2 }}>
         {item.responsible}
       </div>
       {(item.estimatedRevenue || item.faturamentoBand !== 'NAO_INFORMADO') && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2, flexWrap: 'wrap' }}>
           {item.faturamentoBand && item.faturamentoBand !== 'NAO_INFORMADO' && (
             <span style={{
-              fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, padding: '1px 5px', color: 'white',
-              background: item.isICP ? '#22c55e' : '#cc0000',
+              fontFamily: 'var(--font-sans)', fontSize: 9, fontWeight: 700, letterSpacing: '0.03em', padding: '1px 6px', borderRadius: 999, color: 'white',
+              background: item.isICP ? C.green : C.red,
             }}>{item.isICP ? 'ICP' : 'FORA'}</span>
           )}
           {item.estimatedRevenue && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>
+            <span style={{ ...num, fontSize: 11, color: C.dim }}>
               {item.estimatedRevenue}
             </span>
           )}
         </div>
       )}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
         {sourceLabel && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, background: '#e0e0e0', padding: '2px 6px', border: '1px solid #999' }}>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.slate, background: C.bg, padding: '2px 8px', borderRadius: 999, border: `1px solid ${C.line}` }}>
             {sourceLabel}
           </span>
         )}
         {item.saleValue && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, background: '#dcfce7', padding: '2px 6px', border: '1px solid #86efac', fontWeight: 700 }}>
+          <span style={{ ...num, fontSize: 10, fontWeight: 700, color: '#15803d', background: '#dcfce7', padding: '2px 8px', borderRadius: 999, border: '1px solid #bbf7d0' }}>
             R$ {item.saleValue.toLocaleString('pt-BR')}
           </span>
         )}
         {item.productCode && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, background: PRODUCT_COLORS[item.productCode] ?? '#888', color: 'white', padding: '2px 6px', border: '1px solid #e2e8f0' }}>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700, background: PRODUCT_COLORS[item.productCode] ?? C.slate, color: 'white', padding: '2px 8px', borderRadius: 999 }}>
             {item.productCode}
           </span>
         )}
         {!item.productCode && item.suggestedProduct && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, background: 'white', color: PRODUCT_COLORS[item.suggestedProduct] ?? '#888', padding: '2px 6px', border: '1px dashed ' + (PRODUCT_COLORS[item.suggestedProduct] ?? '#888') }}>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700, background: 'white', color: PRODUCT_COLORS[item.suggestedProduct] ?? C.slate, padding: '2px 8px', borderRadius: 999, border: '1px dashed ' + (PRODUCT_COLORS[item.suggestedProduct] ?? C.slate) }}>
             {item.suggestedProduct} ?
           </span>
         )}
@@ -107,20 +111,24 @@ function CardBody({ item }: { item: LeadItem }) {
 
 function SortableCard({ item, onClick }: { item: LeadItem; onClick: (item: LeadItem) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
+  const [hover, setHover] = useState(false)
   return (
     <div
       ref={setNodeRef}
       {...attributes}
       {...listeners}
       onClick={() => onClick(item)}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
       style={{
         transform: CSS.Transform.toString(transform),
-        transition,
+        transition: transition ?? 'box-shadow 0.15s ease, border-color 0.15s ease',
         touchAction: 'none',
-        background: 'white',
-        border: '1px solid #e2e8f0',
-        boxShadow: isDragging ? 'none' : '0 2px 4px rgba(0,0,0,0.05)',
-        padding: '10px 12px',
+        background: '#fff',
+        border: `1px solid ${hover && !isDragging ? '#cbd5e1' : C.line}`,
+        borderRadius: 10,
+        boxShadow: isDragging ? 'none' : (hover ? '0 4px 10px rgba(15,23,42,0.08)' : '0 1px 2px rgba(0,0,0,0.05)'),
+        padding: '11px 13px',
         cursor: isDragging ? 'grabbing' : 'grab',
         opacity: isDragging ? 0.4 : 1,
         userSelect: 'none',
@@ -142,7 +150,7 @@ function DroppableColumn({
   onCardClick: (item: LeadItem) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage })
-  const color = LEAD_STAGE_COLORS[stage] ?? '#888'
+  const color = LEAD_STAGE_COLORS[stage] ?? C.slate
   const label = LEAD_STAGE_LABELS[stage] ?? stage
 
   return (
@@ -151,21 +159,25 @@ function DroppableColumn({
         minWidth: 260,
         maxWidth: 300,
         flex: '1 0 260px',
-        background: isOver ? '#f0f7ff' : '#f5f5f5',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
+        background: isOver ? 'rgba(199,249,0,0.06)' : C.bg,
+        border: `1px solid ${isOver ? C.neon : C.line}`,
+        borderRadius: 12,
         display: 'flex',
         flexDirection: 'column',
         maxHeight: 'calc(100vh - 260px)',
+        overflow: 'hidden',
+        transition: 'background 0.15s ease, border-color 0.15s ease',
       }}
     >
+      {/* barra fina colorida do estágio */}
+      <div style={{ height: 3, background: color }} />
       <div style={{
-        background: color, color: 'white', padding: '8px 12px',
-        fontFamily: 'var(--font-sans)', fontSize: 9, display: 'flex',
+        padding: '10px 12px', display: 'flex',
         justifyContent: 'space-between', alignItems: 'center',
+        borderBottom: `1px solid ${C.line}`,
       }}>
-        <span>{label}</span>
-        <span style={{ background: 'rgba(255,255,255,0.3)', padding: '2px 8px', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700 }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: C.ink }}>{label}</span>
+        <span style={{ ...num, background: '#fff', border: `1px solid ${C.line}`, color: C.mid, padding: '1px 9px', borderRadius: 999, fontSize: 12, fontWeight: 700 }}>
           {items.length}
         </span>
       </div>
@@ -175,7 +187,7 @@ function DroppableColumn({
             <SortableCard key={item.id} item={item} onClick={onCardClick} />
           ))}
           {items.length === 0 && (
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#999', textAlign: 'center', padding: 20 }}>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.dim, textAlign: 'center', padding: 20 }}>
               Nenhum lead
             </div>
           )}
@@ -286,8 +298,8 @@ export default function CrmKanbanBoard({ items, stages, onStageChange, onReorder
       <DragOverlay>
         {activeItem && (
           <div style={{
-            background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.15)',
-            padding: '10px 12px', transform: 'rotate(2deg)', cursor: 'grabbing',
+            background: '#fff', border: `1px solid ${C.line}`, borderRadius: 10, boxShadow: '0 12px 24px -6px rgba(15,23,42,0.22)',
+            padding: '11px 13px', transform: 'rotate(2deg)', cursor: 'grabbing',
           }}>
             <CardBody item={activeItem} />
           </div>

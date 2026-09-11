@@ -30,11 +30,14 @@ interface Task {
   createdAt: string
 }
 
+const C = { ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0', bg: '#f8fafc', neon: '#C7F900', green: '#16a34a', red: '#dc2626', amber: '#f59e0b', slate: '#475569', purple: '#7c3aed' }
+const num: React.CSSProperties = { fontFamily: 'var(--font-sans)', fontVariantNumeric: 'tabular-nums' }
+
 const STAGES = ['TODO', 'DOING', 'DONE', 'WIKI'] as const
 const STAGE_LABELS: Record<string, string> = { TODO: 'A Fazer', DOING: 'Fazendo', DONE: 'Feito', WIKI: 'Wiki' }
-const STAGE_COLORS: Record<string, string> = { TODO: '#4A78FF', DOING: '#f97316', DONE: '#006600', WIKI: '#7c3aed' }
+const STAGE_COLORS: Record<string, string> = { TODO: C.slate, DOING: C.amber, DONE: C.green, WIKI: C.purple }
 const PRIORITY_LABELS: Record<string, string> = { LOW: 'Baixa', MEDIUM: 'Media', HIGH: 'Alta', URGENT: 'Urgente' }
-const PRIORITY_COLORS: Record<string, string> = { LOW: '#888', MEDIUM: '#4A78FF', HIGH: '#f97316', URGENT: '#cc0000' }
+const PRIORITY_COLORS: Record<string, string> = { LOW: C.dim, MEDIUM: C.slate, HIGH: C.amber, URGENT: C.red }
 
 function TaskCard({ task, onClick }: { task: Task; onClick: () => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id })
@@ -43,30 +46,38 @@ function TaskCard({ task, onClick }: { task: Task; onClick: () => void }) {
 
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} onClick={onClick} style={{
-      background: 'white', border: '1px solid #e2e8f0', boxShadow: isDragging ? 'none' : '0 2px 4px rgba(0,0,0,0.05)',
-      padding: '12px', cursor: isDragging ? 'grabbing' : 'grab', opacity: isDragging ? 0.4 : 1,
-      marginBottom: 8, transition: 'transform 0.1s',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, flex: 1 }}>{task.title}</span>
-        <span style={{ background: PRIORITY_COLORS[task.priority], color: 'white', padding: '1px 5px', fontSize: 8, fontWeight: 700, fontFamily: 'var(--font-mono)', flexShrink: 0, marginLeft: 6 }}>
+      background: '#fff', border: `1px solid ${C.line}`, borderRadius: 10,
+      boxShadow: isDragging ? '0 8px 20px rgba(15,23,42,0.12)' : '0 1px 2px rgba(15,23,42,0.05)',
+      padding: '12px 14px', cursor: isDragging ? 'grabbing' : 'grab', opacity: isDragging ? 0.4 : 1,
+      marginBottom: 8, transition: 'box-shadow 0.15s, border-color 0.15s',
+    }}
+      onMouseEnter={e => { if (!isDragging) { e.currentTarget.style.boxShadow = '0 4px 10px rgba(15,23,42,0.08)'; e.currentTarget.style.borderColor = C.dim } }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 2px rgba(15,23,42,0.05)'; e.currentTarget.style.borderColor = C.line }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: task.description ? 6 : 8 }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, color: C.ink, flex: 1, lineHeight: 1.35 }}>{task.title}</span>
+        <span style={{ background: PRIORITY_COLORS[task.priority], color: '#fff', padding: '2px 7px', borderRadius: 100, fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-sans)', flexShrink: 0, whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
           {PRIORITY_LABELS[task.priority]}
         </span>
       </div>
       {task.description && (
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555', marginBottom: 6, lineHeight: 1.3 }}>
+        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.mid, marginBottom: 8, lineHeight: 1.4 }}>
           {task.description.length > 80 ? task.description.slice(0, 80) + '...' : task.description}
         </div>
       )}
-      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 4 }}>
-        {tags.map(tag => (
-          <span key={tag} style={{ background: '#f0f0f0', border: '1px solid #ddd', padding: '1px 6px', fontSize: 8, fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{tag}</span>
-        ))}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        {task.assignee && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#4A78FF' }}>{task.assignee}</span>}
+      {tags.length > 0 && (
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8 }}>
+          {tags.map(tag => (
+            <span key={tag} style={{ background: C.bg, border: `1px solid ${C.line}`, borderRadius: 6, padding: '2px 7px', fontSize: 10, fontFamily: 'var(--font-sans)', fontWeight: 600, color: C.slate }}>{tag}</span>
+          ))}
+        </div>
+      )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        {task.assignee
+          ? <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, color: C.slate }}>{task.assignee}</span>
+          : <span />}
         {task.dueDate && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: isOverdue ? '#cc0000' : '#888', fontWeight: isOverdue ? 700 : 400 }}>
+          <span style={{ ...num, fontSize: 11, color: isOverdue ? C.red : C.mid, fontWeight: isOverdue ? 700 : 500 }}>
             {new Date(task.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
           </span>
         )}
@@ -77,18 +88,26 @@ function TaskCard({ task, onClick }: { task: Task; onClick: () => void }) {
 
 function Column({ stage, tasks, onCardClick }: { stage: string; tasks: Task[]; onCardClick: (t: Task) => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage })
+  const accent = STAGE_COLORS[stage]
   return (
-    <div style={{ flex: '1 1 300px', minWidth: 280, display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 200px)' }}>
-      <div style={{ background: STAGE_COLORS[stage], color: 'white', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)' }}>
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10 }}>{STAGE_LABELS[stage]}</span>
-        <span style={{ background: 'rgba(255,255,255,0.3)', padding: '2px 8px', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700 }}>{tasks.length}</span>
+    <div style={{
+      flex: '1 1 300px', minWidth: 280, display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 200px)',
+      background: C.bg, border: `1px solid ${isOver ? accent : C.line}`, borderRadius: 12, overflow: 'hidden', transition: 'border-color 0.15s',
+    }}>
+      <div style={{ height: 3, background: accent }} />
+      <div style={{ padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, color: C.ink }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: accent, flexShrink: 0 }} />
+          {STAGE_LABELS[stage]}
+        </span>
+        <span style={{ ...num, background: '#fff', border: `1px solid ${C.line}`, borderRadius: 100, padding: '1px 9px', fontSize: 11, fontWeight: 700, color: C.mid }}>{tasks.length}</span>
       </div>
       <div ref={setNodeRef} style={{
-        flex: 1, padding: 8, overflowY: 'auto', border: isOver ? '2px dashed black' : '2px dashed rgba(0,0,0,0.1)',
-        background: isOver ? 'rgba(0,0,0,0.03)' : 'transparent', transition: 'all 0.15s',
+        flex: 1, padding: '0 10px 10px', overflowY: 'auto',
+        background: isOver ? 'rgba(15,23,42,0.03)' : 'transparent', transition: 'background 0.15s',
       }}>
         {tasks.map(t => <TaskCard key={t.id} task={t} onClick={() => onCardClick(t)} />)}
-        {tasks.length === 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#aaa', textAlign: 'center', padding: 20 }}>Sem tarefas</div>}
+        {tasks.length === 0 && <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.dim, textAlign: 'center', padding: '24px 8px' }}>Sem tarefas</div>}
       </div>
     </div>
   )
@@ -207,25 +226,28 @@ export default function TasksPage() {
   const tasksByStage: Record<string, Task[]> = { TODO: [], DOING: [], DONE: [], WIKI: [] }
   tasks.forEach(t => { if (tasksByStage[t.stage]) tasksByStage[t.stage].push(t) })
 
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }
-  const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 3 }
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 10px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 13, color: C.ink }
+  const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid, display: 'block', marginBottom: 5 }
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-        <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 20, margin: 0 }}>TAREFAS</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Tarefas</h1>
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.mid, margin: '2px 0 0' }}>Quadro de tarefas · arraste os cartões entre as colunas</p>
+        </div>
         <button onClick={openNew} style={{
-          padding: '8px 16px', border: '1px solid #e2e8f0', background: '#0A0A0C', color: 'white',
-          fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-        }}>+ NOVA TAREFA</button>
+          padding: '9px 16px', border: 'none', borderRadius: 6, background: C.neon, color: C.ink,
+          fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+        }}>+ Nova tarefa</button>
       </div>
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Responsavel:</span>
-        <button onClick={() => setAssigneeFilter('')} style={{ padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer', background: !assigneeFilter ? 'black' : 'white', color: !assigneeFilter ? 'white' : 'black' }}>TODOS</button>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid, marginRight: 2 }}>Responsavel</span>
+        <button onClick={() => setAssigneeFilter('')} style={{ padding: '5px 12px', border: `1px solid ${!assigneeFilter ? C.ink : C.line}`, borderRadius: 100, fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: !assigneeFilter ? C.ink : '#fff', color: !assigneeFilter ? '#fff' : C.mid }}>Todos</button>
         {assignees.map(a => (
-          <button key={a} onClick={() => setAssigneeFilter(assigneeFilter === a ? '' : a)} style={{ padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer', background: assigneeFilter === a ? 'black' : 'white', color: assigneeFilter === a ? 'white' : 'black' }}>{a}</button>
+          <button key={a} onClick={() => setAssigneeFilter(assigneeFilter === a ? '' : a)} style={{ padding: '5px 12px', border: `1px solid ${assigneeFilter === a ? C.ink : C.line}`, borderRadius: 100, fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: assigneeFilter === a ? C.ink : '#fff', color: assigneeFilter === a ? '#fff' : C.mid }}>{a}</button>
         ))}
       </div>
 
@@ -238,8 +260,8 @@ export default function TasksPage() {
         </div>
         <DragOverlay>
           {activeTask && (
-            <div style={{ width: 280, background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: 12, transform: 'rotate(2deg)', opacity: 0.95 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>{activeTask.title}</span>
+            <div style={{ width: 280, background: '#fff', border: `1px solid ${C.line}`, borderRadius: 10, boxShadow: '0 12px 28px rgba(15,23,42,0.16)', padding: '12px 14px', opacity: 0.97 }}>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, color: C.ink }}>{activeTask.title}</span>
             </div>
           )}
         </DragOverlay>
@@ -247,11 +269,11 @@ export default function TasksPage() {
 
       {/* Modal */}
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
           onClick={e => { if (e.target === e.currentTarget && confirm('Sair sem salvar?')) setShowModal(false) }}>
-          <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ background: '#0A0A0C', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
-              {editTask ? 'EDITAR TAREFA' : 'NOVA TAREFA'}
+          <div style={{ background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 24px 48px rgba(15,23,42,0.24)', width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ background: C.ink, color: '#fff', padding: '14px 20px', fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em', borderRadius: '12px 12px 0 0' }}>
+              {editTask ? 'Editar tarefa' : 'Nova tarefa'}
             </div>
             <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div>
@@ -304,18 +326,18 @@ export default function TasksPage() {
                       <button key={tag} type="button" onClick={() => {
                         const current = formTags.split(',').map(t => t.trim()).filter(Boolean)
                         if (!current.includes(tag)) setFormTags([...current, tag].join(', '))
-                      }} style={{ background: '#f0f0f0', border: '1px solid #ddd', padding: '2px 6px', fontSize: 9, fontFamily: 'var(--font-mono)', cursor: 'pointer' }}>+{tag}</button>
+                      }} style={{ background: C.bg, border: `1px solid ${C.line}`, borderRadius: 6, padding: '3px 8px', fontSize: 11, fontFamily: 'var(--font-sans)', fontWeight: 600, color: C.slate, cursor: 'pointer' }}>+{tag}</button>
                     ))}
                   </div>
                 )}
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                 {editTask && (
-                  <button onClick={handleDelete} style={{ padding: '10px 14px', border: '1px solid #e2e8f0', background: '#dc2626', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>EXCLUIR</button>
+                  <button onClick={handleDelete} style={{ padding: '10px 14px', border: 'none', borderRadius: 6, background: C.red, color: '#fff', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Excluir</button>
                 )}
-                <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
-                <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#0A0A0C', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                  {saving ? 'SALVANDO...' : editTask ? 'ATUALIZAR' : 'CRIAR'}
+                <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: '10px', border: `1px solid ${C.line}`, borderRadius: 6, background: '#fff', color: C.mid, fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
+                <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 6, background: C.ink, color: '#fff', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+                  {saving ? 'Salvando...' : editTask ? 'Atualizar' : 'Criar'}
                 </button>
               </div>
             </div>
