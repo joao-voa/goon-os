@@ -1221,29 +1221,11 @@ function ClientContractsView() {
 // ---- Wrapper com abas ----
 
 export default function ContractsPage() {
-  const [tab, setTab] = useState<'clientes' | 'gerados'>('clientes')
-  const tabBtn = (active: boolean): React.CSSProperties => ({
-    padding: '8px 16px', border: 'none', borderBottom: active ? '2px solid black' : '2px solid transparent',
-    background: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 800,
-    textTransform: 'uppercase', letterSpacing: 1, color: active ? 'black' : '#999',
-  })
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '1px solid #e2e8f0' }}>
-        <button style={tabBtn(tab === 'clientes')} onClick={() => setTab('clientes')}>Por Cliente</button>
-        <button style={tabBtn(tab === 'gerados')} onClick={() => setTab('gerados')}>Contratos Gerados</button>
-      </div>
-      {tab === 'clientes' ? (
-        <div>
-          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 800, color: 'black', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 1 }}>
-            Contratos por Cliente
-          </h1>
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', margin: '0 0 16px' }}>Cada cliente e o contrato assinado dele. Clique no nome para abrir a ficha.</p>
-          <ClientContractsView />
-        </div>
-      ) : (
-        <GeneratedContractsView />
-      )}
+      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: '#0f172a', margin: '0 0 4px' }}>Contratos</h1>
+      <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: '#64748b', margin: '0 0 20px' }}>Cada cliente e o contrato assinado dele. Clique no nome para abrir a ficha.</p>
+      <ClientContractsView />
     </div>
   )
 }

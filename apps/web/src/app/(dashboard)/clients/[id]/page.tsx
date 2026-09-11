@@ -1094,17 +1094,6 @@ export default function ClientDetailPage() {
                 Excluir Cliente
               </button>
             )}
-            <a
-              href="/contracts/generate"
-              style={{
-                background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0',
-                boxShadow: '3px 3px 0 #555', fontFamily: 'var(--font-sans)', fontSize: 9,
-                textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', letterSpacing: 0.5,
-                textDecoration: 'none', display: 'inline-block',
-              }}
-            >
-              Gerar .docx
-            </a>
             {(client.whatsapp ?? client.phone) && (
               <a href={`https://wa.me/${(client.whatsapp ?? client.phone ?? '').replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="goon-btn-secondary" style={{ textDecoration: 'none', background: 'var(--success)', color: 'white', border: '1px solid #e2e8f0' }}>
                 WhatsApp
