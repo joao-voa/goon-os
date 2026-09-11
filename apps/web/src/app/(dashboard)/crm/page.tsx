@@ -24,6 +24,14 @@ import { X, Trash2 } from 'lucide-react'
 const CrmKanbanBoard = dynamic(() => import('@/components/CrmKanbanBoard'), { ssr: false })
 const ClientsPage = dynamic(() => import('../clients/page'), { ssr: false })
 
+// ---- Design tokens (tema claro + neon) ----
+const C = {
+  ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0', bg: '#f8fafc',
+  neon: '#C7F900', green: '#16a34a', greenDk: '#15803d', red: '#dc2626', amber: '#f59e0b', slate: '#475569',
+}
+const num: CSSProperties = { fontFamily: 'var(--font-sans)', fontVariantNumeric: 'tabular-nums' }
+const card: CSSProperties = { background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }
+
 // ---- Types ----
 interface LeadItem {
   id: string
@@ -130,18 +138,20 @@ function CloseDealModal({
   const inputStyle: CSSProperties = {
     width: '100%',
     padding: '8px 10px',
-    border: '1px solid #e2e8f0',
-    fontFamily: 'var(--font-mono)',
+    border: `1px solid ${C.line}`,
+    borderRadius: 6,
+    fontFamily: 'var(--font-sans)',
     fontSize: 13,
     background: 'white',
   }
 
   const labelStyle: CSSProperties = {
-    fontFamily: 'var(--font-mono)',
+    fontFamily: 'var(--font-sans)',
     fontSize: 11,
-    fontWeight: 700,
+    fontWeight: 600,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: '0.04em',
+    color: C.mid,
     marginBottom: 4,
     display: 'block',
   }
@@ -149,7 +159,7 @@ function CloseDealModal({
   return (
     <div
       style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+        position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)',
         zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
       }}
       onClick={e => {
@@ -161,12 +171,12 @@ function CloseDealModal({
       <form
         onSubmit={handleSubmit}
         style={{
-          background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
-          width: '100%', maxWidth: 420, position: 'relative',
+          background: 'white', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 20px 25px -5px rgba(0,0,0,0.15)',
+          width: '100%', maxWidth: 420, position: 'relative', overflow: 'hidden',
         }}
       >
-        <div style={{ background: '#16a34a', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
-          FECHAR NEGÓCIO — {lead.companyName}
+        <div style={{ background: C.green, color: 'white', padding: '12px 16px', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 600 }}>
+          Fechar negócio — {lead.companyName}
         </div>
         <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
@@ -207,7 +217,7 @@ function CloseDealModal({
             <div>
               <label style={labelStyle}>Data 1a Parcela</label>
               <input type="date" value={firstInstallmentDate} onChange={e => setFirstInstallmentDate(e.target.value)} style={inputStyle} />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#666', marginTop: 2 }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.dim, marginTop: 3 }}>
                 Padrao: D+30. Demais parcelas seguem mensalmente.
               </div>
             </div>
@@ -218,9 +228,9 @@ function CloseDealModal({
           </div>
           {/* Adiantamento */}
           {paymentMethod === 'CARTAO' && (
-            <div style={{ border: '2px solid #4A78FF', padding: 12, background: '#f0f5ff' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>
-                <input type="checkbox" checked={wasAdvanced} onChange={e => setWasAdvanced(e.target.checked)} style={{ accentColor: '#4A78FF' }} />
+            <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: C.bg }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: C.ink }}>
+                <input type="checkbox" checked={wasAdvanced} onChange={e => setWasAdvanced(e.target.checked)} style={{ accentColor: C.slate }} />
                 Valor adiantado (app financeiro)
               </label>
               {wasAdvanced && (
@@ -229,10 +239,10 @@ function CloseDealModal({
                   <input type="number" step="0.01" placeholder="0.00" value={advanceValue} onChange={e => setAdvanceValue(e.target.value)} style={inputStyle} />
                   {parseFloat(advanceValue) > 0 && value > 0 && (
                     <>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#cc0000', marginTop: 4 }}>
+                      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.red, marginTop: 4 }}>
                         Taxa adiantamento: R$ {(value - parseFloat(advanceValue)).toFixed(2)} ({((1 - parseFloat(advanceValue) / value) * 100).toFixed(1)}%)
                       </div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#e6a800', marginTop: 2 }}>
+                      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.amber, marginTop: 2 }}>
                         Comissao: {commissionPercentage}% sobre adiantado = R$ {(parseFloat(advanceValue) * parseFloat(commissionPercentage) / 100).toFixed(2)} (parcela unica)
                       </div>
                     </>
@@ -242,34 +252,33 @@ function CloseDealModal({
             </div>
           )}
           {installments > 0 && value > 0 && (
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, background: '#f0f0f0', padding: '8px 12px', border: '1px solid #ccc' }}>
-              {entry > 0 && <div>Entrada: R$ {entry.toFixed(2)} <span style={{ color: '#666' }}>(1/{installments})</span></div>}
+            <div style={{ ...num, fontSize: 12, background: C.bg, padding: '10px 12px', border: `1px solid ${C.line}`, borderRadius: 8 }}>
+              {entry > 0 && <div>Entrada: R$ {entry.toFixed(2)} <span style={{ color: C.mid }}>(1/{installments})</span></div>}
               {entry > 0 ? '+ ' : ''}{regularCount}x de R$ {installmentVal.toFixed(2)}
-              <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>Total: {installments}x &middot; 1a parcela regular: {new Date(firstInstallmentDate + 'T12:00:00').toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</div>
+              <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>Total: {installments}x &middot; 1a parcela regular: {new Date(firstInstallmentDate + 'T12:00:00').toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</div>
               {wasAdvanced && parseFloat(advanceValue) > 0 && (
-                <div style={{ fontSize: 10, color: '#4A78FF', marginTop: 2 }}>Adiantado: R$ {parseFloat(advanceValue).toFixed(2)}</div>
+                <div style={{ fontSize: 11, color: C.slate, marginTop: 2 }}>Adiantado: R$ {parseFloat(advanceValue).toFixed(2)}</div>
               )}
               {parseFloat(commissionPercentage) > 0 && !wasAdvanced && (
-                <div style={{ fontSize: 10, color: '#e6a800', marginTop: 2 }}>Comissao: {commissionPercentage}% = R$ {(installmentVal * parseFloat(commissionPercentage) / 100).toFixed(2)}/parcela</div>
+                <div style={{ fontSize: 11, color: C.amber, marginTop: 2 }}>Comissao: {commissionPercentage}% = R$ {(installmentVal * parseFloat(commissionPercentage) / 100).toFixed(2)}/parcela</div>
               )}
               {wasAdvanced && parseFloat(advanceValue) > 0 && parseFloat(commissionPercentage) > 0 && (
-                <div style={{ fontSize: 10, color: '#e6a800', marginTop: 2 }}>Comissao: {commissionPercentage}% sobre adiantado = R$ {(parseFloat(advanceValue) * parseFloat(commissionPercentage) / 100).toFixed(2)} (parcela unica)</div>
+                <div style={{ fontSize: 11, color: C.amber, marginTop: 2 }}>Comissao: {commissionPercentage}% sobre adiantado = R$ {(parseFloat(advanceValue) * parseFloat(commissionPercentage) / 100).toFixed(2)} (parcela unica)</div>
               )}
             </div>
           )}
           <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
             <button type="button" onClick={onClose} style={{
-              flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: 'white',
-              fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              flex: 1, padding: '10px', border: `1px solid ${C.line}`, borderRadius: 6, background: 'white', color: C.ink,
+              fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
             }}>
-              CANCELAR
+              Cancelar
             </button>
             <button type="submit" disabled={submitting} style={{
-              flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#16a34a', color: 'white',
-              fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+              flex: 1, padding: '10px', border: 'none', borderRadius: 6, background: C.green, color: 'white',
+              fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer',
             }}>
-              {submitting ? 'FECHANDO...' : 'CONFIRMAR'}
+              {submitting ? 'Fechando…' : 'Confirmar'}
             </button>
           </div>
         </div>
@@ -351,12 +360,12 @@ function NewLeadModal({
   }
 
   const inputStyle: CSSProperties = {
-    width: '100%', padding: '8px 10px', border: '1px solid #e2e8f0',
-    fontFamily: 'var(--font-mono)', fontSize: 13, background: 'white',
+    width: '100%', padding: '8px 10px', border: `1px solid ${C.line}`, borderRadius: 6,
+    fontFamily: 'var(--font-sans)', fontSize: 13, background: 'white',
   }
   const labelStyle: CSSProperties = {
-    fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
-    textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4, display: 'block',
+    fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, color: C.mid,
+    textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4, display: 'block',
   }
 
   const hasData = companyName.trim() || responsible.trim() || phone.trim() || email.trim()
@@ -372,7 +381,7 @@ function NewLeadModal({
   return (
     <div
       style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+        position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)',
         zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
       }}
       onClick={handleBackdropClick}
@@ -380,12 +389,12 @@ function NewLeadModal({
       <form
         onSubmit={handleSubmit}
         style={{
-          background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+          background: 'white', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 20px 25px -5px rgba(0,0,0,0.15)',
           width: '100%', maxWidth: 420, maxHeight: '90vh', overflowY: 'auto',
         }}
       >
-        <div style={{ background: '#0A0A0C', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
-          NOVO LEAD
+        <div style={{ background: C.ink, color: 'white', padding: '12px 16px', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 600 }}>
+          Novo lead
         </div>
         <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
@@ -455,7 +464,7 @@ function NewLeadModal({
               <label style={labelStyle}>Modulos AURA 360</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 {AURA_MODULES.map(m => (
-                  <label key={m.code} style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 11, cursor: 'pointer', padding: '4px 6px', background: modules.includes(m.code) ? '#D4A017' : '#f5f5f5', color: modules.includes(m.code) ? 'white' : 'black', border: '1px solid #ccc' }}>
+                  <label key={m.code} style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-sans)', fontSize: 12, cursor: 'pointer', padding: '6px 8px', borderRadius: 6, background: modules.includes(m.code) ? '#D4A017' : C.bg, color: modules.includes(m.code) ? 'white' : C.ink, border: `1px solid ${modules.includes(m.code) ? '#D4A017' : C.line}` }}>
                     <input type="checkbox" checked={modules.includes(m.code)} onChange={() => toggleModule(m.code)} style={{ accentColor: '#D4A017' }} />
                     {m.label}
                   </label>
@@ -470,17 +479,16 @@ function NewLeadModal({
           </div>
           <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
             <button type="button" onClick={onClose} style={{
-              flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: 'white',
-              fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              flex: 1, padding: '10px', border: `1px solid ${C.line}`, borderRadius: 6, background: 'white', color: C.ink,
+              fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
             }}>
-              CANCELAR
+              Cancelar
             </button>
             <button type="submit" disabled={submitting} style={{
-              flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#0A0A0C', color: 'white',
-              fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+              flex: 1, padding: '10px', border: 'none', borderRadius: 6, background: C.ink, color: 'white',
+              fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer',
             }}>
-              {submitting ? 'SALVANDO...' : 'CRIAR LEAD'}
+              {submitting ? 'Salvando…' : 'Criar lead'}
             </button>
           </div>
         </div>
@@ -709,61 +717,61 @@ function LeadDetailModal({
     ? Math.floor((Date.now() - new Date(lead.stageChangedAt).getTime()) / (1000 * 60 * 60 * 24))
     : Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / (1000 * 60 * 60 * 24))
 
-  const inputStyle: CSSProperties = { width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }
+  const inputStyle: CSSProperties = { width: '100%', padding: '6px 10px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 12 }
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'auto' }}>
+      <div style={{ background: 'white', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 20px 25px -5px rgba(0,0,0,0.15)', width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'auto' }}>
         {/* Header */}
-        <div style={{ background: LEAD_STAGE_COLORS[stage] ?? 'black', color: 'white', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, flex: 1 }}>{lead.companyName}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, opacity: 0.8 }}>{LEAD_STAGE_LABELS[stage] ?? stage} | {daysInStage}d</span>
+        <div style={{ background: LEAD_STAGE_COLORS[stage] ?? C.ink, color: 'white', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, flex: 1 }}>{lead.companyName}</span>
+          <span style={{ ...num, fontSize: 11, opacity: 0.85 }}>{LEAD_STAGE_LABELS[stage] ?? stage} · {daysInStage}d</span>
           <button onClick={onClose} title="Fechar" style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 6, width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}><X size={15} strokeWidth={3} /></button>
         </div>
 
         <div style={{ padding: 16 }}>
           {/* Info Grid - with edit button */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 10 }}>DADOS</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid }}>Dados</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               {!editing && (
-                <button onClick={() => setEditing(true)} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700 }}>EDITAR</button>
+                <button onClick={() => setEditing(true)} style={{ background: C.ink, color: 'white', border: 'none', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600 }}>Editar</button>
               )}
-              <button onClick={onDelete} title="Excluir lead" style={{ background: 'white', color: '#dc2626', border: '1px solid #fecaca', padding: '4px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', borderRadius: 3 }}><Trash2 size={13} /></button>
+              <button onClick={onDelete} title="Excluir lead" style={{ background: 'white', color: C.red, border: '1px solid #fecaca', padding: '5px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', borderRadius: 6 }}><Trash2 size={13} /></button>
             </div>
           </div>
           {editing ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>EMPRESA</label>
+                  <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>EMPRESA</label>
                   <input value={editCompanyName} onChange={e => setEditCompanyName(e.target.value)} style={inputStyle} />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>RESPONSAVEL</label>
+                  <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>RESPONSAVEL</label>
                   <input value={editResponsible} onChange={e => setEditResponsible(e.target.value)} style={inputStyle} />
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>TELEFONE</label>
+                  <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>TELEFONE</label>
                   <input value={editPhone} onChange={e => setEditPhone(e.target.value)} style={inputStyle} />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>WHATSAPP</label>
+                  <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>WHATSAPP</label>
                   <input value={editWhatsapp} onChange={e => setEditWhatsapp(e.target.value)} style={inputStyle} />
                 </div>
               </div>
               <div>
-                <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>EMAIL</label>
+                <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>EMAIL</label>
                 <input value={editEmail} onChange={e => setEditEmail(e.target.value)} style={inputStyle} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>VENDEDOR</label>
+                  <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>VENDEDOR</label>
                   <input list="edit-salesrep-list" value={editSalesRep} onChange={e => setEditSalesRep(e.target.value)} style={inputStyle} />
                   <datalist id="edit-salesrep-list">
                     {(suggestions?.salesReps ?? []).map(s => <option key={s} value={s} />)}
@@ -772,7 +780,7 @@ function LeadDetailModal({
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>PROGRAMA SUGERIDO</label>
+                  <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>PROGRAMA SUGERIDO</label>
                   <select value={editSuggestedProduct} onChange={e => setEditSuggestedProduct(e.target.value)} style={inputStyle}>
                     <option value="">Selecione...</option>
                     <option value="GE">GE - GOON ELITE</option>
@@ -782,7 +790,7 @@ function LeadDetailModal({
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>RESPONSAVEL</label>
+                  <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>RESPONSAVEL</label>
                   <select value={editCardResponsible} onChange={e => setEditCardResponsible(e.target.value)} style={inputStyle}>
                     <option value="">Selecione...</option>
                     <option value="JOAO">João</option>
@@ -793,11 +801,11 @@ function LeadDetailModal({
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>FATURAMENTO</label>
+                  <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>FATURAMENTO</label>
                   <input value={editEstimatedRevenue} onChange={e => setEditEstimatedRevenue(e.target.value)} placeholder="Ex: R$500k" style={inputStyle} />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>PAGAMENTO</label>
+                  <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>PAGAMENTO</label>
                   <select value={editPaymentMethod} onChange={e => setEditPaymentMethod(e.target.value)} style={inputStyle}>
                     <option value="">-</option>
                     <option value="BOLETO">Boleto</option>
@@ -808,28 +816,28 @@ function LeadDetailModal({
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6 }}>
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>VALOR (R$)</label>
+                  <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>VALOR (R$)</label>
                   <input type="number" step="0.01" value={editSaleValue} onChange={e => setEditSaleValue(e.target.value)} style={inputStyle} />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>ENTRADA</label>
+                  <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>ENTRADA</label>
                   <input type="number" step="0.01" placeholder="0" value={editEntryValue} onChange={e => setEditEntryValue(e.target.value)} style={inputStyle} />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>PARCELAS (total)</label>
+                  <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>PARCELAS (total)</label>
                   <input type="number" min="1" value={editInstallments} onChange={e => setEditInstallments(e.target.value)} style={inputStyle} />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>VLR PARCELA</label>
+                  <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>VLR PARCELA</label>
                   <input type="number" step="0.01" value={editInstallmentValue} onChange={e => setEditInstallmentValue(e.target.value)} style={inputStyle} />
                 </div>
               </div>
               <div>
-                <label style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, display: 'block', marginBottom: 2 }}>OBSERVACOES</label>
+                <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>OBSERVACOES</label>
                 <textarea value={editLeadNotes} onChange={e => setEditLeadNotes(e.target.value)} rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
-                <button onClick={() => setEditing(false)} style={{ flex: 1, padding: '6px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
+                <button onClick={() => setEditing(false)} style={{ flex: 1, padding: '8px', border: `1px solid ${C.line}`, borderRadius: 6, background: 'white', color: C.ink, fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
                 <button disabled={saving} onClick={async () => {
                   setSaving(true)
                   try {
@@ -858,13 +866,13 @@ function LeadDetailModal({
                     onUpdated()
                   } catch { toast.error('Erro ao salvar') }
                   setSaving(false)
-                }} style={{ flex: 1, padding: '6px', border: '1px solid #e2e8f0', background: '#16a34a', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                  {saving ? 'SALVANDO...' : 'SALVAR'}
+                }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: 6, background: C.green, color: 'white', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, cursor: saving ? 'wait' : 'pointer' }}>
+                  {saving ? 'Salvando…' : 'Salvar'}
                 </button>
               </div>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16, fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16, fontFamily: 'var(--font-sans)', fontSize: 12, color: C.ink }}>
               <div><strong>Responsavel:</strong> {lead.responsible}</div>
               <div><strong>Vendedor:</strong> {lead.salesRep ?? '-'}</div>
               <div><strong>Telefone:</strong> {lead.phone ?? '-'}</div>
@@ -892,18 +900,18 @@ function LeadDetailModal({
             try { mods = JSON.parse(lead.selectedModules) } catch { /* ignore */ }
             return mods.length > 0 ? (
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', marginBottom: 6 }}>Modulos AURA 360</div>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid, marginBottom: 6 }}>Modulos AURA 360</div>
                 <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                   {mods.map(m => {
                     const mod = AURA_MODULES.find(a => a.code === m)
-                    return <span key={m} style={{ background: '#D4A017', color: 'white', padding: '2px 8px', fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{mod?.label ?? m}</span>
+                    return <span key={m} style={{ background: '#D4A017', color: 'white', padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-sans)' }}>{mod?.label ?? m}</span>
                   })}
                 </div>
               </div>
             ) : null
           })()}
           {lead.leadNotes && (
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, background: '#f5f5f5', padding: 10, border: '1px solid #ddd', marginBottom: 16 }}>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.ink, background: C.bg, padding: 12, border: `1px solid ${C.line}`, borderRadius: 8, marginBottom: 16 }}>
               <strong>Notas:</strong> {lead.leadNotes}
             </div>
           )}
@@ -911,22 +919,22 @@ function LeadDetailModal({
           {/* WhatsApp link */}
           {lead.whatsapp && (
             <a href={`https://wa.me/55${lead.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-              style={{ display: 'inline-block', background: '#25d366', color: 'white', padding: '6px 14px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', marginBottom: 16 }}>
-              ABRIR WHATSAPP
+              style={{ display: 'inline-block', background: '#25d366', color: 'white', padding: '7px 14px', border: 'none', borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, textDecoration: 'none', marginBottom: 16 }}>
+              Abrir WhatsApp
             </a>
           )}
 
           {/* Add Interaction */}
           {/* Quick Schedule Meeting */}
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12, marginBottom: 12 }}>
+          <div style={{ borderTop: `1px solid ${C.line}`, paddingTop: 12, marginBottom: 12 }}>
             {!showSchedule ? (
               <button onClick={() => setShowSchedule(true)} style={{
-                width: '100%', padding: '8px', border: '2px solid #22c55e', background: '#16a34a', color: 'white',
-                fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-              }}>AGENDAR REUNIAO COMERCIAL</button>
+                width: '100%', padding: '10px', border: 'none', borderRadius: 6, background: C.green, color: 'white',
+                fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              }}>Agendar reunião comercial</button>
             ) : (
-              <form onSubmit={handleScheduleMeeting} style={{ background: '#f0fff0', border: '2px solid #22c55e', padding: 12 }}>
-                <div style={{ fontFamily: 'var(--font-sans)', fontSize: 10, color: '#22c55e', marginBottom: 8 }}>AGENDAR REUNIAO</div>
+              <form onSubmit={handleScheduleMeeting} style={{ background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, padding: 12 }}>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid, marginBottom: 8 }}>Agendar reunião</div>
                 <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
                   <input value={schedTitle} onChange={e => setSchedTitle(e.target.value)} placeholder="Titulo" style={{ ...inputStyle, flex: 1, fontSize: 11, padding: '5px 8px' }} />
                 </div>
@@ -936,17 +944,17 @@ function LeadDetailModal({
                 </div>
                 <input value={schedNotes} onChange={e => setSchedNotes(e.target.value)} placeholder="Observacoes..." style={{ ...inputStyle, fontSize: 11, padding: '5px 8px', marginBottom: 6, width: '100%' }} />
                 <div style={{ display: 'flex', gap: 6 }}>
-                  <button type="button" onClick={() => setShowSchedule(false)} style={{ flex: 1, padding: '5px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
-                  <button type="submit" disabled={scheduling} style={{ flex: 1, padding: '5px', border: '1px solid #e2e8f0', background: '#16a34a', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: scheduling ? 'wait' : 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                    {scheduling ? 'AGENDANDO...' : 'CONFIRMAR'}
+                  <button type="button" onClick={() => setShowSchedule(false)} style={{ flex: 1, padding: '7px', border: `1px solid ${C.line}`, borderRadius: 6, background: 'white', color: C.ink, fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
+                  <button type="submit" disabled={scheduling} style={{ flex: 1, padding: '7px', border: 'none', borderRadius: 6, background: C.green, color: 'white', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, cursor: scheduling ? 'wait' : 'pointer' }}>
+                    {scheduling ? 'Agendando…' : 'Confirmar'}
                   </button>
                 </div>
               </form>
             )}
           </div>
 
-          <form onSubmit={handleAddInteraction} style={{ marginBottom: 16, borderTop: '1px solid #e2e8f0', paddingTop: 12 }}>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, marginBottom: 8 }}>REGISTRAR INTERACAO</div>
+          <form onSubmit={handleAddInteraction} style={{ marginBottom: 16, borderTop: `1px solid ${C.line}`, paddingTop: 12 }}>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid, marginBottom: 8 }}>Registrar interação</div>
             <div style={{ display: 'flex', gap: 6 }}>
               <select value={newType} onChange={e => setNewType(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
                 {Object.entries(INTERACTION_TYPES).map(([k, v]) => (
@@ -954,27 +962,27 @@ function LeadDetailModal({
                 ))}
               </select>
               <input placeholder="Descreva..." value={newDesc} onChange={e => setNewDesc(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-              <button type="submit" disabled={submitting} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', padding: '6px 12px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>+</button>
+              <button type="submit" disabled={submitting} style={{ background: C.ink, color: 'white', border: 'none', borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap' }}>+</button>
             </div>
           </form>
 
           {/* Timeline */}
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12 }}>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, marginBottom: 8 }}>TIMELINE ({interactions.length})</div>
+          <div style={{ borderTop: `1px solid ${C.line}`, paddingTop: 12 }}>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid, marginBottom: 8 }}>Timeline ({interactions.length})</div>
             {interactions.length === 0 ? (
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', padding: 10 }}>Nenhuma interacao registrada</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.dim, padding: 10 }}>Nenhuma interacao registrada</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {interactions.map(i => (
-                  <div key={i.id} style={{ display: 'flex', gap: 8, padding: '8px 10px', background: '#fafafa', border: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                  <div key={i.id} style={{ display: 'flex', gap: 8, padding: '9px 10px', background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, fontFamily: 'var(--font-sans)', fontSize: 12, color: C.ink }}>
                     <span style={{ fontSize: 16, lineHeight: 1 }}>{INTERACTION_ICONS[i.type] ?? '📝'}</span>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <strong>{INTERACTION_TYPES[i.type] ?? i.type}</strong>
-                        <span style={{ fontSize: 9, color: '#888' }}>{fmtTime(i.createdAt)}</span>
+                        <span style={{ fontSize: 10, color: C.dim }}>{fmtTime(i.createdAt)}</span>
                       </div>
                       <div style={{ marginTop: 2 }}>{i.description}</div>
-                      {i.userName && <div style={{ fontSize: 9, color: '#888', marginTop: 2 }}>por {i.userName}</div>}
+                      {i.userName && <div style={{ fontSize: 10, color: C.dim, marginTop: 2 }}>por {i.userName}</div>}
                     </div>
                   </div>
                 ))}
@@ -984,48 +992,48 @@ function LeadDetailModal({
 
           {/* Active Plans + Mentors */}
           {plans.length > 0 && (
-            <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12, marginTop: 8 }}>
-              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, marginBottom: 8 }}>PLANOS ({plans.length})</div>
+            <div style={{ borderTop: `1px solid ${C.line}`, paddingTop: 12, marginTop: 8 }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid, marginBottom: 8 }}>Planos ({plans.length})</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {plans.map(p => {
                   const planMentors = mentors[p.id] ?? []
                   const totalMentors = planMentors.reduce((s, m) => s + m.value, 0)
                   return (
-                    <div key={p.id} style={{ border: '1px solid #ddd', background: '#fafafa' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                    <div key={p.id} style={{ border: `1px solid ${C.line}`, borderRadius: 8, background: C.bg, overflow: 'hidden' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '8px 10px', fontFamily: 'var(--font-sans)', fontSize: 12, color: C.ink }}>
                         <span style={{ fontWeight: 700 }}>{p.product.code} — {p.product.name}</span>
-                        <span>{fmt(p.value)} | {p.installments ?? 1}x</span>
-                        <span style={{ background: p.status === 'ACTIVE' ? '#006600' : p.status === 'CANCELLED' ? '#cc0000' : '#888', color: 'white', padding: '1px 6px', fontSize: 9, fontWeight: 700 }}>
+                        <span style={num}>{fmt(p.value)} · {p.installments ?? 1}x</span>
+                        <span style={{ background: p.status === 'ACTIVE' ? C.green : p.status === 'CANCELLED' ? C.red : C.dim, color: 'white', padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 600 }}>
                           {p.status === 'ACTIVE' ? 'ATIVO' : p.status === 'CANCELLED' ? 'CANCELADO' : p.status}
                         </span>
                       </div>
                       {/* Mentors */}
-                      <div style={{ padding: '4px 8px 8px', borderTop: '1px solid #eee' }}>
+                      <div style={{ padding: '6px 10px 8px', borderTop: `1px solid ${C.line}` }}>
                         {planMentors.length > 0 && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 6 }}>
                             {planMentors.map(m => (
-                              <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: 'var(--font-mono)', fontSize: 10 }}>
+                              <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontFamily: 'var(--font-sans)', fontSize: 11, color: C.ink }}>
                                 <span>{m.mentorName}</span>
-                                <span style={{ fontWeight: 700 }}>{fmt(m.value)}</span>
+                                <span style={{ ...num, fontWeight: 700 }}>{fmt(m.value)}</span>
                                 <button onClick={async () => {
                                   if (!confirm(`Remover ${m.mentorName}?`)) return
                                   await apiFetch(`/api/mentors/${m.id}`, { method: 'DELETE' })
                                   loadMentors(p.id)
-                                }} style={{ background: '#dc2626', color: 'white', border: 'none', padding: '1px 6px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
+                                }} style={{ background: C.red, color: 'white', border: 'none', borderRadius: 4, padding: '1px 7px', fontSize: 10, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>X</button>
                               </div>
                             ))}
-                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#666', textAlign: 'right' }}>
+                            <div style={{ ...num, fontSize: 10, color: C.mid, textAlign: 'right' }}>
                               Total mentoria: {fmt(totalMentors)} | Saldo: {fmt(p.value - totalMentors)}
                             </div>
                           </div>
                         )}
                         {addingMentor === p.id ? (
                           <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                            <input list="mentor-list" placeholder="Nome" value={newMentorName} onChange={e => setNewMentorName(e.target.value)} style={{ ...inputStyle, flex: '1 1 100px', fontSize: 10, padding: '4px 6px' }} />
+                            <input list="mentor-list" placeholder="Nome" value={newMentorName} onChange={e => setNewMentorName(e.target.value)} style={{ ...inputStyle, flex: '1 1 100px', fontSize: 11, padding: '5px 7px' }} />
                             <datalist id="mentor-list">
                               {(suggestions?.mentors ?? []).map(s => <option key={s} value={s} />)}
                             </datalist>
-                            <input type="number" placeholder="Valor" step="0.01" value={newMentorValue} onChange={e => setNewMentorValue(e.target.value)} style={{ ...inputStyle, width: 80, fontSize: 10, padding: '4px 6px' }} />
+                            <input type="number" placeholder="Valor" step="0.01" value={newMentorValue} onChange={e => setNewMentorValue(e.target.value)} style={{ ...inputStyle, width: 80, fontSize: 11, padding: '5px 7px' }} />
                             <button disabled={savingMentor} onClick={async () => {
                               if (!newMentorName.trim() || !parseFloat(newMentorValue)) return
                               setSavingMentor(true)
@@ -1043,14 +1051,14 @@ function LeadDetailModal({
                                 onUpdated()
                               } catch { toast.error('Erro ao atribuir mentor') }
                               setSavingMentor(false)
-                            }} style={{ background: '#16a34a', color: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>OK</button>
-                            <button onClick={() => setAddingMentor(null)} style={{ background: 'white', border: '1px solid #e2e8f0', padding: '4px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>X</button>
+                            }} style={{ background: C.green, color: 'white', border: 'none', borderRadius: 6, padding: '5px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 700 }}>OK</button>
+                            <button onClick={() => setAddingMentor(null)} style={{ background: 'white', border: `1px solid ${C.line}`, borderRadius: 6, padding: '5px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', color: C.ink }}>X</button>
                           </div>
                         ) : (
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <button onClick={() => setAddingMentor(p.id)} style={{ background: 'white', border: '1px dashed #888', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', color: '#666', flex: 1 }}>+ ATRIBUIR MENTOR</button>
+                            <button onClick={() => setAddingMentor(p.id)} style={{ background: 'white', border: `1px dashed ${C.dim}`, borderRadius: 6, padding: '5px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', color: C.mid, flex: 1 }}>+ Atribuir mentor</button>
                             {p.value - totalMentors > 0 && (
-                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#4A78FF', marginLeft: 6 }}>Disponivel: {fmt(p.value - totalMentors)}</span>
+                              <span style={{ ...num, fontSize: 10, color: C.slate, marginLeft: 6 }}>Disponivel: {fmt(p.value - totalMentors)}</span>
                             )}
                           </div>
                         )}
@@ -1066,14 +1074,14 @@ function LeadDetailModal({
 
           {/* Commissions for closed deals */}
           {lead.leadStage === 'FECHADO' && commissions.length > 0 && (
-            <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12, marginTop: 8 }}>
-              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, marginBottom: 8 }}>COMISSOES ({commissions.length})</div>
+            <div style={{ borderTop: `1px solid ${C.line}`, paddingTop: 12, marginTop: 8 }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid, marginBottom: 8 }}>Comissões ({commissions.length})</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {commissions.map(c => (
-                  <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#fafafa', border: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                  <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '8px 10px', background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, fontFamily: 'var(--font-sans)', fontSize: 12, color: C.ink }}>
                     <span>{c.salesRep} — {c.installment}/{c.totalInstallments}</span>
-                    <span style={{ fontWeight: 700 }}>{fmt(c.value)}</span>
-                    <span style={{ background: c.status === 'PAID' ? '#006600' : c.status === 'PENDING' ? '#e6a800' : '#cc0000', color: 'white', padding: '1px 6px', fontSize: 9, fontWeight: 700 }}>{c.status === 'PAID' ? 'PAGO' : c.status === 'PENDING' ? 'PENDENTE' : 'CANCELADO'}</span>
+                    <span style={{ ...num, fontWeight: 700 }}>{fmt(c.value)}</span>
+                    <span style={{ background: c.status === 'PAID' ? C.green : c.status === 'PENDING' ? C.amber : C.red, color: 'white', padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 600 }}>{c.status === 'PAID' ? 'PAGO' : c.status === 'PENDING' ? 'PENDENTE' : 'CANCELADO'}</span>
                   </div>
                 ))}
               </div>
@@ -1081,21 +1089,21 @@ function LeadDetailModal({
           )}
 
           {/* Actions */}
-          <div style={{ marginTop: 16, borderTop: '1px solid #e2e8f0', paddingTop: 12 }}>
+          <div style={{ marginTop: 16, borderTop: `1px solid ${C.line}`, paddingTop: 12 }}>
             {showMovePicker && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10, padding: 10, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10, padding: 10, background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8 }}>
                 {LEAD_STAGES.filter(s => s !== stage && s !== 'FECHADO').map(s => (
                   <button key={s} onClick={() => { changeStage(s); setShowMovePicker(false) }} disabled={movingStage}
-                    style={{ padding: '5px 10px', border: `1px solid ${LEAD_STAGE_COLORS[s] ?? '#e2e8f0'}`, background: 'white', color: LEAD_STAGE_COLORS[s] ?? '#333', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer', borderRadius: 3 }}>
+                    style={{ padding: '6px 12px', border: `1px solid ${LEAD_STAGE_COLORS[s] ?? C.line}`, background: 'white', color: LEAD_STAGE_COLORS[s] ?? C.ink, fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, cursor: 'pointer', borderRadius: 6 }}>
                     {LEAD_STAGE_LABELS[s] ?? s}
                   </button>
                 ))}
               </div>
             )}
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setShowMovePicker(v => !v)} style={{ flex: 1, padding: '8px', border: '1px solid #0A0A0C', background: showMovePicker ? '#0A0A0C' : 'white', color: showMovePicker ? 'white' : '#0A0A0C', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>MOVER</button>
+              <button onClick={() => setShowMovePicker(v => !v)} style={{ flex: 1, padding: '10px', border: `1px solid ${C.ink}`, borderRadius: 6, background: showMovePicker ? C.ink : 'white', color: showMovePicker ? 'white' : C.ink, fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Mover</button>
               {stage !== 'FECHADO' && stage !== 'PERDIDO' && (
-                <button onClick={onCloseDeal} style={{ flex: 1, padding: '8px', border: '1px solid #e2e8f0', background: '#16a34a', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>FECHAR NEGOCIO</button>
+                <button onClick={onCloseDeal} style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 6, background: C.green, color: 'white', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Fechar negócio</button>
               )}
             </div>
           </div>
@@ -1258,8 +1266,8 @@ export default function CrmPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: 40, textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: 12 }}>
-        CARREGANDO PIPELINE...
+      <div style={{ padding: 40, textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: 13, color: C.mid }}>
+        Carregando pipeline…
       </div>
     )
   }
@@ -1267,21 +1275,17 @@ export default function CrmPage() {
   return (
     <div>
       {/* CRM Tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 16, overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 20, borderBottom: `1px solid ${C.line}`, overflowX: 'auto' }}>
         {(['dashboard', 'pipeline', 'agenda'] as const).map(tab => (
           <button key={tab} onClick={() => setCrmTab(tab)} style={{
-            padding: '10px 24px', border: '1px solid #e2e8f0',
-            borderBottom: crmTab === tab ? 'none' : '2px solid black',
-            background: crmTab === tab ? 'white' : '#f0f0f0',
-            fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-            textTransform: 'uppercase', position: 'relative',
-            marginBottom: crmTab === tab ? -2 : 0, zIndex: crmTab === tab ? 1 : 0,
-            color: crmTab === tab ? 'black' : '#888',
+            padding: '9px 16px', border: 'none', background: 'transparent', cursor: 'pointer',
+            fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: crmTab === tab ? 700 : 500,
+            color: crmTab === tab ? C.ink : C.dim,
+            borderBottom: crmTab === tab ? `2px solid ${C.neon}` : '2px solid transparent', marginBottom: -1,
           }}>
-            {tab === 'pipeline' ? 'PIPELINE' : tab === 'agenda' ? 'AGENDA' : 'DASHBOARD'}
+            {tab === 'pipeline' ? 'Pipeline' : tab === 'agenda' ? 'Agenda' : 'Dashboard'}
           </button>
         ))}
-        <div style={{ flex: 1, borderBottom: '1px solid #e2e8f0' }} />
       </div>
 
       {/* CRM DASHBOARD */}
@@ -1313,13 +1317,13 @@ export default function CrmPage() {
         return (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-              <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: 14, margin: 0 }}>DASHBOARD COMERCIAL</h2>
-              <div style={{ display: 'flex', gap: 4 }}>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em', color: C.ink, margin: 0 }}>Dashboard comercial</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, border: `1px solid ${C.line}`, borderRadius: 100, padding: 4 }}>
                 {(['dia', 'semana', 'mes', 'ano'] as const).map(p => (
                   <button key={p} onClick={() => setDashPeriod(p)} style={{
-                    padding: '5px 12px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
-                    background: dashPeriod === p ? 'black' : 'white', color: dashPeriod === p ? 'white' : 'black',
-                  }}>{p.toUpperCase()}</button>
+                    padding: '5px 12px', border: 'none', borderRadius: 100, fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    background: dashPeriod === p ? C.ink : 'transparent', color: dashPeriod === p ? '#fff' : C.mid,
+                  }}>{p === 'dia' ? 'Dia' : p === 'semana' ? 'Semana' : p === 'mes' ? 'Mês' : 'Ano'}</button>
                 ))}
               </div>
             </div>
@@ -1327,39 +1331,39 @@ export default function CrmPage() {
             {/* KPIs */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12, marginBottom: 24 }}>
               {[
-                { label: 'Leads Ativos', value: String(totalLeads), color: '#4A78FF' },
-                { label: 'Novos', value: String(newLeadsPeriod), color: '#06b6d4' },
-                { label: 'Em Novo', value: String(inNovo), color: '#4A78FF' },
-                { label: 'Follow Up', value: String(inFollowUp), color: '#06b6d4' },
-                { label: 'Negociacao', value: String(inNegociacao), color: '#f97316' },
-                { label: 'Fechados', value: String(fechadosPeriod), color: '#22c55e' },
-                { label: 'Valor Fechado', value: fmtBRL(valorFechadoPeriod), color: '#006600' },
-                { label: 'Reunioes Feitas', value: String(comMeetingsRealizadas), color: '#006600' },
-                { label: 'Reunioes Agendadas', value: String(comMeetingsAgendadas), color: '#4A78FF' },
+                { label: 'Leads Ativos', value: String(totalLeads), color: C.ink },
+                { label: 'Novos', value: String(newLeadsPeriod), color: C.slate },
+                { label: 'Em Novo', value: String(inNovo), color: C.slate },
+                { label: 'Follow Up', value: String(inFollowUp), color: C.slate },
+                { label: 'Negociacao', value: String(inNegociacao), color: C.amber },
+                { label: 'Fechados', value: String(fechadosPeriod), color: C.green },
+                { label: 'Valor Fechado', value: fmtBRL(valorFechadoPeriod), color: C.greenDk },
+                { label: 'Reunioes Feitas', value: String(comMeetingsRealizadas), color: C.greenDk },
+                { label: 'Reunioes Agendadas', value: String(comMeetingsAgendadas), color: C.slate },
               ].map(kpi => (
-                <div key={kpi.label} style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', padding: '12px 14px', background: 'white' }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8, textTransform: 'uppercase', letterSpacing: 0.5, color: '#666' }}>{kpi.label}</div>
-                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 18, color: kpi.color, marginTop: 4 }}>{kpi.value}</div>
+                <div key={kpi.label} style={{ ...card, padding: '14px 16px' }}>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.mid }}>{kpi.label}</div>
+                  <div style={{ ...num, fontSize: 22, fontWeight: 700, color: kpi.color, marginTop: 6 }}>{kpi.value}</div>
                 </div>
               ))}
             </div>
 
             {/* Pipeline summary */}
-            <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white', marginBottom: 20 }}>
-              <div style={{ background: '#0A0A0C', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>FUNIL DE VENDAS</div>
+            <div style={{ ...card, overflow: 'hidden', marginBottom: 20 }}>
+              <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.line}`, fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15, color: C.ink }}>Funil de vendas</div>
               <div style={{ padding: 16 }}>
                 {[
-                  { label: 'Novo', count: inNovo, color: '#4A78FF', pct: totalLeads > 0 ? Math.round(inNovo / totalLeads * 100) : 0 },
-                  { label: 'Follow Up', count: inFollowUp, color: '#06b6d4', pct: totalLeads > 0 ? Math.round(inFollowUp / totalLeads * 100) : 0 },
-                  { label: 'Em Negociacao', count: inNegociacao, color: '#f97316', pct: totalLeads > 0 ? Math.round(inNegociacao / totalLeads * 100) : 0 },
-                  { label: 'Fechado', count: fechados, color: '#22c55e', pct: totalLeads > 0 ? Math.round(fechados / totalLeads * 100) : 0 },
+                  { label: 'Novo', count: inNovo, color: C.slate, pct: totalLeads > 0 ? Math.round(inNovo / totalLeads * 100) : 0 },
+                  { label: 'Follow Up', count: inFollowUp, color: C.slate, pct: totalLeads > 0 ? Math.round(inFollowUp / totalLeads * 100) : 0 },
+                  { label: 'Em Negociacao', count: inNegociacao, color: C.amber, pct: totalLeads > 0 ? Math.round(inNegociacao / totalLeads * 100) : 0 },
+                  { label: 'Fechado', count: fechados, color: C.green, pct: totalLeads > 0 ? Math.round(fechados / totalLeads * 100) : 0 },
                 ].map(stage => (
                   <div key={stage.label} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, width: 110 }}>{stage.label}</span>
-                    <div style={{ flex: 1, height: 20, background: '#f0f0f0', border: '1px solid #ddd', position: 'relative' }}>
+                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: C.ink, width: 110 }}>{stage.label}</span>
+                    <div style={{ flex: 1, height: 20, background: '#f1f5f9', borderRadius: 6, position: 'relative', overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: stage.pct + '%', background: stage.color, transition: 'width 0.3s' }} />
                     </div>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, width: 50, textAlign: 'right' }}>{stage.count} ({stage.pct}%)</span>
+                    <span style={{ ...num, fontSize: 12, fontWeight: 700, color: C.ink, width: 60, textAlign: 'right' }}>{stage.count} ({stage.pct}%)</span>
                   </div>
                 ))}
               </div>
@@ -1370,13 +1374,13 @@ export default function CrmPage() {
               const bySeller: Record<string, number> = {}
               leads.forEach(l => { const rep = l.salesRep ?? 'Sem vendedor'; bySeller[rep] = (bySeller[rep] ?? 0) + 1 })
               return (
-                <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
-                  <div style={{ background: '#0A0A0C', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>LEADS POR VENDEDOR</div>
-                  <div style={{ padding: 16 }}>
+                <div style={{ ...card, overflow: 'hidden' }}>
+                  <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.line}`, fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15, color: C.ink }}>Leads por vendedor</div>
+                  <div style={{ padding: '8px 16px' }}>
                     {Object.entries(bySeller).sort((a, b) => b[1] - a[1]).map(([rep, count]) => (
-                      <div key={rep} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-                        <span style={{ fontWeight: 700 }}>{rep}</span>
-                        <span>{count} leads</span>
+                      <div key={rep} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0', borderBottom: `1px solid ${C.bg}`, fontFamily: 'var(--font-sans)', fontSize: 12, color: C.ink }}>
+                        <span style={{ fontWeight: 600 }}>{rep}</span>
+                        <span style={{ ...num, color: C.mid }}>{count} leads</span>
                       </div>
                     ))}
                   </div>
@@ -1404,28 +1408,28 @@ export default function CrmPage() {
         return (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: 14, margin: 0 }}>AGENDA COMERCIAL</h2>
-            <a href="/agenda" style={{ padding: '6px 14px', border: '1px solid #e2e8f0', background: '#16a34a', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textDecoration: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-              + AGENDAR REUNIAO
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em', color: C.ink, margin: 0 }}>Agenda comercial</h2>
+            <a href="/agenda" style={{ padding: '8px 16px', border: 'none', borderRadius: 6, background: C.green, color: 'white', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
+              + Agendar reunião
             </a>
           </div>
 
           {/* Month navigation */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 12 }}>
-            <button onClick={() => { if (comMonth === 0) { setComMonth(11); setComYear(y => y - 1) } else setComMonth(m => m - 1) }} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>◀</button>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, textTransform: 'uppercase', minWidth: 150, textAlign: 'center' }}>{MONTH_NAMES[comMonth]} {comYear}</span>
-            <button onClick={() => { if (comMonth === 11) { setComMonth(0); setComYear(y => y + 1) } else setComMonth(m => m + 1) }} style={{ padding: '4px 12px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>▶</button>
+            <button onClick={() => { if (comMonth === 0) { setComMonth(11); setComYear(y => y - 1) } else setComMonth(m => m - 1) }} style={{ padding: '4px 12px', border: 'none', background: 'transparent', color: C.mid, fontSize: 16, cursor: 'pointer' }}>‹</button>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, color: C.ink, minWidth: 150, textAlign: 'center' }}>{MONTH_NAMES[comMonth]} {comYear}</span>
+            <button onClick={() => { if (comMonth === 11) { setComMonth(0); setComYear(y => y + 1) } else setComMonth(m => m + 1) }} style={{ padding: '4px 12px', border: 'none', background: 'transparent', color: C.mid, fontSize: 16, cursor: 'pointer' }}>›</button>
           </div>
 
           {/* Calendar */}
-          <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white', marginBottom: 16 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'black' }}>
+          <div style={{ ...card, overflow: 'hidden', marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: C.bg, borderBottom: `1px solid ${C.line}` }}>
               {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map(d => (
-                <div key={d} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: 8, color: 'white' }}>{d}</div>
+                <div key={d} style={{ padding: '8px 4px', textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid }}>{d}</div>
               ))}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
-              {Array.from({ length: firstDay }, (_, i) => <div key={'e' + i} style={{ minHeight: 60, borderRight: '1px solid #eee', borderBottom: '1px solid #eee', background: '#f9f9f9' }} />)}
+              {Array.from({ length: firstDay }, (_, i) => <div key={'e' + i} style={{ minHeight: 60, borderRight: `1px solid ${C.bg}`, borderBottom: `1px solid ${C.bg}`, background: C.bg }} />)}
               {Array.from({ length: daysInMonth }, (_, i) => {
                 const day = i + 1
                 const isToday = day === todayDay
@@ -1433,15 +1437,15 @@ export default function CrmPage() {
                 const dateStr = `${comYear}-${String(comMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
                 return (
                   <div key={day} onClick={() => setComSelectedDate(comSelectedDate === dateStr ? null : dateStr)} style={{
-                    minHeight: 60, padding: 3, borderRight: '1px solid #eee', borderBottom: '1px solid #eee',
-                    cursor: 'pointer', background: isToday ? '#fffff0' : comSelectedDate === dateStr ? '#f0fff0' : 'white',
+                    minHeight: 60, padding: 4, borderRight: `1px solid ${C.bg}`, borderBottom: `1px solid ${C.bg}`,
+                    cursor: 'pointer', background: isToday ? 'rgba(199,249,0,0.10)' : comSelectedDate === dateStr ? '#f0fdf4' : 'white',
                   }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: isToday ? 900 : 400, color: isToday ? '#22c55e' : 'black', display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ ...num, fontSize: 11, fontWeight: isToday ? 800 : 500, color: isToday ? C.greenDk : C.ink, display: 'flex', justifyContent: 'space-between' }}>
                       <span>{day}</span>
-                      {dayMeetings.length > 0 && <span style={{ background: '#16a34a', color: 'white', borderRadius: '50%', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8 }}>{dayMeetings.length}</span>}
+                      {dayMeetings.length > 0 && <span style={{ background: C.green, color: 'white', borderRadius: '50%', width: 15, height: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9 }}>{dayMeetings.length}</span>}
                     </div>
                     {dayMeetings.slice(0, 2).map(m => {
-                      const mStyle: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-mono)', fontSize: 7, padding: '1px 3px', marginTop: 1, background: '#16a34a', color: 'white', borderRadius: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', opacity: m.status === 'DONE' ? 0.6 : 1, textDecoration: 'none', cursor: 'pointer' }
+                      const mStyle: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-sans)', fontSize: 8, padding: '1px 3px', marginTop: 2, background: C.green, color: 'white', borderRadius: 3, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', opacity: m.status === 'DONE' ? 0.6 : 1, textDecoration: 'none', cursor: 'pointer' }
                       const mLabel = `${new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} ${m.client?.companyName ?? m.title}`
                       return m.client?.id ? (
                         <a key={m.id} href="#"
@@ -1462,38 +1466,38 @@ export default function CrmPage() {
             const dayNum = parseInt(comSelectedDate.split('-')[2])
             const dayMeetings = meetingsByDay[dayNum] ?? []
             return (
-              <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', background: 'white', marginBottom: 16 }}>
-                <div style={{ background: '#16a34a', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>
+              <div style={{ ...card, overflow: 'hidden', marginBottom: 16 }}>
+                <div style={{ background: C.green, color: 'white', padding: '10px 16px', fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600, textTransform: 'capitalize' }}>
                   {new Date(comSelectedDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </div>
-                <div style={{ padding: 12 }}>
+                <div style={{ padding: '4px 16px' }}>
                   {dayMeetings.length === 0 ? (
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', textAlign: 'center', padding: 16 }}>Sem reunioes comerciais</div>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.dim, textAlign: 'center', padding: 16 }}>Sem reunioes comerciais</div>
                   ) : dayMeetings.map(m => (
-                    <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #eee', gap: 8 }}>
+                    <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${C.bg}`, gap: 8 }}>
                       <div style={{ flex: 1 }}>
                         {m.client?.id ? (
                           <a href="#"
                             onClick={(e) => { e.preventDefault(); const lead = leads.find(l => l.id === m.client!.id); if (lead) setDetailLead(lead) }}
-                            style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}
+                            style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, color: C.ink, textDecoration: 'underline', cursor: 'pointer' }}
                           >{m.client.companyName}</a>
                         ) : (
-                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>{m.title}</div>
+                          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, color: C.ink }}>{m.title}</div>
                         )}
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555' }}>
+                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.mid }}>
                           {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {m.duration}min{m.mentorName && <> • {m.mentorName}</>}
                         </div>
-                        {m.notes && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 2 }}>{m.notes}</div>}
+                        {m.notes && <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.dim, marginTop: 2 }}>{m.notes}</div>}
                       </div>
                       <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                         {m.status === 'SCHEDULED' && (
                           <>
                             <button onClick={async () => {
                               try { await apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ status: 'DONE' }) }); toast.success('Marcada como feita'); loadCommercialMeetings() } catch { toast.error('Erro') }
-                            }} style={{ background: '#16a34a', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FEITA</button>
+                            }} style={{ background: C.green, color: 'white', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>Feita</button>
                             <button onClick={async () => {
                               try { await apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ status: 'NO_SHOW' }) }); toast.success('Marcada como no-show'); loadCommercialMeetings() } catch { toast.error('Erro') }
-                            }} style={{ background: '#f59e0b', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FALTOU</button>
+                            }} style={{ background: C.amber, color: 'white', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>Faltou</button>
                             <button onClick={() => {
                               const newDate = prompt('Nova data (DD/MM/AAAA):', new Date(m.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }))
                               if (!newDate) return
@@ -1505,16 +1509,16 @@ export default function CrmPage() {
                               apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ date: dt.toISOString() }) })
                                 .then(() => { toast.success('Reagendada para ' + newDate + ' ' + newTime); loadCommercialMeetings() })
                                 .catch(() => toast.error('Erro ao reagendar'))
-                            }} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>REAGENDAR</button>
+                            }} style={{ background: C.ink, color: 'white', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>Reagendar</button>
                             <button onClick={async () => {
                               if (!confirm('Cancelar esta reuniao?')) return
                               try { await apiFetch(`/api/meetings/${m.id}`, { method: 'PUT', body: JSON.stringify({ status: 'CANCELLED' }) }); toast.success('Reuniao cancelada'); loadCommercialMeetings() } catch { toast.error('Erro') }
-                            }} style={{ background: '#dc2626', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>CANCELAR</button>
+                            }} style={{ background: C.red, color: 'white', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>Cancelar</button>
                           </>
                         )}
-                        {m.status === 'DONE' && <span style={{ background: '#16a34a', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>FEITA</span>}
-                        {m.status === 'NO_SHOW' && <span style={{ background: '#dc2626', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>FALTOU</span>}
-                        {m.status === 'CANCELLED' && <span style={{ background: '#888', color: 'white', padding: '3px 8px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>CANCELADA</span>}
+                        {m.status === 'DONE' && <span style={{ background: C.green, color: 'white', padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-sans)' }}>Feita</span>}
+                        {m.status === 'NO_SHOW' && <span style={{ background: C.red, color: 'white', padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-sans)' }}>Faltou</span>}
+                        {m.status === 'CANCELLED' && <span style={{ background: C.dim, color: 'white', padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-sans)' }}>Cancelada</span>}
                       </div>
                     </div>
                   ))}
@@ -1532,9 +1536,12 @@ export default function CrmPage() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         marginBottom: 20, flexWrap: 'wrap', gap: 12,
       }}>
-        <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: isMobile ? 14 : 18, margin: 0 }}>
-          CRM — PIPELINE
-        </h1>
+        <div>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: '-0.02em', color: C.ink, margin: 0 }}>
+            Pipeline
+          </h1>
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.mid, margin: '2px 0 0' }}>Funil de vendas · arraste os cards entre as etapas</p>
+        </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             onClick={async () => {
@@ -1559,22 +1566,20 @@ export default function CrmPage() {
             }}
             disabled={syncing}
             style={{
-              padding: '8px 16px', border: '1px solid #e2e8f0', background: syncing ? '#888' : '#22c55e', color: 'white',
-              fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: syncing ? 'wait' : 'pointer',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+              padding: '8px 16px', border: `1px solid ${C.line}`, borderRadius: 6, background: syncing ? C.dim : '#fff', color: syncing ? '#fff' : C.ink,
+              fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, cursor: syncing ? 'wait' : 'pointer',
             }}
           >
-            {syncing ? 'SINCRONIZANDO...' : 'SINCRONIZAR LEADS'}
+            {syncing ? 'Sincronizando…' : 'Sincronizar leads'}
           </button>
           <button
             onClick={() => setShowNewLead(true)}
             style={{
-              padding: '8px 16px', border: '1px solid #e2e8f0', background: '#0A0A0C', color: 'white',
-              fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+              padding: '8px 16px', border: 'none', borderRadius: 6, background: C.neon, color: C.ink,
+              fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
             }}
           >
-            + NOVO LEAD
+            + Novo lead
           </button>
         </div>
       </div>
@@ -1585,7 +1590,7 @@ export default function CrmPage() {
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           placeholder="Buscar lead por nome, responsavel, email ou telefone..."
-          style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
+          style={{ width: '100%', padding: '10px 12px', border: `1px solid ${C.line}`, borderRadius: 8, fontFamily: 'var(--font-sans)', fontSize: 13, background: '#fff' }}
         />
       </div>
 
@@ -1593,7 +1598,7 @@ export default function CrmPage() {
       <div style={{ display: 'flex', gap: 16, marginBottom: 12, flexWrap: 'wrap' }}>
         {/* Faturamento — por faixa (recorte) */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Faturamento:</span>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid }}>Faturamento:</span>
           {([
             ['ALL', 'TODOS'],
             ['ATE_50K', 'ATÉ 50K'],
@@ -1606,26 +1611,26 @@ export default function CrmPage() {
             const on = faturamentoFilter === val
             // faixas dentro do ICP (>=100k) destacam em verde quando ativas
             const icpBand = ['100_500K', '500K_1M', 'ACIMA_1M'].includes(val)
-            const bg = on ? (icpBand ? '#22c55e' : 'black') : 'white'
+            const bg = on ? (icpBand ? C.green : C.ink) : '#fff'
             return (
               <button key={val} onClick={() => setFaturamentoFilter(val)} style={{
-                padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
-                background: bg, color: on ? 'white' : 'black',
+                padding: '5px 12px', border: `1px solid ${on ? 'transparent' : C.line}`, borderRadius: 100, fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                background: bg, color: on ? 'white' : C.slate,
               }}>{label}</button>
             )
           })}
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#666', marginLeft: 4 }}>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.mid, marginLeft: 4 }}>
             {activeLeads.length} leads · {activeLeads.filter(l => l.isICP).length} no ICP
           </span>
         </div>
       </div>
 
       {/* View toggle: Kanban / Dashboard */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 16, border: `1px solid ${C.line}`, borderRadius: 100, padding: 4, width: 'fit-content' }}>
         {(['kanban', 'dashboard'] as const).map(v => (
           <button key={v} onClick={() => setCrmView(v)} style={{
-            padding: '6px 18px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: 0.5,
-            background: crmView === v ? 'black' : 'white', color: crmView === v ? 'white' : 'black',
+            padding: '6px 18px', border: 'none', borderRadius: 100, fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            background: crmView === v ? C.ink : 'transparent', color: crmView === v ? '#fff' : C.mid,
           }}>{v === 'kanban' ? '▦ Kanban' : '▤ Dashboard'}</button>
         ))}
       </div>
@@ -1645,20 +1650,19 @@ export default function CrmPage() {
         gap: isMobile ? 8 : 12, marginBottom: 20,
       }}>
         {[
-          { label: 'Leads Ativos', value: String(activeLeads.length), color: '#4A78FF' },
-          { label: 'Novos (mes)', value: String(metrics?.newThisMonth ?? 0), color: '#06b6d4' },
-          { label: 'Fechados (mes)', value: String(metrics?.closedThisMonth ?? 0), color: '#22c55e' },
-          { label: 'Conversao', value: `${metrics?.conversionRate ?? 0}%`, color: '#f97316' },
-          { label: 'Parados >7d', value: String(metrics?.staleLeads ?? 0), color: (metrics?.staleLeads ?? 0) > 0 ? '#cc0000' : '#888' },
+          { label: 'Leads Ativos', value: String(activeLeads.length), color: C.ink },
+          { label: 'Novos (mes)', value: String(metrics?.newThisMonth ?? 0), color: C.slate },
+          { label: 'Fechados (mes)', value: String(metrics?.closedThisMonth ?? 0), color: C.green },
+          { label: 'Conversao', value: `${metrics?.conversionRate ?? 0}%`, color: C.amber },
+          { label: 'Parados >7d', value: String(metrics?.staleLeads ?? 0), color: (metrics?.staleLeads ?? 0) > 0 ? C.red : C.dim },
         ].map(kpi => (
           <div key={kpi.label} style={{
-            border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
-            padding: isMobile ? '10px 8px' : '14px 16px', background: 'white',
+            ...card, padding: isMobile ? '10px 8px' : '14px 16px',
           }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5, color: '#666' }}>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.mid }}>
               {kpi.label}
             </div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: isMobile ? 16 : 22, color: kpi.color, marginTop: 4 }}>
+            <div style={{ ...num, fontSize: isMobile ? 18 : 22, fontWeight: 700, color: kpi.color, marginTop: 6 }}>
               {kpi.value}
             </div>
           </div>
@@ -1668,11 +1672,11 @@ export default function CrmPage() {
       {/* Valor fechado + Performance vendedores */}
       {metrics && metrics.closedValueThisMonth > 0 && (
         <div style={{ marginBottom: 16, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ background: '#16a34a', color: 'white', padding: '8px 16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12 }}>
+          <div style={{ background: C.green, color: 'white', padding: '8px 16px', borderRadius: 8, fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 12 }}>
             Fechado no mes: {fmtBRL(metrics.closedValueThisMonth)}
           </div>
           {Object.entries(metrics.bySalesRep).filter(([, v]) => v.closed > 0).map(([rep, v]) => (
-            <div key={rep} style={{ background: 'var(--retro-gray)', padding: '8px 16px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11 }}>
+            <div key={rep} style={{ background: C.bg, color: C.ink, padding: '8px 16px', border: `1px solid ${C.line}`, borderRadius: 8, fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 12 }}>
               {rep}: {v.closed} fechados ({fmtBRL(v.value)})
             </div>
           ))}
@@ -1745,147 +1749,147 @@ function CrmDashboard({ metrics, faturamentoFilter, setFaturamentoFilter, isMobi
   isMobile: boolean
 }) {
   if (!metrics) {
-    return <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#888', padding: 24 }}>Carregando metricas...</div>
+    return <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.mid, padding: 24 }}>Carregando metricas...</div>
   }
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
   const { cards, funnel, bottleneck, meetings, bySource, icp } = metrics
   const maxFunnel = Math.max(1, ...funnel.map(f => f.count))
 
-  const titleStyle: CSSProperties = { fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, margin: '24px 0 12px', display: 'flex', alignItems: 'center', gap: 10 }
-  const box: CSSProperties = { border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: isMobile ? '10px 8px' : '12px 14px', background: 'white' }
+  const titleStyle: CSSProperties = { fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: C.ink, margin: '24px 0 12px', display: 'flex', alignItems: 'center', gap: 10 }
+  const box: CSSProperties = { ...card, padding: isMobile ? '10px 8px' : '14px 16px' }
 
   const card1 = [
-    { label: 'Leads Ativos', value: String(cards.leadsAtivos), color: '#4A78FF' },
-    { label: 'Novos (mes)', value: String(cards.novosNoPeriodo), color: '#06b6d4' },
-    { label: 'Qualificados', value: String(cards.qualificados), color: '#8b5cf6' },
-    { label: 'Reunioes Agend.', value: String(cards.reunioesAgendadas), color: '#0ea5e9' },
-    { label: 'Proposta / Negoc.', value: String(cards.emNegociacao), color: '#f97316' },
-    { label: 'Fechados Ganho', value: String(cards.fechadosGanho), color: '#22c55e' },
-    { label: 'Fechados Perdido', value: String(cards.fechadosPerdido), color: '#cc0000' },
-    { label: 'Valor Fechado', value: fmt(cards.valorTotalFechado), color: '#22c55e' },
-    { label: 'Ticket Medio', value: fmt(cards.ticketMedio), color: '#0d9488' },
+    { label: 'Leads Ativos', value: String(cards.leadsAtivos), color: C.ink },
+    { label: 'Novos (mes)', value: String(cards.novosNoPeriodo), color: C.slate },
+    { label: 'Qualificados', value: String(cards.qualificados), color: C.slate },
+    { label: 'Reunioes Agend.', value: String(cards.reunioesAgendadas), color: C.slate },
+    { label: 'Proposta / Negoc.', value: String(cards.emNegociacao), color: C.amber },
+    { label: 'Fechados Ganho', value: String(cards.fechadosGanho), color: C.green },
+    { label: 'Fechados Perdido', value: String(cards.fechadosPerdido), color: C.red },
+    { label: 'Valor Fechado', value: fmt(cards.valorTotalFechado), color: C.greenDk },
+    { label: 'Ticket Medio', value: fmt(cards.ticketMedio), color: C.greenDk },
   ]
 
   const mtgCards = [
-    { label: 'Agendadas', value: String(meetings.agendadas), sub: '', color: '#4A78FF' },
-    { label: 'Feitas', value: String(meetings.feitas), sub: `${meetings.feitasPct}%`, color: '#22c55e' },
-    { label: 'Canceladas', value: String(meetings.canceladas), sub: `${meetings.canceladasPct}%`, color: '#cc0000' },
-    { label: 'Reagendadas', value: String(meetings.reagendadas), sub: `${meetings.reagendadasPct}%`, color: '#e6a800' },
-    { label: 'No-show', value: String(meetings.noShow), sub: '', color: '#f97316' },
-    { label: 'Taxa de Show', value: `${meetings.showRate}%`, sub: 'feitas/agendadas', color: meetings.showRate >= 70 ? '#22c55e' : meetings.showRate >= 50 ? '#e6a800' : '#cc0000' },
+    { label: 'Agendadas', value: String(meetings.agendadas), sub: '', color: C.slate },
+    { label: 'Feitas', value: String(meetings.feitas), sub: `${meetings.feitasPct}%`, color: C.green },
+    { label: 'Canceladas', value: String(meetings.canceladas), sub: `${meetings.canceladasPct}%`, color: C.red },
+    { label: 'Reagendadas', value: String(meetings.reagendadas), sub: `${meetings.reagendadasPct}%`, color: C.amber },
+    { label: 'No-show', value: String(meetings.noShow), sub: '', color: C.amber },
+    { label: 'Taxa de Show', value: `${meetings.showRate}%`, sub: 'feitas/agendadas', color: meetings.showRate >= 70 ? C.green : meetings.showRate >= 50 ? C.amber : C.red },
   ]
 
   return (
     <div>
       {/* Filtro de faturamento / ICP */}
       <div style={{ ...box, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', marginBottom: 4 }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Faturamento / ICP:</span>
-        <select value={faturamentoFilter} onChange={e => setFaturamentoFilter(e.target.value)} style={{ padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid }}>Faturamento / ICP:</span>
+        <select value={faturamentoFilter} onChange={e => setFaturamentoFilter(e.target.value)} style={{ padding: '7px 10px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, background: '#fff' }}>
           {FATURAMENTO_FILTERS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
         </select>
-        <div style={{ display: 'flex', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 11, flexWrap: 'wrap' }}>
-          <span style={{ color: '#22c55e', fontWeight: 700 }}>Dentro ICP: {icp.dentro}</span>
-          <span style={{ color: '#cc0000', fontWeight: 700 }}>Fora: {icp.fora}</span>
-          <span style={{ color: '#888' }}>Sem info: {icp.naoInformado}</span>
+        <div style={{ display: 'flex', gap: 12, fontFamily: 'var(--font-sans)', fontSize: 12, flexWrap: 'wrap' }}>
+          <span style={{ color: C.green, fontWeight: 700 }}>Dentro ICP: {icp.dentro}</span>
+          <span style={{ color: C.red, fontWeight: 700 }}>Fora: {icp.fora}</span>
+          <span style={{ color: C.mid }}>Sem info: {icp.naoInformado}</span>
         </div>
         {faturamentoFilter !== 'ALL' && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#4A78FF', fontWeight: 700 }}>● filtro ativo — todos os blocos abaixo respeitam a faixa</span>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.slate, fontWeight: 600 }}>● filtro ativo — todos os blocos abaixo respeitam a faixa</span>
         )}
       </div>
 
       {/* ===== BLOCO 1 — Numeros do topo ===== */}
-      <div style={titleStyle}>1 · Numeros do topo</div>
+      <div style={titleStyle}>Números do topo</div>
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: isMobile ? 8 : 12 }}>
         {card1.map(k => (
           <div key={k.label} style={box}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5, color: '#666' }}>{k.label}</div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: isMobile ? 15 : 20, color: k.color, marginTop: 4 }}>{k.value}</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.mid }}>{k.label}</div>
+            <div style={{ ...num, fontSize: isMobile ? 16 : 20, fontWeight: 700, color: k.color, marginTop: 6 }}>{k.value}</div>
           </div>
         ))}
       </div>
 
       {/* ===== BLOCO 2 — Funil de vendas ===== */}
       <div style={titleStyle}>
-        2 · Funil de vendas
+        Funil de vendas
         {bottleneck && (
-          <span style={{ background: '#dc2626', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, padding: '3px 8px', textTransform: 'uppercase' }}>
+          <span style={{ background: C.red, color: 'white', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6 }}>
             Gargalo: {LEAD_STAGE_LABELS[bottleneck] ?? bottleneck}
           </span>
         )}
       </div>
-      <div style={{ ...box, padding: isMobile ? 10 : 16 }}>
+      <div style={{ ...box, padding: isMobile ? 12 : 18 }}>
         {funnel.map(f => {
           const isBottleneck = f.stage === bottleneck
-          const color = LEAD_STAGE_COLORS[f.stage] ?? '#4A78FF'
+          const color = LEAD_STAGE_COLORS[f.stage] ?? C.slate
           return (
             <div key={f.stage} style={{ marginBottom: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 11, marginBottom: 3 }}>
-                <span style={{ fontWeight: 700 }}>{LEAD_STAGE_LABELS[f.stage] ?? f.stage}</span>
-                <span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-sans)', fontSize: 12, marginBottom: 4 }}>
+                <span style={{ fontWeight: 600, color: C.ink }}>{LEAD_STAGE_LABELS[f.stage] ?? f.stage}</span>
+                <span style={num}>
                   <strong>{f.count}</strong>
                   {f.conversionFromPrev !== null && (
-                    <span style={{ marginLeft: 8, color: isBottleneck ? '#cc0000' : '#666', fontWeight: isBottleneck ? 700 : 400 }}>
+                    <span style={{ marginLeft: 8, color: isBottleneck ? C.red : C.mid, fontWeight: isBottleneck ? 700 : 400 }}>
                       {f.conversionFromPrev}% {isBottleneck ? '◄ gargalo' : ''}
                     </span>
                   )}
                 </span>
               </div>
-              <div style={{ background: '#f1f5f9', height: 18, border: isBottleneck ? '2px solid #cc0000' : '1px solid #e2e8f0', position: 'relative' }}>
+              <div style={{ background: '#f1f5f9', height: 18, borderRadius: 6, border: isBottleneck ? `2px solid ${C.red}` : `1px solid ${C.line}`, position: 'relative', overflow: 'hidden' }}>
                 <div style={{ background: color, height: '100%', width: `${(f.count / maxFunnel) * 100}%`, transition: 'width .3s' }} />
               </div>
             </div>
           )
         })}
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 6 }}>
+        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.dim, marginTop: 6 }}>
           Funil cumulativo: cada etapa conta quem ja passou por ela (fechados contam como tendo passado por todas). Perdidos ({cards.fechadosPerdido}) fora do funil.
         </div>
       </div>
 
       {/* ===== BLOCO 3 — Reunioes ===== */}
-      <div style={titleStyle}>3 · Reunioes (mes atual)</div>
+      <div style={titleStyle}>Reuniões (mês atual)</div>
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(6, 1fr)', gap: isMobile ? 8 : 12 }}>
         {mtgCards.map(k => (
           <div key={k.label} style={box}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5, color: '#666' }}>{k.label}</div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: isMobile ? 15 : 20, color: k.color, marginTop: 4 }}>{k.value}</div>
-            {k.sub && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 2 }}>{k.sub}</div>}
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.mid }}>{k.label}</div>
+            <div style={{ ...num, fontSize: isMobile ? 16 : 20, fontWeight: 700, color: k.color, marginTop: 6 }}>{k.value}</div>
+            {k.sub && <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.dim, marginTop: 2 }}>{k.sub}</div>}
           </div>
         ))}
       </div>
 
       {/* ===== BLOCO 4 — Origem dos leads ===== */}
-      <div style={titleStyle}>4 · Origem dos leads (volume x qualidade)</div>
+      <div style={titleStyle}>Origem dos leads (volume x qualidade)</div>
       <div style={{ ...box, padding: 0, overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-sans)', fontSize: 13 }}>
           <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', background: '#f8fafc' }}>
+            <tr style={{ background: C.bg }}>
               {['Origem', 'Leads', 'Qualificados', 'Fechados', '% Conversao'].map((h, i) => (
-                <th key={h} style={{ padding: '10px 12px', textAlign: i === 0 ? 'left' : 'right', fontSize: 9, textTransform: 'uppercase', color: '#666' }}>{h}</th>
+                <th key={h} style={{ padding: '10px 14px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, color: C.mid, borderBottom: `1px solid ${C.line}` }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {bySource.map(s => {
-              const convColor = s.conversion >= 30 ? '#22c55e' : s.conversion >= 10 ? '#e6a800' : '#cc0000'
+              const convColor = s.conversion >= 30 ? C.green : s.conversion >= 10 ? C.amber : C.red
               return (
-                <tr key={s.source} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '8px 12px', fontWeight: 700 }}>{LEAD_SOURCE_LABELS[s.source] ?? s.source}</td>
-                  <td style={{ padding: '8px 12px', textAlign: 'right' }}>{s.leads}</td>
-                  <td style={{ padding: '8px 12px', textAlign: 'right', color: '#8b5cf6' }}>{s.qualified}</td>
-                  <td style={{ padding: '8px 12px', textAlign: 'right', color: '#22c55e', fontWeight: 700 }}>{s.closed}</td>
-                  <td style={{ padding: '8px 12px', textAlign: 'right' }}>
+                <tr key={s.source} style={{ borderBottom: `1px solid ${C.bg}` }}>
+                  <td style={{ padding: '9px 14px', fontWeight: 600, color: C.ink }}>{LEAD_SOURCE_LABELS[s.source] ?? s.source}</td>
+                  <td style={{ ...num, padding: '9px 14px', textAlign: 'right', color: C.ink }}>{s.leads}</td>
+                  <td style={{ ...num, padding: '9px 14px', textAlign: 'right', color: C.slate }}>{s.qualified}</td>
+                  <td style={{ ...num, padding: '9px 14px', textAlign: 'right', color: C.green, fontWeight: 700 }}>{s.closed}</td>
+                  <td style={{ ...num, padding: '9px 14px', textAlign: 'right' }}>
                     <span style={{ color: convColor, fontWeight: 700 }}>{s.conversion}%</span>
                   </td>
                 </tr>
               )
             })}
             {bySource.length === 0 && (
-              <tr><td colSpan={5} style={{ padding: 20, textAlign: 'center', color: '#888' }}>Sem leads no filtro selecionado</td></tr>
+              <tr><td colSpan={5} style={{ padding: 20, textAlign: 'center', color: C.dim }}>Sem leads no filtro selecionado</td></tr>
             )}
           </tbody>
         </table>
       </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', margin: '6px 0 4px' }}>
+      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.dim, margin: '6px 0 4px' }}>
         Distribuicao por faixa de faturamento: {Object.entries(icp.byBand).map(([b, n]) => `${FATURAMENTO_BAND_LABELS[b] ?? b}: ${n}`).join('  ·  ')}
       </div>
     </div>

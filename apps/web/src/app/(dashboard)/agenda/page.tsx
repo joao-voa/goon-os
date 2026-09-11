@@ -57,6 +57,13 @@ const STATUS_LABELS: Record<string, string> = {
   NO_SHOW: 'No-Show',
 }
 
+const C = {
+  ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0', bg: '#f8fafc',
+  neon: '#C7F900', green: '#16a34a', red: '#dc2626', amber: '#f59e0b', slate: '#475569',
+}
+const num: React.CSSProperties = { fontFamily: 'var(--font-sans)', fontVariantNumeric: 'tabular-nums' }
+const cardStyle: React.CSSProperties = { background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }
+
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate()
 }
@@ -280,99 +287,105 @@ export default function AgendaPage() {
 
   const todayDay = now.getMonth() === month && now.getFullYear() === year ? now.getDate() : -1
 
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12 }
-  const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, display: 'block', marginBottom: 3 }
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 10px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 13, color: C.ink, background: '#fff' }
+  const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, color: C.mid, textTransform: 'uppercase' as const, letterSpacing: '0.04em', display: 'block', marginBottom: 5 }
+
+  // Pill de filtro (categoria / mentor)
+  const pill = (active: boolean): React.CSSProperties => ({
+    padding: '5px 12px', border: `1px solid ${active ? C.ink : C.line}`, borderRadius: 100,
+    background: active ? C.ink : '#fff', color: active ? '#fff' : C.mid,
+    fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+  })
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-        <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 20, margin: 0 }}>AGENDA</h1>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {(['painel', 'calendario'] as const).map(v => (
-            <button key={v} onClick={() => setViewMode(v)} style={{
-              padding: '6px 14px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
-              background: viewMode === v ? 'black' : 'white', color: viewMode === v ? 'white' : 'black',
-            }}>{v === 'painel' ? 'PAINEL' : 'CALENDARIO'}</button>
-          ))}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', margin: 0, color: C.ink }}>Agenda</h1>
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.mid, margin: '4px 0 0' }}>Reunioes, cadencia de mentoria e saude dos clientes</p>
         </div>
         <button onClick={() => openNewMeeting(new Date().toISOString().split('T')[0])} style={{
-          padding: '8px 16px', border: '1px solid #e2e8f0', background: '#0A0A0C', color: 'white',
-          fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-        }}>+ NOVA REUNIAO</button>
+          padding: '9px 16px', border: 'none', borderRadius: 6, background: C.neon, color: C.ink,
+          fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+        }}>+ Nova reuniao</button>
+      </div>
+
+      {/* Abas */}
+      <div style={{ display: 'flex', borderBottom: `1px solid ${C.line}` }}>
+        {(['painel', 'calendario'] as const).map(v => (
+          <button key={v} onClick={() => setViewMode(v)} style={{
+            padding: '8px 4px', marginRight: 20, background: 'transparent', border: 'none', cursor: 'pointer',
+            fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: viewMode === v ? 700 : 500,
+            color: viewMode === v ? C.ink : C.dim,
+            borderBottom: viewMode === v ? `2px solid ${C.neon}` : '2px solid transparent', marginBottom: -1,
+          }}>{v === 'painel' ? 'Painel' : 'Calendario'}</button>
+        ))}
       </div>
 
       {/* Category filter */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Categoria:</span>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid, marginRight: 2 }}>Categoria</span>
         {['', 'MENTORIA', 'COMERCIAL', 'GESTAO'].map(cat => (
-          <button key={cat} onClick={() => setCategoryFilter(categoryFilter === cat ? '' : cat)} style={{
-            padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
-            background: categoryFilter === cat ? 'black' : 'white', color: categoryFilter === cat ? 'white' : 'black',
-          }}>{cat || 'TODAS'}</button>
+          <button key={cat} onClick={() => setCategoryFilter(categoryFilter === cat ? '' : cat)} style={pill(categoryFilter === cat)}>{cat ? cat.charAt(0) + cat.slice(1).toLowerCase() : 'Todas'}</button>
         ))}
       </div>
 
       {/* Mentor filter */}
       {mentors.length > 0 && (
-        <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Mentor:</span>
-          <button onClick={() => setMentorFilter('')} style={{
-            padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
-            background: !mentorFilter ? 'black' : 'white', color: !mentorFilter ? 'white' : 'black',
-          }}>TODOS</button>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid, marginRight: 2 }}>Mentor</span>
+          <button onClick={() => setMentorFilter('')} style={pill(!mentorFilter)}>Todos</button>
           {mentors.map(m => (
-            <button key={m} onClick={() => setMentorFilter(mentorFilter === m ? '' : m)} style={{
-              padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
-              background: mentorFilter === m ? 'black' : 'white', color: mentorFilter === m ? 'white' : 'black',
-            }}>{m}</button>
+            <button key={m} onClick={() => setMentorFilter(mentorFilter === m ? '' : m)} style={pill(mentorFilter === m)}>{m}</button>
           ))}
         </div>
       )}
 
       {/* ---- PAINEL VIEW ---- */}
       {viewMode === 'painel' && (
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* KPI Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
-            <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', padding: '14px 16px', background: '#f0f5ff' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666' }}>Hoje</div>
-              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 22, color: '#4A78FF' }}>{stats?.todayCount ?? 0}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>reunioes</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 12 }}>
+            <div style={{ ...cardStyle, padding: '14px 16px', borderTop: `3px solid ${C.neon}` }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, color: C.mid }}>Hoje</div>
+              <div style={{ ...num, fontSize: 24, fontWeight: 700, color: C.ink, marginTop: 4 }}>{stats?.todayCount ?? 0}</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.dim, marginTop: 2 }}>reunioes</div>
             </div>
-            <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', padding: '14px 16px' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666' }}>Esta Semana</div>
-              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 22 }}>{stats?.weekCount ?? 0}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>agendadas</div>
+            <div style={{ ...cardStyle, padding: '14px 16px' }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, color: C.mid }}>Esta semana</div>
+              <div style={{ ...num, fontSize: 24, fontWeight: 700, color: C.ink, marginTop: 4 }}>{stats?.weekCount ?? 0}</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.dim, marginTop: 2 }}>agendadas</div>
             </div>
-            <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', padding: '14px 16px' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666' }}>Realizadas</div>
-              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 22, color: '#006600' }}>{stats?.totalDone ?? 0}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>total</div>
+            <div style={{ ...cardStyle, padding: '14px 16px' }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, color: C.mid }}>Realizadas</div>
+              <div style={{ ...num, fontSize: 24, fontWeight: 700, color: C.green, marginTop: 4 }}>{stats?.totalDone ?? 0}</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.dim, marginTop: 2 }}>total</div>
             </div>
-            <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', padding: '14px 16px', background: (() => { const c = cadenceData.filter(d => d.health === 'red').length; return c > 0 ? '#fef2f2' : 'white' })() }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', color: '#666' }}>Saude Critica</div>
-              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 22, color: '#cc0000' }}>{cadenceData.filter(d => d.health === 'red').length}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888' }}>clientes</div>
+            <div style={{ ...cardStyle, padding: '14px 16px', borderTop: cadenceData.filter(d => d.health === 'red').length > 0 ? `3px solid ${C.red}` : `1px solid ${C.line}` }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, color: C.mid }}>Saude critica</div>
+              <div style={{ ...num, fontSize: 24, fontWeight: 700, color: C.red, marginTop: 4 }}>{cadenceData.filter(d => d.health === 'red').length}</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.dim, marginTop: 2 }}>clientes</div>
             </div>
           </div>
 
           {/* Filtros do painel de atencao + refresh */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: '#666', textTransform: 'uppercase' }}>Filtrar:</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', marginRight: 2 }}>Filtrar</span>
             {([
-              ['Inadimplente', fltInadimplente, setFltInadimplente, '#dc2626'] as const,
+              ['Inadimplente', fltInadimplente, setFltInadimplente, C.red] as const,
               ['Vencido', fltVencido, setFltVencido, '#b45309'] as const,
-              ['Sem reuniao', fltSemReuniao, setFltSemReuniao, '#f59e0b'] as const,
-              ['Em dia', fltEmDia, setFltEmDia, '#16a34a'] as const,
+              ['Sem reuniao', fltSemReuniao, setFltSemReuniao, C.amber] as const,
+              ['Em dia', fltEmDia, setFltEmDia, C.green] as const,
             ]).map(([label, val, set, color]) => (
               <button key={label} onClick={() => set(v => !v)} style={{
-                padding: '5px 10px', border: `1px solid ${val ? color : '#e2e8f0'}`,
-                background: val ? color : 'white', color: val ? 'white' : '#999',
-                fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer', borderRadius: 3,
+                padding: '5px 12px', border: `1px solid ${val ? color : C.line}`, borderRadius: 100,
+                background: val ? color : '#fff', color: val ? '#fff' : C.dim,
+                fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
               }}>{val ? '✓ ' : ''}{label}</button>
             ))}
             <select value={programFilter} onChange={e => setProgramFilter(e.target.value)} style={{
-              padding: '5px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+              padding: '6px 10px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 500, color: C.ink, cursor: 'pointer', background: '#fff',
             }}>
               <option value="">Todos os programas</option>
               {[...new Set(cadenceData.map(d => d.programCode).filter(Boolean))].sort().map(p => (
@@ -380,91 +393,91 @@ export default function AgendaPage() {
               ))}
             </select>
             <button onClick={handleRefresh} disabled={refreshing} title="Atualizar o painel (apos dar baixa em pagamento)" style={{
-              marginLeft: 'auto', padding: '5px 14px', border: '1px solid #0A0A0C',
-              background: '#0A0A0C', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700,
-              cursor: refreshing ? 'wait' : 'pointer', borderRadius: 3,
-            }}>{refreshing ? '↻ ATUALIZANDO...' : '↻ SYNC'}</button>
+              marginLeft: 'auto', padding: '7px 14px', border: 'none', borderRadius: 6,
+              background: C.ink, color: '#fff', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600,
+              cursor: refreshing ? 'wait' : 'pointer',
+            }}>{refreshing ? '↻ Atualizando…' : '↻ Sync'}</button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
             {/* Proximas reunioes */}
-            <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
-              <div style={{ background: '#0A0A0C', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>PROXIMAS REUNIOES</div>
-              <div style={{ padding: 12, maxHeight: 300, overflowY: 'auto' }}>
+            <div style={{ ...cardStyle, overflow: 'hidden' }}>
+              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.line}`, fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 14, color: C.ink }}>Proximas reunioes</div>
+              <div style={{ padding: '4px 18px 12px', maxHeight: 300, overflowY: 'auto' }}>
                 {meetings.filter(m => m.status === 'SCHEDULED' && new Date(m.date) >= new Date()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(0, 10).map(m => (
-                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-                    <div>
-                      <span style={{ background: TYPE_COLORS[m.type] ?? '#888', color: 'white', padding: '1px 5px', fontSize: 8, fontWeight: 700, marginRight: 6 }}>{TYPE_LABELS[m.type]?.split(' ')[0] ?? m.type}</span>
-                      <strong>{m.client?.companyName ?? m.title}</strong>
+                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: `1px solid ${C.bg}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                      <span style={{ background: TYPE_COLORS[m.type] ?? '#888', color: '#fff', padding: '2px 7px', fontSize: 10, fontWeight: 700, borderRadius: 100, fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}>{TYPE_LABELS[m.type]?.split(' ')[0] ?? m.type}</span>
+                      <strong style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.client?.companyName ?? m.title}</strong>
                     </div>
-                    <span style={{ color: '#555', fontSize: 10 }}>{new Date(m.date).toLocaleDateString('pt-BR')} {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span style={{ ...num, color: C.mid, fontSize: 12, whiteSpace: 'nowrap' }}>{new Date(m.date).toLocaleDateString('pt-BR')} {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                 ))}
                 {meetings.filter(m => m.status === 'SCHEDULED' && new Date(m.date) >= new Date()).length === 0 && (
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', textAlign: 'center', padding: 20 }}>Nenhuma reuniao agendada</div>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.dim, textAlign: 'center', padding: '20px 0' }}>Nenhuma reuniao agendada</div>
                 )}
               </div>
             </div>
 
             {/* Clientes que precisam de atencao */}
-            <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
-              <div style={{ background: '#0A0A0C', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>CLIENTES · ATENCAO NO TOPO ({roster.length})</div>
-              <div style={{ padding: 12, maxHeight: 420, overflowY: 'auto' }}>
+            <div style={{ ...cardStyle, overflow: 'hidden' }}>
+              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.line}`, fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 14, color: C.ink }}>Clientes · atencao no topo <span style={{ color: C.dim, fontWeight: 400, fontSize: 12 }}>({roster.length})</span></div>
+              <div style={{ padding: '4px 18px 12px', maxHeight: 420, overflowY: 'auto' }}>
                 {roster.map(d => {
                   const next = d.nextMeetingDate ? new Date(d.nextMeetingDate) : null
                   const isGreen = d.health === 'green'
                   const tag = (bg: string, label: string) => (
-                    <span key={label} style={{ background: bg, color: 'white', padding: '2px 6px', fontSize: 8, fontWeight: 700, borderRadius: 3, whiteSpace: 'nowrap' }}>{label}</span>
+                    <span key={label} style={{ background: bg, color: '#fff', padding: '2px 8px', fontSize: 10, fontWeight: 700, borderRadius: 100, whiteSpace: 'nowrap', fontFamily: 'var(--font-sans)' }}>{label}</span>
                   )
                   return (
-                    <div key={d.clientId} style={{ padding: '10px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11, opacity: isGreen ? 0.72 : 1 }}>
+                    <div key={d.clientId} style={{ padding: '11px 0', borderTop: `1px solid ${C.bg}`, opacity: isGreen ? 0.72 : 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: isGreen ? 3 : 6 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.health === 'red' ? '#dc2626' : d.health === 'yellow' ? '#f59e0b' : '#16a34a', flexShrink: 0 }} />
-                        <strong style={{ flex: 1 }}>{d.companyName}</strong>
-                        {d.programCode && <span style={{ background: '#0A0A0C', color: 'white', padding: '2px 6px', fontSize: 8, fontWeight: 700, borderRadius: 3 }}>{d.programCode}</span>}
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.health === 'red' ? C.red : d.health === 'yellow' ? C.amber : C.green, flexShrink: 0 }} />
+                        <strong style={{ flex: 1, fontFamily: 'var(--font-sans)', fontSize: 13, color: C.ink }}>{d.companyName}</strong>
+                        {d.programCode && <span style={{ background: C.ink, color: '#fff', padding: '2px 8px', fontSize: 10, fontWeight: 700, borderRadius: 100, fontFamily: 'var(--font-sans)' }}>{d.programCode}</span>}
                       </div>
                       {!isGreen && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 6, paddingLeft: 16 }}>
-                          {d.overdueCount > 0 && tag('#dc2626', `FINANCEIRO ATRASADO · R$${d.overdueValue.toLocaleString('pt-BR')}`)}
-                          {d.planExpired && tag('#b45309', 'CONTRATO VENCIDO')}
-                          {d.reasons.includes('SEM_REUNIAO') && tag('#f59e0b', d.daysSinceLastMeeting !== null ? `${d.daysSinceLastMeeting}D SEM REUNIAO` : 'NUNCA REUNIU')}
+                          {d.overdueCount > 0 && tag(C.red, `Financeiro atrasado · R$${d.overdueValue.toLocaleString('pt-BR')}`)}
+                          {d.planExpired && tag('#b45309', 'Contrato vencido')}
+                          {d.reasons.includes('SEM_REUNIAO') && tag(C.amber, d.daysSinceLastMeeting !== null ? `${d.daysSinceLastMeeting}d sem reuniao` : 'Nunca reuniu')}
                         </div>
                       )}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingLeft: 16, fontSize: 9, color: '#888' }}>
-                        <span>{isGreen ? <span style={{ color: '#16a34a', fontWeight: 700 }}>EM DIA</span> : null} {d.doneMeetingsCount} {d.doneMeetingsCount === 1 ? 'reuniao' : 'reunioes'}{d.daysSinceLastMeeting !== null ? ` · ultima ha ${d.daysSinceLastMeeting}d` : ''}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingLeft: 16, fontFamily: 'var(--font-sans)', fontSize: 11, color: C.dim }}>
+                        <span>{isGreen ? <span style={{ color: C.green, fontWeight: 700 }}>Em dia</span> : null} {d.doneMeetingsCount} {d.doneMeetingsCount === 1 ? 'reuniao' : 'reunioes'}{d.daysSinceLastMeeting !== null ? ` · ultima ha ${d.daysSinceLastMeeting}d` : ''}</span>
                         {next
-                          ? <span style={{ color: '#16a34a', fontWeight: 700 }}>✓ proxima {next.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
-                          : !isGreen ? <span style={{ color: '#dc2626', fontWeight: 700 }}>sem reuniao marcada</span> : <span>—</span>}
+                          ? <span style={{ color: C.green, fontWeight: 700 }}>✓ proxima {next.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
+                          : !isGreen ? <span style={{ color: C.red, fontWeight: 700 }}>sem reuniao marcada</span> : <span>—</span>}
                       </div>
                     </div>
                   )
                 })}
                 {roster.length === 0 && (
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', textAlign: 'center', padding: 20 }}>Nenhum cliente nesse filtro.</div>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.dim, textAlign: 'center', padding: '20px 0' }}>Nenhum cliente nesse filtro.</div>
                 )}
               </div>
             </div>
           </div>
 
           {/* Reunioes recentes */}
-          <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white', marginTop: 16 }}>
-            <div style={{ background: '#16a34a', color: 'white', padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 10 }}>ULTIMAS REUNIOES REALIZADAS</div>
-            <div style={{ padding: 12 }}>
+          <div style={{ ...cardStyle, overflow: 'hidden' }}>
+            <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.line}`, fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 14, color: C.green }}>Ultimas reunioes realizadas</div>
+            <div style={{ padding: '4px 18px 12px' }}>
               {meetings.filter(m => m.status === 'DONE').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8).map(m => (
-                <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #eee', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-                  <div>
-                    <span style={{ background: TYPE_COLORS[m.type] ?? '#888', color: 'white', padding: '1px 5px', fontSize: 8, fontWeight: 700, marginRight: 6 }}>{TYPE_LABELS[m.type]?.split(' ')[0] ?? m.type}</span>
-                    <strong>{m.client?.companyName ?? m.title}</strong>
-                    {m.mentorName && <span style={{ color: '#888', marginLeft: 6 }}>• {m.mentorName}</span>}
+                <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: `1px solid ${C.bg}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                    <span style={{ background: TYPE_COLORS[m.type] ?? '#888', color: '#fff', padding: '2px 7px', fontSize: 10, fontWeight: 700, borderRadius: 100, fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}>{TYPE_LABELS[m.type]?.split(' ')[0] ?? m.type}</span>
+                    <strong style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.client?.companyName ?? m.title}</strong>
+                    {m.mentorName && <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.dim, whiteSpace: 'nowrap' }}>• {m.mentorName}</span>}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {m.clientId && <a href={`/clients/${m.clientId}#trackrecord`} title="Trackrecord da mentoria" style={{ background: '#0A0A0C', color: 'white', padding: '2px 7px', fontSize: 9, fontWeight: 700, textDecoration: 'none', borderRadius: 3 }}>+ SESSÃO</a>}
-                    <span style={{ color: '#555', fontSize: 10 }}>{new Date(m.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
+                    {m.clientId && <a href={`/clients/${m.clientId}#trackrecord`} title="Trackrecord da mentoria" style={{ background: C.ink, color: '#fff', padding: '3px 9px', fontSize: 11, fontWeight: 600, textDecoration: 'none', borderRadius: 6, fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}>+ Sessao</a>}
+                    <span style={{ ...num, color: C.mid, fontSize: 12, whiteSpace: 'nowrap' }}>{new Date(m.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
                   </div>
                 </div>
               ))}
               {meetings.filter(m => m.status === 'DONE').length === 0 && (
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', textAlign: 'center', padding: 20 }}>Nenhuma reuniao realizada ainda</div>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.dim, textAlign: 'center', padding: '20px 0' }}>Nenhuma reuniao realizada ainda</div>
               )}
             </div>
           </div>
@@ -474,29 +487,31 @@ export default function AgendaPage() {
       {/* ---- CALENDARIO VIEW ---- */}
       {viewMode === 'calendario' && <>
       {/* Month navigation */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 16 }}>
-        <button onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1) }} style={{
-          padding: '6px 14px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, cursor: 'pointer',
-        }}>◀</button>
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, textTransform: 'uppercase', minWidth: 200, textAlign: 'center' }}>{monthName}</span>
-        <button onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1) }} style={{
-          padding: '6px 14px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, cursor: 'pointer',
-        }}>▶</button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, border: `1px solid ${C.line}`, borderRadius: 100, padding: 4 }}>
+          <button onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1) }} style={{
+            border: 'none', background: 'transparent', color: C.mid, padding: '2px 10px', fontSize: 16, cursor: 'pointer',
+          }}>‹</button>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700, color: C.ink, textTransform: 'capitalize', minWidth: 180, textAlign: 'center' }}>{monthName}</span>
+          <button onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1) }} style={{
+            border: 'none', background: 'transparent', color: C.mid, padding: '2px 10px', fontSize: 16, cursor: 'pointer',
+          }}>›</button>
+        </div>
       </div>
 
       {/* Calendar grid */}
-      <div style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
+      <div style={{ ...cardStyle, overflow: 'hidden' }}>
         {/* Weekday headers */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'black' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: C.bg, borderBottom: `1px solid ${C.line}` }}>
           {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map(d => (
-            <div key={d} style={{ padding: '8px 4px', textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: 9, color: 'white' }}>{d}</div>
+            <div key={d} style={{ padding: '9px 4px', textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid }}>{d}</div>
           ))}
         </div>
 
         {/* Days */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
           {Array.from({ length: firstDay }, (_, i) => (
-            <div key={'e' + i} style={{ minHeight: 80, borderRight: '1px solid #eee', borderBottom: '1px solid #eee', background: '#f9f9f9' }} />
+            <div key={'e' + i} style={{ minHeight: 84, borderRight: `1px solid ${C.bg}`, borderBottom: `1px solid ${C.bg}`, background: C.bg }} />
           ))}
           {Array.from({ length: daysInMonth }, (_, i) => {
             const day = i + 1
@@ -509,26 +524,26 @@ export default function AgendaPage() {
                 key={day}
                 onClick={() => { setSelectedDate(selectedDate === dateStr ? null : dateStr) }}
                 style={{
-                  minHeight: 80, padding: 4, borderRight: '1px solid #eee', borderBottom: '1px solid #eee',
-                  cursor: 'pointer', background: isToday ? '#fffff0' : selectedDate === dateStr ? '#f0f5ff' : 'white',
+                  minHeight: 84, padding: 5, borderRight: `1px solid ${C.bg}`, borderBottom: `1px solid ${C.bg}`,
+                  cursor: 'pointer', background: isToday ? 'rgba(199,249,0,0.10)' : selectedDate === dateStr ? C.bg : '#fff',
                 }}
               >
                 <div style={{
-                  fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: isToday ? 900 : 400,
-                  color: isToday ? '#4A78FF' : 'black', marginBottom: 4,
+                  ...num, fontSize: 12, fontWeight: isToday ? 800 : 500,
+                  color: isToday ? C.ink : C.mid, marginBottom: 4,
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 }}>
                   <span>{day}</span>
                   {dayMeetings.length > 0 && (
-                    <span style={{ background: '#0A0A0C', color: 'white', borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>
+                    <span style={{ background: C.ink, color: '#fff', borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>
                       {dayMeetings.length}
                     </span>
                   )}
                 </div>
                 {dayMeetings.slice(0, 3).map(m => (
                   <div key={m.id} onClick={e => { e.stopPropagation(); openEditMeeting(m) }} style={{
-                    fontFamily: 'var(--font-mono)', fontSize: 8, padding: '2px 4px', marginBottom: 2,
-                    background: TYPE_COLORS[m.type] ?? '#888', color: 'white', borderRadius: 2,
+                    fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, padding: '2px 5px', marginBottom: 2,
+                    background: TYPE_COLORS[m.type] ?? '#888', color: '#fff', borderRadius: 4,
                     overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
                     opacity: m.status === 'CANCELLED' || m.status === 'NO_SHOW' ? 0.5 : 1,
                     textDecoration: m.status === 'CANCELLED' ? 'line-through' : 'none',
@@ -537,7 +552,7 @@ export default function AgendaPage() {
                   </div>
                 ))}
                 {dayMeetings.length > 3 && (
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: '#888' }}>+{dayMeetings.length - 3} mais</div>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 10, color: C.dim }}>+{dayMeetings.length - 3} mais</div>
                 )}
               </div>
             )
@@ -547,44 +562,44 @@ export default function AgendaPage() {
 
       {/* Day detail panel */}
       {selectedDate && (
-        <div style={{ marginTop: 16, border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', background: 'white' }}>
-          <div style={{ background: '#0A0A0C', color: 'white', padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11 }}>
+        <div style={{ ...cardStyle, overflow: 'hidden' }}>
+          <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 600, color: C.ink, textTransform: 'capitalize' }}>
               {new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </span>
             <button onClick={() => openNewMeeting(selectedDate)} style={{
-              padding: '4px 12px', border: '1px solid white', background: 'transparent', color: 'white',
-              fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
-            }}>+ AGENDAR</button>
+              padding: '6px 12px', border: 'none', borderRadius: 6, background: C.neon, color: C.ink,
+              fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            }}>+ Agendar</button>
           </div>
-          <div style={{ padding: 12 }}>
+          <div style={{ padding: '4px 18px 12px' }}>
             {(meetingsByDay[parseInt(selectedDate.split('-')[2])] ?? []).length === 0 ? (
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', padding: 16, textAlign: 'center' }}>Nenhuma reuniao neste dia</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.dim, padding: '20px 0', textAlign: 'center' }}>Nenhuma reuniao neste dia</div>
             ) : (
               (meetingsByDay[parseInt(selectedDate.split('-')[2])] ?? []).map(m => (
-                <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 8px', borderBottom: '1px solid #eee', gap: 8 }}>
-                  <div style={{ flex: 1 }}>
+                <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 0', borderTop: `1px solid ${C.bg}`, gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4 }}>
-                      <span style={{ background: TYPE_COLORS[m.type] ?? '#888', color: 'white', padding: '1px 6px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{TYPE_LABELS[m.type] ?? m.type}</span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700 }}>{m.title}</span>
+                      <span style={{ background: TYPE_COLORS[m.type] ?? '#888', color: '#fff', padding: '2px 8px', fontSize: 10, fontWeight: 700, borderRadius: 100, fontFamily: 'var(--font-sans)' }}>{TYPE_LABELS[m.type] ?? m.type}</span>
+                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, color: C.ink }}>{m.title}</span>
                     </div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555' }}>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.mid }}>
                       {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {m.duration}min • {m.client?.companyName ?? m.title}
                       {m.mentorName && <> • {m.mentorName}</>}
                     </div>
-                    {m.notes && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#888', marginTop: 4 }}>{m.notes}</div>}
+                    {m.notes && <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.dim, marginTop: 4 }}>{m.notes}</div>}
                   </div>
-                  <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                  <div style={{ display: 'flex', gap: 4, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     {m.status === 'SCHEDULED' && (
                       <>
-                        <button onClick={() => handleStatusChange(m.id, 'DONE')} style={{ background: '#16a34a', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FEITA</button>
-                        <button onClick={() => handleStatusChange(m.id, 'NO_SHOW')} style={{ background: '#f59e0b', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>FALTOU</button>
-                        <button onClick={() => handleStatusChange(m.id, 'RESCHEDULED')} style={{ background: '#0ea5e9', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>REAGENDAR</button>
-                        <button onClick={() => handleStatusChange(m.id, 'CANCELLED')} style={{ background: '#888', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>CANCELAR</button>
+                        <button onClick={() => handleStatusChange(m.id, 'DONE')} style={{ background: C.green, color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>Feita</button>
+                        <button onClick={() => handleStatusChange(m.id, 'NO_SHOW')} style={{ background: C.amber, color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>Faltou</button>
+                        <button onClick={() => handleStatusChange(m.id, 'RESCHEDULED')} style={{ background: C.slate, color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>Reagendar</button>
+                        <button onClick={() => handleStatusChange(m.id, 'CANCELLED')} style={{ background: '#fff', color: C.mid, border: `1px solid ${C.line}`, borderRadius: 6, padding: '4px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>Cancelar</button>
                       </>
                     )}
-                    <button onClick={() => openEditMeeting(m)} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>EDITAR</button>
-                    <button onClick={() => handleDelete(m.id)} style={{ background: '#dc2626', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>X</button>
+                    <button onClick={() => openEditMeeting(m)} style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>Editar</button>
+                    <button onClick={() => handleDelete(m.id)} style={{ background: '#fff', color: C.red, border: `1px solid ${C.line}`, borderRadius: 6, padding: '4px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>×</button>
                   </div>
                 </div>
               ))
@@ -597,14 +612,14 @@ export default function AgendaPage() {
 
       {/* Create/Edit Modal */}
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
           onClick={e => { if (e.target === e.currentTarget) { if (confirm('Sair sem salvar?')) setShowModal(false) } }}>
-          <div style={{ background: 'white', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', width: '100%', maxWidth: 420, maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ background: '#0A0A0C', color: 'white', padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
-              {selectedMeeting ? 'EDITAR REUNIAO' : 'NOVA REUNIAO'}
+          <div style={{ background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 20px 25px -5px rgba(0,0,0,0.15)', width: '100%', maxWidth: 440, maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.line}`, fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: C.ink }}>
+              {selectedMeeting ? 'Editar reuniao' : 'Nova reuniao'}
             </div>
-            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
                   <label style={labelStyle}>Tipo</label>
                   <select value={formType} onChange={e => setFormType(e.target.value)} style={inputStyle}>
@@ -628,10 +643,10 @@ export default function AgendaPage() {
                     <option value="TTS">TikTok Scale</option>
                     <option value="AURA">AURA 360</option>
                   </select>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#888', marginTop: 4 }}>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.dim, marginTop: 5 }}>
                     A reuniao sera marcada para TODOS os clientes ativos desse programa (saem da atencao).
                   </div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, color: C.ink }}>
                     <input type="checkbox" checked={formGroupDone} onChange={e => setFormGroupDone(e.target.checked)} />
                     Ja realizada (registrar como feita)
                   </label>
@@ -639,12 +654,12 @@ export default function AgendaPage() {
               )}
               {!['RG', 'ALINHAMENTO'].includes(formType) && !(formType === 'GRUPO' && !selectedMeeting) && (
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <label style={labelStyle}>Cliente *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                    <label style={{ ...labelStyle, marginBottom: 0 }}>Cliente *</label>
                     <div style={{ display: 'flex', gap: 4 }}>
                       {([['active', 'Ativos'], ['lead', 'Leads (CRM)']] as const).map(([src, lbl]) => (
                         <button key={src} type="button" onClick={() => { setClientSource(src); setFormClientId('') }}
-                          style={{ padding: '3px 8px', border: `1px solid ${clientSource === src ? '#0A0A0C' : '#e2e8f0'}`, background: clientSource === src ? '#0A0A0C' : 'white', color: clientSource === src ? 'white' : '#888', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, cursor: 'pointer', borderRadius: 3 }}>{lbl}</button>
+                          style={{ padding: '4px 10px', border: `1px solid ${clientSource === src ? C.ink : C.line}`, borderRadius: 100, background: clientSource === src ? C.ink : '#fff', color: clientSource === src ? '#fff' : C.mid, fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>{lbl}</button>
                       ))}
                     </div>
                   </div>
@@ -661,7 +676,7 @@ export default function AgendaPage() {
                 <label style={labelStyle}>Titulo *</label>
                 <input value={formTitle} onChange={e => setFormTitle(e.target.value)} style={inputStyle} placeholder="Ex: Mentoria Individual" />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
                   <label style={labelStyle}>Data *</label>
                   <input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} style={inputStyle} />
@@ -682,10 +697,10 @@ export default function AgendaPage() {
                 <label style={labelStyle}>Observacoes</label>
                 <textarea value={formNotes} onChange={e => setFormNotes(e.target.value)} rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
               </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-                <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>CANCELAR</button>
-                <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', background: '#0A0A0C', color: 'white', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                  {saving ? 'SALVANDO...' : selectedMeeting ? 'ATUALIZAR' : 'AGENDAR'}
+              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: '10px', border: `1px solid ${C.line}`, borderRadius: 6, background: '#fff', color: C.ink, fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
+                <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 6, background: C.neon, color: C.ink, fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, cursor: saving ? 'wait' : 'pointer' }}>
+                  {saving ? 'Salvando...' : selectedMeeting ? 'Atualizar' : 'Agendar'}
                 </button>
               </div>
             </div>

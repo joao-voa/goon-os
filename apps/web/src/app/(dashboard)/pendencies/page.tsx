@@ -28,6 +28,18 @@ interface Pendency {
   client: Client
 }
 
+// ---- Design tokens ----
+const C = {
+  ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0',
+  bg: '#f8fafc', neon: '#C7F900', green: '#16a34a', red: '#dc2626', amber: '#f59e0b', slate: '#475569',
+}
+const num: React.CSSProperties = { fontVariantNumeric: 'tabular-nums' }
+const thBase: React.CSSProperties = {
+  background: '#f8fafc', color: '#64748b', fontFamily: 'var(--font-sans)', fontSize: 11,
+  fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', padding: '10px 14px',
+  borderBottom: '1px solid #e2e8f0',
+}
+
 // ---- Helpers ----
 const fmtDateTime = (d: string) => {
   const dt = new Date(d)
@@ -572,36 +584,46 @@ export default function PendenciesPage() {
 
   return (
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ marginBottom: 20 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: C.ink, margin: 0 }}>Pendências</h1>
+        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.mid, marginTop: 4 }}>Inadimplência e contratos a vencer</div>
+      </div>
+
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: `1px solid ${C.line}` }}>
         {([
-          { key: 'inadimplentes' as const, label: `INADIMPLENTES (${overduePayments.length})` },
-          { key: 'contratos' as const, label: `FIM DE CONTRATO (${expiringPlans.length})` },
-        ]).map(tab => (
-          <button key={tab.key} onClick={() => setPendTab(tab.key)} style={{
-            padding: '10px 20px', border: '1px solid #e2e8f0',
-            borderBottom: pendTab === tab.key ? 'none' : '2px solid black',
-            background: pendTab === tab.key ? 'white' : '#f0f0f0',
-            fontFamily: 'var(--font-sans)', fontSize: 9, fontWeight: 700, cursor: 'pointer',
-            textTransform: 'uppercase', position: 'relative',
-            marginBottom: pendTab === tab.key ? -2 : 0, zIndex: pendTab === tab.key ? 1 : 0,
-            color: pendTab === tab.key ? 'black' : '#888', whiteSpace: 'nowrap',
-          }}>{tab.label}</button>
-        ))}
-        <div style={{ flex: 1, borderBottom: '1px solid #e2e8f0' }} />
+          { key: 'inadimplentes' as const, label: `Inadimplentes (${overduePayments.length})` },
+          { key: 'contratos' as const, label: `Fim de contrato (${expiringPlans.length})` },
+        ]).map(tab => {
+          const active = pendTab === tab.key
+          return (
+            <button key={tab.key} onClick={() => setPendTab(tab.key)} style={{
+              padding: '10px 4px', marginBottom: -1, background: 'none', border: 'none', cursor: 'pointer',
+              fontFamily: 'var(--font-sans)', fontSize: 14, whiteSpace: 'nowrap',
+              fontWeight: active ? 700 : 500, color: active ? C.ink : C.dim,
+              borderBottom: active ? `2px solid ${C.neon}` : '2px solid transparent',
+            }}>{tab.label}</button>
+          )
+        })}
       </div>
 
       {/* Product filter chips */}
       {(pendTab === 'inadimplentes' || pendTab === 'contratos') && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>Programa:</span>
-          {['', 'GE', 'GI', 'TTS', 'AURA'].map(code => (
-            <button key={code} onClick={() => setProductFilter(productFilter === code ? '' : code)} style={{
-              padding: '4px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
-              background: productFilter === code ? (code ? (PRODUCT_COLORS[code] ?? 'black') : 'black') : 'white',
-              color: productFilter === code ? 'white' : 'black',
-            }}>{code || 'TODOS'}</button>
-          ))}
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid, marginRight: 2 }}>Programa</span>
+          {['', 'GE', 'GI', 'TTS', 'AURA'].map(code => {
+            const active = productFilter === code
+            return (
+              <button key={code} onClick={() => setProductFilter(active ? '' : code)} style={{
+                padding: '5px 12px', borderRadius: 100, cursor: 'pointer',
+                fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600,
+                border: active ? '1px solid transparent' : `1px solid ${C.line}`,
+                background: active ? C.ink : '#fff',
+                color: active ? '#fff' : C.slate,
+              }}>{code || 'Todos'}</button>
+            )
+          })}
         </div>
       )}
 
@@ -615,23 +637,28 @@ export default function PendenciesPage() {
         return (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14 }}>CLIENTES INADIMPLENTES</div>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: C.ink }}>Clientes inadimplentes</div>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
               <button onClick={() => setAgruparCliente(v => !v)} style={{
-                padding: '4px 10px', border: '1px solid #0A0A0C', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 10,
-                background: agruparCliente ? '#0A0A0C' : 'white', color: agruparCliente ? 'white' : 'black', marginRight: 6,
-              }}>{agruparCliente ? '▤ POR CLIENTE' : '▥ POR PARCELA'}</button>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, color: '#666' }}>FILTRO:</span>
-              {([['todos', 'TODOS', '#1e293b'], ['sem', 'SEM A RECUPERAR', '#006600'], ['carteira', 'A RECUPERAR', '#cc0000']] as const).map(([key, label, bg]) => (
-                <button key={key} onClick={() => setCarteiraFilter(carteiraFilter === key ? 'todos' : key)} style={{
-                  padding: '4px 10px', border: '1px solid #e2e8f0', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 10,
-                  background: carteiraFilter === key ? bg : 'white', color: carteiraFilter === key ? 'white' : 'black',
-                }}>{label}{key === 'carteira' && carteiraItems.length > 0 ? ' (' + fmtBRL(carteiraTotal) + ')' : ''}{key === 'sem' ? ' (' + fmtBRL(semCarteiraTotal) + ')' : ''}</button>
-              ))}
+                padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 12,
+                border: agruparCliente ? '1px solid transparent' : `1px solid ${C.line}`,
+                background: agruparCliente ? C.ink : '#fff', color: agruparCliente ? '#fff' : C.slate, marginRight: 6,
+              }}>{agruparCliente ? 'Por cliente' : 'Por parcela'}</button>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid }}>Filtro</span>
+              {([['todos', 'Todos', C.slate], ['sem', 'Sem a recuperar', C.green], ['carteira', 'A recuperar', C.red]] as const).map(([key, label, bg]) => {
+                const active = carteiraFilter === key
+                return (
+                  <button key={key} onClick={() => setCarteiraFilter(active ? 'todos' : key)} style={{
+                    padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 12,
+                    border: active ? '1px solid transparent' : `1px solid ${C.line}`,
+                    background: active ? bg : '#fff', color: active ? '#fff' : C.slate,
+                  }}>{label}{key === 'carteira' && carteiraItems.length > 0 ? ' · ' + fmtBRL(carteiraTotal) : ''}{key === 'sem' ? ' · ' + fmtBRL(semCarteiraTotal) : ''}</button>
+                )
+              })}
             </div>
           </div>
           {filtered.length === 0 ? (
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#006600', padding: 24, textAlign: 'center', border: '1px dashed #006600' }}>Nenhum inadimplente!</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.green, padding: 24, textAlign: 'center', background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12 }}>Nenhum inadimplente.</div>
           ) : agruparCliente ? (() => {
             const groups = Object.values(filtered.reduce((acc: Record<string, { client: { id: string; companyName: string }; items: typeof filtered; total: number; carteira: boolean; prod: Set<string> }>, p) => {
               const k = p.client.id
@@ -640,15 +667,15 @@ export default function PendenciesPage() {
               return acc
             }, {})).sort((a, b) => b.total - a.total)
             return (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+              <div style={{ overflowX: 'auto', background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-sans)', fontSize: 13 }}>
                   <thead>
-                    <tr style={{ background: '#dc2626', color: 'white', textTransform: 'uppercase' }}>
-                      <th style={{ padding: '8px 12px', textAlign: 'left' }}>Cliente</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'center' }}>Programa</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'center' }}>Parcelas em Aberto</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'right' }}>Total a Cobrar</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'center' }}></th>
+                    <tr>
+                      <th style={{ ...thBase, textAlign: 'left' }}>Cliente</th>
+                      <th style={{ ...thBase, textAlign: 'center' }}>Programa</th>
+                      <th style={{ ...thBase, textAlign: 'center' }}>Parcelas em aberto</th>
+                      <th style={{ ...thBase, textAlign: 'right' }}>Total a cobrar</th>
+                      <th style={{ ...thBase, textAlign: 'center' }}></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -657,25 +684,25 @@ export default function PendenciesPage() {
                       return (
                         <>
                           <tr key={g.client.id} onClick={() => setExpandedClients(prev => { const n = new Set(prev); n.has(g.client.id) ? n.delete(g.client.id) : n.add(g.client.id); return n })}
-                            style={{ borderBottom: '1px solid #ddd', background: g.carteira ? '#fff5f5' : '#fafafa', cursor: 'pointer', fontWeight: 700 }}>
-                            <td style={{ padding: '10px 12px' }}>{open ? '▾ ' : '▸ '}{g.carteira && <span style={{ color: '#cc0000', marginRight: 4, fontSize: 10 }}>C</span>}{g.client.companyName}</td>
-                            <td style={{ padding: '10px 12px', textAlign: 'center' }}>{[...g.prod].map(pc => <span key={pc} style={{ background: PRODUCT_COLORS[pc] ?? '#888', color: 'white', padding: '2px 6px', fontSize: 9, fontWeight: 700, marginRight: 2 }}>{pc}</span>)}</td>
-                            <td style={{ padding: '10px 12px', textAlign: 'center' }}>{g.items.length}</td>
-                            <td style={{ padding: '10px 12px', textAlign: 'right', color: '#cc0000' }}>{fmtBRL(g.total)}</td>
-                            <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                              <button onClick={e => { e.stopPropagation(); window.location.href = `/clients/${g.client.id}` }} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>VER</button>
+                            style={{ borderBottom: `1px solid ${C.line}`, background: g.carteira ? '#fef2f2' : '#fff', cursor: 'pointer', fontWeight: 600, color: C.ink }}>
+                            <td style={{ padding: '12px 14px' }}>{open ? '▾ ' : '▸ '}{g.carteira && <span style={{ color: C.red, marginRight: 4, fontSize: 10 }}>●</span>}{g.client.companyName}</td>
+                            <td style={{ padding: '12px 14px', textAlign: 'center' }}>{[...g.prod].map(pc => <span key={pc} style={{ background: PRODUCT_COLORS[pc] ?? C.mid, color: 'white', padding: '2px 7px', borderRadius: 6, fontSize: 10, fontWeight: 700, marginRight: 3 }}>{pc}</span>)}</td>
+                            <td style={{ ...num, padding: '12px 14px', textAlign: 'center' }}>{g.items.length}</td>
+                            <td style={{ ...num, padding: '12px 14px', textAlign: 'right', color: C.red, fontWeight: 700 }}>{fmtBRL(g.total)}</td>
+                            <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                              <button onClick={e => { e.stopPropagation(); window.location.href = `/clients/${g.client.id}` }} style={{ background: C.ink, color: 'white', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>Ver</button>
                             </td>
                           </tr>
                           {open && g.items.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).map(pay => {
                             const days = Math.floor((Date.now() - new Date(pay.dueDate).getTime()) / (1000*60*60*24))
                             return (
-                              <tr key={pay.id} style={{ borderBottom: '1px solid #eee', background: '#fff', fontSize: 11 }}>
-                                <td style={{ padding: '6px 12px 6px 28px', color: '#555' }}>Parcela {pay.installment} · venc {new Date(pay.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} · <span style={{ color: '#cc0000', fontWeight: 700 }}>{days}d atraso</span></td>
+                              <tr key={pay.id} style={{ borderBottom: `1px solid ${C.line}`, background: C.bg, fontSize: 12 }}>
+                                <td style={{ padding: '8px 14px 8px 30px', color: C.mid }}>Parcela {pay.installment} · venc {new Date(pay.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} · <span style={{ color: C.red, fontWeight: 700 }}>{days}d atraso</span></td>
                                 <td />
-                                <td style={{ textAlign: 'center', color: '#888' }}>{pay.inCarteira ? 'A Recuperar' : ''}</td>
-                                <td style={{ padding: '6px 12px', textAlign: 'right' }}>{fmtBRL(pay.value)}</td>
-                                <td style={{ padding: '6px 12px', textAlign: 'center' }}>
-                                  <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                                <td style={{ textAlign: 'center', color: C.dim }}>{pay.inCarteira ? 'A recuperar' : ''}</td>
+                                <td style={{ ...num, padding: '8px 14px', textAlign: 'right', color: C.ink }}>{fmtBRL(pay.value)}</td>
+                                <td style={{ padding: '8px 14px', textAlign: 'center' }}>
+                                  <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
                                     <button onClick={async () => {
                                       const dateStr = prompt('Data do pagamento (DD/MM/AAAA):', new Date().toLocaleDateString('pt-BR', { timeZone: 'UTC' }))
                                       if (!dateStr) return
@@ -683,10 +710,10 @@ export default function PendenciesPage() {
                                       const paidDate = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10), 12)
                                       if (isNaN(paidDate.getTime())) { toast.error('Data invalida'); return }
                                       try { await apiFetch(`/api/payments/${pay.id}`, { method: 'PUT', body: JSON.stringify({ status: 'PAID', paidAt: paidDate.toISOString() }) }); toast.success('Pagamento confirmado'); setOverduePayments(prev => prev.filter(p => p.id !== pay.id)) } catch { toast.error('Erro ao dar baixa') }
-                                    }} style={{ background: '#16a34a', color: 'white', border: 'none', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>PAGAR</button>
+                                    }} style={{ background: C.green, color: 'white', border: 'none', borderRadius: 6, padding: '5px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>Pagar</button>
                                     <button onClick={async () => {
                                       try { await apiFetch(`/api/payments/${pay.id}/carteira`, { method: 'PATCH', body: JSON.stringify({ inCarteira: !pay.inCarteira }) }); setOverduePayments(prev => prev.map(p => p.id === pay.id ? { ...p, inCarteira: !p.inCarteira } : p)); toast.success(pay.inCarteira ? 'Removido de A Recuperar' : 'Adicionado a A Recuperar') } catch { toast.error('Erro') }
-                                    }} style={{ background: pay.inCarteira ? '#e6a800' : '#888', color: 'white', border: 'none', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{pay.inCarteira ? 'TIRAR' : 'RECUP'}</button>
+                                    }} style={{ background: pay.inCarteira ? C.amber : C.mid, color: 'white', border: 'none', borderRadius: 6, padding: '5px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>{pay.inCarteira ? 'Tirar' : 'Recup'}</button>
                                   </div>
                                 </td>
                               </tr>
@@ -695,9 +722,9 @@ export default function PendenciesPage() {
                         </>
                       )
                     })}
-                    <tr style={{ background: '#f0f0f0', fontWeight: 700 }}>
-                      <td colSpan={3} style={{ padding: '8px 12px' }}>TOTAL ({groups.length} clientes)</td>
-                      <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmtBRL(filtered.reduce((s, p) => s + p.value, 0))}</td>
+                    <tr style={{ background: C.bg, fontWeight: 700, color: C.ink }}>
+                      <td colSpan={3} style={{ padding: '12px 14px' }}>Total ({groups.length} clientes)</td>
+                      <td style={{ ...num, padding: '12px 14px', textAlign: 'right' }}>{fmtBRL(filtered.reduce((s, p) => s + p.value, 0))}</td>
                       <td />
                     </tr>
                   </tbody>
@@ -705,37 +732,37 @@ export default function PendenciesPage() {
               </div>
             )
           })() : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+            <div style={{ overflowX: 'auto', background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-sans)', fontSize: 13 }}>
                 <thead>
-                  <tr style={{ background: '#dc2626', color: 'white', textTransform: 'uppercase' }}>
-                    <th style={{ padding: '8px 12px', textAlign: 'left' }}>Cliente</th>
-                    <th style={{ padding: '8px 12px', textAlign: 'center' }}>Programa</th>
-                    <th style={{ padding: '8px 12px', textAlign: 'center' }}>Parcela</th>
-                    <th style={{ padding: '8px 12px', textAlign: 'right' }}>Valor</th>
-                    <th style={{ padding: '8px 12px', textAlign: 'center' }}>Vencimento</th>
-                    <th style={{ padding: '8px 12px', textAlign: 'center' }}>Dias Atraso</th>
-                    <th style={{ padding: '8px 12px', textAlign: 'center' }}>Acoes</th>
+                  <tr>
+                    <th style={{ ...thBase, textAlign: 'left' }}>Cliente</th>
+                    <th style={{ ...thBase, textAlign: 'center' }}>Programa</th>
+                    <th style={{ ...thBase, textAlign: 'center' }}>Parcela</th>
+                    <th style={{ ...thBase, textAlign: 'right' }}>Valor</th>
+                    <th style={{ ...thBase, textAlign: 'center' }}>Vencimento</th>
+                    <th style={{ ...thBase, textAlign: 'center' }}>Dias atraso</th>
+                    <th style={{ ...thBase, textAlign: 'center' }}>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).map(pay => {
                     const days = Math.floor((Date.now() - new Date(pay.dueDate).getTime()) / (1000*60*60*24))
                     return (
-                      <tr key={pay.id} style={{ borderBottom: '1px solid #ddd', background: pay.inCarteira ? '#fff5f5' : 'transparent' }}>
-                        <td style={{ padding: '8px 12px', fontWeight: 700, cursor: 'pointer' }} onClick={() => window.location.href = `/clients/${pay.client.id}`}>
-                          {pay.inCarteira && <span style={{ color: '#cc0000', marginRight: 4, fontSize: 10 }}>C</span>}
+                      <tr key={pay.id} style={{ borderBottom: `1px solid ${C.line}`, background: pay.inCarteira ? '#fef2f2' : 'transparent' }}>
+                        <td style={{ padding: '12px 14px', fontWeight: 600, color: C.ink, cursor: 'pointer' }} onClick={() => window.location.href = `/clients/${pay.client.id}`}>
+                          {pay.inCarteira && <span style={{ color: C.red, marginRight: 4, fontSize: 10 }}>●</span>}
                           {pay.client.companyName}
                         </td>
-                        <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                          {pay.productCode && <span style={{ background: PRODUCT_COLORS[pay.productCode] ?? '#888', color: 'white', padding: '2px 6px', fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{pay.productCode}</span>}
+                        <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                          {pay.productCode && <span style={{ background: PRODUCT_COLORS[pay.productCode] ?? C.mid, color: 'white', padding: '2px 7px', borderRadius: 6, fontSize: 10, fontWeight: 700 }}>{pay.productCode}</span>}
                         </td>
-                        <td style={{ padding: '8px 12px', textAlign: 'center' }}>{pay.installment}</td>
-                        <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmtBRL(pay.value)}</td>
-                        <td style={{ padding: '8px 12px', textAlign: 'center' }}>{new Date(pay.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
-                        <td style={{ padding: '8px 12px', textAlign: 'center', color: '#cc0000', fontWeight: 700 }}>{days}d</td>
-                        <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                          <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                        <td style={{ ...num, padding: '12px 14px', textAlign: 'center', color: C.slate }}>{pay.installment}</td>
+                        <td style={{ ...num, padding: '12px 14px', textAlign: 'right', color: C.ink }}>{fmtBRL(pay.value)}</td>
+                        <td style={{ ...num, padding: '12px 14px', textAlign: 'center', color: C.slate }}>{new Date(pay.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
+                        <td style={{ ...num, padding: '12px 14px', textAlign: 'center', color: C.red, fontWeight: 700 }}>{days}d</td>
+                        <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
                             <button onClick={async () => {
                               const dateStr = prompt('Data do pagamento (DD/MM/AAAA):', new Date().toLocaleDateString('pt-BR', { timeZone: 'UTC' }))
                               if (!dateStr) return
@@ -748,23 +775,23 @@ export default function PendenciesPage() {
                                 toast.success('Pagamento confirmado em ' + dateStr)
                                 setOverduePayments(prev => prev.filter(p => p.id !== pay.id))
                               } catch { toast.error('Erro ao dar baixa') }
-                            }} style={{ background: '#16a34a', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>PAGAR</button>
-                            <button onClick={() => window.location.href = `/clients/${pay.client.id}`} style={{ background: '#0A0A0C', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>VER</button>
+                            }} style={{ background: C.green, color: 'white', border: 'none', borderRadius: 6, padding: '5px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>Pagar</button>
+                            <button onClick={() => window.location.href = `/clients/${pay.client.id}`} style={{ background: C.ink, color: 'white', border: 'none', borderRadius: 6, padding: '5px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>Ver</button>
                             <button onClick={async () => {
                               try {
                                 await apiFetch(`/api/payments/${pay.id}/carteira`, { method: 'PATCH', body: JSON.stringify({ inCarteira: !pay.inCarteira }) })
                                 setOverduePayments(prev => prev.map(p => p.id === pay.id ? { ...p, inCarteira: !p.inCarteira } : p))
                                 toast.success(pay.inCarteira ? 'Removido de A Recuperar' : 'Adicionado a A Recuperar')
                               } catch { toast.error('Erro') }
-                            }} style={{ background: pay.inCarteira ? '#e6a800' : '#888', color: 'white', border: '1px solid #e2e8f0', padding: '3px 8px', fontSize: 9, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{pay.inCarteira ? 'TIRAR' : 'RECUP'}</button>
+                            }} style={{ background: pay.inCarteira ? C.amber : C.mid, color: 'white', border: 'none', borderRadius: 6, padding: '5px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>{pay.inCarteira ? 'Tirar' : 'Recup'}</button>
                           </div>
                         </td>
                       </tr>
                     )
                   })}
-                  <tr style={{ background: '#f0f0f0', fontWeight: 700 }}>
-                    <td colSpan={3} style={{ padding: '8px 12px' }}>TOTAL</td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmtBRL(filtered.reduce((s, p) => s + p.value, 0))}</td>
+                  <tr style={{ background: C.bg, fontWeight: 700, color: C.ink }}>
+                    <td colSpan={3} style={{ padding: '12px 14px' }}>Total</td>
+                    <td style={{ ...num, padding: '12px 14px', textAlign: 'right' }}>{fmtBRL(filtered.reduce((s, p) => s + p.value, 0))}</td>
                     <td colSpan={3} />
                   </tr>
                 </tbody>
@@ -779,38 +806,43 @@ export default function PendenciesPage() {
         const filteredPlans = productFilter ? expiringPlans.filter(p => p.productCode === productFilter) : expiringPlans
         return (
         <div>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14, marginBottom: 16 }}>CONTRATOS VENCIDOS E A VENCER</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: C.ink, marginBottom: 16 }}>Contratos vencidos e a vencer</div>
           {filteredPlans.length === 0 ? (
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#006600', padding: 24, textAlign: 'center', border: '1px dashed #006600' }}>Todos os contratos em dia!</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.green, padding: 24, textAlign: 'center', background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12 }}>Todos os contratos em dia.</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {filteredPlans.sort((a, b) => a.daysLeft - b.daysLeft).map(plan => (
-                <div key={plan.id} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '12px 16px', border: '1px solid #e2e8f0',
-                  background: plan.expired ? '#fef2f2' : plan.daysLeft <= 30 ? '#fffbeb' : 'white',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                }}>
-                  <div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      {plan.companyName}
-                      {plan.productCode && <span style={{ background: PRODUCT_COLORS[plan.productCode] ?? '#888', color: 'white', padding: '1px 6px', fontSize: 9, fontWeight: 700 }}>{plan.productCode}</span>}
-                    </div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#555', marginTop: 2 }}>
-                      {plan.expired
-                        ? <span style={{ color: '#cc0000', fontWeight: 700 }}>Vencido ha {Math.abs(plan.daysLeft)} dias ({new Date(plan.contractEndDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })})</span>
-                        : <span style={{ color: plan.daysLeft <= 30 ? '#e6a800' : '#006600' }}>Vence em {plan.daysLeft} dias ({new Date(plan.contractEndDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })})</span>
-                      }
-                    </div>
-                  </div>
-                  <span style={{
-                    padding: '4px 12px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700,
-                    background: plan.expired ? '#cc0000' : plan.daysLeft <= 30 ? '#e6a800' : '#006600', color: 'white',
+              {filteredPlans.sort((a, b) => a.daysLeft - b.daysLeft).map(plan => {
+                const statusColor = plan.expired ? C.red : plan.daysLeft <= 30 ? C.amber : C.green
+                return (
+                  <div key={plan.id} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+                    padding: '14px 18px', border: `1px solid ${C.line}`, borderRadius: 12,
+                    borderLeft: `3px solid ${statusColor}`,
+                    background: plan.expired ? '#fef2f2' : plan.daysLeft <= 30 ? '#fffbeb' : '#fff',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
                   }}>
-                    {plan.expired ? 'VENCIDO' : plan.daysLeft <= 30 ? 'URGENTE' : 'ATENCAO'}
-                  </span>
-                </div>
-              ))}
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 14, color: C.ink, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {plan.companyName}
+                        {plan.productCode && <span style={{ background: PRODUCT_COLORS[plan.productCode] ?? C.mid, color: 'white', padding: '2px 7px', borderRadius: 6, fontSize: 10, fontWeight: 700 }}>{plan.productCode}</span>}
+                      </div>
+                      <div style={{ ...num, fontFamily: 'var(--font-sans)', fontSize: 12, color: C.mid, marginTop: 3 }}>
+                        {plan.expired
+                          ? <span style={{ color: C.red, fontWeight: 600 }}>Vencido há {Math.abs(plan.daysLeft)} dias ({new Date(plan.contractEndDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })})</span>
+                          : <span style={{ color: plan.daysLeft <= 30 ? C.amber : C.green, fontWeight: 600 }}>Vence em {plan.daysLeft} dias ({new Date(plan.contractEndDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })})</span>
+                        }
+                      </div>
+                    </div>
+                    <span style={{
+                      padding: '4px 12px', borderRadius: 100, fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700,
+                      textTransform: 'uppercase', letterSpacing: '0.03em',
+                      background: statusColor, color: 'white',
+                    }}>
+                      {plan.expired ? 'Vencido' : plan.daysLeft <= 30 ? 'Urgente' : 'Atenção'}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>

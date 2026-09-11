@@ -142,21 +142,29 @@ export function Sidebar({
               <a key={item.href} href={item.href}
                 title={collapsed && !isMobile ? item.label : undefined}
                 style={{
-                  position: 'relative', display: 'flex', alignItems: 'center', gap: 12,
-                  padding: collapsed && !isMobile ? '10px 0' : '10px 16px',
+                  position: 'relative', display: 'flex', alignItems: 'center', gap: 11,
+                  padding: collapsed && !isMobile ? '9px 0' : '9px 14px',
                   justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
                   textDecoration: 'none',
-                  color: isActive ? 'white' : 'rgba(255,255,255,0.5)',
-                  background: isActive ? 'rgba(199,249,0,0.12)' : 'transparent',
-                  borderRadius: 8, margin: '1px 8px',
+                  color: isActive ? '#ffffff' : 'rgba(255,255,255,0.5)',
+                  background: isActive ? 'rgba(199,249,0,0.14)' : 'transparent',
+                  borderRadius: 7, margin: '2px 8px',
                   fontFamily: 'var(--font-sans)', fontWeight: isActive ? 600 : 500, fontSize: 13,
-                  whiteSpace: 'nowrap', transition: 'all 0.15s',
-                  borderLeft: isActive ? '3px solid #C7F900' : '3px solid transparent',
+                  letterSpacing: '-0.005em',
+                  whiteSpace: 'nowrap', transition: 'background 0.15s ease, color 0.15s ease',
                 }}
-                onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.85)' } }}
+                onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.9)' } }}
                 onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'; (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.5)' } }}
               >
-                <Icon size={18} style={{ flexShrink: 0 }} />
+                {/* Indicador neon à esquerda (item ativo) */}
+                {isActive && (!collapsed || isMobile) && (
+                  <span style={{
+                    position: 'absolute', left: -8, top: '50%', transform: 'translateY(-50%)',
+                    width: 3, height: 18, borderRadius: 3, background: '#C7F900',
+                    boxShadow: '0 0 10px rgba(199,249,0,0.6)',
+                  }} />
+                )}
+                <Icon size={18} style={{ flexShrink: 0, color: isActive ? '#C7F900' : 'currentColor' }} />
                 {(!collapsed || isMobile) && <span>{item.label}</span>}
               </a>
             )

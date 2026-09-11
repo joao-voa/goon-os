@@ -44,12 +44,12 @@ function MobileBottomNav({ onMenuClick }: { onMenuClick: () => void }) {
       bottom: 0,
       left: 0,
       right: 0,
-      height: 56,
-      background: 'var(--retro-gray)',
-      borderTop: '1px solid #e2e8f0',
-      boxShadow: '0 -4px 0 black',
+      height: 60,
+      background: '#0A0A0C',
+      borderTop: '1px solid rgba(255,255,255,0.08)',
       display: 'flex',
       alignItems: 'stretch',
+      paddingBottom: 'env(safe-area-inset-bottom)',
       zIndex: 40,
     }}>
       {BOTTOM_NAV.map(({ href, label, Icon }) => {
@@ -60,26 +60,32 @@ function MobileBottomNav({ onMenuClick }: { onMenuClick: () => void }) {
             href={href}
             style={{
               flex: 1,
+              position: 'relative',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 3,
+              gap: 4,
               textDecoration: 'none',
-              background: isActive ? 'var(--retro-blue)' : 'transparent',
-              color: isActive ? 'white' : 'black',
-              borderRight: '1px solid rgba(0,0,0,0.15)',
-              padding: '4px 2px',
+              background: 'transparent',
+              color: isActive ? '#C7F900' : 'rgba(255,255,255,0.5)',
+              padding: '6px 2px',
               minHeight: 44,
             }}
           >
-            <Icon size={16} style={{ flexShrink: 0 }} />
+            {isActive && (
+              <span style={{
+                position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+                width: 22, height: 3, borderRadius: 3, background: '#C7F900',
+                boxShadow: '0 0 10px rgba(199,249,0,0.6)',
+              }} />
+            )}
+            <Icon size={18} style={{ flexShrink: 0 }} />
             <span style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 7,
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: 0.3,
+              fontFamily: 'var(--font-sans)',
+              fontSize: 9,
+              fontWeight: isActive ? 600 : 500,
+              letterSpacing: 0.1,
               lineHeight: 1,
               whiteSpace: 'nowrap',
             }}>
@@ -97,24 +103,22 @@ function MobileBottomNav({ onMenuClick }: { onMenuClick: () => void }) {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 3,
+          gap: 4,
           background: 'none',
           border: 'none',
-          borderLeft: '1px solid rgba(0,0,0,0.15)',
           cursor: 'pointer',
-          padding: '4px 2px',
+          padding: '6px 2px',
           minHeight: 44,
-          color: 'black',
+          color: 'rgba(255,255,255,0.5)',
         }}
         title="Menu"
       >
-        <GitBranch size={16} />
+        <GitBranch size={18} />
         <span style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 7,
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: 0.3,
+          fontFamily: 'var(--font-sans)',
+          fontSize: 9,
+          fontWeight: 500,
+          letterSpacing: 0.1,
           lineHeight: 1,
         }}>
           Menu

@@ -1158,13 +1158,31 @@ function ClientContractsView() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', margin: 0 }}>
-          {'>'} {withContract} com contrato · {rows.length - withContract} sem
-        </p>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', fontFamily: 'var(--font-sans)', fontSize: 13 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#16a34a', fontWeight: 600 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#16a34a', display: 'inline-block' }} />
+            <span style={{ fontVariantNumeric: 'tabular-nums' }}>{withContract}</span> com contrato
+          </span>
+          <span style={{ color: '#cbd5e1' }}>·</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#64748b', fontWeight: 600 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+            <span style={{ fontVariantNumeric: 'tabular-nums' }}>{rows.length - withContract}</span> sem
+          </span>
+        </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             onClick={() => setOnlyMissing(v => !v)}
-            style={{ padding: '6px 12px', border: '1px solid #e2e8f0', background: onlyMissing ? '#f59e0b' : 'white', color: onlyMissing ? 'black' : '#555', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700 }}
+            style={{
+              padding: '7px 14px',
+              borderRadius: 6,
+              border: onlyMissing ? '1px solid #f59e0b' : '1px solid #e2e8f0',
+              background: onlyMissing ? '#fffbeb' : '#fff',
+              color: onlyMissing ? '#b45309' : '#64748b',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-sans)',
+              fontSize: 13,
+              fontWeight: 600,
+            }}
           >
             Só sem contrato
           </button>
@@ -1172,42 +1190,92 @@ function ClientContractsView() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar cliente..."
-            style={{ padding: '6px 10px', border: '1px solid #e2e8f0', fontFamily: 'var(--font-mono)', fontSize: 12, minWidth: 200 }}
+            style={{
+              padding: '8px 12px',
+              borderRadius: 6,
+              border: '1px solid #e2e8f0',
+              background: '#fff',
+              fontFamily: 'var(--font-sans)',
+              fontSize: 13,
+              color: '#0f172a',
+              minWidth: 220,
+              outline: 'none',
+            }}
           />
         </div>
       </div>
 
       {loading ? (
-        <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 13 }}>Carregando...</p>
+        <p style={{ fontFamily: 'var(--font-sans)', color: '#64748b', fontSize: 13 }}>Carregando...</p>
       ) : filtered.length === 0 ? (
-        <p style={{ fontFamily: 'var(--font-mono)', color: '#555', fontSize: 13 }}>Nenhum cliente encontrado.</p>
+        <p style={{ fontFamily: 'var(--font-sans)', color: '#64748b', fontSize: 13 }}>Nenhum cliente encontrado.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {filtered.map(c => (
-            <div key={c.id} style={{ padding: '12px 16px', background: 'white', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <a href={`/clients/${c.id}#contrato`} style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'black', fontSize: 13, textDecoration: 'none' }}>
-                  {c.companyName}
-                </a>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#888', marginTop: 2 }}>{c.responsible}</div>
+            <div
+              key={c.id}
+              style={{
+                padding: '14px 18px',
+                background: '#fff',
+                border: '1px solid #e2e8f0',
+                borderRadius: 12,
+                boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 12,
+                flexWrap: 'wrap',
+              }}
+            >
+              <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  flexShrink: 0,
+                  background: c.documents.length > 0 ? '#16a34a' : '#f59e0b',
+                }} />
+                <div style={{ minWidth: 0 }}>
+                  <a href={`/clients/${c.id}#contrato`} style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, color: '#0f172a', fontSize: 14, textDecoration: 'none' }}>
+                    {c.companyName}
+                  </a>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: '#64748b', marginTop: 2 }}>{c.responsible}</div>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                 {c.documents.length === 0 ? (
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#b45309', background: '#fef3c7', padding: '4px 8px', border: '1px solid #fcd34d' }}>Sem contrato</span>
+                  <span className="goon-badge goon-badge-warning">Sem contrato</span>
                 ) : (
-                  c.documents.map(d => (
-                    <button
-                      key={d.id}
-                      onClick={() => download(c.id, d.id, d.filename)}
-                      title={d.filename}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 10px', border: '1px solid #e2e8f0', background: 'var(--retro-gray)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 11, maxWidth: 260 }}
-                    >
-                      <span style={{ fontWeight: 800, fontSize: 8, background: 'black', color: 'white', padding: '2px 4px' }}>
-                        {d.mimeType.includes('pdf') ? 'PDF' : d.mimeType.includes('image') ? 'IMG' : 'DOC'}
-                      </span>
-                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.filename}</span>
-                    </button>
-                  ))
+                  <>
+                    <span className="goon-badge goon-badge-success">Assinado</span>
+                    {c.documents.map(d => (
+                      <button
+                        key={d.id}
+                        onClick={() => download(c.id, d.id, d.filename)}
+                        title={d.filename}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '7px 12px',
+                          borderRadius: 6,
+                          border: 'none',
+                          background: '#0f172a',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          fontFamily: 'var(--font-sans)',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          maxWidth: 260,
+                        }}
+                      >
+                        <span style={{ fontWeight: 700, fontSize: 9, letterSpacing: 0.5, background: 'rgba(255,255,255,0.18)', color: '#fff', padding: '2px 5px', borderRadius: 4 }}>
+                          {d.mimeType.includes('pdf') ? 'PDF' : d.mimeType.includes('image') ? 'IMG' : 'DOC'}
+                        </span>
+                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.filename}</span>
+                      </button>
+                    ))}
+                  </>
                 )}
               </div>
             </div>
