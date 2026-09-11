@@ -48,14 +48,18 @@ interface Billing {
 const brl = (v: number | null) => v == null ? '—' : v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 const num = (v: number | null) => v == null ? '—' : v.toLocaleString('pt-BR')
 const dt = (d: string | null) => d ? new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '—'
-const NEON = '#C7F900', INK = '#0A0A0C', PANEL = '#141418', LINE = '#2A2A30', FG = '#F2F2F2', MUT = '#8b8b94'
-const disp = 'var(--font-display)', mono = 'var(--font-mono)'
-const KANBAN: [string, string, string][] = [['TODO', 'A Fazer', '#64748b'], ['DOING', 'Fazendo', '#e6a800'], ['DONE', 'Feito', NEON]]
+// paleta clara + neon (design system GOON)
+const NEON = '#C7F900', INK = '#0f172a', MUT = '#64748b', DIM = '#94a3b8', LINE = '#e2e8f0', BG = '#f8fafc', CARD = '#fff', FG = '#0f172a'
+const GREEN = '#16a34a', RED = '#dc2626', AMBER = '#f59e0b', SLATE = '#475569'
+const disp = 'var(--font-display)', mono = 'var(--font-sans)'
+const tnum: React.CSSProperties = { fontVariantNumeric: 'tabular-nums' }
+const cardStyle: React.CSSProperties = { background: CARD, border: `1px solid ${LINE}`, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }
+const KANBAN: [string, string, string][] = [['TODO', 'A Fazer', SLATE], ['DOING', 'Fazendo', AMBER], ['DONE', 'Feito', GREEN]]
 
 function chip(active: boolean, color: string): React.CSSProperties {
-  return { padding: '5px 9px', border: `1px solid ${active ? color : LINE}`, background: active ? color : 'transparent', color: active ? INK : MUT, fontFamily: mono, fontSize: 10, fontWeight: 700, cursor: 'pointer' }
+  return { padding: '6px 12px', borderRadius: 100, border: `1px solid ${active ? color : LINE}`, background: active ? color : CARD, color: active ? (color === NEON ? INK : '#fff') : MUT, fontFamily: mono, fontSize: 12, fontWeight: 600, cursor: 'pointer' }
 }
-const miniBtn: React.CSSProperties = { border: `1px solid ${LINE}`, background: 'transparent', color: FG, cursor: 'pointer', fontFamily: mono, fontSize: 10, padding: '2px 8px' }
+const miniBtn: React.CSSProperties = { border: `1px solid ${LINE}`, background: CARD, color: SLATE, cursor: 'pointer', fontFamily: mono, fontSize: 11, padding: '4px 9px', borderRadius: 6 }
 
 export default function MentorshipDashboard() {
   const [mentees, setMentees] = useState<Mentee[]>([])
@@ -102,63 +106,63 @@ export default function MentorshipDashboard() {
   const sel = mentees.find(m => m.clientId === selId)
 
   return (
-    <div style={{ background: INK, minHeight: 'calc(100vh - 56px)', color: FG, display: 'flex', fontFamily: mono }}>
+    <div style={{ background: BG, minHeight: 'calc(100vh - 56px)', color: FG, display: 'flex', fontFamily: mono }}>
       {/* ══ LISTA (esquerda) — colapsável ══ */}
       {listCollapsed ? (
-        <aside style={{ width: 40, borderRight: `1px solid ${LINE}`, display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, height: 'calc(100vh - 56px)', position: 'sticky', top: 0, paddingTop: 14 }}>
+        <aside style={{ width: 44, background: CARD, borderRight: `1px solid ${LINE}`, display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, height: 'calc(100vh - 56px)', position: 'sticky', top: 0, paddingTop: 14 }}>
           <button onClick={() => setListCollapsed(false)} title="Expandir lista" style={{ background: 'none', border: 'none', color: MUT, cursor: 'pointer', fontSize: 16 }}>▸</button>
-          <div style={{ writingMode: 'vertical-rl', marginTop: 12, fontFamily: disp, fontSize: 12, letterSpacing: '0.1em', color: MUT }}>MENTORIA · {mentees.length}</div>
+          <div style={{ writingMode: 'vertical-rl', marginTop: 12, fontFamily: disp, fontSize: 12, fontWeight: 700, letterSpacing: '0.02em', color: MUT }}>Mentoria · {mentees.length}</div>
         </aside>
       ) : (
-      <aside style={{ width: 300, borderRight: `1px solid ${LINE}`, display: 'flex', flexDirection: 'column', flexShrink: 0, height: 'calc(100vh - 56px)', position: 'sticky', top: 0 }}>
+      <aside style={{ width: 300, background: CARD, borderRight: `1px solid ${LINE}`, display: 'flex', flexDirection: 'column', flexShrink: 0, height: 'calc(100vh - 56px)', position: 'sticky', top: 0 }}>
         <div style={{ padding: '18px 16px 12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontFamily: disp, fontSize: 18, fontWeight: 700, letterSpacing: '0.04em' }}>MENTORIA</div>
-            <button onClick={() => setListCollapsed(true)} title="Recolher lista" style={{ background: 'none', border: 'none', color: MUT, cursor: 'pointer', fontSize: 16 }}>◂</button>
+            <div style={{ fontFamily: disp, fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: INK }}>Mentoria</div>
+            <button onClick={() => setListCollapsed(true)} title="Recolher lista" style={{ background: 'none', border: 'none', color: DIM, cursor: 'pointer', fontSize: 16 }}>◂</button>
           </div>
-          <div style={{ fontSize: 10, color: MUT, marginTop: 2 }}>{mentees.length} mentorados · <span style={{ color: totAtt ? '#ff5a5a' : NEON }}>{totAtt} em atenção</span></div>
+          <div style={{ fontSize: 12, color: MUT, marginTop: 3 }}>{mentees.length} mentorados · <span style={{ color: totAtt ? RED : GREEN, fontWeight: 600 }}>{totAtt} em atenção</span></div>
         </div>
-        <div style={{ padding: '0 16px 10px' }}>
-          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar cliente..." style={{ width: '100%', background: PANEL, border: `1px solid ${LINE}`, color: FG, padding: '7px 10px', fontFamily: mono, fontSize: 12, outline: 'none' }} />
-          <div style={{ display: 'flex', gap: 4, marginTop: 8, flexWrap: 'wrap' }}>
-            <button onClick={() => setAttF(v => !v)} style={chip(attF, '#ff5a5a')}>🔴 Atenção</button>
+        <div style={{ padding: '0 16px 12px' }}>
+          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar cliente..." className="goon-input" />
+          <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+            <button onClick={() => setAttF(v => !v)} style={chip(attF, RED)}>Atenção</button>
             <select value={mentorF} onChange={e => setMentorF(e.target.value)} style={{ ...chip(!!mentorF, NEON), cursor: 'pointer' }}>
-              <option value="" style={{ background: INK }}>Mentor</option>
-              {mentors.map(m => <option key={m} value={m} style={{ background: INK }}>{m}</option>)}
+              <option value="">Mentor</option>
+              {mentors.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
         </div>
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ flex: 1, overflowY: 'auto', borderTop: `1px solid ${LINE}` }}>
           <button onClick={() => setSelId(null)} style={{
-            width: '100%', textAlign: 'left', background: selId === null ? PANEL : 'transparent', border: 'none',
-            borderLeft: `3px solid ${selId === null ? NEON : 'transparent'}`, padding: '12px 14px', cursor: 'pointer', color: FG,
-            display: 'flex', alignItems: 'center', gap: 8, borderBottom: `1px solid ${LINE}`, fontFamily: mono, fontWeight: 700, fontSize: 12,
+            width: '100%', textAlign: 'left', background: selId === null ? BG : 'transparent', border: 'none',
+            borderLeft: `3px solid ${selId === null ? NEON : 'transparent'}`, padding: '12px 14px', cursor: 'pointer', color: INK,
+            display: 'flex', alignItems: 'center', gap: 8, borderBottom: `1px solid ${LINE}`, fontFamily: mono, fontWeight: 700, fontSize: 13,
           }}>
-            <span style={{ fontSize: 14 }}>◱</span> VISÃO GERAL
+            <span style={{ fontSize: 14 }}>◱</span> Visão geral
           </button>
-          {mentees.length === 0 && <div style={{ padding: 20, fontSize: 11, color: MUT, textAlign: 'center' }}>Nenhum mentorado.<br />Inscreva um cliente abaixo.</div>}
+          {mentees.length === 0 && <div style={{ padding: 20, fontSize: 12, color: MUT, textAlign: 'center' }}>Nenhum mentorado.<br />Inscreva um cliente abaixo.</div>}
           {mentees.map(m => {
             const active = m.clientId === selId
             return (
               <button key={m.clientId} onClick={() => setSelId(m.clientId)} style={{
-                width: '100%', textAlign: 'left', background: active ? PANEL : 'transparent', border: 'none',
-                borderLeft: `3px solid ${active ? NEON : 'transparent'}`, padding: '11px 14px', cursor: 'pointer', color: FG,
+                width: '100%', textAlign: 'left', background: active ? BG : 'transparent', border: 'none',
+                borderLeft: `3px solid ${active ? NEON : 'transparent'}`, padding: '11px 14px', cursor: 'pointer', color: INK,
                 display: 'flex', flexDirection: 'column', gap: 3, borderBottom: `1px solid ${LINE}`,
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: m.attention ? '#ff5a5a' : NEON, flexShrink: 0 }} />
-                  <span style={{ fontWeight: 700, fontSize: 12, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.company}</span>
-                  {m.tier && <span style={{ fontSize: 8, background: LINE, padding: '1px 5px', borderRadius: 3 }}>{m.tier}</span>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: m.attention ? RED : GREEN, flexShrink: 0 }} />
+                  <span style={{ fontWeight: 700, fontSize: 13, color: INK, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.company}</span>
+                  {m.tier && <span style={{ fontSize: 9, background: BG, border: `1px solid ${LINE}`, color: MUT, padding: '1px 6px', borderRadius: 100, fontWeight: 600 }}>{m.tier}</span>}
                 </div>
-                <div style={{ fontSize: 9, color: MUT, paddingLeft: 13 }}>
+                <div style={{ fontSize: 11, color: MUT, paddingLeft: 14, ...tnum }}>
                   {m.mentorName ?? 'sem mentor'} · {(m.lastMetrics?.faturamentoMes ?? m.lastMetrics?.faturamentoAno) != null ? brl(m.lastMetrics!.faturamentoMes ?? m.lastMetrics!.faturamentoAno) : 's/ dados'}
-                  {m.overdueActions > 0 && <span style={{ color: '#ff5a5a' }}> · {m.overdueActions} atrasada(s)</span>}
+                  {m.overdueActions > 0 && <span style={{ color: RED }}> · {m.overdueActions} atrasada(s)</span>}
                 </div>
               </button>
             )
           })}
         </div>
-        <div style={{ margin: 12, fontSize: 9, color: '#555', textAlign: 'center', lineHeight: 1.5 }}>Todos os clientes ativos aparecem aqui.<br />Selecione um pra ver a ficha completa.</div>
+        <div style={{ margin: 12, fontSize: 11, color: DIM, textAlign: 'center', lineHeight: 1.5 }}>Todos os clientes ativos aparecem aqui.<br />Selecione um pra ver a ficha completa.</div>
       </aside>
       )}
 
@@ -203,50 +207,50 @@ function OverviewPanel({ onSelect }: { onSelect: (id: string) => void }) {
   const mesLabel = (ym: string | null) => ym ? new Date(ym.slice(0, 7) + '-01T12:00:00').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }) : '—'
   return (
     <div>
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ fontFamily: disp, fontSize: 28, fontWeight: 700, letterSpacing: '-0.01em' }}>Visão Geral</div>
-        <div style={{ fontSize: 11, color: MUT, marginTop: 4 }}>{t.mentees} clientes ativos · {t.comDados} com dados de faturamento neste mês</div>
+      <div style={{ marginBottom: 20 }}>
+        <h1 style={{ fontFamily: disp, fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: INK, margin: 0 }}>Visão Geral</h1>
+        <div style={{ fontSize: 13, color: MUT, marginTop: 4 }}>{t.mentees} clientes ativos · {t.comDados} com dados de faturamento neste mês</div>
       </div>
 
       {/* KPIs somados */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
         {kpis.map(([l, v, hi]) => (
-          <div key={l} style={{ background: PANEL, border: `1px solid ${hi ? NEON : LINE}`, padding: '14px 16px' }}>
-            <div style={{ fontSize: 9, color: MUT, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{l}</div>
-            <div style={{ fontFamily: disp, fontSize: 24, fontWeight: 700, color: hi ? NEON : FG, marginTop: 6 }}>{v}</div>
+          <div key={l} style={{ ...cardStyle, padding: '16px 18px', borderTop: hi ? `3px solid ${NEON}` : `1px solid ${LINE}` }}>
+            <div style={{ fontSize: 11, color: MUT, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>{l}</div>
+            <div style={{ ...tnum, fontFamily: disp, fontSize: 24, fontWeight: 700, color: INK, marginTop: 6 }}>{v}</div>
           </div>
         ))}
       </div>
 
       {/* Evolução somada */}
-      <div style={{ marginBottom: 18 }}>
+      <div style={{ marginBottom: 20 }}>
         <Panel title="Evolução do faturamento somado (mês a mês)"><EvolutionChart studies={monthlyStudies} /></Panel>
       </div>
 
       {/* Ranking de clientes */}
       <Panel title="Ranking de clientes (faturamento do mês)">
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
-              <tr style={{ color: MUT, textAlign: 'left' }}>
-                <th style={{ padding: '6px 8px', fontWeight: 700 }}>#</th>
-                <th style={{ padding: '6px 8px', fontWeight: 700 }}>Cliente</th>
-                <th style={{ padding: '6px 8px', fontWeight: 700, textAlign: 'right' }}>Fat. mês</th>
-                <th style={{ padding: '6px 8px', fontWeight: 700, textAlign: 'right' }}>Clientes</th>
-                <th style={{ padding: '6px 8px', fontWeight: 700, textAlign: 'right' }}>Estoque R$</th>
-                <th style={{ padding: '6px 8px', fontWeight: 700, textAlign: 'right' }}>Atualizado</th>
+              <tr style={{ color: MUT, textAlign: 'left', background: BG }}>
+                <th style={{ padding: '8px 10px', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>#</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cliente</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>Fat. mês</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>Clientes</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>Estoque R$</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>Atualizado</th>
               </tr>
             </thead>
             <tbody>
               {ov.clients.map((c, i) => (
                 <tr key={c.clientId} onClick={() => onSelect(c.clientId)} style={{ cursor: 'pointer', borderTop: `1px solid ${LINE}` }}
-                  onMouseEnter={e => (e.currentTarget.style.background = PANEL)} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                  <td style={{ padding: '8px', color: MUT }}>{i + 1}</td>
-                  <td style={{ padding: '8px', fontWeight: 700 }}>{c.company}</td>
-                  <td style={{ padding: '8px', textAlign: 'right', color: c.faturamentoMes != null ? NEON : MUT, fontWeight: 700 }}>{c.faturamentoMes != null ? brl(c.faturamentoMes) : 's/ dados'}</td>
-                  <td style={{ padding: '8px', textAlign: 'right' }}>{num(c.clientesAtivos)}</td>
-                  <td style={{ padding: '8px', textAlign: 'right' }}>{brl(c.estoqueValor)}</td>
-                  <td style={{ padding: '8px', textAlign: 'right', color: MUT }}>{mesLabel(c.month)}</td>
+                  onMouseEnter={e => (e.currentTarget.style.background = BG)} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                  <td style={{ padding: '9px 10px', color: DIM, ...tnum }}>{i + 1}</td>
+                  <td style={{ padding: '9px 10px', fontWeight: 700, color: INK }}>{c.company}</td>
+                  <td style={{ padding: '9px 10px', textAlign: 'right', color: c.faturamentoMes != null ? INK : DIM, fontWeight: 700, ...tnum }}>{c.faturamentoMes != null ? brl(c.faturamentoMes) : 's/ dados'}</td>
+                  <td style={{ padding: '9px 10px', textAlign: 'right', ...tnum }}>{num(c.clientesAtivos)}</td>
+                  <td style={{ padding: '9px 10px', textAlign: 'right', ...tnum }}>{brl(c.estoqueValor)}</td>
+                  <td style={{ padding: '9px 10px', textAlign: 'right', color: MUT, ...tnum }}>{mesLabel(c.month)}</td>
                 </tr>
               ))}
             </tbody>
@@ -306,49 +310,49 @@ function MonthlyTable({ clientId, metrics, onReload }: { clientId: string; metri
     try { await apiFetch(`/api/mentorship/clients/${clientId}/monthly/${month}`, { method: 'DELETE' }); onReload() } catch { toast.error('Erro ao remover') }
   }
   const mesLabel = (ym: string) => new Date(ym + '-01T12:00:00').toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
-  const cell: React.CSSProperties = { width: '100%', background: INK, border: `1px solid ${LINE}`, color: FG, padding: '5px 7px', fontFamily: mono, fontSize: 11, outline: 'none', textAlign: 'right' }
-  const th: React.CSSProperties = { padding: '4px 8px', fontWeight: 700, textAlign: 'right' }
+  const cell: React.CSSProperties = { width: '100%', background: CARD, border: `1px solid ${LINE}`, color: INK, padding: '6px 8px', fontFamily: mono, fontSize: 12, outline: 'none', textAlign: 'right', borderRadius: 6, ...tnum }
+  const th: React.CSSProperties = { padding: '8px 8px', fontWeight: 600, textAlign: 'right', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em' }
 
   return (
     <Panel title="Faturamento mês a mês">
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <thead>
-            <tr style={{ color: MUT }}>
-              <th style={{ ...th, textAlign: 'left', position: 'sticky', left: 0, background: PANEL }}>Mês</th>
+            <tr style={{ color: MUT, background: BG }}>
+              <th style={{ ...th, textAlign: 'left', position: 'sticky', left: 0, background: BG }}>Mês</th>
               {COLS.map(([k, l]) => <th key={k} style={{ ...th, whiteSpace: 'nowrap' }}>{l}</th>)}
               <th style={{ ...th, width: 30 }}></th>
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 && <tr><td colSpan={COLS.length + 2} style={{ padding: 14, color: MUT, textAlign: 'center' }}>Nenhum mês ainda. Clique em “Gerar últimos 6 meses” abaixo pra começar.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={COLS.length + 2} style={{ padding: 16, color: MUT, textAlign: 'center' }}>Nenhum mês ainda. Clique em “Gerar últimos 6 meses” abaixo pra começar.</td></tr>}
             {rows.map((r, i) => (
               <tr key={r.month} style={{ borderTop: `1px solid ${LINE}` }}>
-                <td style={{ padding: '5px 8px', fontWeight: 700, whiteSpace: 'nowrap', position: 'sticky', left: 0, background: PANEL }}>{mesLabel(r.month)}{saving === r.month && <span style={{ color: MUT, fontWeight: 400 }}> ·</span>}</td>
+                <td style={{ padding: '6px 8px', fontWeight: 700, color: INK, whiteSpace: 'nowrap', position: 'sticky', left: 0, background: CARD }}>{mesLabel(r.month)}{saving === r.month && <span style={{ color: MUT, fontWeight: 400 }}> ·</span>}</td>
                 {COLS.map(([k]) => (
                   <td key={k} style={{ padding: '4px 6px', minWidth: 92 }}>
-                    <input value={r[k]} onChange={e => upd(i, k, e.target.value)} onBlur={() => saveRow(rows[i])} placeholder="—" style={k === 'faturamento' ? { ...cell, color: NEON, fontWeight: 700 } : cell} />
+                    <input value={r[k]} onChange={e => upd(i, k, e.target.value)} onBlur={() => saveRow(rows[i])} placeholder="—" style={k === 'faturamento' ? { ...cell, color: INK, fontWeight: 700 } : cell} />
                   </td>
                 ))}
-                <td style={{ padding: '4px 6px', textAlign: 'center' }}><button onClick={() => delMonth(r.month)} title="Remover mês" style={{ background: 'transparent', border: 'none', color: MUT, cursor: 'pointer', fontSize: 12 }}>✕</button></td>
+                <td style={{ padding: '4px 6px', textAlign: 'center' }}><button onClick={() => delMonth(r.month)} title="Remover mês" style={{ background: 'transparent', border: 'none', color: DIM, cursor: 'pointer', fontSize: 12 }}>✕</button></td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center', flexWrap: 'wrap' }}>
         {rows.length === 0 ? (
-          <button onClick={seedRecent} style={{ background: NEON, color: INK, border: 'none', padding: '6px 14px', fontFamily: mono, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>+ Gerar últimos 6 meses</button>
+          <button onClick={seedRecent} style={{ background: NEON, color: INK, border: 'none', padding: '7px 14px', fontFamily: mono, fontSize: 12, fontWeight: 700, cursor: 'pointer', borderRadius: 6 }}>+ Gerar últimos 6 meses</button>
         ) : (
           <>
             <button onClick={() => earliest && createMonths([shiftMonth(earliest, -1)])} style={miniBtn}>◂ mês anterior</button>
             <button onClick={() => latest && createMonths([shiftMonth(latest, 1)])} style={miniBtn}>próximo mês ▸</button>
             <span style={{ width: 1, height: 18, background: LINE }} />
-            <input type="month" value={draftMonth} onChange={e => setDraftMonth(e.target.value)} style={{ background: INK, border: `1px solid ${LINE}`, color: FG, padding: '6px 8px', fontFamily: mono, fontSize: 11, colorScheme: 'dark' as React.CSSProperties['colorScheme'] }} />
-            <button onClick={addMonth} style={{ background: 'transparent', color: NEON, border: `1px solid ${NEON}`, padding: '6px 12px', fontFamily: mono, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>+ mês específico</button>
+            <input type="month" value={draftMonth} onChange={e => setDraftMonth(e.target.value)} style={{ background: CARD, border: `1px solid ${LINE}`, color: INK, padding: '6px 8px', fontFamily: mono, fontSize: 12, borderRadius: 6 }} />
+            <button onClick={addMonth} style={{ background: CARD, color: INK, border: `1px solid ${LINE}`, padding: '6px 12px', fontFamily: mono, fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6 }}>+ mês específico</button>
           </>
         )}
-        <span style={{ fontSize: 10, color: MUT }}>edite os valores e clique fora do campo para salvar</span>
+        <span style={{ fontSize: 11, color: DIM }}>edite os valores e clique fora do campo para salvar</span>
       </div>
     </Panel>
   )
@@ -383,67 +387,68 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask, 
     ['Seguidores IG', num(lastM?.seguidoresIg ?? last?.seguidoresIg ?? null), lastM?.seguidoresIg ?? last?.seguidoresIg ?? null, prevM?.seguidoresIg ?? prev?.seguidoresIg ?? null],
   ]
   const openTasks = detail.actionItems.filter(a => a.status !== 'DONE').length
+  const badge: React.CSSProperties = { marginLeft: 8, background: '#fee2e2', color: RED, padding: '2px 10px', borderRadius: 100, fontWeight: 700, fontSize: 11 }
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 18 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
         <div>
-          <div style={{ fontFamily: disp, fontSize: 28, fontWeight: 700, letterSpacing: '-0.01em' }}>{detail.client?.companyName ?? sel.company}</div>
-          <div style={{ fontSize: 11, color: MUT, marginTop: 4 }}>
-            {detail.client?.responsible ?? '—'} · Mentor <span style={{ color: FG }}>{detail.profile.mentorName ?? '—'}</span> · {studies.length} sessões
-            {sel.attention && <span style={{ marginLeft: 8, background: '#3a1414', color: '#ff5a5a', padding: '2px 8px', fontWeight: 700 }}>🔴 EM ATENÇÃO</span>}
-            {detail.billing?.delinquent && <span style={{ marginLeft: 8, background: '#3a1414', color: '#ff5a5a', padding: '2px 8px', fontWeight: 700 }}>⚠ INADIMPLENTE</span>}
+          <h1 style={{ fontFamily: disp, fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: INK, margin: 0 }}>{detail.client?.companyName ?? sel.company}</h1>
+          <div style={{ fontSize: 13, color: MUT, marginTop: 4 }}>
+            {detail.client?.responsible ?? '—'} · Mentor <span style={{ color: INK, fontWeight: 600 }}>{detail.profile.mentorName ?? '—'}</span> · {studies.length} sessões
+            {sel.attention && <span style={badge}>Em atenção</span>}
+            {detail.billing?.delinquent && <span style={badge}>Inadimplente</span>}
           </div>
         </div>
-        <button onClick={() => onRegister()} style={{ background: NEON, color: INK, border: 'none', padding: '10px 16px', fontFamily: mono, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ REGISTRAR SESSÃO</button>
+        <button onClick={() => onRegister()} style={{ background: NEON, color: INK, border: 'none', padding: '10px 16px', fontFamily: mono, fontSize: 13, fontWeight: 700, cursor: 'pointer', borderRadius: 6 }}>+ Registrar sessão</button>
       </div>
 
       {/* Última reunião em destaque */}
       {last && (last.pontosPrincipais || last.oQueTrabalhou || last.proximosPassos || (last.materiais && last.materiais.length > 0)) && (
-        <div style={{ background: PANEL, border: `1px solid ${NEON}`, borderLeft: `3px solid ${NEON}`, padding: 16, marginBottom: 18 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            <span style={{ fontSize: 9, color: NEON, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>★ Última reunião · {dt(last.sessionDate)}</span>
-            {last.materiais && last.materiais.length > 0 && <span style={{ fontSize: 10, color: MUT }}>{last.materiais.length} anexo(s)</span>}
+        <div style={{ ...cardStyle, borderLeft: `3px solid ${NEON}`, padding: 18, marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontSize: 11, color: INK, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>Última reunião · {dt(last.sessionDate)}</span>
+            {last.materiais && last.materiais.length > 0 && <span style={{ fontSize: 11, color: MUT }}>{last.materiais.length} anexo(s)</span>}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, fontSize: 12, lineHeight: 1.55 }}>
-            {last.pontosPrincipais && <div><div style={{ color: NEON, fontSize: 9, textTransform: 'uppercase', marginBottom: 3 }}>Principais pontos</div><div style={{ whiteSpace: 'pre-wrap', color: '#ddd' }}>{last.pontosPrincipais}</div></div>}
-            {last.oQueTrabalhou && <div><div style={{ color: MUT, fontSize: 9, textTransform: 'uppercase', marginBottom: 3 }}>Passado ao cliente</div><div style={{ color: '#ddd' }}>{last.oQueTrabalhou}</div></div>}
-            {last.proximosPassos && <div><div style={{ color: MUT, fontSize: 9, textTransform: 'uppercase', marginBottom: 3 }}>Próximos passos</div><div style={{ color: '#ddd' }}>{last.proximosPassos}</div></div>}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, fontSize: 13, lineHeight: 1.55 }}>
+            {last.pontosPrincipais && <div><div style={{ color: MUT, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, marginBottom: 4 }}>Principais pontos</div><div style={{ whiteSpace: 'pre-wrap', color: INK }}>{last.pontosPrincipais}</div></div>}
+            {last.oQueTrabalhou && <div><div style={{ color: MUT, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, marginBottom: 4 }}>Passado ao cliente</div><div style={{ color: INK }}>{last.oQueTrabalhou}</div></div>}
+            {last.proximosPassos && <div><div style={{ color: MUT, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, marginBottom: 4 }}>Próximos passos</div><div style={{ color: INK }}>{last.proximosPassos}</div></div>}
           </div>
           {last.materiais && last.materiais.length > 0 && (
             <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {last.materiais.map((m, i) => (
-                <a key={i} href={m.url} target="_blank" rel="noreferrer" download={m.url?.startsWith('data:') ? m.label : undefined} style={{ background: INK, border: `1px solid ${LINE}`, color: NEON, padding: '5px 10px', fontSize: 10, textDecoration: 'none' }}>{m.url?.startsWith('data:') ? '📎' : '🔗'} {m.label}</a>
+                <a key={i} href={m.url} target="_blank" rel="noreferrer" download={m.url?.startsWith('data:') ? m.label : undefined} style={{ background: BG, border: `1px solid ${LINE}`, color: INK, padding: '5px 10px', fontSize: 11, textDecoration: 'none', borderRadius: 6 }}>{m.url?.startsWith('data:') ? '📎' : '🔗'} {m.label}</a>
               ))}
             </div>
           )}
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 20 }}>
         {kpis.map(([label, val, a, b]) => {
           const dl = delta(a, b)
           return (
-            <div key={label} style={{ background: PANEL, border: `1px solid ${LINE}`, padding: '14px 16px' }}>
-              <div style={{ fontSize: 9, color: MUT, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
-              <div style={{ fontFamily: disp, fontSize: 22, fontWeight: 700, marginTop: 4, color: label === 'Fat. do Mês' ? NEON : FG }}>{val}</div>
-              {dl != null && <div style={{ fontSize: 10, marginTop: 2, color: dl >= 0 ? NEON : '#ff5a5a' }}>{dl >= 0 ? '▲' : '▼'} {Math.abs(dl).toFixed(0)}% vs anterior</div>}
+            <div key={label} style={{ ...cardStyle, padding: '16px 18px', borderTop: label === 'Fat. do Mês' ? `3px solid ${NEON}` : `1px solid ${LINE}` }}>
+              <div style={{ fontSize: 11, color: MUT, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>{label}</div>
+              <div style={{ ...tnum, fontFamily: disp, fontSize: 22, fontWeight: 700, marginTop: 4, color: INK }}>{val}</div>
+              {dl != null && <div style={{ fontSize: 11, marginTop: 3, color: dl >= 0 ? GREEN : RED, fontWeight: 600 }}>{dl >= 0 ? '▲' : '▼'} {Math.abs(dl).toFixed(0)}% vs anterior</div>}
             </div>
           )
         })}
       </div>
 
       {/* Faturamento mês a mês — tabela editável (fonte de verdade dos números) */}
-      <div style={{ marginBottom: 18 }}>
+      <div style={{ marginBottom: 20 }}>
         <MonthlyTable clientId={sel.clientId} metrics={metrics} onReload={onReload} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 14, marginBottom: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 14, marginBottom: 20 }}>
         <Panel title="Evolução do faturamento (mês a mês)"><EvolutionChart studies={metrics.map(m => ({ sessionDate: m.month + '-01T12:00:00', faturamentoMes: m.faturamento })) as unknown as CaseStudy[]} /></Panel>
         <Panel title="Contexto da mentoria">
-          <div style={{ fontSize: 12, lineHeight: 1.6 }}>
-            <div style={{ marginBottom: 8 }}><span style={{ color: MUT }}>Dores:</span> {detail.profile.mainPains || <span style={{ color: '#555' }}>não preenchido</span>}</div>
-            <div><span style={{ color: MUT }}>Objetivo:</span> {detail.profile.goal || <span style={{ color: '#555' }}>não preenchido</span>}</div>
+          <div style={{ fontSize: 13, lineHeight: 1.6 }}>
+            <div style={{ marginBottom: 8 }}><span style={{ color: MUT, fontWeight: 600 }}>Dores:</span> {detail.profile.mainPains || <span style={{ color: DIM }}>não preenchido</span>}</div>
+            <div><span style={{ color: MUT, fontWeight: 600 }}>Objetivo:</span> {detail.profile.goal || <span style={{ color: DIM }}>não preenchido</span>}</div>
           </div>
         </Panel>
       </div>
@@ -455,31 +460,31 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask, 
         const end = p?.endDate ? new Date(p.endDate) : null
         const daysLeft = end ? Math.ceil((end.getTime() - Date.now()) / 86400000) : null
         const vigencia = p ? `${dt(p.startDate)} → ${end ? dt(p.endDate) : 'sem término'}` : '—'
-        const vigColor = daysLeft != null && daysLeft < 0 ? '#ff5a5a' : daysLeft != null && daysLeft <= 30 ? '#e6a800' : FG
+        const vigColor = daysLeft != null && daysLeft < 0 ? RED : daysLeft != null && daysLeft <= 30 ? AMBER : INK
         const parcelas = p ? (p.installments && p.installmentValue ? `${p.installments}× ${brl(p.installmentValue)}` : p.installments ? `${p.installments}×` : 'à vista') : '—'
         const items: [string, React.ReactNode, string?][] = [
           ['Programa', p ? `${p.code} · ${p.name}` : '—'],
-          ['Valor total', p ? brl(p.value) : '—', NEON],
+          ['Valor total', p ? brl(p.value) : '—', INK],
           ['Parcelas', parcelas],
           ['Vigência', vigencia + (daysLeft != null ? daysLeft < 0 ? ' (encerrada)' : daysLeft <= 30 ? ` (${daysLeft}d p/ vencer)` : '' : ''), vigColor],
-          ['Situação', b.delinquent ? `Inadimplente` : 'Adimplente', b.delinquent ? '#ff5a5a' : NEON],
+          ['Situação', b.delinquent ? `Inadimplente` : 'Adimplente', b.delinquent ? RED : GREEN],
           ['Próxima parcela', b.nextDue ? `${dt(b.nextDue.dueDate)} · ${brl(b.nextDue.value)} (${b.nextDue.installment}/${b.nextDue.totalInstallments})` : '—'],
           ['Parcelas pagas', `${b.paidCount}/${b.totalPayments}`],
         ]
         return (
-          <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom: 20 }}>
             <Panel title="Plano & Financeiro">
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px 18px', fontSize: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px 18px', fontSize: 13 }}>
                 {items.map(([l, v, c]) => (
                   <div key={l}>
-                    <div style={{ fontSize: 9, color: MUT, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{l}</div>
-                    <div style={{ color: c ?? FG, fontWeight: c ? 700 : 400 }}>{v}</div>
+                    <div style={{ fontSize: 11, color: MUT, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, marginBottom: 3 }}>{l}</div>
+                    <div style={{ color: c ?? INK, fontWeight: c ? 700 : 400 }}>{v}</div>
                   </div>
                 ))}
               </div>
               {b.delinquent && (
-                <div style={{ marginTop: 12, background: '#2a1414', border: '1px solid #ff5a5a', color: '#ff8a8a', padding: '8px 12px', fontSize: 11 }}>
-                  ⚠ {b.overdueCount} parcela(s) em atraso · total <b style={{ color: '#ff5a5a' }}>{brl(b.overdueTotal)}</b>{b.oldestOverdueDue ? ` · vencida desde ${dt(b.oldestOverdueDue)}` : ''}
+                <div style={{ marginTop: 12, background: '#fef2f2', border: `1px solid ${RED}`, color: RED, padding: '9px 12px', fontSize: 12, borderRadius: 8 }}>
+                  ⚠ {b.overdueCount} parcela(s) em atraso · total <b>{brl(b.overdueTotal)}</b>{b.oldestOverdueDue ? ` · vencida desde ${dt(b.oldestOverdueDue)}` : ''}
                 </div>
               )}
             </Panel>
@@ -488,9 +493,9 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask, 
       })()}
 
       {/* Ficha do cliente + reuniões */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 14, marginBottom: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 14, marginBottom: 20 }}>
         <Panel title="Ficha do cliente">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', fontSize: 11 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', fontSize: 12 }}>
             {[
               ['Programa', detail.client?.plan ? `${detail.client.plan.code} · ${brl(detail.client.plan.value)}` : '—'],
               ['CNPJ', detail.client?.cnpj || '—'],
@@ -501,22 +506,22 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask, 
               ['Cidade', [detail.client?.city, detail.client?.state].filter(Boolean).join('/') || '—'],
               ['Fat. estimado', detail.client?.estimatedRevenue || '—'],
             ].map(([l, v]) => (
-              <div key={l}><div style={{ color: MUT, fontSize: 9, textTransform: 'uppercase' }}>{l}</div><div style={{ color: FG, wordBreak: 'break-word' }}>{v}</div></div>
+              <div key={l}><div style={{ color: MUT, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>{l}</div><div style={{ color: INK, wordBreak: 'break-word' }}>{v}</div></div>
             ))}
           </div>
         </Panel>
         <Panel title={`Reuniões (${detail.meetings?.filter(m => m.status === 'DONE').length ?? 0} realizadas)`}>
-          <div style={{ maxHeight: 150, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {(detail.meetings ?? []).length === 0 && <div style={{ color: '#555', fontSize: 11 }}>Nenhuma reunião.</div>}
+          <div style={{ maxHeight: 150, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {(detail.meetings ?? []).length === 0 && <div style={{ color: DIM, fontSize: 12 }}>Nenhuma reunião.</div>}
             {(detail.meetings ?? []).map(m => {
               const cs = sessionForMeeting(m.id, m.date)
               return (
                 <div key={m.id} onClick={() => cs ? setViewCs(cs) : (m.status === 'DONE' ? onRegister(m.id) : undefined)}
                   title={cs ? 'Ver registro da reunião' : (m.status === 'DONE' ? 'Registrar esta reunião' : '')}
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, padding: '5px 4px', borderBottom: `1px solid ${LINE}`, cursor: m.status === 'DONE' ? 'pointer' : 'default', gap: 8 }}>
-                  <span style={{ color: m.status === 'DONE' ? FG : MUT, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.status === 'DONE' ? '✓' : '○'} {m.title}</span>
-                  {cs ? <span style={{ color: NEON, fontSize: 9, fontWeight: 700 }}>registro ›</span> : m.status === 'DONE' ? <span style={{ color: MUT, fontSize: 9 }}>+ registrar</span> : null}
-                  <span style={{ color: MUT, flexShrink: 0 }}>{dt(m.date)}</span>
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, padding: '7px 4px', borderBottom: `1px solid ${LINE}`, cursor: m.status === 'DONE' ? 'pointer' : 'default', gap: 8 }}>
+                  <span style={{ color: m.status === 'DONE' ? INK : MUT, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.status === 'DONE' ? '✓' : '○'} {m.title}</span>
+                  {cs ? <span style={{ color: GREEN, fontSize: 11, fontWeight: 700 }}>registro ›</span> : m.status === 'DONE' ? <span style={{ color: MUT, fontSize: 11 }}>+ registrar</span> : null}
+                  <span style={{ color: MUT, flexShrink: 0, ...tnum }}>{dt(m.date)}</span>
                 </div>
               )
             })}
@@ -524,32 +529,33 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask, 
         </Panel>
       </div>
 
-      <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14, borderBottom: `1px solid ${LINE}` }}>
         {(['sessoes', 'tarefas'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
-            padding: '7px 16px', border: `1px solid ${LINE}`, cursor: 'pointer', fontFamily: mono, fontSize: 11, fontWeight: 700,
-            background: tab === t ? NEON : 'transparent', color: tab === t ? INK : MUT,
-          }}>{t === 'sessoes' ? 'SESSÕES' : `TAREFAS (${openTasks})`}</button>
+            padding: '9px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: mono, fontSize: 13,
+            fontWeight: tab === t ? 700 : 500, color: tab === t ? INK : DIM,
+            borderBottom: tab === t ? `2px solid ${NEON}` : '2px solid transparent', marginBottom: -1,
+          }}>{t === 'sessoes' ? 'Sessões' : `Tarefas (${openTasks})`}</button>
         ))}
       </div>
 
       {tab === 'sessoes' && (
         <div>
-          {studies.length === 0 && <Panel title=""><div style={{ color: MUT, fontSize: 12 }}>Nenhuma sessão registrada. Clique em “Registrar sessão”.</div></Panel>}
+          {studies.length === 0 && <Panel title=""><div style={{ color: MUT, fontSize: 13 }}>Nenhuma sessão registrada. Clique em “Registrar sessão”.</div></Panel>}
           {studies.map(cs => (
-            <div key={cs.id} style={{ background: PANEL, border: `1px solid ${LINE}`, marginBottom: 8 }}>
-              <div onClick={() => setExpanded(expanded === cs.id ? null : cs.id)} style={{ display: 'flex', justifyContent: 'space-between', padding: '11px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
+            <div key={cs.id} style={{ ...cardStyle, marginBottom: 8 }}>
+              <div onClick={() => setExpanded(expanded === cs.id ? null : cs.id)} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: INK }}>
                 <span>{expanded === cs.id ? '▾' : '▸'} {dt(cs.sessionDate)}{cs.mentorName ? ` · ${cs.mentorName}` : ''}</span>
-                <span style={{ color: MUT, fontWeight: 400 }}>{cs.ticketMedio != null ? `ticket ${brl(cs.ticketMedio)}` : ''}</span>
+                <span style={{ color: MUT, fontWeight: 500, ...tnum }}>{cs.ticketMedio != null ? `ticket ${brl(cs.ticketMedio)}` : ''}</span>
               </div>
               {expanded === cs.id && (
-                <div style={{ padding: '12px 14px 14px', fontSize: 11, lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: 6, borderTop: `1px solid ${LINE}` }}>
-                  {cs.pontosPrincipais && <div><b style={{ color: NEON }}>Principais pontos:</b><div style={{ whiteSpace: 'pre-wrap', color: '#ccc' }}>{cs.pontosPrincipais}</div></div>}
-                  {cs.oQueTrabalhou && <div><b style={{ color: MUT }}>Passado ao cliente:</b> {cs.oQueTrabalhou}</div>}
-                  {cs.proximosPassos && <div><b style={{ color: MUT }}>Próximos passos:</b> {cs.proximosPassos}</div>}
-                  {cs.vendasPorCanal && cs.vendasPorCanal.length > 0 && <div><b style={{ color: MUT }}>Por canal:</b> {cs.vendasPorCanal.map((c, i) => <span key={i} style={{ marginRight: 10 }}>{c.canal} {brl(c.valor)}</span>)}</div>}
-                  {cs.materiais && cs.materiais.length > 0 && <div><b style={{ color: MUT }}>Materiais:</b> {cs.materiais.map((m, i) => m.url ? <a key={i} href={m.url} target="_blank" rel="noreferrer" style={{ color: NEON, marginRight: 8 }}>{m.label}</a> : <span key={i} style={{ marginRight: 8 }}>{m.label}</span>)}</div>}
-                  {cs.transcricao && <details><summary style={{ cursor: 'pointer', color: MUT }}>Transcrição</summary><div style={{ whiteSpace: 'pre-wrap', color: '#aaa', marginTop: 4, maxHeight: 220, overflowY: 'auto', background: INK, padding: 10, border: `1px solid ${LINE}` }}>{cs.transcricao}</div></details>}
+                <div style={{ padding: '12px 16px 16px', fontSize: 12, lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: 8, borderTop: `1px solid ${LINE}` }}>
+                  {cs.pontosPrincipais && <div><b style={{ color: INK }}>Principais pontos:</b><div style={{ whiteSpace: 'pre-wrap', color: SLATE }}>{cs.pontosPrincipais}</div></div>}
+                  {cs.oQueTrabalhou && <div><b style={{ color: INK }}>Passado ao cliente:</b> <span style={{ color: SLATE }}>{cs.oQueTrabalhou}</span></div>}
+                  {cs.proximosPassos && <div><b style={{ color: INK }}>Próximos passos:</b> <span style={{ color: SLATE }}>{cs.proximosPassos}</span></div>}
+                  {cs.vendasPorCanal && cs.vendasPorCanal.length > 0 && <div><b style={{ color: INK }}>Por canal:</b> {cs.vendasPorCanal.map((c, i) => <span key={i} style={{ marginRight: 10, color: SLATE }}>{c.canal} {brl(c.valor)}</span>)}</div>}
+                  {cs.materiais && cs.materiais.length > 0 && <div><b style={{ color: INK }}>Materiais:</b> {cs.materiais.map((m, i) => m.url ? <a key={i} href={m.url} target="_blank" rel="noreferrer" style={{ color: GREEN, marginRight: 8 }}>{m.label}</a> : <span key={i} style={{ marginRight: 8 }}>{m.label}</span>)}</div>}
+                  {cs.transcricao && <details><summary style={{ cursor: 'pointer', color: MUT }}>Transcrição</summary><div style={{ whiteSpace: 'pre-wrap', color: SLATE, marginTop: 4, maxHeight: 220, overflowY: 'auto', background: BG, padding: 10, border: `1px solid ${LINE}`, borderRadius: 8 }}>{cs.transcricao}</div></details>}
                 </div>
               )}
             </div>
@@ -558,20 +564,20 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask, 
       )}
 
       {tab === 'tarefas' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
           {KANBAN.map(([st, label, color]) => {
             const items = detail.actionItems.filter(a => (a.status || (a.done ? 'DONE' : 'TODO')) === st)
             const order = ['TODO', 'DOING', 'DONE']; const idx = order.indexOf(st)
             return (
-              <div key={st} style={{ border: `1px solid ${LINE}`, background: PANEL, minHeight: 120 }}>
-                <div style={{ background: color, color: color === NEON ? INK : '#fff', padding: '6px 10px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }}>{label} ({items.length})</div>
+              <div key={st} style={{ ...cardStyle, minHeight: 120, overflow: 'hidden' }}>
+                <div style={{ background: BG, color, padding: '8px 12px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: `1px solid ${LINE}` }}>{label} ({items.length})</div>
                 <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {items.map(a => {
                     const overdue = a.status !== 'DONE' && a.dueDate && new Date(a.dueDate).getTime() < Date.now()
                     return (
-                      <div key={a.id} style={{ background: INK, border: `1px solid ${LINE}`, padding: 8, fontSize: 11 }}>
-                        <div style={{ fontWeight: 600, marginBottom: 4 }}>{a.what}</div>
-                        <div style={{ fontSize: 9, color: overdue ? '#ff5a5a' : MUT, marginBottom: 4 }}>{a.who ?? '—'} · {a.dueDate ? dt(a.dueDate) : 'sem prazo'}{overdue ? ' · ATRASADA' : ''}</div>
+                      <div key={a.id} style={{ background: CARD, border: `1px solid ${LINE}`, padding: 10, fontSize: 12, borderRadius: 8 }}>
+                        <div style={{ fontWeight: 600, marginBottom: 4, color: INK }}>{a.what}</div>
+                        <div style={{ fontSize: 11, color: overdue ? RED : MUT, marginBottom: 6 }}>{a.who ?? '—'} · {a.dueDate ? dt(a.dueDate) : 'sem prazo'}{overdue ? ' · ATRASADA' : ''}</div>
                         <div style={{ display: 'flex', gap: 4 }}>
                           {idx > 0 && <button onClick={() => onMove(a.id, order[idx - 1])} style={miniBtn}>←</button>}
                           {idx < 2 && <button onClick={() => onMove(a.id, order[idx + 1])} style={{ ...miniBtn, marginLeft: 'auto' }}>→</button>}
@@ -579,10 +585,10 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask, 
                       </div>
                     )
                   })}
-                  {items.length === 0 && st !== 'TODO' && <div style={{ fontSize: 10, color: '#555', textAlign: 'center', padding: 8 }}>—</div>}
+                  {items.length === 0 && st !== 'TODO' && <div style={{ fontSize: 11, color: DIM, textAlign: 'center', padding: 8 }}>—</div>}
                   {st === 'TODO' && (
                     <input value={newTask} onChange={e => setNewTask(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && newTask.trim()) { onAddTask(newTask.trim()); setNewTask('') } }}
-                      placeholder="+ nova tarefa (Enter)" style={{ background: 'transparent', border: `1px dashed ${LINE}`, color: FG, padding: '6px 8px', fontFamily: mono, fontSize: 10, outline: 'none' }} />
+                      placeholder="+ nova tarefa (Enter)" style={{ background: 'transparent', border: `1px dashed ${LINE}`, color: INK, padding: '8px 10px', fontFamily: mono, fontSize: 12, outline: 'none', borderRadius: 8 }} />
                   )}
                 </div>
               </div>
@@ -598,7 +604,7 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask, 
 
 // ───────── Modal: registro de uma reunião ─────────
 function SessionView({ cs, onClose }: { cs: CaseStudy; onClose: () => void }) {
-  const row = (l: string, v: React.ReactNode) => v ? <div style={{ marginBottom: 8 }}><div style={{ color: NEON, fontSize: 9, textTransform: 'uppercase', marginBottom: 3 }}>{l}</div><div style={{ color: '#ddd', fontSize: 12, whiteSpace: 'pre-wrap', lineHeight: 1.55 }}>{v}</div></div> : null
+  const row = (l: string, v: React.ReactNode) => v ? <div style={{ marginBottom: 10 }}><div style={{ color: MUT, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, marginBottom: 3 }}>{l}</div><div style={{ color: INK, fontSize: 13, whiteSpace: 'pre-wrap', lineHeight: 1.55 }}>{v}</div></div> : null
   const metrics = ([
     ['Fat. mês', brl(cs.faturamentoMes)], ['Clientes ativos', num(cs.clientesAtivos)],
     ['Estoque (pç)', num(cs.estoqueQtd)], ['Estoque R$', brl(cs.estoqueValor)],
@@ -607,16 +613,16 @@ function SessionView({ cs, onClose }: { cs: CaseStudy; onClose: () => void }) {
     ['Fat. ano', brl(cs.faturamentoAno)],
   ] as [string, string][]).filter(([, v]) => v !== '—')
   return (
-    <div onClick={e => { if (e.target === e.currentTarget) onClose() }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 16, overflowY: 'auto' }}>
-      <div style={{ background: INK, border: `1px solid ${NEON}`, color: FG, width: '100%', maxWidth: 620, marginTop: 24 }}>
-        <div style={{ background: PANEL, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${LINE}` }}>
-          <span style={{ fontFamily: disp, fontSize: 14, fontWeight: 700 }}>REGISTRO · {dt(cs.sessionDate)}{cs.mentorName ? ` · ${cs.mentorName}` : ''}</span>
-          <button onClick={onClose} style={{ background: 'transparent', color: MUT, border: `1px solid ${LINE}`, borderRadius: 5, width: 24, height: 24, cursor: 'pointer' }}>✕</button>
+    <div onClick={e => { if (e.target === e.currentTarget) onClose() }} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 16, overflowY: 'auto' }}>
+      <div style={{ background: CARD, border: `1px solid ${LINE}`, borderRadius: 12, color: INK, width: '100%', maxWidth: 620, marginTop: 24, overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.15)' }}>
+        <div style={{ background: BG, padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${LINE}` }}>
+          <span style={{ fontFamily: disp, fontSize: 15, fontWeight: 700, color: INK }}>Registro · {dt(cs.sessionDate)}{cs.mentorName ? ` · ${cs.mentorName}` : ''}</span>
+          <button onClick={onClose} style={{ background: 'transparent', color: MUT, border: `1px solid ${LINE}`, borderRadius: 6, width: 26, height: 26, cursor: 'pointer' }}>✕</button>
         </div>
-        <div style={{ padding: 16, fontFamily: mono }}>
+        <div style={{ padding: 18, fontFamily: mono }}>
           {metrics.length > 0 && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: 8, marginBottom: 14 }}>
-              {metrics.map(([l, v]) => <div key={l} style={{ border: `1px solid ${LINE}`, padding: '6px 8px' }}><div style={{ fontSize: 8, color: MUT, textTransform: 'uppercase' }}>{l}</div><div style={{ fontSize: 13, fontWeight: 700, color: l === 'Fat. mês' ? NEON : FG }}>{v}</div></div>)}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: 8, marginBottom: 16 }}>
+              {metrics.map(([l, v]) => <div key={l} style={{ border: `1px solid ${LINE}`, borderRadius: 8, padding: '8px 10px' }}><div style={{ fontSize: 10, color: MUT, textTransform: 'uppercase', letterSpacing: '0.03em' }}>{l}</div><div style={{ fontSize: 14, fontWeight: 700, color: INK, ...tnum }}>{v}</div></div>)}
             </div>
           )}
           {row('Principais pontos', cs.pontosPrincipais)}
@@ -625,12 +631,12 @@ function SessionView({ cs, onClose }: { cs: CaseStudy; onClose: () => void }) {
           {cs.vendasPorCanal && cs.vendasPorCanal.length > 0 && row('Vendas por canal', cs.vendasPorCanal.map(c => `${c.canal}: ${brl(c.valor)}`).join('  ·  '))}
           {cs.customFields && cs.customFields.length > 0 && row('Campos extras', cs.customFields.map(c => `${c.label}: ${c.value}`).join('  ·  '))}
           {cs.materiais && cs.materiais.length > 0 && (
-            <div style={{ marginBottom: 8 }}><div style={{ color: NEON, fontSize: 9, textTransform: 'uppercase', marginBottom: 4 }}>Materiais / anexos</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{cs.materiais.map((m, i) => <a key={i} href={m.url} target="_blank" rel="noreferrer" download={m.url?.startsWith('data:') ? m.label : undefined} style={{ background: PANEL, border: `1px solid ${LINE}`, color: NEON, padding: '5px 10px', fontSize: 10, textDecoration: 'none' }}>{m.url?.startsWith('data:') ? '📎' : '🔗'} {m.label}</a>)}</div>
+            <div style={{ marginBottom: 10 }}><div style={{ color: MUT, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, marginBottom: 5 }}>Materiais / anexos</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{cs.materiais.map((m, i) => <a key={i} href={m.url} target="_blank" rel="noreferrer" download={m.url?.startsWith('data:') ? m.label : undefined} style={{ background: BG, border: `1px solid ${LINE}`, color: INK, padding: '5px 10px', fontSize: 11, textDecoration: 'none', borderRadius: 6 }}>{m.url?.startsWith('data:') ? '📎' : '🔗'} {m.label}</a>)}</div>
             </div>
           )}
-          {cs.transcricao && <div><div style={{ color: MUT, fontSize: 9, textTransform: 'uppercase', marginBottom: 4 }}>Transcrição</div><div style={{ whiteSpace: 'pre-wrap', color: '#aaa', fontSize: 11, background: PANEL, padding: 10, border: `1px solid ${LINE}`, maxHeight: 300, overflowY: 'auto' }}>{cs.transcricao}</div></div>}
-          {!cs.pontosPrincipais && !cs.oQueTrabalhou && !cs.transcricao && metrics.length === 0 && <div style={{ color: MUT, fontSize: 12 }}>Registro sem detalhes.</div>}
+          {cs.transcricao && <div><div style={{ color: MUT, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, marginBottom: 5 }}>Transcrição</div><div style={{ whiteSpace: 'pre-wrap', color: SLATE, fontSize: 12, background: BG, padding: 10, border: `1px solid ${LINE}`, borderRadius: 8, maxHeight: 300, overflowY: 'auto' }}>{cs.transcricao}</div></div>}
+          {!cs.pontosPrincipais && !cs.oQueTrabalhou && !cs.transcricao && metrics.length === 0 && <div style={{ color: MUT, fontSize: 13 }}>Registro sem detalhes.</div>}
         </div>
       </div>
     </div>
@@ -639,8 +645,8 @@ function SessionView({ cs, onClose }: { cs: CaseStudy; onClose: () => void }) {
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: PANEL, border: `1px solid ${LINE}`, padding: 16 }}>
-      {title && <div style={{ fontSize: 9, color: MUT, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>{title}</div>}
+    <div style={{ ...cardStyle, padding: 16 }}>
+      {title && <div style={{ fontSize: 11, color: MUT, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, marginBottom: 12 }}>{title}</div>}
       {children}
     </div>
   )
@@ -656,7 +662,7 @@ function EvolutionChart({ studies }: { studies: CaseStudy[] }) {
     if (!byMonth.has(key)) byMonth.set(key, s.faturamentoMes)
   }
   const pts = [...byMonth.entries()].map(([k, y]) => ({ x: new Date(k + '-01').getTime(), y })).sort((a, b) => a.x - b.x)
-  if (pts.length < 2) return <div style={{ color: MUT, fontSize: 12, padding: '30px 0', textAlign: 'center' }}>Precisa de 2+ meses com faturamento pra desenhar a evolução.</div>
+  if (pts.length < 2) return <div style={{ color: MUT, fontSize: 13, padding: '30px 0', textAlign: 'center' }}>Precisa de 2+ meses com faturamento pra desenhar a evolução.</div>
   const W = 460, H = 160, pad = 8
   const xs = pts.map(p => p.x), ys = pts.map(p => p.y)
   const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys)
@@ -666,10 +672,10 @@ function EvolutionChart({ studies }: { studies: CaseStudy[] }) {
   const area = `${d} L${nx(pts[pts.length - 1].x).toFixed(1)},${H - pad} L${nx(pts[0].x).toFixed(1)},${H - pad} Z`
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto' }}>
-      <defs><linearGradient id="ev" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={NEON} stopOpacity="0.25" /><stop offset="100%" stopColor={NEON} stopOpacity="0" /></linearGradient></defs>
+      <defs><linearGradient id="ev" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={NEON} stopOpacity="0.35" /><stop offset="100%" stopColor={NEON} stopOpacity="0" /></linearGradient></defs>
       <path d={area} fill="url(#ev)" />
-      <path d={d} fill="none" stroke={NEON} strokeWidth="2" />
-      {pts.map((p, i) => <circle key={i} cx={nx(p.x)} cy={ny(p.y)} r="3" fill={INK} stroke={NEON} strokeWidth="1.5" />)}
+      <path d={d} fill="none" stroke={INK} strokeWidth="2" />
+      {pts.map((p, i) => <circle key={i} cx={nx(p.x)} cy={ny(p.y)} r="3" fill={CARD} stroke={INK} strokeWidth="1.5" />)}
       <text x={pad} y={12} fill={MUT} fontSize="9" fontFamily={mono}>{brl(maxY)}</text>
       <text x={pad} y={H - 2} fill={MUT} fontSize="9" fontFamily={mono}>{brl(minY)}</text>
     </svg>
@@ -704,58 +710,59 @@ function SessionForm({ clientId, meetingId, onClose, onSaved }: { clientId: stri
     } catch { toast.error('Erro ao salvar') } finally { setSaving(false) }
   }
 
-  const inp: React.CSSProperties = { width: '100%', padding: '6px 8px', border: `1px solid ${LINE}`, background: PANEL, color: FG, fontFamily: mono, fontSize: 12, outline: 'none' }
-  const lbl: React.CSSProperties = { fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: MUT, display: 'block', marginBottom: 3 }
-  const sec: React.CSSProperties = { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: NEON, margin: '16px 0 6px', borderBottom: `1px solid ${LINE}`, paddingBottom: 4 }
-  const dashBtn: React.CSSProperties = { border: `1px dashed ${LINE}`, background: 'transparent', color: MUT, cursor: 'pointer', fontFamily: mono, fontSize: 10, padding: '4px 10px' }
+  const inp: React.CSSProperties = { width: '100%', padding: '8px 10px', border: `1px solid ${LINE}`, background: CARD, color: INK, fontFamily: mono, fontSize: 13, outline: 'none', borderRadius: 6 }
+  const lbl: React.CSSProperties = { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: MUT, display: 'block', marginBottom: 4 }
+  const sec: React.CSSProperties = { fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: INK, margin: '18px 0 8px', borderBottom: `1px solid ${LINE}`, paddingBottom: 5 }
+  const dashBtn: React.CSSProperties = { border: `1px dashed ${LINE}`, background: 'transparent', color: MUT, cursor: 'pointer', fontFamily: mono, fontSize: 12, padding: '6px 12px', borderRadius: 6 }
+  const xBtn: React.CSSProperties = { border: `1px solid ${LINE}`, background: CARD, color: MUT, width: 34, cursor: 'pointer', borderRadius: 6 }
 
   return (
-    <div onClick={e => { if (e.target === e.currentTarget) onClose() }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 16, overflowY: 'auto' }}>
-      <div style={{ background: INK, border: `1px solid ${LINE}`, color: FG, width: '100%', maxWidth: 580, marginTop: 20 }}>
-        <div style={{ background: PANEL, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${LINE}` }}>
-          <span style={{ fontFamily: disp, fontSize: 14, fontWeight: 700 }}>REGISTRAR SESSÃO</span>
-          <button onClick={onClose} style={{ background: 'transparent', color: MUT, border: `1px solid ${LINE}`, borderRadius: 5, width: 24, height: 24, cursor: 'pointer' }}>✕</button>
+    <div onClick={e => { if (e.target === e.currentTarget) onClose() }} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 16, overflowY: 'auto' }}>
+      <div style={{ background: CARD, border: `1px solid ${LINE}`, borderRadius: 12, color: INK, width: '100%', maxWidth: 580, marginTop: 20, overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.15)' }}>
+        <div style={{ background: BG, padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${LINE}` }}>
+          <span style={{ fontFamily: disp, fontSize: 15, fontWeight: 700, color: INK }}>Registrar sessão</span>
+          <button onClick={onClose} style={{ background: 'transparent', color: MUT, border: `1px solid ${LINE}`, borderRadius: 6, width: 26, height: 26, cursor: 'pointer' }}>✕</button>
         </div>
-        <div style={{ padding: 16 }}>
-          <div><label style={lbl}>Data da sessão</label><input type="date" value={f.sessionDate} onChange={e => set('sessionDate', e.target.value)} style={{ ...inp, colorScheme: 'dark' as React.CSSProperties['colorScheme'] }} /></div>
+        <div style={{ padding: 18 }}>
+          <div><label style={lbl}>Data da sessão</label><input type="date" value={f.sessionDate} onChange={e => set('sessionDate', e.target.value)} style={inp} /></div>
           <div style={sec}>Métricas de marketing / vendas da sessão</div>
-          <div style={{ fontSize: 10, color: MUT, marginBottom: 8 }}>Faturamento, clientes ativos e estoque agora ficam na tabela “Faturamento mês a mês” da ficha do cliente.</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div style={{ fontSize: 12, color: MUT, marginBottom: 8 }}>Faturamento, clientes ativos e estoque agora ficam na tabela “Faturamento mês a mês” da ficha do cliente.</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {[['ticketMedio', 'Ticket médio (R$)'], ['numVendas', 'Nº de vendas'], ['investimentoTrafego', 'Invest. tráfego (R$)'], ['roas', 'ROAS (x)'], ['seguidoresIg', 'Seguidores IG']].map(([k, l]) => (
               <div key={k}><label style={lbl}>{l}</label><input value={f[k] ?? ''} onChange={e => set(k, e.target.value)} style={inp} /></div>
             ))}
           </div>
           <div style={sec}>Vendas por canal</div>
           {channels.map((c, i) => (
-            <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+            <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
               <input value={c.canal} onChange={e => setChannels(ch => ch.map((x, j) => j === i ? { ...x, canal: e.target.value } : x))} placeholder="Canal (IG, TikTok...)" style={{ ...inp, flex: 1 }} />
               <input value={c.valor || ''} onChange={e => setChannels(ch => ch.map((x, j) => j === i ? { ...x, valor: Number(e.target.value) } : x))} placeholder="R$" style={{ ...inp, width: 100 }} />
-              <button onClick={() => setChannels(ch => ch.filter((_, j) => j !== i))} style={{ ...inp, width: 34, cursor: 'pointer' }}>✕</button>
+              <button onClick={() => setChannels(ch => ch.filter((_, j) => j !== i))} style={xBtn}>✕</button>
             </div>
           ))}
           <button onClick={() => setChannels(ch => [...ch, { canal: '', valor: 0 }])} style={dashBtn}>+ canal</button>
           <div style={sec}>Campos extras</div>
           {customs.map((c, i) => (
-            <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+            <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
               <input value={c.label} onChange={e => setCustoms(cs => cs.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} placeholder="Campo" style={{ ...inp, flex: 1 }} />
               <input value={c.value} onChange={e => setCustoms(cs => cs.map((x, j) => j === i ? { ...x, value: e.target.value } : x))} placeholder="Valor" style={{ ...inp, flex: 1 }} />
-              <button onClick={() => setCustoms(cs => cs.filter((_, j) => j !== i))} style={{ ...inp, width: 34, cursor: 'pointer' }}>✕</button>
+              <button onClick={() => setCustoms(cs => cs.filter((_, j) => j !== i))} style={xBtn}>✕</button>
             </div>
           ))}
           <button onClick={() => setCustoms(cs => [...cs, { label: '', value: '' }])} style={dashBtn}>+ campo</button>
 
           <div style={sec}>Materiais / anexos da reunião</div>
           {materiais.map((m, i) => (
-            <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 4, alignItems: 'center' }}>
+            <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6, alignItems: 'center' }}>
               {m.url?.startsWith('data:') ? (
-                <span style={{ flex: 1, fontSize: 11, color: FG, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📎 {m.label}</span>
+                <span style={{ flex: 1, fontSize: 12, color: INK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📎 {m.label}</span>
               ) : (
                 <>
                   <input value={m.label} onChange={e => setMateriais(ms => ms.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} placeholder="Nome" style={{ ...inp, flex: 1 }} />
                   <input value={m.url ?? ''} onChange={e => setMateriais(ms => ms.map((x, j) => j === i ? { ...x, url: e.target.value } : x))} placeholder="https://..." style={{ ...inp, flex: 1 }} />
                 </>
               )}
-              <button onClick={() => setMateriais(ms => ms.filter((_, j) => j !== i))} style={{ ...inp, width: 34, cursor: 'pointer' }}>✕</button>
+              <button onClick={() => setMateriais(ms => ms.filter((_, j) => j !== i))} style={xBtn}>✕</button>
             </div>
           ))}
           <div style={{ display: 'flex', gap: 6 }}>
@@ -775,21 +782,21 @@ function SessionForm({ clientId, meetingId, onClose, onSaved }: { clientId: stri
 
           <div style={sec}>Registro da reunião</div>
           <div><label style={lbl}>Principais pontos discutidos</label><textarea value={f.pontosPrincipais ?? ''} onChange={e => set('pontosPrincipais', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} /></div>
-          <div style={{ marginTop: 6 }}><label style={lbl}>O que foi passado ao cliente</label><textarea value={f.oQueTrabalhou ?? ''} onChange={e => set('oQueTrabalhou', e.target.value)} rows={2} style={{ ...inp, resize: 'vertical' }} /></div>
-          <div style={{ marginTop: 6 }}><label style={lbl}>Próximos passos</label><textarea value={f.proximosPassos ?? ''} onChange={e => set('proximosPassos', e.target.value)} rows={2} style={{ ...inp, resize: 'vertical' }} /></div>
-          <div style={{ marginTop: 6 }}><label style={lbl}>Transcrição da reunião</label><textarea value={f.transcricao ?? ''} onChange={e => set('transcricao', e.target.value)} rows={4} style={{ ...inp, resize: 'vertical' }} placeholder="Cole a transcrição aqui..." /></div>
+          <div style={{ marginTop: 8 }}><label style={lbl}>O que foi passado ao cliente</label><textarea value={f.oQueTrabalhou ?? ''} onChange={e => set('oQueTrabalhou', e.target.value)} rows={2} style={{ ...inp, resize: 'vertical' }} /></div>
+          <div style={{ marginTop: 8 }}><label style={lbl}>Próximos passos</label><textarea value={f.proximosPassos ?? ''} onChange={e => set('proximosPassos', e.target.value)} rows={2} style={{ ...inp, resize: 'vertical' }} /></div>
+          <div style={{ marginTop: 8 }}><label style={lbl}>Transcrição da reunião</label><textarea value={f.transcricao ?? ''} onChange={e => set('transcricao', e.target.value)} rows={4} style={{ ...inp, resize: 'vertical' }} placeholder="Cole a transcrição aqui..." /></div>
           <div style={sec}>Tarefas (o que ficou / pra quem)</div>
           {tasks.map((t, i) => (
-            <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+            <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
               <input value={t.what} onChange={e => setTasks(ts => ts.map((x, j) => j === i ? { ...x, what: e.target.value } : x))} placeholder="O que" style={{ ...inp, flex: 2 }} />
               <input value={t.who} onChange={e => setTasks(ts => ts.map((x, j) => j === i ? { ...x, who: e.target.value } : x))} placeholder="Quem" style={{ ...inp, flex: 1 }} />
-              <button onClick={() => setTasks(ts => ts.filter((_, j) => j !== i))} style={{ ...inp, width: 34, cursor: 'pointer' }}>✕</button>
+              <button onClick={() => setTasks(ts => ts.filter((_, j) => j !== i))} style={xBtn}>✕</button>
             </div>
           ))}
           <button onClick={() => setTasks(ts => [...ts, { what: '', who: '' }])} style={dashBtn}>+ tarefa</button>
           <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
-            <button onClick={onClose} style={{ flex: 1, border: `1px solid ${LINE}`, background: 'transparent', color: FG, padding: 10, fontFamily: mono, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Cancelar</button>
-            <button onClick={save} disabled={saving} style={{ flex: 1, border: 'none', background: NEON, color: INK, padding: 10, fontFamily: mono, fontSize: 12, fontWeight: 700, cursor: saving ? 'wait' : 'pointer' }}>{saving ? 'Salvando...' : 'Registrar sessão'}</button>
+            <button onClick={onClose} style={{ flex: 1, border: `1px solid ${LINE}`, background: CARD, color: INK, padding: 11, fontFamily: mono, fontSize: 13, fontWeight: 700, cursor: 'pointer', borderRadius: 6 }}>Cancelar</button>
+            <button onClick={save} disabled={saving} style={{ flex: 1, border: 'none', background: NEON, color: INK, padding: 11, fontFamily: mono, fontSize: 13, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', borderRadius: 6 }}>{saving ? 'Salvando...' : 'Registrar sessão'}</button>
           </div>
         </div>
       </div>

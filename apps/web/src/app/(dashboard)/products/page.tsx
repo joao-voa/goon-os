@@ -6,6 +6,10 @@ import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 import { PRODUCT_COLORS } from '@/lib/constants'
 
+// ---- Palette ----
+const C = { ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0', bg: '#f8fafc', neon: '#C7F900', green: '#16a34a', red: '#dc2626' }
+const card: React.CSSProperties = { background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }
+
 // ---- Types ----
 interface Product {
   id: string
@@ -53,7 +57,8 @@ function EditModal({ product, onClose, onSaved }: EditModalProps) {
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.6)',
+        background: 'rgba(15,23,42,0.5)',
+        backdropFilter: 'blur(4px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -66,47 +71,42 @@ function EditModal({ product, onClose, onSaved }: EditModalProps) {
         style={{
           width: '100%',
           maxWidth: 440,
-          background: 'white',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+          background: '#fff',
+          border: `1px solid ${C.line}`,
+          borderRadius: 12,
+          boxShadow: '0 20px 40px -12px rgba(0,0,0,0.18)',
+          overflow: 'hidden',
         }}
       >
         {/* Header */}
         <div style={{
-          background: 'black',
-          color: 'white',
-          fontFamily: 'var(--font-sans)',
-          fontSize: 10,
-          textTransform: 'uppercase',
-          padding: '12px 16px',
+          padding: '16px 22px',
+          borderBottom: `1px solid ${C.line}`,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          letterSpacing: 1,
-          backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)',
-          backgroundSize: '16px 16px',
         }}>
-          <span>Editar Programa</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15, color: C.ink }}>Editar Programa</span>
           <button
             onClick={onClose}
             style={{
-              background: 'var(--danger)',
-              border: '1px solid white',
-              color: 'white',
+              background: 'transparent',
+              border: 'none',
+              color: C.dim,
               cursor: 'pointer',
-              width: 20,
-              height: 20,
+              width: 24,
+              height: 24,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 14,
-              fontWeight: 700,
+              fontFamily: 'var(--font-sans)',
+              fontSize: 18,
+              lineHeight: 1,
             }}
           >×</button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form onSubmit={handleSubmit} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
             <label className="goon-label">Nome</label>
             <input
@@ -126,7 +126,7 @@ function EditModal({ product, onClose, onSaved }: EditModalProps) {
             />
           </div>
 
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8, borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4, borderTop: `1px solid ${C.line}`, paddingTop: 16 }}>
             <button type="button" className="goon-btn-secondary" onClick={onClose} disabled={saving}>
               Cancelar
             </button>
@@ -149,80 +149,68 @@ interface ProductCardProps {
 }
 
 function ProductCard({ product, onEdit, onToggleActive, onNavigate }: ProductCardProps) {
-  const color = PRODUCT_COLORS[product.code] ?? 'black'
+  const color = PRODUCT_COLORS[product.code] ?? C.ink
 
   return (
     <div
       style={{
-        background: 'white',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.08)',
+        ...card,
+        borderLeft: `4px solid ${color}`,
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
-        gap: 16,
-        padding: 0,
         overflow: 'hidden',
         transition: 'transform 0.15s, box-shadow 0.15s',
       }}
       onClick={() => onNavigate(product)}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLDivElement).style.transform = 'translate(-2px, -2px)'
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '8px 8px 0px 0px #000'
+        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 20px -6px rgba(0,0,0,0.12)'
       }}
       onMouseLeave={e => {
         (e.currentTarget as HTMLDivElement).style.transform = ''
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.08)'
+        ;(e.currentTarget as HTMLDivElement).style.boxShadow = card.boxShadow as string
       }}
     >
-      {/* Code header */}
-      <div style={{
-        background: color,
-        padding: '16px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundImage: 'radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px)',
-        backgroundSize: '12px 12px',
-      }}>
+      {/* Header: code + status */}
+      <div style={{ padding: '16px 18px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <span style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          padding: '4px 10px',
+          borderRadius: 6,
+          background: color,
+          color: '#fff',
           fontFamily: 'var(--font-sans)',
-          fontSize: 20,
-          color: 'white',
-          fontWeight: 900,
-          letterSpacing: '0.05em',
+          fontSize: 13,
+          fontWeight: 800,
+          letterSpacing: '0.04em',
         }}>
           {product.code}
         </span>
-        <span style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10,
-          color: 'rgba(255,255,255,0.8)',
-          fontWeight: 700,
-          textTransform: 'uppercase',
-        }}>
-          {product.isActive ? '[ATIVO]' : '[INATIVO]'}
+        <span className={product.isActive ? 'goon-badge goon-badge-active' : 'goon-badge goon-badge-inactive'}>
+          {product.isActive ? 'Ativo' : 'Inativo'}
         </span>
       </div>
 
-      <div style={{ padding: '0 24px 0 24px', flex: 1 }}>
+      <div style={{ padding: '12px 18px 16px', flex: 1 }}>
         {/* Name & Description */}
         <h3 style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 14,
+          fontFamily: 'var(--font-display)',
+          fontSize: 16,
           fontWeight: 700,
-          color: 'black',
-          margin: '0 0 8px 0',
-          textTransform: 'uppercase',
+          color: C.ink,
+          margin: '0 0 6px 0',
+          letterSpacing: '-0.01em',
         }}>
           {product.name}
         </h3>
         {product.description ? (
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', margin: 0, lineHeight: 1.6 }}>
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.mid, margin: 0, lineHeight: 1.5 }}>
             {product.description}
           </p>
         ) : (
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#888', margin: 0, fontStyle: 'italic' }}>
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.dim, margin: 0, fontStyle: 'italic' }}>
             Sem descrição
           </p>
         )}
@@ -234,13 +222,13 @@ function ProductCard({ product, onEdit, onToggleActive, onNavigate }: ProductCar
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '12px 24px',
-          borderTop: '1px solid #e2e8f0',
-          background: 'var(--retro-gray)',
+          padding: '12px 18px',
+          borderTop: `1px solid ${C.line}`,
+          background: C.bg,
         }}
         onClick={e => e.stopPropagation()}
       >
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'black', fontWeight: 700, textTransform: 'uppercase' }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12.5, color: C.mid, fontWeight: 600 }}>
           {product._count.plans} {product._count.plans === 1 ? 'cliente' : 'clientes'}
         </span>
 
@@ -249,55 +237,35 @@ function ProductCard({ product, onEdit, onToggleActive, onNavigate }: ProductCar
             onClick={e => { e.stopPropagation(); onEdit(product) }}
             title="Editar produto"
             style={{
-              background: '#c0c0c0',
-              color: 'black',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              padding: '4px 10px',
+              background: '#fff',
+              color: C.ink,
+              border: `1px solid ${C.line}`,
+              borderRadius: 6,
+              fontFamily: 'var(--font-sans)',
+              fontSize: 12,
+              fontWeight: 600,
+              padding: '5px 12px',
               cursor: 'pointer',
-              transition: 'transform 0.1s, box-shadow 0.1s',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.transform = 'translate(1px, 1px)'
-              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = 'none'
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.transform = ''
-              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'
             }}
           >
             Editar
           </button>
           <button
             onClick={() => onToggleActive(product)}
-          title={product.isActive ? 'Desativar produto' : 'Ativar produto'}
-          style={{
-            background: product.isActive ? 'var(--success)' : 'var(--retro-gray)',
-            color: product.isActive ? 'white' : 'black',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            padding: '4px 10px',
-            cursor: 'pointer',
-            transition: 'transform 0.1s, box-shadow 0.1s',
-          }}
-          onMouseEnter={e => {
-            (e.currentTarget as HTMLButtonElement).style.transform = 'translate(1px, 1px)'
-            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = 'none'
-          }}
-          onMouseLeave={e => {
-            (e.currentTarget as HTMLButtonElement).style.transform = ''
-            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'
-          }}
-        >
-          {product.isActive ? 'Desativar' : 'Ativar'}
+            title={product.isActive ? 'Desativar produto' : 'Ativar produto'}
+            style={{
+              background: product.isActive ? '#fff' : C.neon,
+              color: product.isActive ? C.red : C.ink,
+              border: product.isActive ? `1px solid ${C.line}` : 'none',
+              borderRadius: 6,
+              fontFamily: 'var(--font-sans)',
+              fontSize: 12,
+              fontWeight: product.isActive ? 600 : 700,
+              padding: '5px 12px',
+              cursor: 'pointer',
+            }}
+          >
+            {product.isActive ? 'Desativar' : 'Ativar'}
           </button>
         </div>
       </div>
@@ -350,20 +318,19 @@ export default function ProductsPage() {
   return (
     <div style={{ maxWidth: 900, margin: '0 auto' }}>
       {/* Header */}
-      <div style={{ marginBottom: 28 }}>
+      <div style={{ marginBottom: 24 }}>
         <h1 style={{
-          fontFamily: 'var(--font-sans)',
-          fontSize: 14,
-          fontWeight: 800,
-          color: 'black',
-          margin: '0 0 6px 0',
-          textTransform: 'uppercase',
-          letterSpacing: 1,
+          fontFamily: 'var(--font-display)',
+          fontSize: 22,
+          fontWeight: 700,
+          color: C.ink,
+          margin: '0 0 4px 0',
+          letterSpacing: '-0.02em',
         }}>
           Programas
         </h1>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#555', margin: 0 }}>
-          {'>'} Gerencie os programas GOON disponíveis para seus clientes
+        <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.mid, margin: 0 }}>
+          Gerencie os programas GOON disponíveis para seus clientes
         </p>
       </div>
 
@@ -372,10 +339,10 @@ export default function ProductsPage() {
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
           <div
             style={{
-              width: 36,
-              height: 36,
-              border: '1px solid #e2e8f0',
-              borderTopColor: 'transparent',
+              width: 32,
+              height: 32,
+              border: `2px solid ${C.line}`,
+              borderTopColor: C.ink,
               borderRadius: '50%',
               animation: 'spin 0.6s linear infinite',
             }}
@@ -387,7 +354,7 @@ export default function ProductsPage() {
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-            gap: 20,
+            gap: 16,
           }}
         >
           {products.map(product => (
@@ -403,16 +370,8 @@ export default function ProductsPage() {
       )}
 
       {products.length === 0 && !loading && (
-        <div
-          style={{
-            background: 'white',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
-            padding: 48,
-            textAlign: 'center',
-          }}
-        >
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'black', textTransform: 'uppercase' }}>
+        <div style={{ ...card, padding: 48, textAlign: 'center' }}>
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.mid, margin: 0 }}>
             Nenhum programa cadastrado.
           </p>
         </div>
