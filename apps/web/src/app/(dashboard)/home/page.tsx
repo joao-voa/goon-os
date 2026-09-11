@@ -106,34 +106,29 @@ export default function HomePage() {
             <Link key={item.href} href={item.href} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div
                 style={{
-                  background: 'white', border: '1px solid #e2e8f0',
-                  borderLeft: '4px solid #C7F900',
-                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)', padding: '16px 14px',
-                  cursor: 'pointer', transition: 'transform 0.1s, box-shadow 0.1s',
-                  display: 'flex', flexDirection: 'column', gap: 6,
+                  background: 'white', border: '1px solid #e2e8f0', borderRadius: 12,
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.04)', padding: '15px 16px',
+                  cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s, border-color 0.15s',
+                  display: 'flex', gap: 13, alignItems: 'flex-start',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translate(-2px, -2px)'
-                  e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.08)'
-                  e.currentTarget.style.background = '#0A0A0C'
-                  e.currentTarget.style.color = 'white'
-                  e.currentTarget.style.borderColor = '#0A0A0C'
+                  e.currentTarget.style.transform = 'translateY(-3px)'
+                  e.currentTarget.style.boxShadow = '0 10px 20px -6px rgba(0,0,0,0.12)'
+                  e.currentTarget.style.borderColor = item.color
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translate(0, 0)'
-                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.07)'
-                  e.currentTarget.style.background = 'white'
-                  e.currentTarget.style.color = 'inherit'
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.04)'
                   e.currentTarget.style.borderColor = '#e2e8f0'
                 }}
               >
-                <Icon size={20} color="currentColor" strokeWidth={2.2} />
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }}>
-                  {item.label}
-                </span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, opacity: 0.7, lineHeight: 1.3 }}>
-                  {item.description}
-                </span>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: '#f8fafc', border: '1px solid #eef2f6', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <Icon size={19} color={item.color} strokeWidth={2.2} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{item.label}</span>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: '#64748b', lineHeight: 1.35 }}>{item.description}</span>
+                </div>
               </div>
             </Link>
           )
