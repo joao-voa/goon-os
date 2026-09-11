@@ -18,7 +18,7 @@ interface OverviewData { year: number; months: OvMonth[]; yearTotal: { metaValue
 
 const META_PRODUCTS = [
   { v: '', l: 'Geral (todos)' }, { v: 'GE', l: 'GE' }, { v: 'GI', l: 'GI' },
-  { v: 'TTS', l: 'TTS' }, { v: 'TTSG', l: 'TTS Grupo' }, { v: 'GA', l: 'GA' }, { v: 'GS', l: 'GS' }, { v: 'AURA', l: 'AURA' },
+  { v: 'TTS', l: 'TTS' }, { v: 'TTSG', l: 'TTS Grupo' }, { v: 'GA', l: 'GA' },
 ]
 
 const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
@@ -325,7 +325,7 @@ export default function SalesPage() {
                             <td style={{ ...num, padding: '9px 14px', textAlign: 'right', color: C.mid }}>{soldC}</td>
                             <td style={{ ...num, padding: '9px 14px', textAlign: 'right', fontWeight: 700, color: mC > 0 ? gaugeColor(pctC) : C.dim }}>{mC > 0 ? `${Math.round(pctC * 100)}%` : '—'}</td>
                           </tr>
-                          {open && PROGRAMS.map(prog => {
+                          {open && PROGRAMS.filter(prog => prog.v !== 'TTSG' || (soldOf(mo, 'TTSG')?.soldCount ?? 0) > 0).map(prog => {
                             const sold = soldOf(mo, prog.v)
                             const sv = sold?.soldValue ?? 0, sc = sold?.soldCount ?? 0
                             const mv = ovMetaV(mo, prog.v), mc = ovMetaC(mo, prog.v)

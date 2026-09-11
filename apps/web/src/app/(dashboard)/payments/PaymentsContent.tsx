@@ -75,9 +75,9 @@ function ProgramSelector({ active, onChange }: { active: string; onChange: (v: s
     { code: '', label: 'TODOS' },
     { code: 'GE', label: 'GE' },
     { code: 'GI', label: 'GI' },
-    { code: 'GS', label: 'GS' },
     { code: 'TTS', label: 'TTS' },
-    { code: 'AURA', label: 'AURA' },
+    { code: 'TTSG', label: 'TTS Grupo' },
+    { code: 'GA', label: 'GA' },
   ]
   return (
     <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
