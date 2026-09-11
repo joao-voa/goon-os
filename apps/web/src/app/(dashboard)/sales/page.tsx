@@ -244,28 +244,35 @@ export default function SalesPage() {
           <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.line}`, fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Evolução mensal{productFilter ? ` · ${productFilter}` : ''}</div>
           <div style={{ padding: 12 }}>
             {activeMonths.length === 0 && <div style={{ fontSize: 12, color: C.dim, textAlign: 'center', padding: 24 }}>Nenhuma venda{productFilter ? ` de ${productFilter}` : ''} em {year}.</div>}
-            {data?.months.map(m => m.count > 0 && (
-              <div key={m.month} style={{ borderBottom: `1px solid ${C.line}` }}>
-                <div onClick={() => setExpanded(expanded === m.month ? null : m.month)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 4px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 12.5 }}>
-                  <span style={{ width: 70, fontWeight: 700 }}>{expanded === m.month ? '▾' : '▸'} {m.label}</span>
-                  <div style={{ flex: 1, background: '#f1f5f9', height: 20, borderRadius: 4, position: 'relative', overflow: 'hidden' }}>
-                    <div style={{ width: `${(m.total / maxTotal) * 100}%`, background: C.ink, height: '100%', transition: 'width 0.3s' }} />
+            {data?.months.map(m => {
+              if (m.count === 0) return null
+              const isCur = m.month === curMonth && year === nowYear
+              const open = expanded === m.month
+              return (
+                <div key={m.month} style={{ borderBottom: `1px solid ${C.bg}`, background: open ? C.bg : isCur ? 'rgba(199,249,0,0.06)' : 'transparent', borderRadius: 8, transition: 'background 0.15s' }}>
+                  <div onClick={() => setExpanded(open ? null : m.month)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 12.5 }}>
+                    <span style={{ width: 72, fontWeight: isCur ? 800 : 700, color: isCur ? C.ink : C.slate, textTransform: 'capitalize' }}>
+                      <span style={{ color: C.dim, marginRight: 4 }}>{open ? '▾' : '▸'}</span>{m.label}
+                    </span>
+                    <div style={{ flex: 1, background: '#eef2f6', height: 22, borderRadius: 6, position: 'relative', overflow: 'hidden' }}>
+                      <div style={{ width: `${(m.total / maxTotal) * 100}%`, background: isCur ? C.neon : C.slate, height: '100%', borderRadius: 6, transition: 'width 0.4s ease' }} />
+                    </div>
+                    <span style={{ width: 40, textAlign: 'center', color: C.mid, fontSize: 11, fontWeight: 600 }}>{m.count}x</span>
+                    <span style={{ ...num, width: 120, textAlign: 'right', fontWeight: 800, color: C.ink }}>{fmtBRL(m.total)}</span>
                   </div>
-                  <span style={{ width: 44, textAlign: 'center', color: C.dim, fontSize: 11 }}>{m.count}x</span>
-                  <span style={{ ...num, width: 120, textAlign: 'right', fontWeight: 700 }}>{fmtBRL(m.total)}</span>
+                  {open && (
+                    <div style={{ padding: '2px 12px 12px 84px' }}>
+                      {m.deals.slice().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((d, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '6px 0', fontFamily: 'var(--font-sans)', fontSize: 12, color: C.mid, borderBottom: `1px solid ${C.bg}` }}>
+                          <span><span style={{ ...num, color: C.dim }}>{new Date(d.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}</span> · <strong style={{ color: C.ink }}>{d.companyName}</strong>{d.product ? <span style={{ color: C.dim }}> · {d.product}</span> : ''}{d.salesRep ? <span style={{ color: C.dim }}> · {d.salesRep}</span> : ''}</span>
+                          <span style={{ ...num, fontWeight: 700, color: C.green }}>{fmtBRL(d.value)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                {expanded === m.month && (
-                  <div style={{ padding: '4px 4px 12px 80px' }}>
-                    {m.deals.slice().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((d, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontFamily: 'var(--font-sans)', fontSize: 12, color: C.mid, borderBottom: '1px solid #f5f5f5' }}>
-                        <span>{new Date(d.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} · <strong style={{ color: C.ink }}>{d.companyName}</strong>{d.product ? ` · ${d.product}` : ''}{d.salesRep ? ` · ${d.salesRep}` : ''}</span>
-                        <span style={{ ...num, fontWeight: 700, color: C.ink }}>{fmtBRL(d.value)}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </>}
