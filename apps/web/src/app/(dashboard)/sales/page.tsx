@@ -64,6 +64,8 @@ export default function SalesPage() {
   const [expanded, setExpanded] = useState<number | null>(null)
   const [productFilter, setProductFilter] = useState('')
   const [edits, setEdits] = useState<Record<number, { v: string; c: string }>>({})
+  const [ovEdits, setOvEdits] = useState<Record<string, { v: string; c: string }>>({})
+  const [ovDirty, setOvDirty] = useState<Set<string>>(new Set())
   const [allV, setAllV] = useState('')
   const [allC, setAllC] = useState('')
   const [saving, setSaving] = useState(false)
@@ -89,6 +91,34 @@ export default function SalesPage() {
     for (const g of goals.months) e[g.month] = { v: g.targetValue ? String(g.targetValue) : '', c: g.targetCount ? String(g.targetCount) : '' }
     setEdits(e)
   }, [goals])
+
+  // Edição no drill-down do Geral: chave `${mês}-${programa}`
+  useEffect(() => {
+    if (!overview) return
+    const e: Record<string, { v: string; c: string }> = {}
+    for (const m of overview.months) for (const pg of m.byProgram) e[`${m.month}-${pg.product}`] = { v: pg.metaValue ? String(pg.metaValue) : '', c: pg.metaCount ? String(pg.metaCount) : '' }
+    setOvEdits(e); setOvDirty(new Set())
+  }, [overview])
+
+  const setOv = (mo: number, prod: string, field: 'v' | 'c', val: string) => {
+    const k = `${mo}-${prod}`
+    setOvEdits(p => ({ ...p, [k]: { ...(p[k] ?? { v: '', c: '' }), [field]: val } }))
+    setOvDirty(p => new Set(p).add(k))
+  }
+
+  async function saveOverview() {
+    setSaving(true)
+    try {
+      await Promise.all([...ovDirty].map(k => {
+        const idx = k.indexOf('-')
+        const mo = parseInt(k.slice(0, idx)); const product = k.slice(idx + 1)
+        const e = ovEdits[k] ?? { v: '', c: '' }
+        return apiFetch('/api/crm/goals', { method: 'PUT', body: JSON.stringify({ year, month: mo, product, targetValue: parseFloat(e.v) || 0, targetCount: parseInt(e.c) || 0 }) })
+      }))
+      toast.success('Metas salvas')
+      loadOverview(); loadGoals()
+    } catch { toast.error('Erro ao salvar metas') } finally { setSaving(false) }
+  }
 
   async function saveAll() {
     setSaving(true)
@@ -117,6 +147,15 @@ export default function SalesPage() {
   const card: React.CSSProperties = { background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }
   const curMonth = new Date().getMonth() + 1
   const nowYear = new Date().getFullYear()
+  // Helpers do drill-down editável (Geral)
+  const PROGRAMS = META_PRODUCTS.filter(p => p.v)
+  const ovMetaV = (mo: number, prod: string) => parseFloat(ovEdits[`${mo}-${prod}`]?.v || '') || 0
+  const ovMetaC = (mo: number, prod: string) => parseInt(ovEdits[`${mo}-${prod}`]?.c || '') || 0
+  const monthMetaV = (mo: number) => PROGRAMS.reduce((s, p) => s + ovMetaV(mo, p.v), 0)
+  const monthMetaC = (mo: number) => PROGRAMS.reduce((s, p) => s + ovMetaC(mo, p.v), 0)
+  const yearMetaV = Array.from({ length: 12 }, (_, i) => i + 1).reduce((s, mo) => s + monthMetaV(mo), 0)
+  const yearMetaC = Array.from({ length: 12 }, (_, i) => i + 1).reduce((s, mo) => s + monthMetaC(mo), 0)
+  const soldOf = (mo: number, prod: string) => overview?.months.find(x => x.month === mo)?.byProgram.find(p => p.product === prod)
 
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -246,12 +285,15 @@ export default function SalesPage() {
           /* ===== GERAL — consolidado com drill-down por mês ===== */
           <>
             <div style={{ ...card, padding: '20px 16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
-              <Gauge label={`Ano ${year} · R$`} value={overview?.yearTotal.soldValue ?? 0} target={overview?.yearTotal.metaValue ?? 0} kind="money" />
-              <Gauge label={`Ano ${year} · Vendas`} value={overview?.yearTotal.soldCount ?? 0} target={overview?.yearTotal.metaCount ?? 0} kind="count" />
+              <Gauge label={`Ano ${year} · R$`} value={overview?.yearTotal.soldValue ?? 0} target={yearMetaV} kind="money" />
+              <Gauge label={`Ano ${year} · Vendas`} value={overview?.yearTotal.soldCount ?? 0} target={yearMetaC} kind="count" />
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-              <span style={{ fontSize: 12.5, color: C.mid }}>Total do mês = soma dos programas. Clique num mês para abrir o detalhamento · escolha um programa acima para editar.</span>
-              <button onClick={() => { const anyOpen = Object.values(openMonths).some(Boolean); if (anyOpen) setOpenMonths({}); else { const o: Record<number, boolean> = {}; for (let m = 1; m <= 12; m++) o[m] = true; setOpenMonths(o) } }} style={{ background: '#fff', color: C.ink, border: `1px solid ${C.line}`, borderRadius: 6, padding: '7px 14px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600 }}>{Object.values(openMonths).some(Boolean) ? 'Recolher tudo' : 'Expandir tudo'}</button>
+              <span style={{ fontSize: 12.5, color: C.mid }}>Clique num mês e preencha a meta de cada programa. O total do mês é a soma dos programas.</span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => { const anyOpen = Object.values(openMonths).some(Boolean); if (anyOpen) setOpenMonths({}); else { const o: Record<number, boolean> = {}; for (let m = 1; m <= 12; m++) o[m] = true; setOpenMonths(o) } }} style={{ background: '#fff', color: C.ink, border: `1px solid ${C.line}`, borderRadius: 6, padding: '7px 14px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600 }}>{Object.values(openMonths).some(Boolean) ? 'Recolher tudo' : 'Expandir tudo'}</button>
+                <button onClick={saveOverview} disabled={saving || ovDirty.size === 0} style={{ background: ovDirty.size ? C.neon : '#e2e8f0', color: C.ink, border: 'none', borderRadius: 6, padding: '7px 16px', cursor: ovDirty.size ? 'pointer' : 'default', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700 }}>{saving ? 'Salvando…' : `Salvar metas${ovDirty.size ? ` (${ovDirty.size})` : ''}`}</button>
+              </div>
             </div>
             <div style={{ ...card, overflow: 'hidden' }}>
               <div style={{ overflowX: 'auto' }}>
@@ -264,36 +306,40 @@ export default function SalesPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(overview?.months ?? []).map(m => {
-                      const open = openMonths[m.month]
-                      const pctV = m.metaValue > 0 ? m.soldValue / m.metaValue : 0
-                      const pctC = m.metaCount > 0 ? m.soldCount / m.metaCount : 0
-                      const isCur = m.month === curMonth && year === nowYear
-                      const has = m.metaValue > 0 || m.soldValue > 0
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(mo => {
+                      const ov = overview?.months.find(x => x.month === mo)
+                      const mV = monthMetaV(mo), mC = monthMetaC(mo)
+                      const soldV = ov?.soldValue ?? 0, soldC = ov?.soldCount ?? 0
+                      const open = openMonths[mo]
+                      const pctV = mV > 0 ? soldV / mV : 0
+                      const pctC = mC > 0 ? soldC / mC : 0
+                      const isCur = mo === curMonth && year === nowYear
                       return (
-                        <Fragment key={m.month}>
-                          <tr onClick={() => has && setOpenMonths(p => ({ ...p, [m.month]: !p[m.month] }))} style={{ background: isCur ? 'rgba(199,249,0,0.07)' : 'transparent', borderBottom: `1px solid ${C.bg}`, cursor: has ? 'pointer' : 'default', opacity: has ? 1 : 0.5 }}>
-                            <td style={{ padding: '9px 14px', fontWeight: isCur ? 800 : 700, color: C.ink }}>{has ? (open ? '▾' : '▸') : ''} {MONTH_FULL[m.month - 1]}</td>
-                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', color: C.ink }}>{fmtBRL(m.metaValue)}</td>
-                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', color: C.mid }}>{fmtBRL(m.soldValue)}</td>
-                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', fontWeight: 700, color: m.metaValue > 0 ? gaugeColor(pctV) : C.dim }}>{m.metaValue > 0 ? `${Math.round(pctV * 100)}%` : '—'}</td>
-                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', color: C.ink }}>{m.metaCount}</td>
-                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', color: C.mid }}>{m.soldCount}</td>
-                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', fontWeight: 700, color: m.metaCount > 0 ? gaugeColor(pctC) : C.dim }}>{m.metaCount > 0 ? `${Math.round(pctC * 100)}%` : '—'}</td>
+                        <Fragment key={mo}>
+                          <tr onClick={() => setOpenMonths(p => ({ ...p, [mo]: !p[mo] }))} style={{ background: isCur ? 'rgba(199,249,0,0.07)' : 'transparent', borderBottom: `1px solid ${C.bg}`, cursor: 'pointer' }}>
+                            <td style={{ padding: '9px 14px', fontWeight: isCur ? 800 : 700, color: C.ink }}>{open ? '▾' : '▸'} {MONTH_FULL[mo - 1]}</td>
+                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', color: C.ink }}>{fmtBRL(mV)}</td>
+                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', color: C.mid }}>{fmtBRL(soldV)}</td>
+                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', fontWeight: 700, color: mV > 0 ? gaugeColor(pctV) : C.dim }}>{mV > 0 ? `${Math.round(pctV * 100)}%` : '—'}</td>
+                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', color: C.ink }}>{mC}</td>
+                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', color: C.mid }}>{soldC}</td>
+                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', fontWeight: 700, color: mC > 0 ? gaugeColor(pctC) : C.dim }}>{mC > 0 ? `${Math.round(pctC * 100)}%` : '—'}</td>
                           </tr>
-                          {open && m.byProgram.map(pg => {
-                            const pv = pg.metaValue > 0 ? pg.soldValue / pg.metaValue : 0
-                            const pc = pg.metaCount > 0 ? pg.soldCount / pg.metaCount : 0
-                            const color = PRODUCT_COLORS[pg.product] ?? C.dim
+                          {open && PROGRAMS.map(prog => {
+                            const sold = soldOf(mo, prog.v)
+                            const sv = sold?.soldValue ?? 0, sc = sold?.soldCount ?? 0
+                            const mv = ovMetaV(mo, prog.v), mc = ovMetaC(mo, prog.v)
+                            const pv = mv > 0 ? sv / mv : 0, pc = mc > 0 ? sc / mc : 0
+                            const color = PRODUCT_COLORS[prog.v] ?? C.dim
                             return (
-                              <tr key={pg.product} style={{ background: '#fbfcfd', borderBottom: `1px solid ${C.bg}` }}>
-                                <td style={{ padding: '6px 14px 6px 30px', fontSize: 12.5 }}><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: color, marginRight: 6 }} />{pg.product}</td>
-                                <td style={{ ...num, padding: '6px 14px', textAlign: 'right', fontSize: 12.5, color: C.mid }}>{fmtBRL(pg.metaValue)}</td>
-                                <td style={{ ...num, padding: '6px 14px', textAlign: 'right', fontSize: 12.5, color: C.mid }}>{fmtBRL(pg.soldValue)}</td>
-                                <td style={{ ...num, padding: '6px 14px', textAlign: 'right', fontSize: 12.5, fontWeight: 700, color: pg.metaValue > 0 ? gaugeColor(pv) : C.dim }}>{pg.metaValue > 0 ? `${Math.round(pv * 100)}%` : '—'}</td>
-                                <td style={{ ...num, padding: '6px 14px', textAlign: 'right', fontSize: 12.5, color: C.mid }}>{pg.metaCount}</td>
-                                <td style={{ ...num, padding: '6px 14px', textAlign: 'right', fontSize: 12.5, color: C.mid }}>{pg.soldCount}</td>
-                                <td style={{ ...num, padding: '6px 14px', textAlign: 'right', fontSize: 12.5, fontWeight: 700, color: pg.metaCount > 0 ? gaugeColor(pc) : C.dim }}>{pg.metaCount > 0 ? `${Math.round(pc * 100)}%` : '—'}</td>
+                              <tr key={prog.v} style={{ background: '#fbfcfd', borderBottom: `1px solid ${C.bg}` }}>
+                                <td style={{ padding: '5px 14px 5px 30px', fontSize: 12.5 }}><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: color, marginRight: 6 }} />{prog.l}</td>
+                                <td style={{ padding: '4px 14px', textAlign: 'right' }}><input type="number" value={ovEdits[`${mo}-${prog.v}`]?.v ?? ''} onChange={e => setOv(mo, prog.v, 'v', e.target.value)} placeholder="0" style={{ width: 100, padding: '5px 8px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 12.5, textAlign: 'right' }} /></td>
+                                <td style={{ ...num, padding: '4px 14px', textAlign: 'right', fontSize: 12.5, color: C.mid }}>{fmtBRL(sv)}</td>
+                                <td style={{ ...num, padding: '4px 14px', textAlign: 'right', fontSize: 12.5, fontWeight: 700, color: mv > 0 ? gaugeColor(pv) : C.dim }}>{mv > 0 ? `${Math.round(pv * 100)}%` : '—'}</td>
+                                <td style={{ padding: '4px 14px', textAlign: 'right' }}><input type="number" value={ovEdits[`${mo}-${prog.v}`]?.c ?? ''} onChange={e => setOv(mo, prog.v, 'c', e.target.value)} placeholder="0" style={{ width: 60, padding: '5px 8px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 12.5, textAlign: 'right' }} /></td>
+                                <td style={{ ...num, padding: '4px 14px', textAlign: 'right', fontSize: 12.5, color: C.mid }}>{sc}</td>
+                                <td style={{ ...num, padding: '4px 14px', textAlign: 'right', fontSize: 12.5, fontWeight: 700, color: mc > 0 ? gaugeColor(pc) : C.dim }}>{mc > 0 ? `${Math.round(pc * 100)}%` : '—'}</td>
                               </tr>
                             )
                           })}
@@ -304,12 +350,12 @@ export default function SalesPage() {
                   <tfoot>
                     <tr style={{ background: C.bg, fontWeight: 800 }}>
                       <td style={{ padding: '10px 14px', color: C.ink }}>Ano</td>
-                      <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: C.ink }}>{fmtBRL(overview?.yearTotal.metaValue ?? 0)}</td>
+                      <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: C.ink }}>{fmtBRL(yearMetaV)}</td>
                       <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: C.mid }}>{fmtBRL(overview?.yearTotal.soldValue ?? 0)}</td>
-                      <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: (overview?.yearTotal.metaValue ?? 0) > 0 ? gaugeColor(overview!.yearTotal.soldValue / overview!.yearTotal.metaValue) : C.dim }}>{(overview?.yearTotal.metaValue ?? 0) > 0 ? `${Math.round(overview!.yearTotal.soldValue / overview!.yearTotal.metaValue * 100)}%` : '—'}</td>
-                      <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: C.ink }}>{overview?.yearTotal.metaCount ?? 0}</td>
+                      <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: yearMetaV > 0 ? gaugeColor((overview?.yearTotal.soldValue ?? 0) / yearMetaV) : C.dim }}>{yearMetaV > 0 ? `${Math.round((overview?.yearTotal.soldValue ?? 0) / yearMetaV * 100)}%` : '—'}</td>
+                      <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: C.ink }}>{yearMetaC}</td>
                       <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: C.mid }}>{overview?.yearTotal.soldCount ?? 0}</td>
-                      <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: (overview?.yearTotal.metaCount ?? 0) > 0 ? gaugeColor(overview!.yearTotal.soldCount / overview!.yearTotal.metaCount) : C.dim }}>{(overview?.yearTotal.metaCount ?? 0) > 0 ? `${Math.round(overview!.yearTotal.soldCount / overview!.yearTotal.metaCount * 100)}%` : '—'}</td>
+                      <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: yearMetaC > 0 ? gaugeColor((overview?.yearTotal.soldCount ?? 0) / yearMetaC) : C.dim }}>{yearMetaC > 0 ? `${Math.round((overview?.yearTotal.soldCount ?? 0) / yearMetaC * 100)}%` : '—'}</td>
                     </tr>
                   </tfoot>
                 </table>
