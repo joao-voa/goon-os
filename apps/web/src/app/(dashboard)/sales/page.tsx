@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Fragment } from 'react'
 import { apiFetch } from '@/lib/api'
 import { useAuth } from '@/hooks/useAuth'
 import { canSeeSales, PRODUCT_COLORS } from '@/lib/constants'
@@ -12,6 +12,9 @@ interface ProgramTotal { code: string; count: number; total: number }
 interface SalesData { year: number; totalYear: number; countYear: number; months: MonthSales[]; byProgram: ProgramTotal[] }
 interface Goal { month: number; targetValue: number; targetCount: number }
 interface GoalsData { year: number; product: string; months: Goal[]; totalValue: number; totalCount: number }
+interface OvProgram { product: string; metaValue: number; metaCount: number; soldValue: number; soldCount: number }
+interface OvMonth { month: number; metaValue: number; metaCount: number; soldValue: number; soldCount: number; byProgram: OvProgram[] }
+interface OverviewData { year: number; months: OvMonth[]; yearTotal: { metaValue: number; metaCount: number; soldValue: number; soldCount: number } }
 
 const META_PRODUCTS = [
   { v: '', l: 'Geral (todos)' }, { v: 'GE', l: 'GE' }, { v: 'GI', l: 'GI' },
@@ -56,6 +59,8 @@ export default function SalesPage() {
   const [year, setYear] = useState(new Date().getFullYear())
   const [data, setData] = useState<SalesData | null>(null)
   const [goals, setGoals] = useState<GoalsData | null>(null)
+  const [overview, setOverview] = useState<OverviewData | null>(null)
+  const [openMonths, setOpenMonths] = useState<Record<number, boolean>>({})
   const [expanded, setExpanded] = useState<number | null>(null)
   const [productFilter, setProductFilter] = useState('')
   const [edits, setEdits] = useState<Record<number, { v: string; c: string }>>({})
@@ -66,13 +71,17 @@ export default function SalesPage() {
   const loadGoals = useCallback(() => {
     apiFetch<GoalsData>(`/api/crm/goals?year=${year}&product=${productFilter || 'GERAL'}`).then(setGoals).catch(() => {})
   }, [year, productFilter])
+  const loadOverview = useCallback(() => {
+    apiFetch<OverviewData>(`/api/crm/goals-overview?year=${year}`).then(setOverview).catch(() => {})
+  }, [year])
 
   useEffect(() => {
     if (!isOwner) return
     const qs = `year=${year}${productFilter ? `&product=${productFilter}` : ''}`
     apiFetch<SalesData>(`/api/crm/sales-by-month?${qs}`).then(setData).catch(() => {})
     loadGoals()
-  }, [isOwner, year, productFilter, loadGoals])
+    loadOverview()
+  }, [isOwner, year, productFilter, loadGoals, loadOverview])
 
   useEffect(() => {
     if (!goals) return
@@ -87,7 +96,7 @@ export default function SalesPage() {
       await Promise.all(Object.entries(edits).map(([m, e]) =>
         apiFetch('/api/crm/goals', { method: 'PUT', body: JSON.stringify({ year, month: parseInt(m), product: productFilter || 'GERAL', targetValue: parseFloat(e.v) || 0, targetCount: parseInt(e.c) || 0 }) })))
       toast.success('Metas salvas')
-      loadGoals()
+      loadGoals(); loadOverview()
     } catch { toast.error('Erro ao salvar metas') } finally { setSaving(false) }
   }
 
@@ -233,10 +242,86 @@ export default function SalesPage() {
           </select>
         </div>
 
+        {productFilter === '' ? (
+          /* ===== GERAL — consolidado com drill-down por mês ===== */
+          <>
+            <div style={{ ...card, padding: '20px 16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+              <Gauge label={`Ano ${year} · R$`} value={overview?.yearTotal.soldValue ?? 0} target={overview?.yearTotal.metaValue ?? 0} kind="money" />
+              <Gauge label={`Ano ${year} · Vendas`} value={overview?.yearTotal.soldCount ?? 0} target={overview?.yearTotal.metaCount ?? 0} kind="count" />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+              <span style={{ fontSize: 12.5, color: C.mid }}>Total do mês = soma dos programas. Clique num mês para abrir o detalhamento · escolha um programa acima para editar.</span>
+              <button onClick={() => { const anyOpen = Object.values(openMonths).some(Boolean); if (anyOpen) setOpenMonths({}); else { const o: Record<number, boolean> = {}; for (let m = 1; m <= 12; m++) o[m] = true; setOpenMonths(o) } }} style={{ background: '#fff', color: C.ink, border: `1px solid ${C.line}`, borderRadius: 6, padding: '7px 14px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600 }}>{Object.values(openMonths).some(Boolean) ? 'Recolher tudo' : 'Expandir tudo'}</button>
+            </div>
+            <div style={{ ...card, overflow: 'hidden' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-sans)', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ background: C.bg, color: C.mid }}>
+                      {['Mês', 'Meta R$', 'Vendido', '%', 'Meta vendas', 'Feitas', '%'].map((h, i) => (
+                        <th key={h} style={{ padding: '10px 14px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, borderBottom: `1px solid ${C.line}` }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(overview?.months ?? []).map(m => {
+                      const open = openMonths[m.month]
+                      const pctV = m.metaValue > 0 ? m.soldValue / m.metaValue : 0
+                      const pctC = m.metaCount > 0 ? m.soldCount / m.metaCount : 0
+                      const isCur = m.month === curMonth && year === nowYear
+                      const has = m.metaValue > 0 || m.soldValue > 0
+                      return (
+                        <Fragment key={m.month}>
+                          <tr onClick={() => has && setOpenMonths(p => ({ ...p, [m.month]: !p[m.month] }))} style={{ background: isCur ? 'rgba(199,249,0,0.07)' : 'transparent', borderBottom: `1px solid ${C.bg}`, cursor: has ? 'pointer' : 'default', opacity: has ? 1 : 0.5 }}>
+                            <td style={{ padding: '9px 14px', fontWeight: isCur ? 800 : 700, color: C.ink }}>{has ? (open ? '▾' : '▸') : ''} {MONTH_FULL[m.month - 1]}</td>
+                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', color: C.ink }}>{fmtBRL(m.metaValue)}</td>
+                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', color: C.mid }}>{fmtBRL(m.soldValue)}</td>
+                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', fontWeight: 700, color: m.metaValue > 0 ? gaugeColor(pctV) : C.dim }}>{m.metaValue > 0 ? `${Math.round(pctV * 100)}%` : '—'}</td>
+                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', color: C.ink }}>{m.metaCount}</td>
+                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', color: C.mid }}>{m.soldCount}</td>
+                            <td style={{ ...num, padding: '9px 14px', textAlign: 'right', fontWeight: 700, color: m.metaCount > 0 ? gaugeColor(pctC) : C.dim }}>{m.metaCount > 0 ? `${Math.round(pctC * 100)}%` : '—'}</td>
+                          </tr>
+                          {open && m.byProgram.map(pg => {
+                            const pv = pg.metaValue > 0 ? pg.soldValue / pg.metaValue : 0
+                            const pc = pg.metaCount > 0 ? pg.soldCount / pg.metaCount : 0
+                            const color = PRODUCT_COLORS[pg.product] ?? C.dim
+                            return (
+                              <tr key={pg.product} style={{ background: '#fbfcfd', borderBottom: `1px solid ${C.bg}` }}>
+                                <td style={{ padding: '6px 14px 6px 30px', fontSize: 12.5 }}><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: color, marginRight: 6 }} />{pg.product}</td>
+                                <td style={{ ...num, padding: '6px 14px', textAlign: 'right', fontSize: 12.5, color: C.mid }}>{fmtBRL(pg.metaValue)}</td>
+                                <td style={{ ...num, padding: '6px 14px', textAlign: 'right', fontSize: 12.5, color: C.mid }}>{fmtBRL(pg.soldValue)}</td>
+                                <td style={{ ...num, padding: '6px 14px', textAlign: 'right', fontSize: 12.5, fontWeight: 700, color: pg.metaValue > 0 ? gaugeColor(pv) : C.dim }}>{pg.metaValue > 0 ? `${Math.round(pv * 100)}%` : '—'}</td>
+                                <td style={{ ...num, padding: '6px 14px', textAlign: 'right', fontSize: 12.5, color: C.mid }}>{pg.metaCount}</td>
+                                <td style={{ ...num, padding: '6px 14px', textAlign: 'right', fontSize: 12.5, color: C.mid }}>{pg.soldCount}</td>
+                                <td style={{ ...num, padding: '6px 14px', textAlign: 'right', fontSize: 12.5, fontWeight: 700, color: pg.metaCount > 0 ? gaugeColor(pc) : C.dim }}>{pg.metaCount > 0 ? `${Math.round(pc * 100)}%` : '—'}</td>
+                              </tr>
+                            )
+                          })}
+                        </Fragment>
+                      )
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr style={{ background: C.bg, fontWeight: 800 }}>
+                      <td style={{ padding: '10px 14px', color: C.ink }}>Ano</td>
+                      <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: C.ink }}>{fmtBRL(overview?.yearTotal.metaValue ?? 0)}</td>
+                      <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: C.mid }}>{fmtBRL(overview?.yearTotal.soldValue ?? 0)}</td>
+                      <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: (overview?.yearTotal.metaValue ?? 0) > 0 ? gaugeColor(overview!.yearTotal.soldValue / overview!.yearTotal.metaValue) : C.dim }}>{(overview?.yearTotal.metaValue ?? 0) > 0 ? `${Math.round(overview!.yearTotal.soldValue / overview!.yearTotal.metaValue * 100)}%` : '—'}</td>
+                      <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: C.ink }}>{overview?.yearTotal.metaCount ?? 0}</td>
+                      <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: C.mid }}>{overview?.yearTotal.soldCount ?? 0}</td>
+                      <td style={{ ...num, padding: '10px 14px', textAlign: 'right', color: (overview?.yearTotal.metaCount ?? 0) > 0 ? gaugeColor(overview!.yearTotal.soldCount / overview!.yearTotal.metaCount) : C.dim }}>{(overview?.yearTotal.metaCount ?? 0) > 0 ? `${Math.round(overview!.yearTotal.soldCount / overview!.yearTotal.metaCount * 100)}%` : '—'}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </>
+        ) : (
+        <>
         {/* Velocímetros do ano */}
         <div style={{ ...card, padding: '20px 16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
-          <Gauge label={`Ano ${year}${productFilter ? ` · ${productFilter}` : ''} · R$`} value={data?.totalYear ?? 0} target={goals?.totalValue ?? 0} kind="money" />
-          <Gauge label={`Ano ${year}${productFilter ? ` · ${productFilter}` : ''} · Vendas`} value={data?.countYear ?? 0} target={goals?.totalCount ?? 0} kind="count" />
+          <Gauge label={`Ano ${year} · ${productFilter} · R$`} value={data?.totalYear ?? 0} target={goals?.totalValue ?? 0} kind="money" />
+          <Gauge label={`Ano ${year} · ${productFilter} · Vendas`} value={data?.countYear ?? 0} target={goals?.totalCount ?? 0} kind="count" />
         </div>
 
         {/* Aplicar a todos */}
@@ -307,6 +392,8 @@ export default function SalesPage() {
             </table>
           </div>
         </div>
+        </>
+        )}
       </>}
     </div>
   )

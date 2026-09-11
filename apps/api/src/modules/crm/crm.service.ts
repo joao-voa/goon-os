@@ -1180,6 +1180,58 @@ export class CrmService {
     return { year, months, totalYear, countYear, byProgram }
   }
 
+  // Visão consolidada: por mês, o total (= soma dos programas) + o detalhamento
+  // por programa (meta e vendido). O total do mês é a soma dos programas.
+  async getGoalsOverview(year: number) {
+    const start = new Date(year, 0, 1)
+    const end = new Date(year + 1, 0, 1)
+    const plans = await this.prisma.clientPlan.findMany({
+      where: { startDate: { gte: start, lt: end }, status: { not: 'CANCELLED' }, client: { leadStage: { notIn: ['RECUPERAR', 'PERDIDO'] } } },
+      select: { value: true, startDate: true, product: { select: { code: true } } },
+    })
+    const sold: Record<number, Record<string, { value: number; count: number }>> = {}
+    for (let m = 1; m <= 12; m++) sold[m] = {}
+    for (const pl of plans) {
+      const m = pl.startDate.getMonth() + 1
+      const code = pl.product.code
+      const cur = sold[m][code] ?? { value: 0, count: 0 }
+      cur.value += Number(pl.value ?? 0); cur.count++
+      sold[m][code] = cur
+    }
+    // Metas por programa (exclui GERAL — no consolidado o total é a soma dos programas)
+    const goals = await this.prisma.salesGoal.findMany({ where: { year, product: { not: 'GERAL' } } })
+    const meta: Record<number, Record<string, { value: number; count: number }>> = {}
+    for (let m = 1; m <= 12; m++) meta[m] = {}
+    for (const g of goals) meta[g.month][g.product] = { value: Number(g.targetValue), count: g.targetCount }
+
+    const months = Array.from({ length: 12 }, (_, i) => {
+      const m = i + 1
+      const codes = [...new Set([...Object.keys(sold[m]), ...Object.keys(meta[m])])]
+      const byProgram = codes.map(product => ({
+        product,
+        metaValue: meta[m][product]?.value ?? 0,
+        metaCount: meta[m][product]?.count ?? 0,
+        soldValue: sold[m][product]?.value ?? 0,
+        soldCount: sold[m][product]?.count ?? 0,
+      })).sort((a, b) => b.metaValue - a.metaValue || b.soldValue - a.soldValue)
+      return {
+        month: m,
+        metaValue: byProgram.reduce((s, p) => s + p.metaValue, 0),
+        metaCount: byProgram.reduce((s, p) => s + p.metaCount, 0),
+        soldValue: byProgram.reduce((s, p) => s + p.soldValue, 0),
+        soldCount: byProgram.reduce((s, p) => s + p.soldCount, 0),
+        byProgram,
+      }
+    })
+    const yearTotal = {
+      metaValue: months.reduce((s, m) => s + m.metaValue, 0),
+      metaCount: months.reduce((s, m) => s + m.metaCount, 0),
+      soldValue: months.reduce((s, m) => s + m.soldValue, 0),
+      soldCount: months.reduce((s, m) => s + m.soldCount, 0),
+    }
+    return { year, months, yearTotal }
+  }
+
   async createLead(dto: {
     companyName: string
     responsible: string

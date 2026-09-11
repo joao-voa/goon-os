@@ -59,6 +59,12 @@ export class CrmController {
     return this.service.setGoals(dto)
   }
 
+  @Get('goals-overview')
+  @UseGuards(SalesGuard)
+  getGoalsOverview(@Query('year') year?: string) {
+    return this.service.getGoalsOverview(year ? parseInt(year, 10) : new Date().getFullYear())
+  }
+
   @Post('sync-sheets')
   @HttpCode(HttpStatus.OK)
   syncFromSheets() {
