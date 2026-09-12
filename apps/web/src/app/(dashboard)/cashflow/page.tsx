@@ -86,7 +86,10 @@ export default function CashflowPage() {
           }
           for (const e of expArray) {
             const dt = new Date(e.dueDate)
-            const skip = e.category === 'MENTORIA' && e.description?.includes('Giulliano')
+            // Gastos do Giulliano (repasse E pessoal) ficam FORA do fluxo geral —
+            // eles têm a aba própria. Só custos da empresa entram aqui.
+            const giu = /giulliano/i.test(e.description ?? '')
+            const skip = giu && (e.category === 'MENTORIA' || e.category === 'PESSOAL')
             if (!skip && dt.getUTCDate() === d && dt.getUTCMonth() === selMonth) {
               saidas += e.value; items.push({ type: 'saida', description: e.description, value: e.value, category: e.category, status: e.status })
               layers[layerFromCat(e.category ?? 'OUTRO', e.description ?? '')] += e.value
@@ -288,7 +291,53 @@ export default function CashflowPage() {
         </>
       )}
 
-      {level === 'mes' && (
+      {level === 'mes' && (<>
+        {/* Detalhamento do mês — entradas e saídas (gastos do Giu ficam fora) */}
+        {(() => {
+          const ent = new Map<string, number>(); const sai = new Map<string, number>()
+          for (const d of dailyData) for (const it of d.items) {
+            const k = it.description || '—'
+            if (it.type === 'entrada') ent.set(k, (ent.get(k) ?? 0) + it.value)
+            else sai.set(k, (sai.get(k) ?? 0) + it.value)
+          }
+          const entL = [...ent.entries()].sort((a, b) => b[1] - a[1])
+          const saiL = [...sai.entries()].sort((a, b) => b[1] - a[1])
+          const entT = entL.reduce((s, [, v]) => s + v, 0), saiT = saiL.reduce((s, [, v]) => s + v, 0)
+          return (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }}>
+              <div style={{ ...card, overflow: 'hidden' }}>
+                <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 14, color: C.greenDk }}>Entradas <span style={{ color: C.dim, fontSize: 12, fontWeight: 400 }}>({entL.length})</span></span>
+                  <span style={{ ...num, fontSize: 13, fontWeight: 800, color: C.greenDk }}>{fmt(entT)}</span>
+                </div>
+                <div style={{ maxHeight: 340, overflowY: 'auto' }}>
+                  {entL.length === 0 && <div style={{ padding: '14px 18px', color: C.dim, fontSize: 13 }}>Nenhuma entrada.</div>}
+                  {entL.map(([k, v], i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '8px 18px', borderTop: `1px solid ${C.bg}` }}>
+                      <span style={{ fontSize: 12.5, color: C.ink }}>{k}</span>
+                      <span style={{ ...num, fontSize: 12.5, color: C.greenDk, fontWeight: 600 }}>{fmt(v)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ ...card, overflow: 'hidden' }}>
+                <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 14, color: C.red }}>Saídas <span style={{ color: C.dim, fontSize: 12, fontWeight: 400 }}>({saiL.length}) · só da empresa</span></span>
+                  <span style={{ ...num, fontSize: 13, fontWeight: 800, color: C.red }}>{fmt(saiT)}</span>
+                </div>
+                <div style={{ maxHeight: 340, overflowY: 'auto' }}>
+                  {saiL.length === 0 && <div style={{ padding: '14px 18px', color: C.dim, fontSize: 13 }}>Nenhuma saída.</div>}
+                  {saiL.map(([k, v], i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '8px 18px', borderTop: `1px solid ${C.bg}` }}>
+                      <span style={{ fontSize: 12.5, color: C.ink }}>{k}</span>
+                      <span style={{ ...num, fontSize: 12.5, color: C.red, fontWeight: 600, whiteSpace: 'nowrap' }}>{fmt(v)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )
+        })()}
         <div style={{ ...card, overflow: 'hidden' }}>
           <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.line}`, fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Dia a dia <span style={{ color: C.dim, fontSize: 12, fontWeight: 400 }}>— clique para o detalhe</span></div>
           {dailyData.filter(d => d.entradas > 0 || d.saidas > 0).length === 0 && (
@@ -313,7 +362,7 @@ export default function CashflowPage() {
             )
           })}
         </div>
-      )}
+      </>)}
 
       {level === 'dia' && (() => {
         const d = dailyData.find(x => x.day === selDay)
