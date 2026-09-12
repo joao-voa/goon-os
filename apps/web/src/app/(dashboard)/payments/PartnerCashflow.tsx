@@ -38,6 +38,7 @@ export default function PartnerCashflow({ partnerKey }: { partnerKey: 'giulliano
   const [year, setYear] = useState(new Date().getFullYear())
   const [openMonth, setOpenMonth] = useState<number | null>(null)
   const [items, setItems] = useState<Record<number, Array<{ description: string; value: number; status: string }>>>({})
+  const [incPessoal, setIncPessoal] = useState(true) // incluir gastos pessoais no cálculo (só Giulliano)
 
   const load = useCallback(async () => {
     const [cf, mt] = await Promise.all([
@@ -90,7 +91,7 @@ export default function PartnerCashflow({ partnerKey }: { partnerKey: 'giulliano
     if (m.month > RATEIO_MONTH) return custo * cfg.custoPost
     return augSplit ? augSplit.pre * cfg.custoPre + augSplit.pos * cfg.custoPost : custo * cfg.custoPost
   }
-  const personalMes = (m: MonthData): number => cfg.personal === 'Giulliano' ? m.layers.pessoalGiu : 0
+  const personalMes = (m: MonthData): number => (cfg.personal === 'Giulliano' && incPessoal) ? m.layers.pessoalGiu : 0
 
   // Repasse (fatia de receita) por mês — exclui carteira/churn
   const repasseByMonth: Record<number, number> = {}
@@ -108,7 +109,7 @@ export default function PartnerCashflow({ partnerKey }: { partnerKey: 'giulliano
   const repasseAno = Object.values(repasseByMonth).reduce((s, v) => s + v, 0)
   const custoShareAno = data.months.reduce((s, m) => s + custoShare(m), 0)
   const rendaAno = repasseAno - custoShareAno
-  const gastosAno = cfg.personal === 'Giulliano' ? data.totals.pessoalGiu : 0
+  const gastosAno = (cfg.personal === 'Giulliano' && incPessoal) ? data.totals.pessoalGiu : 0
   const sobraAno = rendaAno - gastosAno
 
   const custoHint = cfg.custoPre === cfg.custoPost
@@ -123,7 +124,7 @@ export default function PartnerCashflow({ partnerKey }: { partnerKey: 'giulliano
     { l: 'Repasse (sua fatia da receita)', v: repasseAno, hint: 'Da aba Repasses — exclui carteira', kind: 'base' },
     { l: 'Sua parte das despesas comuns', v: -custoShareAno, hint: custoHint, kind: 'out' },
     { l: 'Renda da operação', v: rendaAno, hint: 'O que sobra pra você da empresa', kind: 'sub' },
-    ...(cfg.personal ? [{ l: 'Gastos pessoais', v: -gastosAno, hint: 'Cartão, aluguel, luz…', kind: 'out' as const }] : []),
+    ...(cfg.personal && incPessoal ? [{ l: 'Gastos pessoais', v: -gastosAno, hint: 'Cartão, aluguel, luz…', kind: 'out' as const }] : []),
     { l: 'Sobra pra você', v: sobraAno, hint: 'Depois de tudo', kind: 'result' },
   ]
 
@@ -134,10 +135,18 @@ export default function PartnerCashflow({ partnerKey }: { partnerKey: 'giulliano
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Fluxo de Caixa · {cfg.name}</h1>
           <p style={{ margin: '2px 0 0', color: C.mid, fontSize: 13 }}>{cfg.subtitle}</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, border: `1px solid ${C.line}`, borderRadius: 100, padding: 4 }}>
-          <button onClick={() => setYear(y => y - 1)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: C.mid, padding: '2px 8px', fontSize: 14 }}>‹</button>
-          <span style={{ ...num, fontWeight: 700, minWidth: 42, textAlign: 'center', fontSize: 14 }}>{year}</span>
-          <button onClick={() => setYear(y => y + 1)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: C.mid, padding: '2px 8px', fontSize: 14 }}>›</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          {cfg.personal && (
+            <button onClick={() => setIncPessoal(v => !v)} title="Inclui/tira os gastos pessoais do cálculo da sobra" style={{
+              padding: '7px 14px', borderRadius: 100, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600,
+              border: `1px solid ${incPessoal ? C.neon : C.line}`, background: incPessoal ? C.neon : '#fff', color: C.ink,
+            }}>Pessoal Giulliano: {incPessoal ? 'ON' : 'OFF'}</button>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, border: `1px solid ${C.line}`, borderRadius: 100, padding: 4 }}>
+            <button onClick={() => setYear(y => y - 1)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: C.mid, padding: '2px 8px', fontSize: 14 }}>‹</button>
+            <span style={{ ...num, fontWeight: 700, minWidth: 42, textAlign: 'center', fontSize: 14 }}>{year}</span>
+            <button onClick={() => setYear(y => y + 1)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: C.mid, padding: '2px 8px', fontSize: 14 }}>›</button>
+          </div>
         </div>
       </div>
 
@@ -167,7 +176,7 @@ export default function PartnerCashflow({ partnerKey }: { partnerKey: 'giulliano
           <div style={{ display: 'flex', gap: 14, fontSize: 11, color: C.mid, flexWrap: 'wrap' }}>
             <span><i style={{ display: 'inline-block', width: 9, height: 9, background: C.green, borderRadius: 2, marginRight: 5 }} />Repasse</span>
             <span><i style={{ display: 'inline-block', width: 9, height: 9, background: C.slate, borderRadius: 2, marginRight: 5 }} />Despesas comuns</span>
-            {cfg.personal && <span><i style={{ display: 'inline-block', width: 9, height: 9, background: C.red, borderRadius: 2, marginRight: 5 }} />Pessoal</span>}
+            {cfg.personal && incPessoal && <span><i style={{ display: 'inline-block', width: 9, height: 9, background: C.red, borderRadius: 2, marginRight: 5 }} />Pessoal</span>}
           </div>
         </div>
         {(() => {
@@ -251,7 +260,7 @@ export default function PartnerCashflow({ partnerKey }: { partnerKey: 'giulliano
                     <span style={{ fontSize: 13, color: C.ink }}>Sua parte das despesas comuns</span>
                     <span style={{ ...num, fontSize: 13, color: C.red, fontWeight: 600 }}>{cs > 0 ? '−' : ''}{fmt(cs)}</span>
                   </div>
-                  {cfg.personal && <>
+                  {cfg.personal && incPessoal && <>
                     {!items[m.month] && <div style={{ color: C.dim, fontSize: 12, padding: '6px 0' }}>Carregando gastos pessoais…</div>}
                     {items[m.month]?.length === 0 && <div style={{ color: C.dim, fontSize: 12, padding: '6px 0' }}>Sem gastos pessoais neste mês.</div>}
                     {items[m.month]?.map((it, i) => (
