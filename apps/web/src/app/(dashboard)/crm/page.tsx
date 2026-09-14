@@ -1126,6 +1126,8 @@ export default function CrmPage() {
   const [suggestions, setSuggestions] = useState<{ salesReps: string[]; mentors: string[] }>({ salesReps: [], mentors: [] })
   const [crmTab, setCrmTab] = useState<'pipeline' | 'agenda' | 'dashboard'>('pipeline')
   const [dashPeriod, setDashPeriod] = useState<'dia' | 'semana' | 'mes' | 'ano'>('mes')
+  const [leadDay, setLeadDay] = useState('') // dia selecionado no gráfico de novos leads (YYYY-MM-DD | '')
+  const [leadWindow, setLeadWindow] = useState<7 | 14 | 30 | 90>(30)
   const [commercialMeetings, setCommercialMeetings] = useState<Array<{ id: string; title: string; type: string; category?: string; date: string; duration: number; mentorName: string | null; notes: string | null; status: string; client?: { id: string; companyName: string } | null }>>([])
   const [comMonth, setComMonth] = useState(new Date().getMonth())
   const [comYear, setComYear] = useState(new Date().getFullYear())
@@ -1347,6 +1349,123 @@ export default function CrmPage() {
                 </div>
               ))}
             </div>
+
+            {/* Novos leads por dia */}
+            {(() => {
+              const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+              // Fim da janela: dia selecionado (se houver) ou hoje.
+              const end = leadDay ? new Date(leadDay + 'T12:00:00') : new Date()
+              end.setHours(12, 0, 0, 0)
+              // Contagem de leads por dia (chave local YYYY-MM-DD).
+              const counts: Record<string, number> = {}
+              for (const l of leads) {
+                const k = dayKey(new Date(l.createdAt))
+                counts[k] = (counts[k] ?? 0) + 1
+              }
+              // Buckets: leadWindow dias terminando em `end`.
+              const days: { key: string; date: Date; count: number }[] = []
+              for (let i = leadWindow - 1; i >= 0; i--) {
+                const d = new Date(end); d.setDate(d.getDate() - i)
+                const k = dayKey(d)
+                days.push({ key: k, date: d, count: counts[k] ?? 0 })
+              }
+              const maxCount = Math.max(1, ...days.map(d => d.count))
+              const totalWindow = days.reduce((s, d) => s + d.count, 0)
+              const avgWindow = Math.round((totalWindow / leadWindow) * 10) / 10
+              const selKey = leadDay || null
+              const selDays = selKey ? leads.filter(l => dayKey(new Date(l.createdAt)) === selKey) : []
+              const wLabel: Record<number, string> = { 7: '7 dias', 14: '14 dias', 30: '30 dias', 90: '90 dias' }
+              const stageLabel: Record<string, string> = {
+                NOVO: 'Novo', FOLLOW_UP: 'Em Contato', FUP: 'Em Contato', REUNIAO_AGENDADA: 'Agendado',
+                EM_NEGOCIACAO: 'Em Negociação', REPESCAGEM: 'Repescagem', PERDIDO: 'Perdido', FECHADO: 'Ganho',
+              }
+              return (
+                <div style={{ ...card, overflow: 'hidden', marginBottom: 20 }}>
+                  <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15, color: C.ink }}>Novos leads por dia</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, border: `1px solid ${C.line}`, borderRadius: 100, padding: 3 }}>
+                        {([7, 14, 30, 90] as const).map(w => (
+                          <button key={w} onClick={() => setLeadWindow(w)} style={{
+                            padding: '4px 10px', border: 'none', borderRadius: 100, fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer',
+                            background: leadWindow === w ? C.ink : 'transparent', color: leadWindow === w ? '#fff' : C.mid,
+                          }}>{wLabel[w]}</button>
+                        ))}
+                      </div>
+                      <input type="date" value={leadDay} onChange={e => setLeadDay(e.target.value)} style={{
+                        border: `1px solid ${C.line}`, borderRadius: 8, padding: '6px 10px', fontFamily: 'var(--font-sans)', fontSize: 12.5, color: C.ink, cursor: 'pointer',
+                      }} />
+                      {leadDay && (
+                        <button onClick={() => setLeadDay('')} style={{
+                          border: `1px solid ${C.line}`, background: '#fff', borderRadius: 8, padding: '6px 10px', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: C.mid, cursor: 'pointer',
+                        }}>Limpar</button>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ padding: '16px 20px' }}>
+                    {/* Resumo */}
+                    <div style={{ display: 'flex', gap: 24, marginBottom: 14, flexWrap: 'wrap' }}>
+                      <div>
+                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.mid }}>Total ({wLabel[leadWindow]})</div>
+                        <div style={{ ...num, fontSize: 20, fontWeight: 700, color: C.ink }}>{totalWindow}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.mid }}>Média/dia</div>
+                        <div style={{ ...num, fontSize: 20, fontWeight: 700, color: C.slate }}>{avgWindow}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.mid }}>Pico/dia</div>
+                        <div style={{ ...num, fontSize: 20, fontWeight: 700, color: C.greenDk }}>{Math.max(...days.map(d => d.count))}</div>
+                      </div>
+                    </div>
+                    {/* Gráfico de barras */}
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: leadWindow > 30 ? 2 : 4, height: 140, overflowX: 'auto', paddingBottom: 4 }}>
+                      {days.map(d => {
+                        const isSel = d.key === selKey
+                        const h = d.count > 0 ? Math.max(3, Math.round((d.count / maxCount) * 118)) : 0
+                        return (
+                          <div key={d.key} onClick={() => setLeadDay(isSel ? '' : d.key)} title={`${d.date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })} · ${d.count} lead${d.count === 1 ? '' : 's'}`}
+                            style={{ flex: leadWindow > 30 ? '0 0 auto' : 1, minWidth: leadWindow > 30 ? 8 : 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                            {d.count > 0 && <span style={{ ...num, fontSize: 10, fontWeight: 700, color: isSel ? C.ink : C.dim }}>{d.count}</span>}
+                            <div style={{ width: '100%', maxWidth: 22, height: h, background: isSel ? C.neon : selKey ? '#e5e9ef' : C.slate, borderRadius: '4px 4px 0 0', transition: 'background 0.12s' }} />
+                            {(leadWindow <= 14 || d.date.getDate() === 1 || isSel) && (
+                              <span style={{ ...num, fontSize: 8.5, color: isSel ? C.ink : C.dim, fontWeight: isSel ? 700 : 500, whiteSpace: 'nowrap' }}>{d.date.getDate()}/{d.date.getMonth() + 1}</span>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                    {/* Detalhe do dia selecionado */}
+                    {selKey && (
+                      <div style={{ marginTop: 14, borderTop: `1px solid ${C.line}`, paddingTop: 12 }}>
+                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, color: C.ink, marginBottom: 8 }}>
+                          {new Date(selKey + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+                          <span style={{ color: C.mid, fontWeight: 500 }}> · {selDays.length} novo{selDays.length === 1 ? '' : 's'}</span>
+                        </div>
+                        {selDays.length === 0 ? (
+                          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12.5, color: C.dim }}>Nenhum lead novo neste dia.</div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {selDays.map(l => (
+                              <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '7px 10px', background: C.bg, borderRadius: 8 }}>
+                                <div style={{ minWidth: 0 }}>
+                                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.companyName}</div>
+                                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11.5, color: C.mid }}>{l.responsible}{l.leadSource ? ` · ${l.leadSource}` : ''}</div>
+                                </div>
+                                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10.5, fontWeight: 600, color: C.slate, background: '#fff', border: `1px solid ${C.line}`, borderRadius: 100, padding: '2px 9px', whiteSpace: 'nowrap' }}>{stageLabel[l.leadStage] ?? l.leadStage}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {!selKey && (
+                      <div style={{ marginTop: 10, fontFamily: 'var(--font-sans)', fontSize: 11.5, color: C.dim }}>Clique numa barra ou escolha uma data para ver os leads do dia.</div>
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Pipeline summary */}
             <div style={{ ...card, overflow: 'hidden', marginBottom: 20 }}>
