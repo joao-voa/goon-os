@@ -25,19 +25,31 @@ export class PortalService {
 
   async getByToken(token: string) {
     const client = await this.clientByToken(token)
-    const [profile, metrics] = await Promise.all([
-      this.prisma.menteeProfile.findUnique({ where: { clientId: client.id }, select: { mentorName: true } }),
+    const now = Date.now()
+    const [profile, metrics, actions, meetings, lastStudy] = await Promise.all([
+      this.prisma.menteeProfile.findUnique({ where: { clientId: client.id }, select: { mentorName: true, goal: true } }),
       this.prisma.monthlyMetric.findMany({ where: { clientId: client.id }, orderBy: { month: 'asc' } }),
+      // só tarefas em aberto do próprio cliente (nada interno)
+      this.prisma.actionItem.findMany({ where: { clientId: client.id, done: false }, orderBy: [{ dueDate: 'asc' }], select: { id: true, what: true, dueDate: true } }),
+      // agenda de reuniões do cliente
+      this.prisma.meeting.findMany({ where: { clientId: client.id }, orderBy: { date: 'desc' }, take: 40, select: { id: true, title: true, date: true, status: true } }),
+      // próximos passos da última sessão (campo voltado ao cliente)
+      this.prisma.sessionCaseStudy.findFirst({ where: { clientId: client.id }, orderBy: { sessionDate: 'desc' }, select: { sessionDate: true, proximosPassos: true } }),
     ])
     return {
       company: client.companyName,
       responsible: client.responsible ?? null,
       mentorName: profile?.mentorName ?? null,
+      goal: profile?.goal ?? null,
       months: metrics.map(m => ({
         month: m.month, faturamento: m.faturamento, clientesAtivos: m.clientesAtivos, estoqueQtd: m.estoqueQtd,
         estoqueValor: m.estoqueValor, ticketMedio: m.ticketMedio, numVendas: m.numVendas,
         investimentoTrafego: m.investimentoTrafego, roas: m.roas, seguidoresIg: m.seguidoresIg,
       })),
+      tasks: actions.map(a => ({ id: a.id, what: a.what, dueDate: a.dueDate?.toISOString() ?? null, overdue: !!a.dueDate && a.dueDate.getTime() < now })),
+      meetings: meetings.map(m => ({ id: m.id, title: m.title, date: m.date.toISOString(), status: m.status })),
+      nextSteps: lastStudy?.proximosPassos ?? null,
+      lastSessionDate: lastStudy?.sessionDate?.toISOString() ?? null,
     }
   }
 
