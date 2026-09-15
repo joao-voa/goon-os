@@ -48,6 +48,17 @@ export class MentorshipController {
     return this.service.unenroll(clientId)
   }
 
+  @Post('clients/:clientId/portal-token')
+  @HttpCode(201)
+  generatePortalToken(@Param('clientId') clientId: string) {
+    return this.service.generatePortalToken(clientId)
+  }
+
+  @Delete('clients/:clientId/portal-token')
+  revokePortalToken(@Param('clientId') clientId: string) {
+    return this.service.revokePortalToken(clientId)
+  }
+
   @Post('case-studies')
   @HttpCode(201)
   createCaseStudy(@Body() dto: Parameters<MentorshipService['createCaseStudy']>[0]) {

@@ -5,5 +5,6 @@ import { MentorshipController } from './mentorship.controller'
 @Module({
   controllers: [MentorshipController],
   providers: [MentorshipService],
+  exports: [MentorshipService],
 })
 export class MentorshipModule {}

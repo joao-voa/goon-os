@@ -30,6 +30,7 @@ interface Detail {
     companyName: string; tradeName?: string | null; cnpj?: string | null; responsible: string | null
     email?: string | null; whatsapp?: string | null; phone?: string | null; segment: string | null
     city?: string | null; state?: string | null; estimatedRevenue?: string | null; createdAt?: string
+    portalToken?: string | null
     plan?: { value: number; installments: number | null; code: string; name: string } | null
   } | null
   attention: boolean; caseStudies: CaseStudy[]; actionItems: Action[]
@@ -392,6 +393,52 @@ function QuickEntry({ clients, onSaved }: { clients: OvClient[]; onSaved: () => 
   )
 }
 
+// link público de auto-preenchimento do cliente (gerar / copiar / revogar)
+function PortalLink({ clientId, initialToken }: { clientId: string; initialToken: string | null }) {
+  const [token, setToken] = useState<string | null>(initialToken)
+  const [open, setOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [copied, setCopied] = useState(false)
+  useEffect(() => { setToken(initialToken) }, [initialToken, clientId])
+  const url = token && typeof window !== 'undefined' ? `${window.location.origin}/portal/${token}` : ''
+  async function gen() {
+    setBusy(true)
+    try { const r = await apiFetch<{ portalToken: string }>(`/api/mentorship/clients/${clientId}/portal-token`, { method: 'POST' }); setToken(r.portalToken); setOpen(true) }
+    catch { toast.error('Erro ao gerar link') } finally { setBusy(false) }
+  }
+  async function revoke() {
+    if (!confirm('Revogar o link? A URL atual deixa de funcionar.')) return
+    setBusy(true)
+    try { await apiFetch(`/api/mentorship/clients/${clientId}/portal-token`, { method: 'DELETE' }); setToken(null) }
+    catch { toast.error('Erro ao revogar') } finally { setBusy(false) }
+  }
+  function copy() { navigator.clipboard.writeText(url).then(() => { setCopied(true); toast.success('Link copiado'); setTimeout(() => setCopied(false), 2000) }) }
+
+  if (!token) {
+    return <button onClick={gen} disabled={busy} style={{ background: CARD, color: INK, border: `1px solid ${LINE}`, padding: '10px 16px', fontFamily: mono, fontSize: 13, fontWeight: 600, cursor: 'pointer', borderRadius: 6 }}>{busy ? '…' : '🔗 Gerar link do cliente'}</button>
+  }
+  return (
+    <div style={{ position: 'relative' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ background: CARD, color: INK, border: `1px solid ${LINE}`, padding: '10px 16px', fontFamily: mono, fontSize: 13, fontWeight: 600, cursor: 'pointer', borderRadius: 6 }}>🔗 Link do cliente {open ? '▴' : '▾'}</button>
+      {open && (
+        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 6px)', zIndex: 50, width: 320, background: CARD, border: `1px solid ${LINE}`, borderRadius: 10, boxShadow: '0 10px 30px rgba(0,0,0,0.15)', padding: 14 }}>
+          <div style={{ fontSize: 11, color: MUT, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, marginBottom: 6 }}>Link de auto-preenchimento</div>
+          <div style={{ fontSize: 12, color: SLATE, wordBreak: 'break-all', background: BG, border: `1px solid ${LINE}`, borderRadius: 8, padding: '8px 10px', marginBottom: 8 }}>{url}</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <button onClick={copy} style={{ flex: 1, background: NEON, color: INK, border: 'none', padding: '8px 12px', fontFamily: mono, fontSize: 12, fontWeight: 700, cursor: 'pointer', borderRadius: 6 }}>{copied ? '✓ Copiado' : 'Copiar link'}</button>
+            <a href={url} target="_blank" rel="noreferrer" style={{ background: CARD, color: INK, border: `1px solid ${LINE}`, padding: '8px 12px', fontFamily: mono, fontSize: 12, fontWeight: 600, textDecoration: 'none', borderRadius: 6 }}>Abrir</a>
+          </div>
+          <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+            <button onClick={gen} disabled={busy} style={{ flex: 1, background: 'transparent', color: MUT, border: `1px solid ${LINE}`, padding: '7px 10px', fontFamily: mono, fontSize: 11.5, fontWeight: 600, cursor: 'pointer', borderRadius: 6 }}>Gerar novo</button>
+            <button onClick={revoke} disabled={busy} style={{ flex: 1, background: 'transparent', color: RED, border: `1px solid #fecaca`, padding: '7px 10px', fontFamily: mono, fontSize: 11.5, fontWeight: 600, cursor: 'pointer', borderRadius: 6 }}>Revogar</button>
+          </div>
+          <div style={{ fontSize: 10.5, color: DIM, marginTop: 8, lineHeight: 1.4 }}>Mande esse link ao cliente. Ele preenche os números direto, sem login, e só enxerga os dados dele.</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // contexto da mentoria editável (dores + objetivo), salva ao sair do campo
 function EditableContext({ clientId, mainPains, goal, onSaved }: { clientId: string; mainPains: string | null; goal: string | null; onSaved: () => void }) {
   const [pains, setPains] = useState(mainPains ?? '')
@@ -683,7 +730,10 @@ function ClientPanel({ detail, sel, tab, setTab, onMove, onRegister, onAddTask, 
             {detail.billing?.delinquent && <span style={badge}>Inadimplente</span>}
           </div>
         </div>
-        <button onClick={() => onRegister()} style={{ background: NEON, color: INK, border: 'none', padding: '10px 16px', fontFamily: mono, fontSize: 13, fontWeight: 700, cursor: 'pointer', borderRadius: 6 }}>+ Registrar sessão</button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <PortalLink clientId={sel.clientId} initialToken={detail.client?.portalToken ?? null} />
+          <button onClick={() => onRegister()} style={{ background: NEON, color: INK, border: 'none', padding: '10px 16px', fontFamily: mono, fontSize: 13, fontWeight: 700, cursor: 'pointer', borderRadius: 6 }}>+ Registrar sessão</button>
+        </div>
       </div>
 
       {/* Última reunião em destaque */}
