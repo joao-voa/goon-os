@@ -35,10 +35,18 @@ export class MentorshipService {
       where: { status: 'ACTIVE', plans: { some: { status: 'ACTIVE' } } },
       select: {
         id: true, companyName: true, responsible: true, segment: true,
-        plans: { where: { status: 'ACTIVE' }, take: 1, select: { product: { select: { code: true } } }, orderBy: { value: 'desc' } },
+        plans: { where: { status: 'ACTIVE' }, select: { product: { select: { code: true } }, endDate: true }, orderBy: { value: 'desc' } },
       },
       orderBy: { companyName: 'asc' },
     })
+    // contrato vigente = algum plano ativo sem término OU com término >= hoje
+    const startToday = new Date(); startToday.setHours(0, 0, 0, 0)
+    const inTermOf = (plans: { endDate: Date | null }[]) => plans.some(p => p.endDate == null || p.endDate >= startToday)
+    const latestEndOf = (plans: { endDate: Date | null }[]) => {
+      const ends = plans.map(p => p.endDate).filter(Boolean) as Date[]
+      if (plans.some(p => p.endDate == null)) return null
+      return ends.length ? new Date(Math.max(...ends.map(d => d.getTime()))) : null
+    }
     const clientIds = clients.map(c => c.id)
     if (clientIds.length === 0) return { mentees: [], total: 0 }
 
@@ -75,6 +83,8 @@ export class MentorshipService {
         tier: c.plans[0]?.product?.code ?? null,
         mentorName,
         status: p?.status ?? 'ACTIVE',
+        activeInTerm: inTermOf(c.plans),
+        endDate: latestEndOf(c.plans)?.toISOString() ?? null,
         color: p?.color ?? null,
         openActions: open.length,
         overdueActions: overdue.length,

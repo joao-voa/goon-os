@@ -8,7 +8,7 @@ import { apiFetch } from '@/lib/api'
 interface Mentee {
   clientId: string; company: string; responsible: string | null; tier: string | null
   mentorName: string | null; status: string; openActions: number; overdueActions: number
-  daysSinceContact: number | null; attention: boolean
+  daysSinceContact: number | null; attention: boolean; activeInTerm: boolean; endDate: string | null
   lastMetrics: { faturamentoMes: number | null; faturamentoAno: number | null; clientesAtivos: number | null; estoqueQtd: number | null; estoqueValor: number | null; ticketMedio: number | null; roas: number | null; seguidoresIg: number | null; numVendas: number | null; sessionDate: string } | null
 }
 interface Channel { canal: string; valor: number }
@@ -68,6 +68,7 @@ export default function MentorshipDashboard() {
   const [q, setQ] = useState('')
   const [mentorF, setMentorF] = useState('')
   const [attF, setAttF] = useState(false)
+  const [segF, setSegF] = useState<'vigente' | 'vencido' | 'todos'>('vigente')
   const [formOpen, setFormOpen] = useState(false)
   const [formMeetingId, setFormMeetingId] = useState<string | undefined>(undefined)
   const [tab, setTab] = useState<'sessoes' | 'tarefas'>('sessoes')
@@ -96,7 +97,10 @@ export default function MentorshipDashboard() {
   // abre na Visão Geral (selId = null); usuário escolhe o cliente na lista
 
   const mentors = [...new Set(mentees.map(m => m.mentorName).filter(Boolean))] as string[]
-  const totAtt = mentees.filter(m => m.attention).length
+  const nVigentes = mentees.filter(m => m.activeInTerm).length
+  const nVencidos = mentees.length - nVigentes
+  const visibleMentees = mentees.filter(m => segF === 'todos' ? true : segF === 'vigente' ? m.activeInTerm : !m.activeInTerm)
+  const totAtt = visibleMentees.filter(m => m.attention).length
 
   async function moveAction(id: string, status: string) {
     setDetail(prev => prev ? { ...prev, actionItems: prev.actionItems.map(a => a.id === id ? { ...a, status, done: status === 'DONE' } : a) } : prev)
@@ -111,7 +115,7 @@ export default function MentorshipDashboard() {
       {listCollapsed ? (
         <aside style={{ width: 44, background: CARD, borderRight: `1px solid ${LINE}`, display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, height: 'calc(100vh - 56px)', position: 'sticky', top: 0, paddingTop: 14 }}>
           <button onClick={() => setListCollapsed(false)} title="Expandir lista" style={{ background: 'none', border: 'none', color: MUT, cursor: 'pointer', fontSize: 16 }}>▸</button>
-          <div style={{ writingMode: 'vertical-rl', marginTop: 12, fontFamily: disp, fontSize: 12, fontWeight: 700, letterSpacing: '0.02em', color: MUT }}>Mentoria · {mentees.length}</div>
+          <div style={{ writingMode: 'vertical-rl', marginTop: 12, fontFamily: disp, fontSize: 12, fontWeight: 700, letterSpacing: '0.02em', color: MUT }}>Mentoria · {visibleMentees.length}</div>
         </aside>
       ) : (
       <aside style={{ width: 300, background: CARD, borderRight: `1px solid ${LINE}`, display: 'flex', flexDirection: 'column', flexShrink: 0, height: 'calc(100vh - 56px)', position: 'sticky', top: 0 }}>
@@ -120,10 +124,19 @@ export default function MentorshipDashboard() {
             <div style={{ fontFamily: disp, fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: INK }}>Mentoria</div>
             <button onClick={() => setListCollapsed(true)} title="Recolher lista" style={{ background: 'none', border: 'none', color: DIM, cursor: 'pointer', fontSize: 16 }}>◂</button>
           </div>
-          <div style={{ fontSize: 12, color: MUT, marginTop: 3 }}>{mentees.length} mentorados · <span style={{ color: totAtt ? RED : GREEN, fontWeight: 600 }}>{totAtt} em atenção</span></div>
+          <div style={{ fontSize: 12, color: MUT, marginTop: 3 }}>{visibleMentees.length} mentorados · <span style={{ color: totAtt ? RED : GREEN, fontWeight: 600 }}>{totAtt} em atenção</span></div>
         </div>
         <div style={{ padding: '0 16px 12px' }}>
           <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar cliente..." className="goon-input" />
+          {/* Filtro de vigência do contrato — igual à aba Clientes (nem todos com plano ativo estão vigentes) */}
+          <div style={{ display: 'flex', gap: 5, marginTop: 8 }}>
+            {([['vigente', 'Vigentes', nVigentes], ['vencido', 'Vencidos', nVencidos], ['todos', 'Todos', mentees.length]] as const).map(([k, label, n]) => (
+              <button key={k} onClick={() => setSegF(k)} style={{
+                flex: 1, padding: '6px 4px', borderRadius: 8, cursor: 'pointer', fontFamily: mono, fontSize: 11.5, fontWeight: 600,
+                border: `1px solid ${segF === k ? INK : LINE}`, background: segF === k ? INK : CARD, color: segF === k ? '#fff' : MUT,
+              }}>{label} <span style={{ opacity: 0.7 }}>{n}</span></button>
+            ))}
+          </div>
           <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
             <button onClick={() => setAttF(v => !v)} style={chip(attF, RED)}>Atenção</button>
             <select value={mentorF} onChange={e => setMentorF(e.target.value)} style={{ ...chip(!!mentorF, NEON), cursor: 'pointer' }}>
@@ -140,8 +153,8 @@ export default function MentorshipDashboard() {
           }}>
             <span style={{ fontSize: 14 }}>◱</span> Visão geral
           </button>
-          {mentees.length === 0 && <div style={{ padding: 20, fontSize: 12, color: MUT, textAlign: 'center' }}>Nenhum mentorado.<br />Inscreva um cliente abaixo.</div>}
-          {mentees.map(m => {
+          {visibleMentees.length === 0 && <div style={{ padding: 20, fontSize: 12, color: MUT, textAlign: 'center' }}>Nenhum mentorado {segF === 'vigente' ? 'vigente' : segF === 'vencido' ? 'vencido' : ''} neste filtro.</div>}
+          {visibleMentees.map(m => {
             const active = m.clientId === selId
             return (
               <button key={m.clientId} onClick={() => setSelId(m.clientId)} style={{
@@ -152,6 +165,7 @@ export default function MentorshipDashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: m.attention ? RED : GREEN, flexShrink: 0 }} />
                   <span style={{ fontWeight: 700, fontSize: 13, color: INK, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.company}</span>
+                  {!m.activeInTerm && <span style={{ fontSize: 9, background: '#fef2f2', border: `1px solid ${RED}`, color: RED, padding: '1px 6px', borderRadius: 100, fontWeight: 700 }}>vencido</span>}
                   {m.tier && <span style={{ fontSize: 9, background: BG, border: `1px solid ${LINE}`, color: MUT, padding: '1px 6px', borderRadius: 100, fontWeight: 600 }}>{m.tier}</span>}
                 </div>
                 <div style={{ fontSize: 11, color: MUT, paddingLeft: 14, ...tnum }}>
@@ -162,7 +176,7 @@ export default function MentorshipDashboard() {
             )
           })}
         </div>
-        <div style={{ margin: 12, fontSize: 11, color: DIM, textAlign: 'center', lineHeight: 1.5 }}>Todos os clientes ativos aparecem aqui.<br />Selecione um pra ver a ficha completa.</div>
+        <div style={{ margin: 12, fontSize: 11, color: DIM, textAlign: 'center', lineHeight: 1.5 }}>{segF === 'vigente' ? 'Mostrando só contratos vigentes.' : segF === 'vencido' ? 'Mostrando contratos vencidos.' : 'Mostrando todos os mentorados.'}<br />Selecione um pra ver a ficha completa.</div>
       </aside>
       )}
 
