@@ -185,78 +185,311 @@ export default function MentorshipDashboard() {
 }
 
 // ───────── Visão Geral (todos os clientes, faturamento somado) ─────────
-interface Overview {
-  totals: { faturamentoMes: number; clientesAtivos: number; estoqueQtd: number; estoqueValor: number; mentees: number; comDados: number }
-  byMentor: { mentor: string; faturamentoMes: number; mentees: number }[]
-  monthly: { month: string; faturamento: number }[]
-  clients: { clientId: string; company: string; responsible: string | null; mentor: string; faturamentoMes: number | null; clientesAtivos: number | null; estoqueValor: number | null; month: string | null }[]
+interface OvClient {
+  clientId: string; company: string; responsible: string | null; mentor: string
+  faturamentoMes: number | null; faturamentoPrev: number | null; growthPct: number | null
+  clientesAtivos: number | null; estoqueValor: number | null; month: string | null
+  series: { month: string; faturamento: number | null }[]
 }
+interface Overview {
+  totals: { faturamentoMes: number; clientesAtivos: number; estoqueQtd: number; estoqueValor: number; mentees: number; comDados: number; baseGrowthPct: number | null; curSum: number; prevSum: number }
+  byMentor: { mentor: string; faturamentoMes: number; mentees: number }[]
+  monthly: { month: string; faturamento: number; clientesAtivos: number; estoqueValor: number; numVendas: number; comDados: number }[]
+  clients: OvClient[]
+}
+
+const mesShort = (ym: string) => new Date(ym + '-01T12:00:00').toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
+const mesFull = (ym: string | null) => ym ? new Date(ym.slice(0, 7) + '-01T12:00:00').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }) : '—'
+
+// variação percentual (pill verde/vermelho)
+function DeltaChip({ pct, small }: { pct: number | null; small?: boolean }) {
+  if (pct == null) return <span style={{ fontSize: small ? 10 : 11, color: DIM }}>—</span>
+  const up = pct >= 0
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: small ? 10.5 : 11.5, fontWeight: 700, color: up ? GREEN : RED, background: up ? '#dcfce7' : '#fee2e2', borderRadius: 100, padding: small ? '1px 6px' : '2px 8px', ...tnum }}>
+      {up ? '▲' : '▼'} {Math.abs(pct)}%
+    </span>
+  )
+}
+
+// sparkline minúscula (sem eixos) para o ranking
+function Spark({ data, w = 88, h = 26 }: { data: (number | null)[]; w?: number; h?: number }) {
+  const pts = data.map((v, i) => ({ i, v })).filter(p => p.v != null) as { i: number; v: number }[]
+  if (pts.length < 2) return <span style={{ color: DIM, fontSize: 10 }}>—</span>
+  const xs = pts.map(p => p.i), ys = pts.map(p => p.v)
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys)
+  const nx = (i: number) => 1 + ((i - minX) / (maxX - minX || 1)) * (w - 2)
+  const ny = (v: number) => (h - 2) - ((v - minY) / (maxY - minY || 1)) * (h - 4)
+  const d = pts.map((p, k) => `${k ? 'L' : 'M'}${nx(p.i).toFixed(1)},${ny(p.v).toFixed(1)}`).join(' ')
+  const last = pts[pts.length - 1]
+  const up = pts.length > 1 && last.v >= pts[pts.length - 2].v
+  return (
+    <svg width={w} height={h} style={{ display: 'block' }}>
+      <path d={d} fill="none" stroke={up ? GREEN : RED} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={nx(last.i)} cy={ny(last.v)} r="2.2" fill={up ? GREEN : RED} />
+    </svg>
+  )
+}
+
+// gráfico de linha interativo com eixos, grade e tooltip no hover
+function TrendChart({ data, fmt, color = INK }: { data: { month: string; value: number }[]; fmt: (n: number) => string; color?: string }) {
+  const [hi, setHi] = useState<number | null>(null)
+  if (data.length < 2) return <div style={{ color: MUT, fontSize: 13, padding: '46px 0', textAlign: 'center' }}>Precisa de 2+ meses com dados para desenhar a evolução.</div>
+  const W = 760, H = 240, padL = 54, padR = 14, padT = 18, padB = 30
+  const ys = data.map(d => d.value)
+  const maxYraw = Math.max(...ys), minY = Math.min(0, ...ys)
+  const maxY = maxYraw === minY ? maxYraw + 1 : maxYraw
+  const n = data.length
+  const x = (i: number) => padL + (i / (n - 1)) * (W - padL - padR)
+  const y = (v: number) => padT + (1 - (v - minY) / (maxY - minY)) * (H - padT - padB)
+  const line = data.map((d, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(d.value).toFixed(1)}`).join(' ')
+  const area = `${line} L${x(n - 1).toFixed(1)},${(H - padB).toFixed(1)} L${x(0).toFixed(1)},${(H - padB).toFixed(1)} Z`
+  const grid = [0, 0.25, 0.5, 0.75, 1].map(f => minY + f * (maxY - minY))
+  const compact = (v: number) => v >= 1000 ? `${Math.round(v / 1000)}k` : String(Math.round(v))
+  const xStep = Math.ceil(n / 9)
+  const sel = hi != null ? data[hi] : null
+  const selPrev = hi != null && hi > 0 ? data[hi - 1] : null
+  const selGrowth = sel && selPrev && selPrev.value !== 0 ? Math.round(((sel.value - selPrev.value) / selPrev.value) * 100) : null
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }} onMouseLeave={() => setHi(null)}>
+      <defs><linearGradient id="tc" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color === INK ? NEON : color} stopOpacity="0.28" /><stop offset="100%" stopColor={color === INK ? NEON : color} stopOpacity="0" /></linearGradient></defs>
+      {grid.map((gv, i) => (
+        <g key={i}>
+          <line x1={padL} x2={W - padR} y1={y(gv)} y2={y(gv)} stroke={LINE} strokeWidth="1" />
+          <text x={padL - 8} y={y(gv) + 3} textAnchor="end" fill={DIM} fontSize="10" fontFamily={mono}>{compact(gv)}</text>
+        </g>
+      ))}
+      <path d={area} fill="url(#tc)" />
+      <path d={line} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+      {data.map((d, i) => (i % xStep === 0 || i === n - 1) && (
+        <text key={i} x={x(i)} y={H - 9} textAnchor="middle" fill={MUT} fontSize="10" fontFamily={mono}>{mesShort(d.month)}</text>
+      ))}
+      {data.map((d, i) => (
+        <circle key={i} cx={x(i)} cy={y(d.value)} r={hi === i ? 4.5 : 2.5} fill={hi === i ? (color === INK ? NEON : color) : CARD} stroke={color} strokeWidth="1.6" />
+      ))}
+      {/* hit areas */}
+      {data.map((d, i) => (
+        <rect key={i} x={x(i) - (W - padL - padR) / (n - 1) / 2} y={0} width={(W - padL - padR) / (n - 1)} height={H} fill="transparent" onMouseEnter={() => setHi(i)} />
+      ))}
+      {sel && (() => {
+        const bx = Math.min(Math.max(x(hi!) - 66, padL), W - padR - 132)
+        return (
+          <g pointerEvents="none">
+            <line x1={x(hi!)} x2={x(hi!)} y1={padT} y2={H - padB} stroke={DIM} strokeWidth="1" strokeDasharray="3 3" />
+            <rect x={bx} y={padT} width="132" height={selGrowth != null ? 50 : 34} rx="7" fill={INK} opacity="0.96" />
+            <text x={bx + 10} y={padT + 15} fill="#fff" fontSize="10.5" fontFamily={mono} opacity="0.8">{mesFull(sel.month)}</text>
+            <text x={bx + 10} y={padT + 29} fill="#fff" fontSize="12.5" fontFamily={mono} fontWeight="700">{fmt(sel.value)}</text>
+            {selGrowth != null && <text x={bx + 10} y={padT + 44} fill={selGrowth >= 0 ? NEON : '#fca5a5'} fontSize="10.5" fontFamily={mono} fontWeight="700">{selGrowth >= 0 ? '▲' : '▼'} {Math.abs(selGrowth)}% vs mês ant.</text>}
+          </g>
+        )
+      })()}
+    </svg>
+  )
+}
+
+// faturamento por mentor (barras horizontais)
+function MentorBars({ data }: { data: { mentor: string; faturamentoMes: number; mentees: number }[] }) {
+  const rows = data.filter(d => d.faturamentoMes > 0)
+  if (!rows.length) return <div style={{ color: MUT, fontSize: 13, padding: '10px 0' }}>Sem faturamento por mentor ainda.</div>
+  const max = Math.max(...rows.map(r => r.faturamentoMes))
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {rows.map(r => (
+        <div key={r.mentor}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: INK }}>{r.mentor} <span style={{ color: DIM, fontWeight: 400 }}>· {r.mentees}</span></span>
+            <span style={{ ...tnum, fontSize: 12.5, fontWeight: 700, color: INK }}>{brl(r.faturamentoMes)}</span>
+          </div>
+          <div style={{ height: 8, background: BG, borderRadius: 100, overflow: 'hidden' }}>
+            <div style={{ width: `${Math.round((r.faturamentoMes / max) * 100)}%`, height: '100%', background: NEON, borderRadius: 100 }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// lançamento rápido: escolhe o mês e digita o faturamento de todos os mentorados de uma vez
+function QuickEntry({ clients, onSaved }: { clients: OvClient[]; onSaved: () => void }) {
+  const nowYm = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` })()
+  const [month, setMonth] = useState(nowYm)
+  const [drafts, setDrafts] = useState<Record<string, string>>({})
+  const [saving, setSaving] = useState<string | null>(null)
+  const [saved, setSaved] = useState<Set<string>>(new Set())
+  useEffect(() => { setDrafts({}); setSaved(new Set()) }, [month])
+  const numOr = (v: string) => { const t = v.trim(); if (!t) return null; const nn = Number(t.replace(/[^\d.,-]/g, '').replace(',', '.')); return isNaN(nn) ? null : nn }
+  const stored = (c: OvClient) => c.series.find(s => s.month === month)?.faturamento ?? null
+  const prevMonthOf = (ym: string) => { const [y, m] = ym.split('-').map(Number); const d = new Date(y, m - 2, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` }
+  const prevVal = (c: OvClient) => c.series.find(s => s.month === prevMonthOf(month))?.faturamento ?? null
+  const shift = (delta: number) => { const [y, m] = month.split('-').map(Number); const d = new Date(y, m - 1 + delta, 1); setMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`) }
+
+  async function save(c: OvClient) {
+    const raw = drafts[c.clientId]
+    if (raw === undefined) return
+    setSaving(c.clientId)
+    try {
+      await apiFetch(`/api/mentorship/clients/${c.clientId}/monthly`, { method: 'PUT', body: JSON.stringify({ month, faturamento: numOr(raw) }) })
+      setSaved(s => new Set(s).add(c.clientId)); onSaved()
+    } catch { toast.error(`Erro ao salvar ${c.company}`) } finally { setSaving(null) }
+  }
+
+  const preenchidos = clients.filter(c => drafts[c.clientId] !== undefined ? numOr(drafts[c.clientId] ?? '') != null : stored(c) != null).length
+  const inp: React.CSSProperties = { width: '100%', background: CARD, border: `1px solid ${LINE}`, color: INK, padding: '7px 9px', fontFamily: mono, fontSize: 13, fontWeight: 700, outline: 'none', textAlign: 'right', borderRadius: 7, ...tnum }
+
+  return (
+    <div style={{ ...cardStyle, padding: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
+        <div>
+          <div style={{ fontFamily: disp, fontSize: 15, fontWeight: 700, color: INK }}>Lançamento rápido de faturamento</div>
+          <div style={{ fontSize: 12, color: MUT, marginTop: 2 }}>{preenchidos} de {clients.length} preenchidos em {mesFull(month)} · salva ao sair do campo</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={() => shift(-1)} style={miniBtn}>◂</button>
+          <input type="month" value={month} onChange={e => setMonth(e.target.value)} style={{ background: CARD, border: `1px solid ${LINE}`, color: INK, padding: '6px 10px', fontFamily: mono, fontSize: 12.5, fontWeight: 600, borderRadius: 7 }} />
+          <button onClick={() => shift(1)} style={miniBtn}>▸</button>
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10, maxHeight: 420, overflowY: 'auto', paddingRight: 4 }}>
+        {clients.map(c => {
+          const cur = drafts[c.clientId] !== undefined ? numOr(drafts[c.clientId] ?? '') : stored(c)
+          const pv = prevVal(c)
+          const g = cur != null && pv != null && pv !== 0 ? Math.round(((cur - pv) / pv) * 100) : null
+          const isSaved = saved.has(c.clientId)
+          return (
+            <div key={c.clientId} style={{ border: `1px solid ${LINE}`, borderRadius: 9, padding: '9px 11px', background: isSaved ? '#f6fee7' : CARD }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 6, marginBottom: 6 }}>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: INK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.company}</span>
+                {g != null && <DeltaChip pct={g} small />}
+              </div>
+              <input
+                value={drafts[c.clientId] ?? (stored(c) != null ? String(stored(c)) : '')}
+                onChange={e => setDrafts(d => ({ ...d, [c.clientId]: e.target.value }))}
+                onBlur={() => save(c)}
+                onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+                placeholder="R$ —"
+                style={{ ...inp, borderColor: saving === c.clientId ? NEON : LINE }}
+              />
+              <div style={{ fontSize: 10.5, color: DIM, marginTop: 4, ...tnum }}>ant.: {pv != null ? brl(pv) : '—'}</div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function OverviewPanel({ onSelect }: { onSelect: (id: string) => void }) {
   const [ov, setOv] = useState<Overview | null>(null)
-  useEffect(() => { apiFetch<Overview>('/api/mentorship/overview').then(setOv).catch(() => setOv(null)) }, [])
+  const load = useCallback(() => { apiFetch<Overview>('/api/mentorship/overview').then(setOv).catch(() => setOv(null)) }, [])
+  useEffect(() => { load() }, [load])
+  const [metric, setMetric] = useState<'faturamento' | 'clientesAtivos' | 'estoqueValor' | 'numVendas'>('faturamento')
+  const [mentorF, setMentorF] = useState('')
   if (!ov) return <div style={{ color: MUT, fontFamily: disp, fontSize: 15, padding: 40 }}>Carregando visão geral…</div>
   const t = ov.totals
-  const kpis: [string, string, boolean][] = [
-    ['Faturamento somado (mês)', brl(t.faturamentoMes), true],
-    ['Clientes ativos (total)', num(t.clientesAtivos), false],
-    ['Estoque total (R$)', brl(t.estoqueValor), false],
-    ['Estoque total (peças)', num(t.estoqueQtd), false],
-    ['Mentorados', String(t.mentees), false],
+  const METRICS: [typeof metric, string, (n: number) => string, string][] = [
+    ['faturamento', 'Faturamento', brl, INK],
+    ['clientesAtivos', 'Clientes ativos', (n) => num(n), SLATE],
+    ['estoqueValor', 'Estoque (R$)', brl, AMBER],
+    ['numVendas', 'Nº de vendas', (n) => num(n), GREEN],
   ]
-  const monthlyStudies = ov.monthly.map(m => ({ sessionDate: m.month + '-01', faturamentoMes: m.faturamento })) as unknown as CaseStudy[]
-  const mesLabel = (ym: string | null) => ym ? new Date(ym.slice(0, 7) + '-01T12:00:00').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }) : '—'
+  const mCfg = METRICS.find(m => m[0] === metric)!
+  const chartData = ov.monthly.map(m => ({ month: m.month, value: m[metric] as number }))
+  const kpis: { l: string; v: string; hi?: boolean; delta?: number | null; sub?: string }[] = [
+    { l: 'Faturamento da base', v: brl(t.faturamentoMes), hi: true, delta: t.baseGrowthPct, sub: 'último dado de cada cliente' },
+    { l: 'Clientes ativos (soma)', v: num(t.clientesAtivos) },
+    { l: 'Estoque total (R$)', v: brl(t.estoqueValor) },
+    { l: 'Mentorados', v: String(t.mentees), sub: `${t.comDados} com faturamento` },
+  ]
+  const mentors = [...new Set(ov.clients.map(c => c.mentor))].sort()
+  const ranking = mentorF ? ov.clients.filter(c => c.mentor === mentorF) : ov.clients
+  const thBase: React.CSSProperties = { padding: '8px 10px', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', color: MUT }
+
   return (
     <div>
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ fontFamily: disp, fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: INK, margin: 0 }}>Visão Geral</h1>
-        <div style={{ fontSize: 13, color: MUT, marginTop: 4 }}>{t.mentees} clientes ativos · {t.comDados} com dados de faturamento neste mês</div>
+        <div style={{ fontSize: 13, color: MUT, marginTop: 4 }}>{t.mentees} clientes ativos · {t.comDados} com dados de faturamento · soma do último mês {brl(t.curSum)}</div>
       </div>
 
-      {/* KPIs somados */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
-        {kpis.map(([l, v, hi]) => (
-          <div key={l} style={{ ...cardStyle, padding: '16px 18px', borderTop: hi ? `3px solid ${NEON}` : `1px solid ${LINE}` }}>
-            <div style={{ fontSize: 11, color: MUT, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>{l}</div>
-            <div style={{ ...tnum, fontFamily: disp, fontSize: 24, fontWeight: 700, color: INK, marginTop: 6 }}>{v}</div>
+      {/* KPIs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 18 }}>
+        {kpis.map(k => (
+          <div key={k.l} style={{ ...cardStyle, padding: '16px 18px', borderTop: k.hi ? `3px solid ${NEON}` : `1px solid ${LINE}` }}>
+            <div style={{ fontSize: 11, color: MUT, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>{k.l}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+              <span style={{ ...tnum, fontFamily: disp, fontSize: 24, fontWeight: 700, color: INK }}>{k.v}</span>
+              {k.delta !== undefined && <DeltaChip pct={k.delta} />}
+            </div>
+            {k.sub && <div style={{ fontSize: 11, color: DIM, marginTop: 3 }}>{k.sub}</div>}
           </div>
         ))}
       </div>
 
-      {/* Evolução somada */}
-      <div style={{ marginBottom: 20 }}>
-        <Panel title="Evolução do faturamento somado (mês a mês)"><EvolutionChart studies={monthlyStudies} /></Panel>
+      {/* Gráfico interativo + por mentor */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 16, marginBottom: 18 }}>
+        <div style={{ ...cardStyle, padding: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+            <span style={{ fontSize: 11, color: MUT, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Evolução da base (mês a mês)</span>
+            <div style={{ display: 'flex', gap: 4, border: `1px solid ${LINE}`, borderRadius: 100, padding: 3 }}>
+              {METRICS.map(([key, label]) => (
+                <button key={key} onClick={() => setMetric(key)} style={{ padding: '4px 10px', border: 'none', borderRadius: 100, fontFamily: mono, fontSize: 11.5, fontWeight: 600, cursor: 'pointer', background: metric === key ? INK : 'transparent', color: metric === key ? '#fff' : MUT }}>{label}</button>
+              ))}
+            </div>
+          </div>
+          <TrendChart data={chartData} fmt={mCfg[2]} color={mCfg[3]} />
+        </div>
+        <Panel title="Faturamento por mentor"><MentorBars data={ov.byMentor} /></Panel>
+      </div>
+
+      {/* Lançamento rápido */}
+      <div style={{ marginBottom: 18 }}>
+        <QuickEntry clients={ov.clients} onSaved={load} />
       </div>
 
       {/* Ranking de clientes */}
-      <Panel title="Ranking de clientes (faturamento do mês)">
+      <div style={{ ...cardStyle, padding: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: MUT, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Ranking de clientes</span>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <button onClick={() => setMentorF('')} style={chip(mentorF === '', INK)}>Todos</button>
+            {mentors.map(m => <button key={m} onClick={() => setMentorF(m)} style={chip(mentorF === m, INK)}>{m}</button>)}
+          </div>
+        </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
-              <tr style={{ color: MUT, textAlign: 'left', background: BG }}>
-                <th style={{ padding: '8px 10px', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>#</th>
-                <th style={{ padding: '8px 10px', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cliente</th>
-                <th style={{ padding: '8px 10px', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>Fat. mês</th>
-                <th style={{ padding: '8px 10px', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>Clientes</th>
-                <th style={{ padding: '8px 10px', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>Estoque R$</th>
-                <th style={{ padding: '8px 10px', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>Atualizado</th>
+              <tr style={{ textAlign: 'left', background: BG }}>
+                <th style={thBase}>#</th>
+                <th style={thBase}>Cliente</th>
+                <th style={{ ...thBase, textAlign: 'right' }}>Fat. mês</th>
+                <th style={{ ...thBase, textAlign: 'right' }}>Cresc.</th>
+                <th style={{ ...thBase, textAlign: 'center' }}>Tendência</th>
+                <th style={{ ...thBase, textAlign: 'right' }}>Clientes</th>
+                <th style={{ ...thBase, textAlign: 'right' }}>Estoque R$</th>
+                <th style={{ ...thBase, textAlign: 'right' }}>Atualizado</th>
               </tr>
             </thead>
             <tbody>
-              {ov.clients.map((c, i) => (
+              {ranking.map((c, i) => (
                 <tr key={c.clientId} onClick={() => onSelect(c.clientId)} style={{ cursor: 'pointer', borderTop: `1px solid ${LINE}` }}
                   onMouseEnter={e => (e.currentTarget.style.background = BG)} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                   <td style={{ padding: '9px 10px', color: DIM, ...tnum }}>{i + 1}</td>
-                  <td style={{ padding: '9px 10px', fontWeight: 700, color: INK }}>{c.company}</td>
+                  <td style={{ padding: '9px 10px' }}>
+                    <div style={{ fontWeight: 700, color: INK }}>{c.company}</div>
+                    <div style={{ fontSize: 11, color: DIM }}>{c.mentor}</div>
+                  </td>
                   <td style={{ padding: '9px 10px', textAlign: 'right', color: c.faturamentoMes != null ? INK : DIM, fontWeight: 700, ...tnum }}>{c.faturamentoMes != null ? brl(c.faturamentoMes) : 's/ dados'}</td>
+                  <td style={{ padding: '9px 10px', textAlign: 'right' }}><DeltaChip pct={c.growthPct} small /></td>
+                  <td style={{ padding: '6px 10px', textAlign: 'center' }}><div style={{ display: 'flex', justifyContent: 'center' }}><Spark data={c.series.map(s => s.faturamento)} /></div></td>
                   <td style={{ padding: '9px 10px', textAlign: 'right', ...tnum }}>{num(c.clientesAtivos)}</td>
                   <td style={{ padding: '9px 10px', textAlign: 'right', ...tnum }}>{brl(c.estoqueValor)}</td>
-                  <td style={{ padding: '9px 10px', textAlign: 'right', color: MUT, ...tnum }}>{mesLabel(c.month)}</td>
+                  <td style={{ padding: '9px 10px', textAlign: 'right', color: MUT, ...tnum }}>{mesFull(c.month)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </Panel>
+      </div>
     </div>
   )
 }

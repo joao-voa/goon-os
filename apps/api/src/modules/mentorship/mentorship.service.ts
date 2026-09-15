@@ -151,15 +151,26 @@ export class MentorshipService {
     // valor mais recente não-nulo por cliente (ignora meses vazios recém-criados)
     const lastMetric = this.consolidateMetrics(metrics)
 
-    // série mensal somada de faturamento entre todos os clientes
-    const monthlyMap = new Map<string, number>()
+    // série mensal somada (multi-métrica) entre todos os clientes
+    const monthAgg = new Map<string, { faturamento: number; clientesAtivos: number; estoqueValor: number; numVendas: number; comDados: number }>()
     for (const m of metrics) {
-      if (m.faturamento == null) continue
-      monthlyMap.set(m.month, (monthlyMap.get(m.month) ?? 0) + m.faturamento)
+      const a = monthAgg.get(m.month) ?? { faturamento: 0, clientesAtivos: 0, estoqueValor: 0, numVendas: 0, comDados: 0 }
+      if (m.faturamento != null) { a.faturamento += m.faturamento; a.comDados++ }
+      if (m.clientesAtivos != null) a.clientesAtivos += m.clientesAtivos
+      if (m.estoqueValor != null) a.estoqueValor += m.estoqueValor
+      if (m.numVendas != null) a.numVendas += m.numVendas
+      monthAgg.set(m.month, a)
     }
-    const monthly = [...monthlyMap.entries()].map(([month, faturamento]) => ({ month, faturamento })).sort((a, b) => a.month.localeCompare(b.month))
+    const monthly = [...monthAgg.entries()].map(([month, a]) => ({ month, ...a })).sort((a, b) => a.month.localeCompare(b.month))
 
-    // totais a partir da última métrica de cada cliente
+    // métricas por cliente em ordem desc de mês (para série individual + crescimento)
+    const metricsByClient = new Map<string, Array<typeof metrics[number]>>()
+    for (const m of metrics) {
+      const arr = metricsByClient.get(m.clientId)
+      if (arr) arr.push(m); else metricsByClient.set(m.clientId, [m])
+    }
+
+    // totais a partir do valor mais recente informado por cliente
     let faturamentoMes = 0, clientesAtivos = 0, estoqueQtd = 0, estoqueValor = 0, comDados = 0
     const byMentorMap = new Map<string, { mentor: string; faturamentoMes: number; mentees: number }>()
     const rows = clients.map(c => {
@@ -173,11 +184,23 @@ export class MentorshipService {
       const mb = byMentorMap.get(mentor) ?? { mentor, faturamentoMes: 0, mentees: 0 }
       mb.faturamentoMes += fm ?? 0; mb.mentees++
       byMentorMap.set(mentor, mb)
-      return { clientId: c.id, company: c.companyName, responsible: c.responsible ?? null, mentor, faturamentoMes: fm, clientesAtivos: st?.clientesAtivos ?? null, estoqueValor: st?.estoqueValor ?? null, month: st?.month ?? null }
+      // série (últimos 12 meses, cronológica) + crescimento vs mês anterior com faturamento
+      const cliMetrics = metricsByClient.get(c.id) ?? [] // desc
+      const withFat = cliMetrics.filter(m => m.faturamento != null)
+      const prev = withFat[1]?.faturamento ?? null
+      const growthPct = (fm != null && prev != null && prev !== 0) ? Math.round(((fm - prev) / prev) * 100) : null
+      const series = cliMetrics.slice(0, 12).reverse().map(m => ({ month: m.month, faturamento: m.faturamento }))
+      return { clientId: c.id, company: c.companyName, responsible: c.responsible ?? null, mentor, faturamentoMes: fm, faturamentoPrev: prev, growthPct, clientesAtivos: st?.clientesAtivos ?? null, estoqueValor: st?.estoqueValor ?? null, month: st?.month ?? null, series }
     }).sort((a, b) => (b.faturamentoMes ?? -1) - (a.faturamentoMes ?? -1))
 
+    // crescimento da base: soma do mês mais recente vs mês anterior (na série somada)
+    const nMon = monthly.length
+    const curSum = nMon ? monthly[nMon - 1].faturamento : 0
+    const prevSum = nMon > 1 ? monthly[nMon - 2].faturamento : 0
+    const baseGrowthPct = prevSum > 0 ? Math.round(((curSum - prevSum) / prevSum) * 100) : null
+
     return {
-      totals: { faturamentoMes, clientesAtivos, estoqueQtd, estoqueValor, mentees: clients.length, comDados },
+      totals: { faturamentoMes, clientesAtivos, estoqueQtd, estoqueValor, mentees: clients.length, comDados, baseGrowthPct, curSum, prevSum },
       byMentor: [...byMentorMap.values()].sort((a, b) => b.faturamentoMes - a.faturamentoMes),
       monthly,
       clients: rows,
@@ -267,17 +290,19 @@ export class MentorshipService {
 
   /** upsert de métrica mensal (faturamento/clientes/estoque) — chave clientId+month */
   async upsertMonthlyMetric(clientId: string, dto: { month: string; faturamento?: number | null; clientesAtivos?: number | null; estoqueQtd?: number | null; estoqueValor?: number | null; ticketMedio?: number | null; numVendas?: number | null; investimentoTrafego?: number | null; roas?: number | null; seguidoresIg?: number | null; note?: string | null }) {
-    const data = {
-      faturamento: dto.faturamento ?? null, clientesAtivos: dto.clientesAtivos ?? null,
-      estoqueQtd: dto.estoqueQtd ?? null, estoqueValor: dto.estoqueValor ?? null,
-      ticketMedio: dto.ticketMedio ?? null, numVendas: dto.numVendas ?? null,
-      investimentoTrafego: dto.investimentoTrafego ?? null, roas: dto.roas ?? null, seguidoresIg: dto.seguidoresIg ?? null,
-      note: dto.note ?? null,
+    const FIELDS = ['faturamento', 'clientesAtivos', 'estoqueQtd', 'estoqueValor', 'ticketMedio', 'numVendas', 'investimentoTrafego', 'roas', 'seguidoresIg', 'note'] as const
+    // create: todos os campos (default null). update: parcial — só o que veio no dto
+    // (permite lançar só o faturamento sem zerar estoque/clientes já preenchidos do mês).
+    const createData: Record<string, unknown> = { clientId, month: dto.month }
+    const updateData: Record<string, unknown> = {}
+    for (const k of FIELDS) {
+      createData[k] = dto[k] ?? null
+      if (dto[k] !== undefined) updateData[k] = dto[k]
     }
     const metric = await this.prisma.monthlyMetric.upsert({
       where: { clientId_month: { clientId, month: dto.month } },
-      create: { clientId, month: dto.month, ...data },
-      update: data,
+      create: createData as never,
+      update: updateData,
     })
     // garante perfil + marca contato
     let profile = await this.prisma.menteeProfile.findUnique({ where: { clientId } })
