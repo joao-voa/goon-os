@@ -54,8 +54,7 @@ export class MentorshipService {
     for (const m of meetings) if (m.clientId && !lastMeeting.has(m.clientId)) lastMeeting.set(m.clientId, m.date)
     const lastStudy = new Map<string, typeof studies[number]>()
     for (const s of studies) if (!lastStudy.has(s.clientId)) lastStudy.set(s.clientId, s)
-    const lastMetric = new Map<string, typeof metrics[number]>()
-    for (const m of metrics) if (!lastMetric.has(m.clientId)) lastMetric.set(m.clientId, m)
+    const lastMetric = this.consolidateMetrics(metrics)
 
     const now = Date.now()
     let mentees = clients.map(c => {
@@ -99,6 +98,42 @@ export class MentorshipService {
     return { mentees, total: mentees.length }
   }
 
+  /**
+   * Consolida, por cliente, o valor MAIS RECENTE não-nulo de cada métrica.
+   * `metricsDesc` deve vir em ordem de mês desc (mais novo primeiro). Assim um mês
+   * recém-criado e vazio não zera o faturamento/estoque do cliente na visão geral e na lista.
+   * `month` = mês do faturamento mais recente (fallback: mês mais recente que houver).
+   */
+  private consolidateMetrics(metricsDesc: Array<{
+    clientId: string; month: string
+    faturamento: number | null; clientesAtivos: number | null; estoqueQtd: number | null; estoqueValor: number | null
+    numVendas: number | null; ticketMedio: number | null; roas: number | null; seguidoresIg: number | null
+  }>) {
+    type Merged = {
+      faturamento: number | null; clientesAtivos: number | null; estoqueQtd: number | null; estoqueValor: number | null
+      numVendas: number | null; ticketMedio: number | null; roas: number | null; seguidoresIg: number | null
+      month: string | null; fallbackMonth: string | null
+    }
+    const acc = new Map<string, Merged>()
+    for (const m of metricsDesc) {
+      let cur = acc.get(m.clientId)
+      if (!cur) {
+        cur = { faturamento: null, clientesAtivos: null, estoqueQtd: null, estoqueValor: null, numVendas: null, ticketMedio: null, roas: null, seguidoresIg: null, month: null, fallbackMonth: m.month }
+        acc.set(m.clientId, cur)
+      }
+      if (cur.faturamento == null && m.faturamento != null) { cur.faturamento = m.faturamento; cur.month = m.month }
+      if (cur.clientesAtivos == null && m.clientesAtivos != null) cur.clientesAtivos = m.clientesAtivos
+      if (cur.estoqueQtd == null && m.estoqueQtd != null) cur.estoqueQtd = m.estoqueQtd
+      if (cur.estoqueValor == null && m.estoqueValor != null) cur.estoqueValor = m.estoqueValor
+      if (cur.numVendas == null && m.numVendas != null) cur.numVendas = m.numVendas
+      if (cur.ticketMedio == null && m.ticketMedio != null) cur.ticketMedio = m.ticketMedio
+      if (cur.roas == null && m.roas != null) cur.roas = m.roas
+      if (cur.seguidoresIg == null && m.seguidoresIg != null) cur.seguidoresIg = m.seguidoresIg
+    }
+    for (const cur of acc.values()) if (cur.month == null) cur.month = cur.fallbackMonth
+    return acc
+  }
+
   /** Visão geral consolidada de todos os clientes ativos (faturamento somado, série mensal, ranking) */
   async getOverview() {
     const clients = await this.prisma.client.findMany({
@@ -113,9 +148,8 @@ export class MentorshipService {
     const profileMap = new Map(profiles.map(p => [p.clientId, p]))
     const mentorOf = (c: typeof clients[number]) => profileMap.get(c.id)?.mentorName ?? this.mentorForProduct(c.plans[0]?.product?.code)
 
-    // última métrica por cliente (metrics em ordem de mês desc → primeira = mês mais recente)
-    const lastMetric = new Map<string, typeof metrics[number]>()
-    for (const m of metrics) if (!lastMetric.has(m.clientId)) lastMetric.set(m.clientId, m)
+    // valor mais recente não-nulo por cliente (ignora meses vazios recém-criados)
+    const lastMetric = this.consolidateMetrics(metrics)
 
     // série mensal somada de faturamento entre todos os clientes
     const monthlyMap = new Map<string, number>()
