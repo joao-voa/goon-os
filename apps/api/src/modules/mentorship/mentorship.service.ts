@@ -239,7 +239,7 @@ export class MentorshipService {
         where: { id: clientId },
         select: {
           id: true, companyName: true, tradeName: true, cnpj: true, responsible: true, email: true, whatsapp: true, phone: true,
-          segment: true, city: true, state: true, estimatedRevenue: true, mainPains: true, strategicGoals: true, createdAt: true, portalToken: true,
+          segment: true, city: true, state: true, estimatedRevenue: true, mainPains: true, strategicGoals: true, createdAt: true, portalFillToken: true, portalPanelToken: true,
           plans: { where: { status: 'ACTIVE' }, orderBy: { value: 'desc' }, select: { value: true, installments: true, installmentValue: true, paymentType: true, startDate: true, endDate: true, status: true, renewalStatus: true, product: { select: { code: true, name: true } } } },
         },
       }),
@@ -299,22 +299,24 @@ export class MentorshipService {
     }
   }
 
-  /** gera (ou regenera) o token do link público de auto-preenchimento do cliente */
-  async generatePortalToken(clientId: string) {
+  /** gera (ou regenera) um token de link público — kind: 'fill' (preenchimento) | 'panel' (painel read-only) */
+  async generatePortalToken(clientId: string, kind: 'fill' | 'panel') {
     const client = await this.prisma.client.findUnique({ where: { id: clientId }, select: { id: true } })
     if (!client) throw new NotFoundException('Cliente não encontrado')
     const token = randomBytes(24).toString('base64url')
-    await this.prisma.client.update({ where: { id: clientId }, data: { portalToken: token } })
+    const field = kind === 'panel' ? 'portalPanelToken' : 'portalFillToken'
+    await this.prisma.client.update({ where: { id: clientId }, data: { [field]: token } })
     // garante perfil de mentorado para aparecer na base
     const profile = await this.prisma.menteeProfile.findUnique({ where: { clientId } })
     if (!profile) await this.prisma.menteeProfile.create({ data: { clientId, mentorName: await this.deriveMentor(clientId) } })
-    return { portalToken: token }
+    return { kind, token }
   }
 
-  /** revoga o link público (invalida a URL antiga) */
-  async revokePortalToken(clientId: string) {
-    await this.prisma.client.update({ where: { id: clientId }, data: { portalToken: null } })
-    return { portalToken: null }
+  /** revoga um link público (invalida a URL antiga) */
+  async revokePortalToken(clientId: string, kind: 'fill' | 'panel') {
+    const field = kind === 'panel' ? 'portalPanelToken' : 'portalFillToken'
+    await this.prisma.client.update({ where: { id: clientId }, data: { [field]: null } })
+    return { kind, token: null }
   }
 
   /** upsert de métrica mensal (faturamento/clientes/estoque) — chave clientId+month */

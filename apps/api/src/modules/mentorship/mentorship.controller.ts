@@ -48,15 +48,15 @@ export class MentorshipController {
     return this.service.unenroll(clientId)
   }
 
-  @Post('clients/:clientId/portal-token')
+  @Post('clients/:clientId/portal-token/:kind')
   @HttpCode(201)
-  generatePortalToken(@Param('clientId') clientId: string) {
-    return this.service.generatePortalToken(clientId)
+  generatePortalToken(@Param('clientId') clientId: string, @Param('kind') kind: string) {
+    return this.service.generatePortalToken(clientId, kind === 'panel' ? 'panel' : 'fill')
   }
 
-  @Delete('clients/:clientId/portal-token')
-  revokePortalToken(@Param('clientId') clientId: string) {
-    return this.service.revokePortalToken(clientId)
+  @Delete('clients/:clientId/portal-token/:kind')
+  revokePortalToken(@Param('clientId') clientId: string, @Param('kind') kind: string) {
+    return this.service.revokePortalToken(clientId, kind === 'panel' ? 'panel' : 'fill')
   }
 
   @Post('case-studies')

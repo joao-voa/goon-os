@@ -73,7 +73,9 @@ model Client {
 
   status           String   @default("ACTIVE")
 
-  portalToken      String?  @unique // token do link público de auto-preenchimento (mentoria)
+  portalToken      String?  @unique // (deprecated) token único antigo — migrado para portalFillToken
+  portalFillToken  String?  @unique // link público de PREENCHIMENTO (aceita escrita)
+  portalPanelToken String?  @unique // link público do PAINEL (read-only)
 
   kanbanOrder      Int      @default(0) // ordem manual do card dentro da coluna do CRM
 

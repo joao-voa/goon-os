@@ -29,6 +29,7 @@ interface MonthData { month: string; [k: string]: number | string | null }
 interface Task { id: string; what: string; dueDate: string | null; overdue: boolean }
 interface PMeeting { id: string; title: string; date: string; status: string }
 interface PortalData {
+  mode: 'fill' | 'panel'
   company: string; responsible: string | null; mentorName: string | null; goal: string | null
   months: MonthData[]; tasks: Task[]; meetings: PMeeting[]; nextSteps: string | null; lastSessionDate: string | null
 }
@@ -99,7 +100,6 @@ export default function PortalPage({ params }: { params: Promise<{ token: string
   const { token } = use(params)
   const [data, setData] = useState<PortalData | null>(null)
   const [error, setError] = useState('')
-  const [view, setView] = useState<'painel' | 'preencher'>('painel')
   const [month, setMonth] = useState(ymNow())
   const [drafts, setDrafts] = useState<Record<string, Record<string, string>>>({})
   const [saving, setSaving] = useState(false)
@@ -158,21 +158,15 @@ export default function PortalPage({ params }: { params: Promise<{ token: string
           <div style={{ width: 30, height: 3, background: C.neon, borderRadius: 2, margin: '14px 0 12px' }} />
           <h1 style={{ fontFamily: disp, fontSize: 22, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>{data.company}</h1>
           {data.goal && <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', marginTop: 6 }}>🎯 {data.goal}</p>}
-          {/* abas */}
-          <div style={{ display: 'flex', gap: 4, marginTop: 16 }}>
-            {([['painel', 'Meu painel'], ['preencher', 'Preencher dados']] as const).map(([k, label]) => (
-              <button key={k} onClick={() => setView(k)} style={{
-                padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: sans, fontSize: 13.5,
-                fontWeight: view === k ? 700 : 500, color: view === k ? '#fff' : 'rgba(255,255,255,0.5)',
-                borderBottom: view === k ? `2px solid ${C.neon}` : '2px solid transparent', marginBottom: -1,
-              }}>{label}</button>
-            ))}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 14, marginBottom: 18, padding: '5px 12px', borderRadius: 100, background: 'rgba(199,249,0,0.14)', border: '1px solid rgba(199,249,0,0.3)' }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.neon }} />
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>{data.mode === 'panel' ? 'Meu painel' : 'Preencher meus dados'}</span>
           </div>
         </div>
       </div>
 
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '20px 20px 60px' }}>
-        {view === 'painel' ? <PanelView data={data} metric={metric} setMetric={setMetric} onGoFill={() => setView('preencher')} /> : (
+        {data.mode === 'panel' ? <PanelView data={data} metric={metric} setMetric={setMetric} /> : (
           <FillView data={data} month={month} setMonth={setMonth} valuesFor={valuesFor} setFieldVal={setFieldVal} save={save} saving={saving} savedMonth={savedMonth} />
         )}
         <p style={{ textAlign: 'center', marginTop: 26, fontSize: 11, color: C.dim }}>
@@ -184,7 +178,7 @@ export default function PortalPage({ params }: { params: Promise<{ token: string
 }
 
 // ───────── ABA: Meu painel (read-only) ─────────
-function PanelView({ data, metric, setMetric, onGoFill }: { data: PortalData; metric: string; setMetric: (m: string) => void; onGoFill: () => void }) {
+function PanelView({ data, metric, setMetric }: { data: PortalData; metric: string; setMetric: (m: string) => void }) {
   const asc = data.months.slice().sort((a, b) => a.month.localeCompare(b.month))
   const withFat = asc.filter(m => m.faturamento != null) as { month: string; faturamento: number }[]
   const lastFat = withFat.length ? withFat[withFat.length - 1].faturamento : null
@@ -221,9 +215,8 @@ function PanelView({ data, metric, setMetric, onGoFill }: { data: PortalData; me
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {empty && (
         <div style={{ ...card, padding: 20, textAlign: 'center' }}>
-          <div style={{ fontFamily: disp, fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Vamos começar? 🚀</div>
-          <div style={{ fontSize: 13.5, color: C.mid, marginBottom: 14, lineHeight: 1.5 }}>Preencha o faturamento dos seus meses para ver sua evolução aqui.</div>
-          <button onClick={onGoFill} style={{ background: C.neon, color: C.ink, border: 'none', borderRadius: 10, padding: '11px 20px', fontFamily: sans, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Preencher meus dados</button>
+          <div style={{ fontFamily: disp, fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Seu painel está quase pronto 🚀</div>
+          <div style={{ fontSize: 13.5, color: C.mid, lineHeight: 1.5 }}>Assim que seus números forem preenchidos, sua evolução aparece aqui.</div>
         </div>
       )}
 

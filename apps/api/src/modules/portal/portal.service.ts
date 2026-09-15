@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { MentorshipService } from '../mentorship/mentorship.service'
 
@@ -16,11 +16,16 @@ type MonthlyDto = {
 export class PortalService {
   constructor(private prisma: PrismaService, private mentorship: MentorshipService) {}
 
-  private async clientByToken(token: string) {
+  // resolve o token contra os dois campos e retorna também o modo do link
+  private async clientByToken(token: string): Promise<{ id: string; companyName: string; responsible: string | null; mode: 'fill' | 'panel' }> {
     if (!token || token.length < 8) throw new NotFoundException('Link inválido')
-    const client = await this.prisma.client.findUnique({ where: { portalToken: token }, select: { id: true, companyName: true, responsible: true } })
+    const client = await this.prisma.client.findFirst({
+      where: { OR: [{ portalFillToken: token }, { portalPanelToken: token }] },
+      select: { id: true, companyName: true, responsible: true, portalFillToken: true, portalPanelToken: true },
+    })
     if (!client) throw new NotFoundException('Link inválido ou expirado')
-    return client
+    const mode: 'fill' | 'panel' = client.portalPanelToken === token ? 'panel' : 'fill'
+    return { id: client.id, companyName: client.companyName, responsible: client.responsible, mode }
   }
 
   async getByToken(token: string) {
@@ -37,6 +42,7 @@ export class PortalService {
       this.prisma.sessionCaseStudy.findFirst({ where: { clientId: client.id }, orderBy: { sessionDate: 'desc' }, select: { sessionDate: true, proximosPassos: true } }),
     ])
     return {
+      mode: client.mode,
       company: client.companyName,
       responsible: client.responsible ?? null,
       mentorName: profile?.mentorName ?? null,
@@ -55,6 +61,7 @@ export class PortalService {
 
   async saveByToken(token: string, dto: MonthlyDto) {
     const client = await this.clientByToken(token)
+    if (client.mode !== 'fill') throw new ForbiddenException('Este link é somente leitura')
     if (!dto?.month || !/^\d{4}-\d{2}$/.test(dto.month)) throw new BadRequestException('Mês inválido')
     await this.mentorship.upsertMonthlyMetric(client.id, dto)
     return { ok: true }
