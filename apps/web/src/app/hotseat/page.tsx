@@ -53,9 +53,11 @@ export default function HotseatPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#0A0A0C', color: '#fff', fontFamily: sans }}>
+      {/* sticky só no desktop (2 colunas); no mobile a foto rola normalmente */}
+      <style>{`.hs-poster{position:static}@media (min-width:700px){.hs-poster{position:sticky;top:24px}}`}</style>
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '28px 20px 60px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 28, alignItems: 'start' }}>
         {/* Pôster */}
-        <div style={{ position: 'sticky', top: 24 }}>
+        <div className="hs-poster">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/hotseat.jpg" alt="HOTSEAT · Giulliano Puga · 17/09" style={{ width: '100%', height: 'auto', borderRadius: 16, border: '1px solid #1c1c22', display: 'block' }} />
         </div>
