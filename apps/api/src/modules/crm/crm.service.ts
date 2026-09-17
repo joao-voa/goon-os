@@ -1273,4 +1273,60 @@ export class CrmService {
 
     return client
   }
+
+  /**
+   * Captação PÚBLICA de lead por formulário de evento (masterclass etc).
+   * Dedup leve por e-mail (exato) ou WhatsApp (como digitado) — enriquece o lead existente
+   * sem rebaixar o estágio; senão cria um lead novo em NOVO com origem "evento".
+   */
+  async createEventLead(dto: {
+    responsible: string; companyName?: string; whatsapp?: string; email?: string
+    instagram?: string; segment?: string; estimatedRevenue?: string; notes?: string; eventName?: string
+  }) {
+    if (!dto.responsible?.trim()) throw new BadRequestException('Nome é obrigatório')
+    const email = dto.email?.trim().toLowerCase() || null
+    const whatsapp = dto.whatsapp?.trim() || null
+    const parts: string[] = []
+    if (dto.eventName) parts.push(`Inscrição: ${dto.eventName}`)
+    if (dto.instagram) parts.push(`Instagram: ${dto.instagram.trim().replace(/^@?/, '@')}`)
+    if (dto.notes?.trim()) parts.push(dto.notes.trim())
+    const note = parts.join(' · ')
+
+    // dedup
+    let existing = null as null | { id: string; companyName: string; leadStage: string | null; leadNotes: string | null; leadSource: string | null; segment: string | null; estimatedRevenue: string | null }
+    if (email) existing = await this.prisma.client.findFirst({ where: { email }, select: { id: true, companyName: true, leadStage: true, leadNotes: true, leadSource: true, segment: true, estimatedRevenue: true } })
+    if (!existing && whatsapp) existing = await this.prisma.client.findFirst({ where: { whatsapp }, select: { id: true, companyName: true, leadStage: true, leadNotes: true, leadSource: true, segment: true, estimatedRevenue: true } })
+
+    if (existing) {
+      await this.prisma.client.update({
+        where: { id: existing.id },
+        data: {
+          leadSource: existing.leadSource ?? 'evento',
+          segment: existing.segment ?? (dto.segment?.trim() || null),
+          estimatedRevenue: existing.estimatedRevenue ?? (dto.estimatedRevenue?.trim() || null),
+          leadNotes: note ? (existing.leadNotes ? `${existing.leadNotes}\n${note}` : note) : existing.leadNotes,
+        },
+      })
+      await this.activityLog.log({ clientId: existing.id, entityType: 'CRM', entityId: existing.id, action: 'EVENT_SIGNUP', description: `${existing.companyName} se inscreveu (${dto.eventName ?? 'evento'})` })
+      return { ok: true, deduped: true }
+    }
+
+    const client = await this.prisma.client.create({
+      data: {
+        companyName: dto.companyName?.trim() || dto.responsible.trim(),
+        responsible: dto.responsible.trim(),
+        whatsapp,
+        email,
+        segment: dto.segment?.trim() || null,
+        estimatedRevenue: dto.estimatedRevenue?.trim() || null,
+        leadSource: 'evento',
+        leadNotes: note || null,
+        status: 'PROSPECT',
+        leadStage: 'NOVO',
+        stageChangedAt: new Date(),
+      },
+    })
+    await this.activityLog.log({ clientId: client.id, entityType: 'CRM', entityId: client.id, action: 'EVENT_SIGNUP', description: `Lead ${client.companyName} inscrito (${dto.eventName ?? 'evento'})` })
+    return { ok: true, deduped: false }
+  }
 }
