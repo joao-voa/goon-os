@@ -376,6 +376,7 @@ model Expense {
   id          String    @id @default(cuid())
   description String
   category    String    // SISTEMAS, MARKETING, PESSOAS, ESTRUTURA, OUTRO, MENTORIA, PESSOAL, COMISSAO, IMPOSTOS
+  costCenter  String?   // centro de custo: GLOBAL, INFINITY, TIKTOK
   value       Decimal   @db.Decimal(10, 2)
   paidValue   Decimal   @default(0) @db.Decimal(10, 2)
   recurrence  String    @default("UNICA") // UNICA, MENSAL, TRIMESTRAL, ANUAL

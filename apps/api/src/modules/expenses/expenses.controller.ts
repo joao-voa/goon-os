@@ -10,6 +10,7 @@ export class ExpensesController {
   @Get()
   findAll(
     @Query('category') category?: string,
+    @Query('costCenter') costCenter?: string,
     @Query('status') status?: string,
     @Query('recurrence') recurrence?: string,
     @Query('month') month?: string,
@@ -19,6 +20,7 @@ export class ExpensesController {
   ) {
     return this.service.findAll({
       category,
+      costCenter,
       status,
       recurrence,
       month: month ? parseInt(month, 10) : undefined,
@@ -44,6 +46,7 @@ export class ExpensesController {
   create(@Body() dto: {
     description: string
     category: string
+    costCenter?: string | null
     value: number
     recurrence: string
     dueDate: string
@@ -57,6 +60,7 @@ export class ExpensesController {
   update(@Param('id') id: string, @Body() dto: {
     description?: string
     category?: string
+    costCenter?: string | null
     value?: number
     recurrence?: string
     dueDate?: string

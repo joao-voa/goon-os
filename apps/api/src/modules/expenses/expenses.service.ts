@@ -7,6 +7,7 @@ export class ExpensesService {
 
   async findAll(params: {
     category?: string
+    costCenter?: string
     status?: string
     recurrence?: string
     month?: number
@@ -14,11 +15,12 @@ export class ExpensesService {
     page?: number
     limit?: number
   }) {
-    const { category, status, recurrence, month, year, page = 1, limit = 20 } = params
+    const { category, costCenter, status, recurrence, month, year, page = 1, limit = 20 } = params
     const giuFilter = { NOT: { AND: [{ category: 'MENTORIA' }, { description: { contains: 'Giulliano' } }] } }
     const where: Record<string, unknown> = { ...giuFilter }
 
     if (category) where.category = category
+    if (costCenter) where.costCenter = costCenter
     if (status) where.status = status
     if (recurrence) where.recurrence = recurrence
 
@@ -82,16 +84,24 @@ export class ExpensesService {
       _sum: { value: true },
     })
 
+    const byCostCenterRaw = await this.prisma.expense.groupBy({
+      by: ['costCenter'],
+      where,
+      _sum: { value: true },
+    })
+
     return {
       totalPrevisto: Number(previstoAgg._sum.value ?? 0),
       totalPago: Number(pagoAgg._sum.value ?? 0),
       byCategory: byCategory.map(c => ({ category: c.category, total: Number(c._sum.value ?? 0) })),
+      byCostCenter: byCostCenterRaw.map(c => ({ costCenter: c.costCenter ?? 'SEM', total: Number(c._sum.value ?? 0) })),
     }
   }
 
   async create(dto: {
     description: string
     category: string
+    costCenter?: string | null
     value: number
     recurrence: string
     dueDate: Date | string
@@ -102,6 +112,7 @@ export class ExpensesService {
       data: {
         description: dto.description,
         category: dto.category,
+        costCenter: dto.costCenter ?? null,
         value: dto.value,
         recurrence: dto.recurrence,
         dueDate: new Date(dto.dueDate),
@@ -114,6 +125,7 @@ export class ExpensesService {
   async update(id: string, dto: {
     description?: string
     category?: string
+    costCenter?: string | null
     value?: number
     recurrence?: string
     dueDate?: Date | string
@@ -129,6 +141,7 @@ export class ExpensesService {
       data: {
         description: dto.description,
         category: dto.category,
+        costCenter: dto.costCenter,
         value: dto.value,
         recurrence: dto.recurrence,
         dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,

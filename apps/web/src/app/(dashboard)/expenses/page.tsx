@@ -8,6 +8,7 @@ interface Expense {
   id: string
   description: string
   category: string
+  costCenter: string | null
   value: number
   recurrence: string
   dueDate: string
@@ -20,15 +21,19 @@ interface Summary {
   totalPrevisto: number
   totalPago: number
   byCategory: Array<{ category: string; total: number }>
+  byCostCenter: Array<{ costCenter: string; total: number }>
 }
 
 const CATEGORIES = ['PESSOAL', 'MENTORIA', 'COMISSAO', 'IMPOSTOS', 'MARKETING', 'PESSOAS', 'SISTEMAS', 'ESTRUTURA', 'OUTRO']
 const RECURRENCES = ['UNICA', 'MENSAL', 'TRIMESTRAL', 'ANUAL']
+const COST_CENTERS = ['GLOBAL', 'INFINITY', 'TIKTOK']
 const CATEGORY_LABELS: Record<string, string> = { PESSOAL: 'Pessoal Giu', MENTORIA: 'Mentoria', COMISSAO: 'Comissao', IMPOSTOS: 'Impostos', SISTEMAS: 'Sistemas', MARKETING: 'Marketing', PESSOAS: 'Pessoas', ESTRUTURA: 'Estrutura', OUTRO: 'Outro' }
 const CATEGORY_COLORS: Record<string, string> = { PESSOAL: '#000080', MENTORIA: '#4A78FF', COMISSAO: '#e6a800', IMPOSTOS: '#cc0000', MARKETING: '#7c3aed', PESSOAS: '#059669', SISTEMAS: '#06b6d4', ESTRUTURA: '#475569', OUTRO: '#888' }
+const COST_CENTER_LABELS: Record<string, string> = { GLOBAL: 'GOON Global', INFINITY: 'GOON Infinity', TIKTOK: 'GOON TikTok', SEM: 'Sem centro' }
+const COST_CENTER_COLORS: Record<string, string> = { GLOBAL: '#475569', INFINITY: '#4A78FF', TIKTOK: '#ec4899', SEM: '#cbd5e1' }
 const RECURRENCE_LABELS: Record<string, string> = { UNICA: 'Unica', MENSAL: 'Mensal', TRIMESTRAL: 'Trimestral', ANUAL: 'Anual' }
 
-const emptyForm = { description: '', category: 'SISTEMAS', value: '', recurrence: 'MENSAL', dueDate: '', notes: '' }
+const emptyForm = { description: '', category: 'SISTEMAS', costCenter: '', value: '', recurrence: 'MENSAL', dueDate: '', notes: '' }
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -36,6 +41,7 @@ export default function ExpensesPage() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [costCenterFilter, setCostCenterFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const now = new Date()
   const [month, setMonth] = useState(now.getMonth() + 1)
@@ -59,6 +65,7 @@ export default function ExpensesPage() {
     try {
       const params = new URLSearchParams()
       if (categoryFilter) params.set('category', categoryFilter)
+      if (costCenterFilter) params.set('costCenter', costCenterFilter)
       if (statusFilter) params.set('status', statusFilter)
       if (month) params.set('month', String(month))
       if (year) params.set('year', String(year))
@@ -74,13 +81,13 @@ export default function ExpensesPage() {
       setTotal(list.total)
       setSummary(sum)
     } catch { toast.error('Erro ao carregar despesas') }
-  }, [categoryFilter, statusFilter, month, year, page])
+  }, [categoryFilter, costCenterFilter, statusFilter, month, year, page])
 
   useEffect(() => { loadData() }, [loadData])
 
   const handleSave = async () => {
     try {
-      const body = { ...form, value: parseFloat(form.value) }
+      const body = { ...form, value: parseFloat(form.value), costCenter: form.costCenter || null }
       if (editId) {
         await apiFetch(`/api/expenses/${editId}`, { method: 'PUT', body: JSON.stringify(body) })
       } else {
@@ -96,7 +103,7 @@ export default function ExpensesPage() {
 
   const handleEdit = (e: Expense) => {
     setEditId(e.id)
-    setForm({ description: e.description, category: e.category, value: String(e.value), recurrence: e.recurrence, dueDate: e.dueDate.slice(0, 10), notes: e.notes ?? '' })
+    setForm({ description: e.description, category: e.category, costCenter: e.costCenter ?? '', value: String(e.value), recurrence: e.recurrence, dueDate: e.dueDate.slice(0, 10), notes: e.notes ?? '' })
     setShowModal(true)
   }
 
@@ -185,6 +192,28 @@ export default function ExpensesPage() {
         </div>
       )}
 
+      {/* Centro de custo */}
+      {summary && summary.byCostCenter.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', fontWeight: 600, marginRight: 2 }}>Centro de custo:</span>
+          {summary.byCostCenter.slice().sort((a, b) => b.total - a.total).map(c => {
+            const color = COST_CENTER_COLORS[c.costCenter] ?? '#94a3b8'
+            const isActive = costCenterFilter === c.costCenter
+            const clickable = c.costCenter !== 'SEM'
+            return (
+              <div key={c.costCenter} onClick={() => clickable && setCostCenterFilter(isActive ? '' : c.costCenter)} style={{
+                background: isActive ? color : '#fff', color: isActive ? 'white' : '#0f172a',
+                border: `1px solid ${isActive ? color : '#e2e8f0'}`, borderLeft: `3px solid ${color}`, borderRadius: 10,
+                boxShadow: '0 1px 2px rgba(0,0,0,0.04)', padding: '10px 16px', cursor: clickable ? 'pointer' : 'default', minWidth: 120,
+              }}>
+                <div style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, color: isActive ? 'rgba(255,255,255,0.85)' : '#64748b' }}>{COST_CENTER_LABELS[c.costCenter] ?? c.costCenter}</div>
+                <div style={{ fontFamily: 'var(--font-sans)', fontVariantNumeric: 'tabular-nums', fontSize: 16, fontWeight: 700, marginTop: 3 }}>{fmt(c.total)}</div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
       {/* Filters */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div>
@@ -192,6 +221,13 @@ export default function ExpensesPage() {
           <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={selStyle}>
             <option value="">Todas categorias</option>
             {CATEGORIES.map(c => <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>Centro de custo</label>
+          <select value={costCenterFilter} onChange={e => setCostCenterFilter(e.target.value)} style={selStyle}>
+            <option value="">Todos centros</option>
+            {COST_CENTERS.map(c => <option key={c} value={c}>{COST_CENTER_LABELS[c]}</option>)}
           </select>
         </div>
         <div>
@@ -224,6 +260,7 @@ export default function ExpensesPage() {
             <tr style={{ background: '#0A0A0C', color: 'white', textTransform: 'uppercase' }}>
               <th onClick={() => toggleSort('description')} style={{ padding: '8px 12px', textAlign: 'left', cursor: 'pointer' }}>Descricao{sortField === 'description' ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>
               <th onClick={() => toggleSort('category')} style={{ padding: '8px 12px', textAlign: 'center', cursor: 'pointer' }}>Categoria{sortField === 'category' ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>
+              <th onClick={() => toggleSort('costCenter')} style={{ padding: '8px 12px', textAlign: 'center', cursor: 'pointer' }}>Centro{sortField === 'costCenter' ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>
               <th onClick={() => toggleSort('value')} style={{ padding: '8px 12px', textAlign: 'right', cursor: 'pointer' }}>Valor{sortField === 'value' ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>
               <th onClick={() => toggleSort('recurrence')} style={{ padding: '8px 12px', textAlign: 'center', cursor: 'pointer' }}>Recorrencia{sortField === 'recurrence' ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>
               <th onClick={() => toggleSort('dueDate')} style={{ padding: '8px 12px', textAlign: 'center', cursor: 'pointer' }}>Vencimento{sortField === 'dueDate' ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>
@@ -236,6 +273,11 @@ export default function ExpensesPage() {
               <tr key={e.id} style={{ borderBottom: '1px solid #ccc' }}>
                 <td style={{ padding: '8px 12px' }}>{e.description}</td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>{CATEGORY_LABELS[e.category] ?? e.category}</td>
+                <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                  {e.costCenter ? (
+                    <span style={{ background: (COST_CENTER_COLORS[e.costCenter] ?? '#94a3b8') + '22', color: COST_CENTER_COLORS[e.costCenter] ?? '#475569', border: `1px solid ${(COST_CENTER_COLORS[e.costCenter] ?? '#94a3b8')}55`, padding: '2px 8px', borderRadius: 100, fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap' }}>{COST_CENTER_LABELS[e.costCenter] ?? e.costCenter}</span>
+                  ) : <span style={{ color: '#cbd5e1' }}>—</span>}
+                </td>
                 <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700 }}>{fmt(e.value)}</td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>{RECURRENCE_LABELS[e.recurrence] ?? e.recurrence}</td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>{new Date(e.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
@@ -264,7 +306,7 @@ export default function ExpensesPage() {
               </tr>
             ))}
             {expenses.length === 0 && (
-              <tr><td colSpan={7} style={{ padding: 24, textAlign: 'center', fontFamily: 'var(--font-mono)', color: '#888' }}>Nenhuma despesa encontrada</td></tr>
+              <tr><td colSpan={8} style={{ padding: 24, textAlign: 'center', fontFamily: 'var(--font-mono)', color: '#888' }}>Nenhuma despesa encontrada</td></tr>
             )}
           </tbody>
         </table>
@@ -288,6 +330,10 @@ export default function ExpensesPage() {
               <input placeholder="Descricao" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} style={inputStyle} />
               <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={inputStyle}>
                 {CATEGORIES.map(c => <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>)}
+              </select>
+              <select value={form.costCenter} onChange={e => setForm(f => ({ ...f, costCenter: e.target.value }))} style={inputStyle}>
+                <option value="">Centro de custo (opcional)</option>
+                {COST_CENTERS.map(c => <option key={c} value={c}>{COST_CENTER_LABELS[c]}</option>)}
               </select>
               <input type="number" placeholder="Valor" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))} style={inputStyle} />
               <select value={form.recurrence} onChange={e => setForm(f => ({ ...f, recurrence: e.target.value }))} style={inputStyle}>
