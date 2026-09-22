@@ -22,6 +22,13 @@ const REVENUE_OPTIONS: { label: string; value: string }[] = [
   { label: 'Acima de R$ 1 milhão/mês', value: 'acima de 1 milhao/mês' },
 ]
 
+const FASES: [string, string, string][] = [
+  ['01', 'Setup, onboarding e gestão', 'Seller Center, fiscal, ERP, cadastro e SEO de produtos, mais a gestão diária do Shop.'],
+  ['02', 'Produto hero, precificação e creators', 'Validação do produto certo, política de preços e uma rede de ~100 creators ativos.'],
+  ['03', 'Ads, criativos e escala dos vencedores', 'GMV Max e Paid Ads: sobe, testa, otimiza e redistribui verba nos criativos que vencem.'],
+  ['04', 'Lives, conteúdo, remarketing e gestão contínua', 'Live commerce, remarketing e acompanhamento com relatório e ações priorizadas.'],
+]
+
 export default function TiktokPage() {
   const [f, setF] = useState<Record<string, string>>({ estimatedRevenue: '' })
   const [sending, setSending] = useState(false)
@@ -56,55 +63,74 @@ export default function TiktokPage() {
   const lbl: React.CSSProperties = { display: 'block', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.65)', marginBottom: 6 }
   const focus = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => { e.currentTarget.style.borderColor = NEON; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(199,249,0,0.15)' }
   const blur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => { e.currentTarget.style.borderColor = '#2a2a30'; e.currentTarget.style.boxShadow = 'none' }
+  const label3 = (t: React.ReactNode) => <span style={{ fontFamily: sans, fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' as const }}>{t}</span>
 
   return (
     <div style={{ minHeight: '100vh', background: '#0A0A0C', color: '#fff', fontFamily: sans }}>
-      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '26px 20px 60px' }}>
-        {/* topo: logo + link */}
+      <div style={{ maxWidth: 980, margin: '0 auto', padding: '24px 20px 56px' }}>
+        {/* topo */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <a href="https://www.goon-global.com/" target="_blank" rel="noreferrer" style={{ display: 'inline-block' }}><GoonLogo height={26} fill="#F2F2F2" /></a>
+          <a href="https://www.goon-global.com/" target="_blank" rel="noreferrer" style={{ display: 'inline-block' }}><GoonLogo height={24} fill="#F2F2F2" /></a>
           <a href="https://www.goon-global.com/" target="_blank" rel="noreferrer" style={{ color: NEON, textDecoration: 'none', fontSize: 12.5, fontWeight: 600 }}>goon-global.com ↗</a>
         </div>
 
-        {/* banner do slide TikTok Scale */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/tiktok-hero.jpg" alt="TikTok Scale — estratégia, operação e escala do TikTok Shop de ponta a ponta" style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 16, marginTop: 18, border: '1px solid #1c1c22' }}
-          onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+        {/* HERO — TikTok Scale (nativo) */}
+        <div style={{ textAlign: 'center', marginTop: 34 }}>
+          <div style={{ fontFamily: disp, fontSize: 30, color: NEON, lineHeight: 1, fontWeight: 800 }}>∞</div>
+          <h1 style={{ fontFamily: disp, fontSize: 'clamp(46px, 12vw, 88px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 0.88, margin: '6px 0 0' }}>TIKTOK<br />SCALE</h1>
+          <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.6)', marginTop: 16, maxWidth: 460, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>
+            Estratégia, operação e escala do TikTok Shop de ponta a ponta. Uma máquina de vendas online com awareness de marca.
+          </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 32, alignItems: 'start', marginTop: 30 }}>
-          {/* Hero / marca */}
-          <div>
-            <div style={{ width: 30, height: 3, background: NEON, borderRadius: 2, marginBottom: 16 }} />
-            <h1 style={{ fontFamily: disp, fontSize: 32, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.06, margin: 0 }}>
-              Quer aumentar<br />suas vendas?
-            </h1>
-            {/* selo agência oficial */}
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 14, padding: '6px 12px', borderRadius: 100, background: '#141418', border: '1px solid #2a2a30' }}>
-              <span style={{ color: NEON, fontSize: 13 }}>✔</span>
-              <span style={{ fontSize: 12.5, fontWeight: 700 }}>Agência TikTok Shop <span style={{ color: NEON }}>Oficial</span></span>
+          {/* modelo operacional */}
+          <div style={{ maxWidth: 620, margin: '20px auto 0', padding: '15px 20px', border: '1px solid #1c1c22', borderRadius: 14, background: '#0e0e12' }}>
+            <div style={{ fontFamily: disp, fontSize: 15.5, fontWeight: 800, lineHeight: 1.4 }}>
+              <span style={{ color: NEON }}>Nosso modelo é operacional, não consultivo.</span>{' '}
+              <span style={{ color: '#fff' }}>A GOON estrutura, executa e otimiza.</span>
             </div>
-            <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, marginTop: 16, maxWidth: 450 }}>
-              A GOON monta e toca a sua operação de TikTok Shop de ponta a ponta.
-              <b style={{ color: NEON }}> Não é mentoria</b> — o que você teria que fazer, nós fazemos por você.
+          </div>
+
+          {/* stats */}
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginTop: 16 }}>
+            {[['3', 'Fases operacionais'], ['360°', 'Gestão do canal'], ['✔', 'Agência TikTok Shop Oficial']].map(([n, t]) => (
+              <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 14px', border: '1px solid #1c1c22', borderRadius: 100, background: '#141418' }}>
+                <span style={{ fontFamily: disp, fontSize: 16, fontWeight: 800, color: NEON }}>{n}</span>
+                <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>{t}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* GRID — pitch + form */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 32, alignItems: 'start', marginTop: 40 }}>
+          <div>
+            <h2 style={{ fontFamily: disp, fontSize: 30, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.06, margin: 0 }}>
+              Quer aumentar<br />suas vendas?
+            </h2>
+            <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, marginTop: 14, maxWidth: 450 }}>
+              Com a GOON, <b style={{ color: '#fff' }}>o que você teria que fazer, nós faremos por você</b> — mais estratégia, mais velocidade, mais resultado.
             </p>
 
-            {/* FOMO */}
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 18, padding: '7px 14px', borderRadius: 100, background: 'rgba(199,249,0,0.14)', border: '1px solid rgba(199,249,0,0.3)' }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: NEON }} />
-              <span style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.02em' }}>Vagas limitadas · seleção por perfil</span>
+              <span style={{ fontSize: 12.5, fontWeight: 700 }}>Vagas limitadas · seleção por perfil</span>
             </div>
 
-            <div style={{ marginTop: 22, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {['Setup completo: Seller Center, fiscal, ERP e catálogo', 'Produto hero, precificação e ~100 creators ativos', 'GMV Max, ads e escala dos criativos vencedores', 'Lives, remarketing e gestão 360° do canal'].map(t => (
-                <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'rgba(255,255,255,0.82)' }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: NEON, flexShrink: 0 }} />{t}
-                </div>
-              ))}
+            {/* 4 fases */}
+            <div style={{ marginTop: 24 }}>
+              <div style={{ color: 'rgba(255,255,255,0.5)' }}>{label3('As 4 fases da operação')}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+                {FASES.map(([n, title, desc]) => (
+                  <div key={n} style={{ display: 'flex', gap: 12 }}>
+                    <span style={{ fontFamily: disp, fontSize: 15, fontWeight: 800, color: NEON, minWidth: 22 }}>{n}</span>
+                    <div>
+                      <div style={{ fontSize: 14.5, fontWeight: 700, color: '#fff' }}>{title}</div>
+                      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.45, marginTop: 2 }}>{desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-
-            <p style={{ fontFamily: disp, fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.28em', fontWeight: 700, marginTop: 26, textTransform: 'uppercase' }}>
-              Global <span style={{ color: '#8fb800' }}>or</span> Nothing
-            </p>
           </div>
 
           {/* Form / confirmação */}
@@ -167,19 +193,30 @@ export default function TiktokPage() {
                     fontSize: 15.5, fontWeight: 800, cursor: sending ? 'wait' : 'pointer', marginTop: 4,
                     boxShadow: '0 6px 20px rgba(199,249,0,0.35)', opacity: sending ? 0.7 : 1,
                   }}>{sending ? 'Enviando…' : 'Quero escalar minhas vendas'}</button>
-                  <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', textAlign: 'center', margin: 0 }}>
-                    GOON · <span style={{ letterSpacing: '0.06em' }}>GLOBAL <span style={{ color: '#a3cc00' }}>OR</span> NOTHING</span>
-                  </p>
                 </form>
               </div>
             )}
           </div>
         </div>
 
-        {/* faixa de credibilidade — agência TikTok Shop Oficial */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/tiktok-oficial.jpg" alt="Somos uma agência TikTok Shop Oficial — GOON + TikTok Shop" style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 16, marginTop: 34, border: '1px solid #1c1c22' }}
-          onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+        {/* RODAPÉ — agência oficial (nativo) */}
+        <div style={{ textAlign: 'center', marginTop: 44, paddingTop: 32, borderTop: '1px solid #1c1c22' }}>
+          <h3 style={{ fontFamily: disp, fontSize: 'clamp(22px, 5vw, 30px)', fontWeight: 800, letterSpacing: '-0.01em', margin: 0, lineHeight: 1.2 }}>
+            Somos uma agência <span style={{ color: NEON }}>TikTok Shop</span> Oficial.
+          </h3>
+          <div style={{ marginTop: 12, color: 'rgba(255,255,255,0.55)' }}>
+            {label3(<>MARCA <span style={{ color: NEON }}>×</span> CONTEÚDO <span style={{ color: NEON }}>×</span> COMÉRCIO <span style={{ color: NEON }}>×</span> RESULTADOS</>)}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginTop: 22 }}>
+            <GoonLogo height={26} fill="#F2F2F2" />
+            <span style={{ color: NEON, fontSize: 20, fontWeight: 800 }}>+</span>
+            <span style={{ fontFamily: disp, fontSize: 16, fontWeight: 700 }}>agência TikTok Shop</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: NEON, border: `1px solid ${NEON}`, borderRadius: 100, padding: '2px 9px' }}>✔ Official</span>
+          </div>
+          <p style={{ fontFamily: disp, fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.28em', fontWeight: 700, marginTop: 26, textTransform: 'uppercase' }}>
+            Global <span style={{ color: '#8fb800' }}>or</span> Nothing
+          </p>
+        </div>
       </div>
     </div>
   )
