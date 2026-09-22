@@ -513,7 +513,7 @@ export default function PendenciesPage() {
     apiFetch('/api/payments/check-overdue', { method: 'POST' }).catch(() => {})
     // Load overdue payments with product info
     setTimeout(() => {
-      apiFetch<{ data: Array<{ id: string; value: number; dueDate: string; installment: number; installmentNumber?: number; productCode?: string; client: { id: string; companyName: string }; clientPlan?: { product?: { code: string } } }> }>('/api/payments?status=OVERDUE&limit=100')
+      apiFetch<{ data: Array<{ id: string; value: number; dueDate: string; installment: number; installmentNumber?: number; productCode?: string; inCarteira?: boolean; client: { id: string; companyName: string }; clientPlan?: { product?: { code: string } } }> }>('/api/payments?status=OVERDUE&limit=100&includeCarteira=true')
         .then(res => setOverduePayments((res.data ?? []).map(p => ({ ...p, productCode: p.productCode ?? p.clientPlan?.product?.code ?? '' }))))
         .catch(() => {})
     }, 500)

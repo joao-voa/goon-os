@@ -36,6 +36,7 @@ export class PaymentsController {
     @Query('year') year?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('includeCarteira') includeCarteira?: string,
   ) {
     return this.paymentsService.findAll({
       clientId,
@@ -45,6 +46,7 @@ export class PaymentsController {
       year: year ? parseInt(year, 10) : undefined,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
+      includeCarteira: includeCarteira === 'true',
     })
   }
 

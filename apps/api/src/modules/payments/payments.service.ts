@@ -163,12 +163,14 @@ export class PaymentsService {
     year?: number
     page?: number
     limit?: number
+    includeCarteira?: boolean
   }) {
-    const { clientId, status, product, month, year, page = 1, limit = 20 } = params
+    const { clientId, status, product, month, year, page = 1, limit = 20, includeCarteira = false } = params
 
     // Parcelas em carteira de cobrança (98/98, 99/99 — churn) não aparecem no
-    // Financeiro > Pagamentos nem no fluxo: são desconsideradas.
-    const where: Record<string, unknown> = { inCarteira: false }
+    // Financeiro > Pagamentos nem no fluxo: são desconsideradas — a menos que
+    // o chamador peça explicitamente (Pendências > A recuperar).
+    const where: Record<string, unknown> = includeCarteira ? {} : { inCarteira: false }
     if (clientId) where.clientId = clientId
     if (status) where.status = status
     if (product) {
