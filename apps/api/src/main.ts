@@ -13,12 +13,21 @@ async function bootstrap() {
 
   app.enableShutdownHooks()
 
+  const allowedOrigins = [
+    process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    'http://localhost:3000',
+    'https://goon-os-web.vercel.app',
+  ].filter(Boolean) as string[]
   app.enableCors({
-    origin: [
-      process.env.FRONTEND_URL ?? 'http://localhost:3000',
-      'http://localhost:3000',
-      'https://goon-os-web.vercel.app',
-    ].filter(Boolean),
+    // libera os fixos + qualquer subdomínio goon-global.com (landings públicas) + Vercel previews do web
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true) // curl / server-to-server / same-origin
+      const ok = allowedOrigins.includes(origin)
+        || origin === 'https://goon-global.com'
+        || /\.goon-global\.com$/.test(origin)
+        || /^https:\/\/goon-os-web-.*\.vercel\.app$/.test(origin)
+      cb(null, ok)
+    },
     credentials: true,
   })
 

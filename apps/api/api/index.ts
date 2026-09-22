@@ -21,12 +21,21 @@ async function bootstrap(): Promise<ExpressInstance> {
   app.useBodyParser('json', { limit: '5mb' })
   app.useBodyParser('urlencoded', { limit: '5mb', extended: true })
 
+  const allowedOrigins = [
+    process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    'http://localhost:3000',
+    'https://goon-os-web.vercel.app',
+  ].filter(Boolean) as string[]
   app.enableCors({
-    origin: [
-      process.env.FRONTEND_URL ?? 'http://localhost:3000',
-      'http://localhost:3000',
-      'https://goon-os-web.vercel.app',
-    ].filter(Boolean),
+    // fixos + qualquer subdomínio goon-global.com (landings públicas) + previews Vercel do web
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true)
+      const ok = allowedOrigins.includes(origin)
+        || origin === 'https://goon-global.com'
+        || /\.goon-global\.com$/.test(origin)
+        || /^https:\/\/goon-os-web-.*\.vercel\.app$/.test(origin)
+      cb(null, ok)
+    },
     credentials: true,
   })
 
