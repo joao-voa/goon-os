@@ -75,14 +75,20 @@ export default function MentoriaPage() {
               </div>
             ))}
           </div>
-          <a href="https://www.goon-global.com/" target="_blank" rel="noreferrer" style={{
-            display: 'inline-flex', alignItems: 'center', gap: 7, marginTop: 22, padding: '10px 16px', borderRadius: 100,
-            border: `1px solid rgba(199,249,0,0.35)`, color: NEON, textDecoration: 'none', fontSize: 13.5, fontWeight: 600, width: 'fit-content',
-          }}>Conheça a GOON Global <span style={{ fontSize: 15 }}>↗</span></a>
+          <div style={{ marginTop: 22 }}>
+            <a href="https://www.goon-global.com/" target="_blank" rel="noreferrer" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 16px', borderRadius: 100,
+              border: `1px solid rgba(199,249,0,0.35)`, color: NEON, textDecoration: 'none', fontSize: 13.5, fontWeight: 600,
+            }}>Conheça a GOON Global <span style={{ fontSize: 15 }}>↗</span></a>
+          </div>
 
           <p style={{ fontFamily: disp, fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.28em', fontWeight: 700, marginTop: 26, textTransform: 'uppercase' }}>
             Global <span style={{ color: '#8fb800' }}>or</span> Nothing
           </p>
+
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/mentoria.png" alt="Giulliano Puga" style={{ width: '100%', maxWidth: 460, height: 'auto', display: 'block', marginTop: 8 }}
+            onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
         </div>
 
         {/* Form / confirmação */}
