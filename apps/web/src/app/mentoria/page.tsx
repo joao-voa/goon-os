@@ -58,31 +58,28 @@ export default function MentoriaPage() {
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 20px 60px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 32, alignItems: 'start' }}>
         {/* Hero / marca */}
         <div>
-          <GoonLogo height={30} fill="#F2F2F2" />
+          <a href="https://www.goon-global.com/" target="_blank" rel="noreferrer" style={{ display: 'inline-block' }}><GoonLogo height={30} fill="#F2F2F2" /></a>
           <div style={{ width: 30, height: 3, background: NEON, borderRadius: 2, margin: '18px 0 16px' }} />
           <div style={{ fontFamily: disp, fontSize: 12, fontWeight: 700, letterSpacing: '0.32em', color: NEON, textTransform: 'uppercase' }}>GOON Global · Mentoria</div>
           <h1 style={{ fontFamily: disp, fontSize: 34, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.05, margin: '14px 0 0' }}>
-            Candidate-se à<br />mentoria da GOON
+            Aplique para a<br />mentoria da GOON
           </h1>
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.62)', lineHeight: 1.6, marginTop: 16, maxWidth: 420 }}>
-            Mentoria de marca, direção criativa e escala para quem quer construir algo grande.
-            Preencha abaixo pra se candidatar — ou pra saber mais. Nosso time entra em contato com você.
+            Mentoria de marca, direção criativa e escala para quem quer construir algo grande. Preencha abaixo pra saber mais. Nosso time entra em contato com você.
           </p>
 
-          {/* espaço reservado pra foto (será adicionada) */}
-          <div style={{ marginTop: 24, borderRadius: 16, overflow: 'hidden', border: '1px solid #1c1c22' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/mentoria.jpg" alt="GOON Global" style={{ width: '100%', height: 'auto', display: 'block' }}
-              onError={e => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none' }} />
-          </div>
-
-          <div style={{ marginTop: 22, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {['Direção criativa e mix de produtos', 'Estratégia de marca e escala', 'Acompanhamento de perto, sem fórmula pronta'].map(t => (
               <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'rgba(255,255,255,0.8)' }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: NEON, flexShrink: 0 }} />{t}
               </div>
             ))}
           </div>
+          <a href="https://www.goon-global.com/" target="_blank" rel="noreferrer" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 7, marginTop: 22, padding: '10px 16px', borderRadius: 100,
+            border: `1px solid rgba(199,249,0,0.35)`, color: NEON, textDecoration: 'none', fontSize: 13.5, fontWeight: 600, width: 'fit-content',
+          }}>Conheça a GOON Global <span style={{ fontSize: 15 }}>↗</span></a>
+
           <p style={{ fontFamily: disp, fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.28em', fontWeight: 700, marginTop: 26, textTransform: 'uppercase' }}>
             Global <span style={{ color: '#8fb800' }}>or</span> Nothing
           </p>
@@ -100,8 +97,7 @@ export default function MentoriaPage() {
             </div>
           ) : (
             <div style={{ background: '#141418', border: '1px solid #1c1c22', borderRadius: 16, padding: '24px 22px' }}>
-              <h2 style={{ fontFamily: disp, fontSize: 19, fontWeight: 700, margin: '0 0 4px' }}>Preencha pra se candidatar</h2>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', margin: '0 0 18px' }}>Leva menos de 1 minuto.</p>
+              <h2 style={{ fontFamily: disp, fontSize: 19, fontWeight: 700, margin: '0 0 18px' }}>Preencha pra saber mais</h2>
               <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div>
                   <label style={lbl}>Nome completo *</label>
@@ -148,7 +144,7 @@ export default function MentoriaPage() {
                   background: NEON, color: '#0A0A0C', border: 'none', borderRadius: 12, padding: '15px', fontFamily: sans,
                   fontSize: 15.5, fontWeight: 800, cursor: sending ? 'wait' : 'pointer', marginTop: 4,
                   boxShadow: '0 6px 20px rgba(199,249,0,0.35)', opacity: sending ? 0.7 : 1,
-                }}>{sending ? 'Enviando…' : 'Quero me candidatar'}</button>
+                }}>{sending ? 'Enviando…' : 'Aplicar para a mentoria'}</button>
                 <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', textAlign: 'center', margin: 0 }}>
                   GOON Global · <span style={{ letterSpacing: '0.06em' }}>GLOBAL <span style={{ color: '#a3cc00' }}>OR</span> NOTHING</span>
                 </p>
