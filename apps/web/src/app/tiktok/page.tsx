@@ -84,16 +84,6 @@ export default function TiktokPage() {
               </div>
             </div>
 
-            {/* stats */}
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
-              {[['3', 'Fases operacionais'], ['360°', 'Gestão do canal'], ['✔', 'Agência TikTok Shop Oficial']].map(([n, t]) => (
-                <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 14px', border: '1px solid #1c1c22', borderRadius: 100, background: '#141418' }}>
-                  <span style={{ fontFamily: disp, fontSize: 16, fontWeight: 800, color: NEON }}>{n}</span>
-                  <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>{t}</span>
-                </div>
-              ))}
-            </div>
-
             {/* FOMO */}
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 18, padding: '7px 14px', borderRadius: 100, background: 'rgba(199,249,0,0.14)', border: '1px solid rgba(199,249,0,0.3)' }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: NEON }} />
