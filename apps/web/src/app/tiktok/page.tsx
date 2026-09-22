@@ -22,13 +22,6 @@ const REVENUE_OPTIONS: { label: string; value: string }[] = [
   { label: 'Acima de R$ 1 milhão/mês', value: 'acima de 1 milhao/mês' },
 ]
 
-const FASES: [string, string, string][] = [
-  ['01', 'Setup, onboarding e gestão', 'Seller Center, fiscal, ERP, cadastro e SEO de produtos, mais a gestão diária do Shop.'],
-  ['02', 'Produto hero, precificação e creators', 'Validação do produto certo, política de preços e uma rede de ~100 creators ativos.'],
-  ['03', 'Ads, criativos e escala dos vencedores', 'GMV Max e Paid Ads: sobe, testa, otimiza e redistribui verba nos criativos que vencem.'],
-  ['04', 'Lives, conteúdo, remarketing e gestão contínua', 'Live commerce, remarketing e acompanhamento com relatório e ações priorizadas.'],
-]
-
 export default function TiktokPage() {
   const [f, setF] = useState<Record<string, string>>({ estimatedRevenue: '' })
   const [sending, setSending] = useState(false)
@@ -74,62 +67,37 @@ export default function TiktokPage() {
           <a href="https://www.goon-global.com/" target="_blank" rel="noreferrer" style={{ color: NEON, textDecoration: 'none', fontSize: 12.5, fontWeight: 600 }}>goon-global.com ↗</a>
         </div>
 
-        {/* HERO — TikTok Scale (nativo) */}
-        <div style={{ textAlign: 'center', marginTop: 34 }}>
-          <div style={{ fontFamily: disp, fontSize: 30, color: NEON, lineHeight: 1, fontWeight: 800 }}>∞</div>
-          <h1 style={{ fontFamily: disp, fontSize: 'clamp(46px, 12vw, 88px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 0.88, margin: '6px 0 0' }}>TIKTOK<br />SCALE</h1>
-          <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.6)', marginTop: 16, maxWidth: 460, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>
-            Estratégia, operação e escala do TikTok Shop de ponta a ponta. Uma máquina de vendas online com awareness de marca.
-          </p>
-
-          {/* modelo operacional */}
-          <div style={{ maxWidth: 620, margin: '20px auto 0', padding: '15px 20px', border: '1px solid #1c1c22', borderRadius: 14, background: '#0e0e12' }}>
-            <div style={{ fontFamily: disp, fontSize: 15.5, fontWeight: 800, lineHeight: 1.4 }}>
-              <span style={{ color: NEON }}>Nosso modelo é operacional, não consultivo.</span>{' '}
-              <span style={{ color: '#fff' }}>A GOON estrutura, executa e otimiza.</span>
-            </div>
-          </div>
-
-          {/* stats */}
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginTop: 16 }}>
-            {[['3', 'Fases operacionais'], ['360°', 'Gestão do canal'], ['✔', 'Agência TikTok Shop Oficial']].map(([n, t]) => (
-              <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 14px', border: '1px solid #1c1c22', borderRadius: 100, background: '#141418' }}>
-                <span style={{ fontFamily: disp, fontSize: 16, fontWeight: 800, color: NEON }}>{n}</span>
-                <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>{t}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* GRID — pitch + form */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 32, alignItems: 'start', marginTop: 40 }}>
+        {/* GRID — TikTok Scale (esquerda) + form (direita) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 32, alignItems: 'start', marginTop: 34 }}>
           <div>
-            <h2 style={{ fontFamily: disp, fontSize: 30, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.06, margin: 0 }}>
-              Quer aumentar<br />suas vendas?
-            </h2>
-            <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, marginTop: 14, maxWidth: 450 }}>
-              Com a GOON, <b style={{ color: '#fff' }}>o que você teria que fazer, nós faremos por você</b> — mais estratégia, mais velocidade, mais resultado.
+            <div style={{ fontFamily: disp, fontSize: 26, color: NEON, lineHeight: 1, fontWeight: 800 }}>∞</div>
+            <h1 style={{ fontFamily: disp, fontSize: 'clamp(40px, 8vw, 58px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 0.9, margin: '8px 0 0' }}>TIKTOK<br />SCALE</h1>
+            <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.62)', marginTop: 14, lineHeight: 1.55, maxWidth: 440 }}>
+              Estratégia, operação e escala do TikTok Shop de ponta a ponta. Uma máquina de vendas online com awareness de marca.
             </p>
 
+            {/* modelo operacional */}
+            <div style={{ marginTop: 18, padding: '14px 18px', border: '1px solid #1c1c22', borderRadius: 14, background: '#0e0e12' }}>
+              <div style={{ fontFamily: disp, fontSize: 15, fontWeight: 800, lineHeight: 1.4 }}>
+                <span style={{ color: NEON }}>Nosso modelo é operacional, não consultivo.</span>{' '}
+                <span style={{ color: '#fff' }}>A GOON estrutura, executa e otimiza.</span>
+              </div>
+            </div>
+
+            {/* stats */}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
+              {[['3', 'Fases operacionais'], ['360°', 'Gestão do canal'], ['✔', 'Agência TikTok Shop Oficial']].map(([n, t]) => (
+                <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 14px', border: '1px solid #1c1c22', borderRadius: 100, background: '#141418' }}>
+                  <span style={{ fontFamily: disp, fontSize: 16, fontWeight: 800, color: NEON }}>{n}</span>
+                  <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>{t}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* FOMO */}
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 18, padding: '7px 14px', borderRadius: 100, background: 'rgba(199,249,0,0.14)', border: '1px solid rgba(199,249,0,0.3)' }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: NEON }} />
               <span style={{ fontSize: 12.5, fontWeight: 700 }}>Vagas limitadas · seleção por perfil</span>
-            </div>
-
-            {/* 4 fases */}
-            <div style={{ marginTop: 24 }}>
-              <div style={{ color: 'rgba(255,255,255,0.5)' }}>{label3('As 4 fases da operação')}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
-                {FASES.map(([n, title, desc]) => (
-                  <div key={n} style={{ display: 'flex', gap: 12 }}>
-                    <span style={{ fontFamily: disp, fontSize: 15, fontWeight: 800, color: NEON, minWidth: 22 }}>{n}</span>
-                    <div>
-                      <div style={{ fontSize: 14.5, fontWeight: 700, color: '#fff' }}>{title}</div>
-                      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.45, marginTop: 2 }}>{desc}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
 
