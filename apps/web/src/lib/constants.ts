@@ -151,6 +151,9 @@ export const LEAD_SOURCE_LABELS: Record<string, string> = {
   indicacao: 'Indicacao',
   evento: 'Evento',
   base_clientes: 'Base de Clientes',
+  // landings públicas (origem por canal + oferta)
+  story_tiktok: 'Story · TikTok',
+  story_mentoria: 'Story · Mentoria',
   // legado (dados antigos migrados; mantidos p/ exibição)
   site: 'Site',
   facebook: 'Facebook',

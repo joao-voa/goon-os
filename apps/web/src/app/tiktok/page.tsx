@@ -6,8 +6,12 @@ import { GoonLogo } from '@/components/GoonLogo'
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 const NEON = '#C7F900'
 const sans = 'var(--font-sans)', disp = 'var(--font-display)'
-const LEAD_SOURCE = 'site'
 const INTEREST = 'TikTok Scale — Social Commerce'
+// origem = {canal}_tiktok. canal vem de ?c= (default "story") → ex.: story_tiktok
+const leadSourceFor = () => {
+  const c = (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('c') : null) || 'story'
+  return `${c.replace(/[^a-z0-9]/gi, '').toLowerCase()}_tiktok`
+}
 
 const REVENUE_OPTIONS: { label: string; value: string }[] = [
   { label: 'Ainda não faturo', value: '' },
@@ -37,7 +41,7 @@ export default function TiktokPage() {
         body: JSON.stringify({
           responsible: f.responsible, companyName: f.companyName, whatsapp: f.whatsapp, email: f.email,
           instagram: f.instagram, segment: f.segment, estimatedRevenue: f.estimatedRevenue,
-          notes: f.notes, eventName: INTEREST, leadSource: LEAD_SOURCE,
+          notes: f.notes, eventName: INTEREST, leadSource: leadSourceFor(),
         }),
       })
       if (!r.ok) throw new Error()
