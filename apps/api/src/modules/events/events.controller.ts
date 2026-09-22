@@ -10,7 +10,7 @@ export class EventsController {
   @HttpCode(201)
   eventLead(@Body() dto: {
     responsible: string; companyName?: string; whatsapp?: string; email?: string
-    instagram?: string; segment?: string; estimatedRevenue?: string; notes?: string; eventName?: string
+    instagram?: string; segment?: string; estimatedRevenue?: string; notes?: string; eventName?: string; leadSource?: string
   }) {
     return this.crm.createEventLead(dto)
   }

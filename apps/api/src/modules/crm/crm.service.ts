@@ -1281,9 +1281,10 @@ export class CrmService {
    */
   async createEventLead(dto: {
     responsible: string; companyName?: string; whatsapp?: string; email?: string
-    instagram?: string; segment?: string; estimatedRevenue?: string; notes?: string; eventName?: string
+    instagram?: string; segment?: string; estimatedRevenue?: string; notes?: string; eventName?: string; leadSource?: string
   }) {
     if (!dto.responsible?.trim()) throw new BadRequestException('Nome é obrigatório')
+    const source = dto.leadSource?.trim() || 'evento'
     const email = dto.email?.trim().toLowerCase() || null
     const whatsapp = dto.whatsapp?.trim() || null
     const parts: string[] = []
@@ -1301,7 +1302,7 @@ export class CrmService {
       await this.prisma.client.update({
         where: { id: existing.id },
         data: {
-          leadSource: existing.leadSource ?? 'evento',
+          leadSource: existing.leadSource ?? source,
           segment: existing.segment ?? (dto.segment?.trim() || null),
           estimatedRevenue: existing.estimatedRevenue ?? (dto.estimatedRevenue?.trim() || null),
           leadNotes: note ? (existing.leadNotes ? `${existing.leadNotes}\n${note}` : note) : existing.leadNotes,
@@ -1319,7 +1320,7 @@ export class CrmService {
         email,
         segment: dto.segment?.trim() || null,
         estimatedRevenue: dto.estimatedRevenue?.trim() || null,
-        leadSource: 'evento',
+        leadSource: source,
         leadNotes: note || null,
         status: 'PROSPECT',
         leadStage: 'NOVO',
