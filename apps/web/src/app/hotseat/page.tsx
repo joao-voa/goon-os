@@ -5,7 +5,7 @@ import { useState } from 'react'
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 const NEON = '#C7F900'
 const sans = 'var(--font-sans)', disp = 'var(--font-display)'
-const EVENT_NAME = 'HOTSEAT · 17/09'
+const EVENT_NAME = 'HOTSEAT · 24/09 · Richard Hey'
 
 const REVENUE_OPTIONS: { label: string; value: string }[] = [
   { label: 'Ainda não faturo', value: '' },
@@ -59,7 +59,7 @@ export default function HotseatPage() {
         {/* Pôster */}
         <div className="hs-poster">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/hotseat.jpg" alt="HOTSEAT · Giulliano Puga · 17/09" style={{ width: '100%', height: 'auto', borderRadius: 16, border: '1px solid #1c1c22', display: 'block' }} />
+          <img src="/hotseat.jpg" alt="HOTSEAT · Richard Hey · 24/09" style={{ width: '100%', height: 'auto', borderRadius: 16, border: '1px solid #1c1c22', display: 'block' }} />
         </div>
 
         {/* Form / confirmação */}
@@ -69,7 +69,7 @@ export default function HotseatPage() {
               <div style={{ width: 56, height: 56, borderRadius: '50%', background: NEON, color: '#0A0A0C', display: 'grid', placeItems: 'center', margin: '0 auto 16px', fontSize: 28, fontWeight: 800 }}>✓</div>
               <h2 style={{ fontFamily: disp, fontSize: 22, fontWeight: 700, margin: 0 }}>Presença confirmada!</h2>
               <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 14.5, lineHeight: 1.55, marginTop: 10 }}>
-                Você garantiu sua vaga no <b style={{ color: '#fff' }}>HOTSEAT</b> com o Giulliano Puga.<br />
+                Você garantiu sua vaga no <b style={{ color: '#fff' }}>HOTSEAT</b> com o Richard Hey.<br />
                 Vamos te enviar os detalhes de acesso no seu <b style={{ color: NEON }}>WhatsApp</b>. Fica de olho! 🚀
               </p>
             </div>
@@ -78,11 +78,11 @@ export default function HotseatPage() {
               <div style={{ marginBottom: 20 }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 100, background: 'rgba(199,249,0,0.14)', border: '1px solid rgba(199,249,0,0.3)', marginBottom: 14 }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: NEON }} />
-                  <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.02em' }}>17/09 · 20:00 às 22:00 · vagas limitadas</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.02em' }}>24/09 · 20:00 às 22:00 · vagas limitadas</span>
                 </div>
                 <h1 style={{ fontFamily: disp, fontSize: 27, fontWeight: 800, letterSpacing: '-0.02em', margin: 0, lineHeight: 1.1 }}>Garanta sua vaga na masterclass</h1>
                 <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14.5, lineHeight: 1.55, marginTop: 10 }}>
-                  Direção criativa e organização de mix de produtos com <b style={{ color: '#fff' }}>Giulliano Puga</b>. Preencha abaixo pra confirmar sua presença.
+                  Criação de vídeos e short-films com IA para negócios e produtos, com <b style={{ color: "#fff" }}>Richard Hey</b>. Preencha abaixo pra confirmar sua presença.
                 </p>
               </div>
 
