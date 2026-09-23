@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', '@dnd-kit/core', '@dnd-kit/sortable'],
   },
+  async redirects() {
+    return [
+      { source: '/hotseat', destination: '/masterclass', permanent: false },
+    ]
+  },
 }
 
 export default nextConfig

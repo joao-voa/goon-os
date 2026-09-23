@@ -16,7 +16,7 @@ const REVENUE_OPTIONS: { label: string; value: string }[] = [
   { label: 'Acima de R$ 1 milhão/mês', value: 'acima de 1 milhao/mês' },
 ]
 
-export default function HotseatPage() {
+export default function MasterclassPage() {
   const [f, setF] = useState<Record<string, string>>({ estimatedRevenue: '' })
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(false)
@@ -59,7 +59,7 @@ export default function HotseatPage() {
         {/* Pôster */}
         <div className="hs-poster">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/hotseat.jpg" alt="MASTERCLASS · IA Aplicada · 24/09 · Richard Hey e Giulliano Puga" style={{ width: '100%', height: 'auto', borderRadius: 16, border: '1px solid #1c1c22', display: 'block' }} />
+          <img src="/masterclass.jpg" alt="MASTERCLASS · IA Aplicada · 24/09 · Richard Hey e Giulliano Puga" style={{ width: '100%', height: 'auto', borderRadius: 16, border: '1px solid #1c1c22', display: 'block' }} />
         </div>
 
         {/* Form / confirmação */}
