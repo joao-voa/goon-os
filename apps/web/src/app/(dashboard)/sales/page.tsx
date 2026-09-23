@@ -188,6 +188,13 @@ export default function SalesPage() {
         {(() => {
           const mS = data?.months.find(x => x.month === curMonth)
           const mG = goals?.months.find(x => x.month === curMonth)
+          const ovM = overview?.months.find(x => x.month === curMonth)
+          // Sem filtro de produto: meta = soma dos programas (mesma fonte da aba Metas).
+          // Com filtro: meta do produto selecionado.
+          const monthMetaV = productFilter ? (mG?.targetValue ?? 0) : (ovM?.metaValue ?? 0)
+          const monthMetaC = productFilter ? (mG?.targetCount ?? 0) : (ovM?.metaCount ?? 0)
+          const yearMetaV = productFilter ? (goals?.totalValue ?? 0) : (overview?.yearTotal.metaValue ?? 0)
+          const yearMetaC = productFilter ? (goals?.totalCount ?? 0) : (overview?.yearTotal.metaCount ?? 0)
           return (
             <div style={{ ...card, padding: '20px 16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
@@ -195,10 +202,10 @@ export default function SalesPage() {
                 <button onClick={() => setTab('meta')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: C.mid }}>ajustar metas ›</button>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8 }}>
-                {year === nowYear && <Gauge label={`${MONTH_FULL[curMonth - 1]} · R$`} value={mS?.total ?? 0} target={mG?.targetValue ?? 0} kind="money" />}
-                {year === nowYear && <Gauge label={`${MONTH_FULL[curMonth - 1]} · Vendas`} value={mS?.count ?? 0} target={mG?.targetCount ?? 0} kind="count" />}
-                <Gauge label={`Ano ${year} · R$`} value={data?.totalYear ?? 0} target={goals?.totalValue ?? 0} kind="money" />
-                <Gauge label={`Ano ${year} · Vendas`} value={data?.countYear ?? 0} target={goals?.totalCount ?? 0} kind="count" />
+                {year === nowYear && <Gauge label={`${MONTH_FULL[curMonth - 1]} · R$`} value={mS?.total ?? 0} target={monthMetaV} kind="money" />}
+                {year === nowYear && <Gauge label={`${MONTH_FULL[curMonth - 1]} · Vendas`} value={mS?.count ?? 0} target={monthMetaC} kind="count" />}
+                <Gauge label={`Ano ${year} · R$`} value={data?.totalYear ?? 0} target={yearMetaV} kind="money" />
+                <Gauge label={`Ano ${year} · Vendas`} value={data?.countYear ?? 0} target={yearMetaC} kind="count" />
               </div>
             </div>
           )

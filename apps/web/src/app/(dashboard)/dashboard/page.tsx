@@ -28,6 +28,8 @@ interface MonthSales { month: number; total: number; count: number }
 interface SalesData { totalYear: number; countYear: number; months: MonthSales[] }
 interface Goal { month: number; targetValue: number; targetCount: number }
 interface GoalsData { months: Goal[]; totalValue: number; totalCount: number }
+interface OvMonth { month: number; metaValue: number; metaCount: number }
+interface GoalsOverview { months: OvMonth[]; yearTotal: { metaValue: number; metaCount: number } }
 interface Buckets { ativos: number; recorrentes: number; base: number; leads: number }
 
 const fmtBRL = (n?: number | null) => n != null ? n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }) : 'R$ 0'
@@ -80,7 +82,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [cf, setCf] = useState<CashflowData | null>(null)
   const [sales, setSales] = useState<SalesData | null>(null)
-  const [goals, setGoals] = useState<GoalsData | null>(null)
+  const [goals, setGoals] = useState<GoalsOverview | null>(null)
   const [buckets, setBuckets] = useState<Buckets | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -93,7 +95,7 @@ export default function DashboardPage() {
       apiFetch<Stats>('/api/dashboard').catch(() => null),
       apiFetch<CashflowData>(`/api/cashflow?year=${year}`).catch(() => null),
       apiFetch<SalesData>(`/api/crm/sales-by-month?year=${year}`).catch(() => null),
-      apiFetch<GoalsData>(`/api/crm/goals?year=${year}&product=GERAL`).catch(() => null),
+      apiFetch<GoalsOverview>(`/api/crm/goals-overview?year=${year}`).catch(() => null),
       apiFetch<Buckets>('/api/clients/buckets/counts').catch(() => null),
     ]).then(([s, c, sa, g, b]) => {
       setStats(s); setCf(c); setSales(sa); setGoals(g); setBuckets(b); setLoading(false)
@@ -104,9 +106,9 @@ export default function DashboardPage() {
 
   // ── Derivados ──
   const mesSold = sales?.months.find(m => m.month === curMonth)?.total ?? 0
-  const mesMeta = goals?.months.find(m => m.month === curMonth)?.targetValue ?? 0
+  const mesMeta = goals?.months.find(m => m.month === curMonth)?.metaValue ?? 0
   const anoSold = sales?.totalYear ?? 0
-  const anoMeta = goals?.totalValue ?? 0
+  const anoMeta = goals?.yearTotal.metaValue ?? 0
   const ativos = buckets?.ativos ?? stats?.kpis.totalActiveClients ?? 0
 
   // Fluxo (camadas do ano)
