@@ -5,7 +5,7 @@ import { useState } from 'react'
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 const NEON = '#C7F900'
 const sans = 'var(--font-sans)', disp = 'var(--font-display)'
-const EVENT_NAME = 'HOTSEAT · 24/09 · Richard Hey'
+const EVENT_NAME = 'MASTERCLASS · 24/09 · IA Aplicada'
 
 const REVENUE_OPTIONS: { label: string; value: string }[] = [
   { label: 'Ainda não faturo', value: '' },
@@ -59,7 +59,7 @@ export default function HotseatPage() {
         {/* Pôster */}
         <div className="hs-poster">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/hotseat.jpg" alt="HOTSEAT · Richard Hey · 24/09" style={{ width: '100%', height: 'auto', borderRadius: 16, border: '1px solid #1c1c22', display: 'block' }} />
+          <img src="/hotseat.jpg" alt="MASTERCLASS · IA Aplicada · 24/09 · Richard Hey e Giulliano Puga" style={{ width: '100%', height: 'auto', borderRadius: 16, border: '1px solid #1c1c22', display: 'block' }} />
         </div>
 
         {/* Form / confirmação */}
@@ -69,7 +69,7 @@ export default function HotseatPage() {
               <div style={{ width: 56, height: 56, borderRadius: '50%', background: NEON, color: '#0A0A0C', display: 'grid', placeItems: 'center', margin: '0 auto 16px', fontSize: 28, fontWeight: 800 }}>✓</div>
               <h2 style={{ fontFamily: disp, fontSize: 22, fontWeight: 700, margin: 0 }}>Presença confirmada!</h2>
               <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 14.5, lineHeight: 1.55, marginTop: 10 }}>
-                Você garantiu sua vaga no <b style={{ color: '#fff' }}>HOTSEAT</b> com o Richard Hey.<br />
+                Você garantiu sua vaga na <b style={{ color: '#fff' }}>MASTERCLASS</b> com Richard Hey e Giulliano Puga.<br />
                 Vamos te enviar os detalhes de acesso no seu <b style={{ color: NEON }}>WhatsApp</b>. Fica de olho! 🚀
               </p>
             </div>
@@ -82,7 +82,7 @@ export default function HotseatPage() {
                 </div>
                 <h1 style={{ fontFamily: disp, fontSize: 27, fontWeight: 800, letterSpacing: '-0.02em', margin: 0, lineHeight: 1.1 }}>Garanta sua vaga na masterclass</h1>
                 <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14.5, lineHeight: 1.55, marginTop: 10 }}>
-                  Criação de vídeos e short-films com IA para negócios e produtos, com <b style={{ color: "#fff" }}>Richard Hey</b>. Preencha abaixo pra confirmar sua presença.
+                  IA aplicada: imagem e vídeos com uso de IA, com <b style={{ color: "#fff" }}>Richard Hey</b> e <b style={{ color: "#fff" }}>Giulliano Puga</b>. Preencha abaixo pra confirmar sua presença.
                 </p>
               </div>
 
@@ -122,7 +122,7 @@ export default function HotseatPage() {
                   </div>
                 </div>
                 <div>
-                  <label style={lbl}>O que você quer levar do HOTSEAT? <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>(opcional)</span></label>
+                  <label style={lbl}>O que você quer levar da masterclass? <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>(opcional)</span></label>
                   <textarea value={f.notes ?? ''} onChange={e => set('notes', e.target.value)} rows={2} placeholder="Seu maior desafio hoje…" style={{ ...inp, resize: 'vertical', lineHeight: 1.5 }} onFocus={focus} onBlur={blur} />
                 </div>
 
