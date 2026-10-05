@@ -355,6 +355,9 @@ export class PaymentsService {
       },
     })
 
+    // TTS recorrente: se esta atualização marcou como PAGA, joga a próxima pro fluxo
+    if (dto.status === 'PAID' && existing.status !== 'PAID') await this.maybeRenewTTS(id)
+
     return { ...payment, value: payment.value.toNumber() }
   }
 
@@ -380,7 +383,53 @@ export class PaymentsService {
       description: `Parcela ${payment.installment}/${payment.totalInstallments} marcada como paga`,
     })
 
+    if (existing.status !== 'PAID') await this.maybeRenewTTS(id)
+
     return { ...payment, value: payment.value.toNumber() }
+  }
+
+  /**
+   * TikTok Scale é recorrente ("1+1", cancelamento com 30 dias de aviso).
+   * Ao pagar uma parcela de um plano TTS ATIVO, cria automaticamente a próxima
+   * parcela (mesmo valor, +1 mês após a última), mantendo o fluxo rolando pra frente.
+   * Pra encerrar, basta mudar o status do plano (ex.: COMPLETED) — aí para de renovar.
+   */
+  private async maybeRenewTTS(paymentId: string) {
+    const pay = await this.prisma.payment.findUnique({
+      where: { id: paymentId },
+      select: {
+        value: true, clientId: true, clientPlanId: true,
+        clientPlan: {
+          select: {
+            id: true, status: true, paymentDay: true,
+            product: { select: { code: true } },
+            payments: { select: { dueDate: true, installment: true } },
+          },
+        },
+      },
+    })
+    const plan = pay?.clientPlan
+    if (!pay || !plan || plan.product?.code !== 'TTS' || plan.status !== 'ACTIVE') return
+
+    let lastDate = plan.payments[0]?.dueDate ?? new Date()
+    let maxInst = 0
+    for (const q of plan.payments) {
+      if (q.dueDate > lastDate) lastDate = q.dueDate
+      if ((q.installment ?? 0) > maxInst) maxInst = q.installment ?? 0
+    }
+    const ld = new Date(lastDate)
+    const day = plan.paymentDay ?? ld.getUTCDate()
+    const next = new Date(Date.UTC(ld.getUTCFullYear(), ld.getUTCMonth() + 1, day))
+
+    await this.prisma.payment.create({
+      data: {
+        clientId: pay.clientId, clientPlanId: plan.id,
+        installment: maxInst + 1, totalInstallments: maxInst + 1,
+        value: pay.value, dueDate: next, status: 'PENDING',
+        observation: 'Renovação automática TTS (recorrente)',
+      },
+    })
+    await this.prisma.clientPlan.update({ where: { id: plan.id }, data: { installments: maxInst + 1, endDate: next } })
   }
 
   async toggleCarteira(id: string, inCarteira: boolean) {
