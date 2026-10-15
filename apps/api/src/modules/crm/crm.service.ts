@@ -100,6 +100,9 @@ export class CrmService {
       const fat = CrmService.parseMonthlyRevenue(lead.estimatedRevenue)
       return {
         ...lead,
+        // normaliza estágios legados p/ os canônicos — senão o card não cai em
+        // nenhuma coluna do kanban e "some" (lead contado mas invisível no quadro)
+        leadStage: CrmService.normalizeStage(lead.leadStage),
         saleValue: lead.saleValue ? Number(lead.saleValue) : null,
         installmentValue: lead.installmentValue ? Number(lead.installmentValue) : null,
         entryValue: lead.entryValue ? Number(lead.entryValue) : null,
@@ -660,6 +663,18 @@ export class CrmService {
     }
   }
 
+  // Estágios legados -> canônicos do kanban (CRM_STAGES). Mantém o card visível.
+  static readonly STAGE_ALIAS: Record<string, string> = {
+    FOLLOW_UP: 'FUP',
+    QUALIFICADO: 'FUP',
+    PROPOSTA_ENVIADA: 'EM_NEGOCIACAO',
+    RECUPERAR: 'PERDIDO',
+  }
+  static normalizeStage(s: string | null): string | null {
+    if (!s) return s
+    return CrmService.STAGE_ALIAS[s] ?? s
+  }
+
   // ===== Faturamento / ICP helpers =====
   static readonly PIPE = ['NOVO', 'FUP', 'REUNIAO_AGENDADA', 'EM_NEGOCIACAO', 'FECHADO']
   static readonly ICP_THRESHOLD = 100000 // R$/mês
@@ -1031,6 +1046,10 @@ export class CrmService {
 
   private isSpamLead(lead: { companyName: string; responsible: string; email?: string | null }, raw: Record<string, string>): boolean {
     const name = lead.companyName.toLowerCase()
+
+    // Nome só de pontuação ("......."): normalizado vira vazio, escapa do dedup
+    // e re-entra a cada sync
+    if (!normText(name)) return true
     const cargo = (raw['qual_é_seu_cargo_na_empresa?'] || raw['E qual é o seu cargo na empresa?'] || '').toLowerCase()
     const faturamento = (raw['qual_é_seu_faturamento_anual?'] || raw['Qual é o seu faturamento anual?'] || '').toLowerCase()
 
