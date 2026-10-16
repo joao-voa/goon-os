@@ -8,8 +8,13 @@ export class TasksController {
   constructor(private service: TasksService) {}
 
   @Get()
-  findAll(@Query('stage') stage?: string, @Query('assignee') assignee?: string) {
-    return this.service.findAll({ stage, assignee })
+  findAll(
+    @Query('stage') stage?: string,
+    @Query('assignee') assignee?: string,
+    @Query('clientId') clientId?: string,
+    @Query('crm') crm?: string,
+  ) {
+    return this.service.findAll({ stage, assignee, clientId, crm: crm === '1' })
   }
 
   @Get('tags')
@@ -32,6 +37,7 @@ export class TasksController {
     assignee?: string
     dueDate?: string
     tags?: string[]
+    clientId?: string
   }) {
     return this.service.create(dto)
   }
@@ -46,6 +52,7 @@ export class TasksController {
     dueDate?: string | null
     tags?: string[]
     order?: number
+    clientId?: string | null
   }) {
     return this.service.update(id, dto)
   }

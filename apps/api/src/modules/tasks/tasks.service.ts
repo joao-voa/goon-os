@@ -5,14 +5,17 @@ import { PrismaService } from '../../prisma/prisma.service'
 export class TasksService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(params: { stage?: string; assignee?: string }) {
-    const { stage, assignee } = params
+  async findAll(params: { stage?: string; assignee?: string; clientId?: string; crm?: boolean }) {
+    const { stage, assignee, clientId, crm } = params
     const where: Record<string, unknown> = {}
     if (stage) where.stage = stage
     if (assignee) where.assignee = assignee
+    if (clientId) where.clientId = clientId
+    else if (crm) where.clientId = { not: null }
 
     return this.prisma.task.findMany({
       where,
+      include: { client: { select: { id: true, companyName: true, responsible: true, leadStage: true } } },
       orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
     })
   }
@@ -25,6 +28,7 @@ export class TasksService {
     assignee?: string
     dueDate?: string
     tags?: string[]
+    clientId?: string
   }) {
     return this.prisma.task.create({
       data: {
@@ -35,6 +39,7 @@ export class TasksService {
         assignee: dto.assignee,
         dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
         tags: dto.tags ? JSON.stringify(dto.tags) : null,
+        clientId: dto.clientId || null,
       },
     })
   }
@@ -48,6 +53,7 @@ export class TasksService {
     dueDate?: string | null
     tags?: string[]
     order?: number
+    clientId?: string | null
   }) {
     const existing = await this.prisma.task.findUnique({ where: { id } })
     if (!existing) throw new NotFoundException('Task not found')
@@ -60,6 +66,7 @@ export class TasksService {
     if (dto.dueDate !== undefined) data.dueDate = dto.dueDate ? new Date(dto.dueDate) : null
     if (dto.tags !== undefined) data.tags = JSON.stringify(dto.tags)
     if (dto.order !== undefined) data.order = dto.order
+    if (dto.clientId !== undefined) data.clientId = dto.clientId || null
     if (dto.stage !== undefined) {
       data.stage = dto.stage
       if (dto.stage === 'DONE' && existing.stage !== 'DONE') data.completedAt = new Date()

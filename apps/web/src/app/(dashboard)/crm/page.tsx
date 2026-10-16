@@ -23,6 +23,7 @@ import { X, Trash2 } from 'lucide-react'
 
 const CrmKanbanBoard = dynamic(() => import('@/components/CrmKanbanBoard'), { ssr: false })
 const ClientsPage = dynamic(() => import('../clients/page'), { ssr: false })
+const CrmTasks = dynamic(() => import('@/components/CrmTasks'), { ssr: false })
 
 // ---- Design tokens (tema claro + neon) ----
 const C = {
@@ -1124,7 +1125,7 @@ export default function CrmPage() {
   const [syncing, setSyncing] = useState(false)
   const [metrics, setMetrics] = useState<CrmMetrics | null>(null)
   const [suggestions, setSuggestions] = useState<{ salesReps: string[]; mentors: string[] }>({ salesReps: [], mentors: [] })
-  const [crmTab, setCrmTab] = useState<'pipeline' | 'agenda' | 'dashboard'>('pipeline')
+  const [crmTab, setCrmTab] = useState<'pipeline' | 'agenda' | 'tarefas' | 'dashboard'>('pipeline')
   const [dashPeriod, setDashPeriod] = useState<'dia' | 'semana' | 'mes' | 'ano'>('mes')
   const [leadDay, setLeadDay] = useState('') // dia selecionado no gráfico de novos leads (YYYY-MM-DD | '')
   const [leadWindow, setLeadWindow] = useState<7 | 14 | 30 | 90>(30)
@@ -1278,14 +1279,14 @@ export default function CrmPage() {
     <div>
       {/* CRM Tabs */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 20, borderBottom: `1px solid ${C.line}`, overflowX: 'auto' }}>
-        {(['dashboard', 'pipeline', 'agenda'] as const).map(tab => (
+        {(['dashboard', 'pipeline', 'agenda', 'tarefas'] as const).map(tab => (
           <button key={tab} onClick={() => setCrmTab(tab)} style={{
             padding: '9px 16px', border: 'none', background: 'transparent', cursor: 'pointer',
             fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: crmTab === tab ? 700 : 500,
             color: crmTab === tab ? C.ink : C.dim,
             borderBottom: crmTab === tab ? `2px solid ${C.neon}` : '2px solid transparent', marginBottom: -1,
           }}>
-            {tab === 'pipeline' ? 'Pipeline' : tab === 'agenda' ? 'Agenda' : 'Dashboard'}
+            {tab === 'pipeline' ? 'Pipeline' : tab === 'agenda' ? 'Agenda' : tab === 'tarefas' ? 'Tarefas' : 'Dashboard'}
           </button>
         ))}
       </div>
@@ -1650,6 +1651,14 @@ export default function CrmPage() {
       })()}
 
       {/* PIPELINE */}
+      {crmTab === 'tarefas' && (
+        <CrmTasks
+          leads={leads}
+          assigneeSuggestions={suggestions.salesReps}
+          onOpenLead={id => { const lead = leads.find(l => l.id === id); if (lead) setDetailLead(lead) }}
+        />
+      )}
+
       {crmTab === 'pipeline' && <>
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',

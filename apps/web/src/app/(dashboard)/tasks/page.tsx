@@ -28,6 +28,7 @@ interface Task {
   order: number
   completedAt: string | null
   createdAt: string
+  client?: { id: string; companyName: string } | null
 }
 
 const C = { ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0', bg: '#f8fafc', neon: '#C7F900', green: '#16a34a', red: '#dc2626', amber: '#f59e0b', slate: '#475569', purple: '#7c3aed' }
@@ -63,6 +64,11 @@ function TaskCard({ task, onClick }: { task: Task; onClick: () => void }) {
       {task.description && (
         <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.mid, marginBottom: 8, lineHeight: 1.4 }}>
           {task.description.length > 80 ? task.description.slice(0, 80) + '...' : task.description}
+        </div>
+      )}
+      {task.client && (
+        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, color: C.slate, marginBottom: 8 }}>
+          Lead: {task.client.companyName}
         </div>
       )}
       {tags.length > 0 && (

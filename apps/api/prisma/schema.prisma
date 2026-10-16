@@ -87,6 +87,7 @@ model Client {
   pendencies   Pendency[]
   commissions  Commission[]
   interactions LeadInteraction[]
+  tasks        Task[]
   meetings     Meeting[]
   documents    ClientDocument[]
 
@@ -155,11 +156,14 @@ model Task {
   tags        String?   // JSON array of tag names e.g. ["marketing","urgente"]
   order       Int       @default(0)
   completedAt DateTime?
+  clientId    String?   // lead/cliente do CRM a que a tarefa se refere (aba Tarefas do CRM)
+  client      Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@index([stage])
+  @@index([clientId])
   @@index([assignee])
   @@index([dueDate])
 }
