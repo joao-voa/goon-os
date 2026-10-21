@@ -766,6 +766,16 @@ export class CrmService {
         type: 'respondi' as const,
       },
       {
+        name: 'Meta TikTok Scale',
+        url: 'https://docs.google.com/spreadsheets/d/1NcbmiSCxxx7N8id0hHf2A52nwurhnqodF66dxc2fAIo/gviz/tq?tqx=out:csv&sheet=0',
+        type: 'metaTts' as const,
+      },
+      {
+        name: 'Meta TikTok Scale 2',
+        url: 'https://docs.google.com/spreadsheets/d/1g76dwU7B2_E99TywNcS2tEkpnQVgJOI7oFtKMycGBo0/gviz/tq?tqx=out:csv&sheet=0',
+        type: 'metaTts' as const,
+      },
+      {
         name: 'Respondi 2',
         url: 'https://docs.google.com/spreadsheets/d/1YZ14lNMh4iE4x8bUHkFLTI6o3IJFvUwIVL58aKhd47I/gviz/tq?tqx=out:csv&sheet=0',
         type: 'respondi2' as const,
@@ -811,6 +821,8 @@ export class CrmService {
             const record = this.mapRow(header, row)
             const lead = sheet.type === 'meta'
               ? this.parseMetaLead(record)
+              : sheet.type === 'metaTts'
+                ? this.parseMetaTtsLead(record)
               : sheet.type === 'respondi2'
                 ? this.parseRespondi2Lead(record)
                 : this.parseRespondiLead(record)
@@ -946,6 +958,53 @@ export class CrmService {
       phone: whatsapp,
       email,
       estimatedRevenue: faturamento || null,
+      segment: 'Moda',
+      status: 'PROSPECT',
+      leadStage: 'NOVO',
+      leadSource: 'meta_ads',
+      leadNotes: notes || null,
+      stageChangedAt: this.parseSheetDate(createdTime),
+      createdAt: this.parseSheetDate(createdTime),
+    }
+  }
+
+  /**
+   * Formulário Meta "TikTok Scale | GOON" (colunas: nome_completo, número_do_whatsapp,
+   * nome_da_empresa, modelo do negócio, estoque, faturamento MENSAL). Respostas vêm
+   * com "_" no lugar de espaço.
+   */
+  private parseMetaTtsLead(r: Record<string, string>) {
+    const pick = (kw: string) => {
+      const key = Object.keys(r).find(k => k.toLowerCase().includes(kw))
+      return key ? r[key]?.trim().replace(/_/g, ' ') : undefined
+    }
+    const responsible = pick('nome_completo')
+    const companyName = pick('nome_da_empresa')
+    const whatsapp = pick('whatsapp') || null
+    const modelo = pick('modelo_principal')
+    const estoque = pick('estoque')
+    const faturamento = pick('faturamento')
+    const website = pick('site')
+    const campaign = r['campaign_name']?.trim()
+    const platform = r['platform']?.trim()
+    const createdTime = r['created_time']?.trim()
+
+    const notes = [
+      modelo ? `Modelo: ${modelo}` : null,
+      estoque ? `Estoque: ${estoque}` : null,
+      website ? `Site: ${website}` : null,
+      campaign ? `Campanha: ${campaign}` : null,
+      `Plataforma: ${platform === 'fb' ? 'Facebook' : 'Instagram'}`,
+    ].filter(Boolean).join(' | ')
+
+    return {
+      companyName: companyName || responsible || '',
+      responsible: responsible || companyName || '',
+      whatsapp: whatsapp ? `+${whatsapp.replace(/\D/g, '')}` : null,
+      phone: whatsapp ? `+${whatsapp.replace(/\D/g, '')}` : null,
+      email: null,
+      estimatedRevenue: faturamento || null,
+      suggestedProduct: 'TTS',
       segment: 'Moda',
       status: 'PROSPECT',
       leadStage: 'NOVO',
