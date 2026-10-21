@@ -11,7 +11,7 @@ export class MentorshipService {
 
   // ---------- Helpers ----------
 
-  /** Mentor que conduz as sessões: Giulliano (Carol saiu da operação em 01/10/2026). */
+  /** Mentor que conduz as sessões: Giulliano. */
   private mentorForProduct(_code: string | null | undefined): string {
     return 'Giulliano'
   }

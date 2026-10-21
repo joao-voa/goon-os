@@ -12,7 +12,6 @@ const PartnerCashflow = dynamic(() => import('./PartnerCashflow'), { ssr: false 
 const TABS = [
   { key: 'fluxo', label: 'Fluxo de Caixa' },
   { key: 'giulliano', label: 'Fluxo Giulliano' },
-  { key: 'carol', label: 'Fluxo Carol' },
   { key: 'joao', label: 'Fluxo João' },
   { key: 'pagamentos', label: 'Pagamentos' },
   { key: 'despesas', label: 'Despesas' },
@@ -50,7 +49,6 @@ export default function FinanceiroPage() {
 
       {activeTab === 'fluxo' && <CashflowPage />}
       {activeTab === 'giulliano' && <PartnerCashflow partnerKey="giulliano" />}
-      {activeTab === 'carol' && <PartnerCashflow partnerKey="carol" />}
       {activeTab === 'joao' && <PartnerCashflow partnerKey="joao" />}
       {activeTab === 'pagamentos' && <PaymentsContent />}
       {activeTab === 'despesas' && <ExpensesPage />}

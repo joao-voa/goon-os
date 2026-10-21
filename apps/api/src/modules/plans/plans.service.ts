@@ -4,8 +4,8 @@ import { ActivityLogService } from '../activity-log/activity-log.service'
 import { ExpensesService } from '../expenses/expenses.service'
 import { CreatePlanDto } from './dto/create-plan.dto'
 
-// Carol Valladão saiu da operação: nada é repassado a ela em parcelas com vencimento a partir daqui
-const CAROL_EXIT = new Date(Date.UTC(2026, 9, 1))
+// Ex-mentora saiu da operação: nada é repassado a ela em parcelas com vencimento a partir daqui
+const EX_MENTORA_EXIT = new Date(Date.UTC(2026, 9, 1))
 
 @Injectable()
 export class PlansService {
@@ -239,7 +239,7 @@ export class PlansService {
       },
     })
 
-    const carolTransfer = new Map<string, Record<string, number>>() // planId -> mês -> valor
+    const exMentoraTransfer = new Map<string, Record<string, number>>() // planId -> mês -> valor
 
     for (const m of mentors) {
       const planValue = Number(m.plan.value)
@@ -248,16 +248,16 @@ export class PlansService {
 
       const monthlyBreakdown: Record<string, number> = {}
       const installments: Array<{ date: string; value: number; status: string }> = []
-      const isCarol = /carol/i.test(m.mentorName)
+      const isExMentora = /ex-mentora/i.test(m.mentorName)
       for (const pay of m.plan.payments) {
         const proportion = totalPayments > 0 ? Number(pay.value) / totalPayments : 0
         const mentorInstallment = Math.round(mentorValue * proportion * 100) / 100
         const monthKey = `${pay.dueDate.getFullYear()}-${String(pay.dueDate.getMonth() + 1).padStart(2, '0')}`
-        // Carol saiu da operação: parcelas a partir de 01/10/2026 vão pro Giulliano
-        if (isCarol && pay.dueDate >= CAROL_EXIT) {
-          const t = carolTransfer.get(m.planId) ?? {}
+        // Ex-mentora saiu da operação: parcelas a partir de 01/10/2026 vão pro Giulliano
+        if (isExMentora && pay.dueDate >= EX_MENTORA_EXIT) {
+          const t = exMentoraTransfer.get(m.planId) ?? {}
           t[monthKey] = (t[monthKey] ?? 0) + mentorInstallment
-          carolTransfer.set(m.planId, t)
+          exMentoraTransfer.set(m.planId, t)
           continue
         }
         monthlyBreakdown[monthKey] = (monthlyBreakdown[monthKey] ?? 0) + mentorInstallment
@@ -317,15 +317,15 @@ export class PlansService {
       })
     }
 
-    // Soma a fatia herdada da Carol na linha do Giulliano do plano (real ou virtual)
-    for (const [planId, months] of carolTransfer) {
+    // Soma a fatia herdada da ex-mentora na linha do Giulliano do plano (real ou virtual)
+    for (const [planId, months] of exMentoraTransfer) {
       let giu = result.find(r => r.mentorName.toLowerCase().includes('giulliano') &&
         (r.id === `giu-${planId}` || mentors.some(m => m.id === r.id && m.planId === planId)))
       if (!giu) {
         const src = mentors.find(m => m.planId === planId)!
         giu = {
           id: `giu-${planId}`, mentorName: 'Giulliano', value: 0,
-          notes: 'Fatia da Carol a partir de 01/10/2026', createdAt: src.plan.createdAt,
+          notes: 'Fatia da ex-mentora a partir de 01/10/2026', createdAt: src.plan.createdAt,
           client: src.plan.client.companyName, clientId: src.plan.client.id,
           product: src.plan.product.code, productName: src.plan.product.name,
           planValue: Number(src.plan.value), monthlyBreakdown: {},

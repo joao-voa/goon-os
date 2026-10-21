@@ -5,12 +5,13 @@
 ---
 
 ## 2026-10-23
-- **Saída da Carol Valladão (01/10/2026)** — nada repassado a ela em parcelas com vencimento ≥ 01/10.
+- **Nome da ex-mentora removido de tudo** — aba "Fluxo" dela excluída do Financeiro; banco anonimizado (repasses, splits, conta corrente, reuniões, logs → "Ex-mentora"), valores mantidos pro fluxo passado bater. Código e docs sem o nome.
+- **Saída da Ex-mentora (01/10/2026)** — nada repassado a ela em parcelas com vencimento ≥ 01/10.
   - 32 repasses MENTORIA previstos (out/26→jun/27, **R$94.673,66**) renomeados pra **Giulliano**; 32 débitos da conta corrente dela removidos.
-  - Aba Repasses: `CAROL_EXIT` em `plans.service.getAllMentors` joga a fatia dela (≥ 01/10) na linha do Giulliano do plano. `PlanMentor` intacto.
-  - Fluxo por sócio: despesas comuns 100% Giulliano a partir de out/26 (Carol 0%).
+  - Aba Repasses: `EX_MENTORA_EXIT` em `plans.service.getAllMentors` joga a fatia dela (≥ 01/10) na linha do Giulliano do plano. `PlanMentor` intacto.
+  - Fluxo por sócio: despesas comuns 100% Giulliano a partir de out/26 (Ex-mentora 0%).
   - Mentorias TTS/TTSG → Giulliano (4 mentorados trocados + padrão no código).
-  - **Segue devido à Carol:** 20 repasses previstos até set/26 (R$54.049,99), não mexidos.
+  - **Segue devido à Ex-mentora:** 20 repasses previstos até set/26 (R$54.049,99), não mexidos.
 
 ## 2026-10-21
 - **CRIS SEMI JOIAS** — devolução integral: 2 parcelas TTS (10/10 e 10/11) → CANCELLED, comissão pendente R$235 cancelada, plano TTS **CANCELADO**, cliente → PERDIDO/INACTIVE.
@@ -43,12 +44,12 @@
 - **Gestor de Tráfego (Thiago)** — R$1.200/mês de out/26→ago/27 (substitui o Jhon no tráfego).
 - **Closer (Jana)** — 11 parcelas de R$3.000 movidas do dia 01 → **dia 10**.
 - **Willy = "Wily"** (Editor/Filmaker, prestador) — 15/09 (R$6.000) mantida; 11 futuras removidas.
-- **Inóbvia** — Advisor (GA) ajustado p/ **3× R$8.000** (R$24.000; splits João/Giu/Carol = R$7.520 cada; resta só 30/10). GOON Elite (R$2.076) — 11 parcelas reagendadas pra **28/11/26→28/09/27** (depois do Advisor).
+- **Inóbvia** — Advisor (GA) ajustado p/ **3× R$8.000** (R$24.000; splits João/Giu/Ex-mentora = R$7.520 cada; resta só 30/10). GOON Elite (R$2.076) — 11 parcelas reagendadas pra **28/11/26→28/09/27** (depois do Advisor).
 - **Jana — comissão de setembro (A VALIDAR):** 10% sobre vendas a clientes NOVOS. 11 vendas = **R$80.000** → 10% bruto **R$8.000** / 10% líquido **R$7.520**. Pendências: (a) DITS (base) entra? (b) bruto ou líquido? (c) lançar como despesa?
 
 ## Rodada de vendas/splits (set/26)
 - Novas vendas TTS: **Fiuju** (7.500), **Presence Jeans** (renovação 5.000), **DITS** (5.000), **Zapone** (5.000, venda ago/26), **Cris Semi Joias** (ajustado p/ 5.000 2×), **Lakre** (GI renovação 30.000 + TTS 5.000).
-- **Splits 10/45/45** (João 10% / Carol 45% / Giu 45% do líquido) lançados nesses 7 planos.
+- **Splits 10/45/45** (João 10% / Ex-mentora 45% / Giu 45% do líquido) lançados nesses 7 planos.
 - **Lakre** — GE antigo: canceladas parcelas R$1.000 out/nov/dez; GI renovação R$30k (12× R$2.500 de 08/10); venda do GI marcada em **setembro** (meta), financeiro em outubro.
 - **Fiuju** — produto corrigido GE→**TTS**; plano duplicado (PIX) removido; parcelas 1.500/2.000/4.000.
 - **Produtos em Acrílico** — venda cancelada → lead **EM_NEGOCIACAO**.
@@ -74,5 +75,5 @@
 ### Notas técnicas
 - Deploy: Vercel (web `goon-os-web` auto; API `goon-os-api` serverless, confirmar via `/health`=200).
 - Scripts de dados: `cd apps/api && npx tsx <arquivo>.ts` (Prisma via adapter Neon). Nunca `--force-reset/--accept-data-loss`.
-- Split TTS/GI padrão: imposto 6% → **João 10% / Carol 45% / Giu 45%** do líquido.
+- Split TTS/GI padrão: imposto 6% → **João 10% / Ex-mentora 45% / Giu 45%** do líquido.
 - TTS: recorrente (1+1), cancelamento c/ 30 dias de aviso.

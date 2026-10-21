@@ -93,7 +93,7 @@
     },
     "splitsMentores": {
       "aplicacao": "GI/TTS a partir de 08/08/2026",
-      "formula": "imposto 6% -> liquido = valor*0.94; Joao 10% do liquido = valor*0.094; resto 50/50 Carol/Giu = valor*0.423 cada",
+      "formula": "imposto 6% -> liquido = valor*0.94; Joao 10% do liquido = valor*0.094; resto 50/50 Ex-mentora/Giu = valor*0.423 cada",
       "realizacao": "guardado como total no PlanMentor, realizado mes a mes",
       "fernandoVaz": "removido dos splits e das despesas de mentoria a partir de 08/08/2026"
     },

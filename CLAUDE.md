@@ -123,14 +123,14 @@ Sem renovação automática (confirmar a cada ciclo).
 
 ### Splits de mentores (GI/TTS a partir de 08/08/2026)
 Sobre o valor do plano: **imposto 6%** → líquido = `valor × 0,94`; **João 10% do
-líquido** (`valor × 0,094`); resto **50% Carol / 50% Giulliano** (`valor × 0,423`
+líquido** (`valor × 0,094`); resto **50% Ex-mentora / 50% Giulliano** (`valor × 0,423`
 cada) — **até 30/09/2026**. Guardado como total no `PlanMentor`, realizado **mês a mês**.
 Fernando Vaz foi **removido** dos splits e das despesas de mentoria a partir de 08/08.
 
-**Carol Valladão saiu da operação em 01/10/2026.** Nada é repassado a ela em parcelas
+**Ex-mentora saiu da operação em 01/10/2026.** Nada é repassado a ela em parcelas
 com vencimento ≥ 01/10: a fatia dela vai pro **Giulliano** (split novo: imposto 6% →
 João 10% do líquido → resto 100% Giulliano). O `PlanMentor` dela fica intacto (histórico);
-o corte é feito em código (`CAROL_EXIT` em `plans.service.getAllMentors`) e nas despesas
+o corte é feito em código (`EX_MENTORA_EXIT` em `plans.service.getAllMentors`) e nas despesas
 MENTORIA (renomeadas pra Giulliano). Despesas comuns: 100% Giulliano a partir de out/26
 (`PartnerCashflow`). Mentorias TTS/TTSG passam a ser conduzidas pelo Giulliano.
 
@@ -162,7 +162,7 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
 - Comissão: **10%** pro "Time de Vendas" (Serginho divide internamente); desconta dos
   mentores (Giulliano absorve).
 - **João Afonso** entra como mentor em cliente novo (10% do líquido). Splits por
-  cliente variam (Kan House 66/33 Carol/Giu sem João; Ary Narah/Star Shop com João).
+  cliente variam (Kan House 66/33 Ex-mentora/Giu sem João; Ary Narah/Star Shop com João).
 - Mentoria: GE individual+grupo, GI só grupo, TTS/AURA individual.
 
 ### Acesso
