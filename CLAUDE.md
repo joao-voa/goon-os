@@ -124,8 +124,15 @@ Sem renovação automática (confirmar a cada ciclo).
 ### Splits de mentores (GI/TTS a partir de 08/08/2026)
 Sobre o valor do plano: **imposto 6%** → líquido = `valor × 0,94`; **João 10% do
 líquido** (`valor × 0,094`); resto **50% Carol / 50% Giulliano** (`valor × 0,423`
-cada). Guardado como total no `PlanMentor`, realizado **mês a mês**.
+cada) — **até 30/09/2026**. Guardado como total no `PlanMentor`, realizado **mês a mês**.
 Fernando Vaz foi **removido** dos splits e das despesas de mentoria a partir de 08/08.
+
+**Carol Valladão saiu da operação em 01/10/2026.** Nada é repassado a ela em parcelas
+com vencimento ≥ 01/10: a fatia dela vai pro **Giulliano** (split novo: imposto 6% →
+João 10% do líquido → resto 100% Giulliano). O `PlanMentor` dela fica intacto (histórico);
+o corte é feito em código (`CAROL_EXIT` em `plans.service.getAllMentors`) e nas despesas
+MENTORIA (renomeadas pra Giulliano). Despesas comuns: 100% Giulliano a partir de out/26
+(`PartnerCashflow`). Mentorias TTS/TTSG passam a ser conduzidas pelo Giulliano.
 
 ### Carteira de cobrança (churn) — códigos de parcela
 - **98/98** = parcela **futura** de cliente em churn.

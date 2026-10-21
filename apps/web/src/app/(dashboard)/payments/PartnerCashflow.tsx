@@ -17,17 +17,19 @@ const C = { ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0', neo
 const num: React.CSSProperties = { fontFamily: 'var(--font-sans)', fontVariantNumeric: 'tabular-nums' }
 
 const RATEIO_YEAR = 2026, RATEIO_MONTH = 8, RATEIO_DAY = 8
+// Carol saiu da operação: a partir de out/2026 o custo comum volta 100% pro Giulliano
+const SAIDA_CAROL_YEAR = 2026, SAIDA_CAROL_MONTH = 10
 function isCusto(cat: string, desc: string): boolean {
   if (cat === 'IMPOSTOS' || cat === 'MENTORIA') return false
   if (cat === 'PESSOAL' && /giulliano/i.test(desc)) return false
   return true
 }
 
-interface Cfg { name: string; regex: RegExp; custoPre: number; custoPost: number; personal: string | null; subtitle: string }
+interface Cfg { name: string; regex: RegExp; custoPre: number; custoPost: number; custoSaidaCarol: number; personal: string | null; subtitle: string }
 const CONFIG: Record<string, Cfg> = {
-  giulliano: { name: 'Giulliano', regex: /giulliano/i, custoPre: 1, custoPost: 0.5, personal: 'Giulliano', subtitle: 'Seu repasse, menos sua parte das despesas comuns, menos seus gastos pessoais.' },
-  carol: { name: 'Carol', regex: /carol/i, custoPre: 0, custoPost: 0.5, personal: null, subtitle: 'Seu repasse, menos sua parte das despesas comuns (a partir de 08/08).' },
-  joao: { name: 'João', regex: /jo[aã]o/i, custoPre: 0, custoPost: 0, personal: null, subtitle: 'Seu repasse da operação (10% dos clientes novos, sem despesas).' },
+  giulliano: { name: 'Giulliano', regex: /giulliano/i, custoPre: 1, custoPost: 0.5, custoSaidaCarol: 1, personal: 'Giulliano', subtitle: 'Seu repasse, menos sua parte das despesas comuns, menos seus gastos pessoais.' },
+  carol: { name: 'Carol', regex: /carol/i, custoPre: 0, custoPost: 0.5, custoSaidaCarol: 0, personal: null, subtitle: 'Seu repasse, menos sua parte das despesas comuns (de 08/08 a 30/09/2026; saiu da operação em 01/10).' },
+  joao: { name: 'João', regex: /jo[aã]o/i, custoPre: 0, custoPost: 0, custoSaidaCarol: 0, personal: null, subtitle: 'Seu repasse da operação (10% dos clientes novos, sem despesas).' },
 }
 
 export default function PartnerCashflow({ partnerKey }: { partnerKey: 'giulliano' | 'carol' | 'joao' }) {
@@ -85,6 +87,7 @@ export default function PartnerCashflow({ partnerKey }: { partnerKey: 'giulliano
   // Fator do custo comum por mês, respeitando o corte 08/08/2026
   const custoShare = (m: MonthData): number => {
     const custo = m.layers.custoOperacao
+    if (year > SAIDA_CAROL_YEAR || (year === SAIDA_CAROL_YEAR && m.month >= SAIDA_CAROL_MONTH)) return custo * cfg.custoSaidaCarol
     if (year < RATEIO_YEAR) return custo * cfg.custoPre
     if (year > RATEIO_YEAR) return custo * cfg.custoPost
     if (m.month < RATEIO_MONTH) return custo * cfg.custoPre
@@ -115,8 +118,8 @@ export default function PartnerCashflow({ partnerKey }: { partnerKey: 'giulliano
   const custoHint = cfg.custoPre === cfg.custoPost
     ? (cfg.custoPost === 0 ? 'Não participa das despesas comuns' : `${cfg.custoPost * 100}% do custo da operação`)
     : (year < RATEIO_YEAR ? `${cfg.custoPre * 100}% do custo (antes do rateio 08/08)`
-      : year > RATEIO_YEAR ? `${cfg.custoPost * 100}% do custo (rateio)`
-      : `${cfg.custoPre * 100}% até 07/08, ${cfg.custoPost * 100}% de 08/08 em diante`)
+      : year > RATEIO_YEAR ? `${cfg.custoSaidaCarol * 100}% do custo`
+      : `${cfg.custoPre * 100}% até 07/08, ${cfg.custoPost * 100}% de 08/08 a 30/09, ${cfg.custoSaidaCarol * 100}% de 01/10 em diante`)
 
   const card: React.CSSProperties = { background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }
 

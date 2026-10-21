@@ -11,9 +11,9 @@ export class MentorshipService {
 
   // ---------- Helpers ----------
 
-  /** Mentor que conduz as sessões: TikTok (TTS/TTSG) → Carol; todo o resto → Giulliano. */
-  private mentorForProduct(code: string | null | undefined): string {
-    return code && ['TTS', 'TTSG'].includes(code) ? 'Carol Valladão' : 'Giulliano'
+  /** Mentor que conduz as sessões: Giulliano (Carol saiu da operação em 01/10/2026). */
+  private mentorForProduct(_code: string | null | undefined): string {
+    return 'Giulliano'
   }
   private async deriveMentor(clientId: string): Promise<string> {
     const plan = await this.prisma.clientPlan.findFirst({

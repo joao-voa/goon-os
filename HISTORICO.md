@@ -4,6 +4,23 @@
 
 ---
 
+## 2026-10-23
+- **Saída da Carol Valladão (01/10/2026)** — nada repassado a ela em parcelas com vencimento ≥ 01/10.
+  - 32 repasses MENTORIA previstos (out/26→jun/27, **R$94.673,66**) renomeados pra **Giulliano**; 32 débitos da conta corrente dela removidos.
+  - Aba Repasses: `CAROL_EXIT` em `plans.service.getAllMentors` joga a fatia dela (≥ 01/10) na linha do Giulliano do plano. `PlanMentor` intacto.
+  - Fluxo por sócio: despesas comuns 100% Giulliano a partir de out/26 (Carol 0%).
+  - Mentorias TTS/TTSG → Giulliano (4 mentorados trocados + padrão no código).
+  - **Segue devido à Carol:** 20 repasses previstos até set/26 (R$54.049,99), não mexidos.
+
+## 2026-10-21
+- **CRIS SEMI JOIAS** — devolução integral: 2 parcelas TTS (10/10 e 10/11) → CANCELLED, comissão pendente R$235 cancelada, plano TTS **CANCELADO**, cliente → PERDIDO/INACTIVE.
+- **ARY NARAH** — cancelado: parcelas 20/10 e 20/11 → CANCELLED (4 pagas mantidas), plano TTS **CANCELADO**, cliente → PERDIDO/INACTIVE.
+- **DITS** — cancelado: 2 parcelas TTS (23/10 e 23/11) → CANCELLED, plano TTS **CANCELADO**, cliente → PERDIDO/INACTIVE.
+- **Zapone** — sai do TikTok: parcela TTS 26/10 → CANCELLED, plano TTS **CANCELADO** (26/09 paga mantida). Segue só no **GI** (11 parcelas nov/26–set/27).
+- **Cynthia Durante** — parcela atrasada 09/10 → CANCELLED (não havia futuras), plano TTS **CANCELADO**, cliente → PERDIDO/INACTIVE. 09/09 paga mantida.
+- **Andressa Polsse** — cliente cancelou: plano GI (R$30k) **CANCELADO**, 11 parcelas em aberto (2 vencidas set/out + 9 futuras) → CANCELLED (saem da lista de pagamentos). Cliente → **PERDIDO/INACTIVE**. Adesão paga (11/08) mantida.
+- **A FIRMA** — carteira de cobrança: 3 vencidas (ago–out/26) → **99/99**, 6 futuras (nov/26–abr/27) → **98/98**, todas `inCarteira` (fora do fluxo e dos recebíveis). Plano segue ACTIVE (padrão Star Shop/Talamonte).
+
 ## 2026-10-15
 - **CRM — lead "......." entrando a toda hora (Respondi).** Nome só de pontuação vira vazio na normalização, não tinha telefone/email → escapava do dedup e reentrava a cada sync. `isSpamLead` agora descarta nome sem letra/número. 21 leads lixo apagados do banco (+ histórico).
 - **CRM — leads sumindo do kanban.** Estágios legados (`FOLLOW_UP`, `QUALIFICADO`→FUP, `PROPOSTA_ENVIADA`→EM_NEGOCIACAO, `RECUPERAR`→PERDIDO) normalizados no `findPipeline()` via `CrmService.normalizeStage()`.
