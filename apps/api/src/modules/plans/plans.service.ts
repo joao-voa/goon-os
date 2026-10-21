@@ -253,8 +253,9 @@ export class PlansService {
         const proportion = totalPayments > 0 ? Number(pay.value) / totalPayments : 0
         const mentorInstallment = Math.round(mentorValue * proportion * 100) / 100
         const monthKey = `${pay.dueDate.getFullYear()}-${String(pay.dueDate.getMonth() + 1).padStart(2, '0')}`
-        // Ex-mentora saiu da operação: parcelas a partir de 01/10/2026 vão pro Giulliano
-        if (isExMentora && pay.dueDate >= EX_MENTORA_EXIT) {
+        // Ex-mentora saiu da operação: só recebeu o que o cliente pagou antes de 01/10/2026;
+        // parcela não paga ou a partir de 01/10 vai pro Giulliano
+        if (isExMentora && (pay.dueDate >= EX_MENTORA_EXIT || pay.status !== 'PAID')) {
           const t = exMentoraTransfer.get(m.planId) ?? {}
           t[monthKey] = (t[monthKey] ?? 0) + mentorInstallment
           exMentoraTransfer.set(m.planId, t)
@@ -325,7 +326,7 @@ export class PlansService {
         const src = mentors.find(m => m.planId === planId)!
         giu = {
           id: `giu-${planId}`, mentorName: 'Giulliano', value: 0,
-          notes: 'Fatia da ex-mentora a partir de 01/10/2026', createdAt: src.plan.createdAt,
+          notes: 'Fatia da ex-mentora (não paga ou a partir de 01/10/2026)', createdAt: src.plan.createdAt,
           client: src.plan.client.companyName, clientId: src.plan.client.id,
           product: src.plan.product.code, productName: src.plan.product.name,
           planValue: Number(src.plan.value), monthlyBreakdown: {},

@@ -5,6 +5,7 @@
 ---
 
 ## 2026-10-23
+- **Ex-mentora — acerto final:** dos 20 repasses previstos até set/26, **10 com parcela paga pelo cliente → PAGO** a ela (R$23.030, crédito na conta); **10 sem pagamento do cliente → saem dela** e vão pro Giulliano (R$31.020: Lady Modas, Star Shop, Kan House 15/07 e 15/09, Lehua 07/08 e 07/09). Débito órfão Lady Modas P6 removido. Conta corrente dela **zerada** (R$103.086,15 devido = pago). Aba Repasses segue a mesma regra.
 - **Nome da ex-mentora removido de tudo** — aba "Fluxo" dela excluída do Financeiro; banco anonimizado (repasses, splits, conta corrente, reuniões, logs → "Ex-mentora"), valores mantidos pro fluxo passado bater. Código e docs sem o nome.
 - **Saída da Ex-mentora (01/10/2026)** — nada repassado a ela em parcelas com vencimento ≥ 01/10.
   - 32 repasses MENTORIA previstos (out/26→jun/27, **R$94.673,66**) renomeados pra **Giulliano**; 32 débitos da conta corrente dela removidos.
