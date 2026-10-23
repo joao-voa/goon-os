@@ -147,6 +147,8 @@ export const LEAD_STAGE_COLORS: Record<string, string> = {
 export const LEAD_SOURCE_LABELS: Record<string, string> = {
   instagram: 'Instagram',
   meta_ads: 'Meta Ads',
+  form_tiktok_meta: 'FORMULÁRIO TIKTOK - META',
+  form_mentoria_meta: 'FORMULÁRIO MENTORIA - META',
   respondi: 'Respondi',
   indicacao: 'Indicacao',
   evento: 'Evento',
@@ -165,6 +167,8 @@ export const LEAD_SOURCE_LABELS: Record<string, string> = {
 export const LEAD_SOURCE_OPTIONS = [
   'instagram',
   'meta_ads',
+  'form_tiktok_meta',
+  'form_mentoria_meta',
   'respondi',
   'indicacao',
   'evento',

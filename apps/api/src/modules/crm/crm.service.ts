@@ -776,6 +776,16 @@ export class CrmService {
         type: 'metaTts' as const,
       },
       {
+        name: 'Formulário TikTok (Meta)',
+        url: 'https://docs.google.com/spreadsheets/d/1zcEeyC0HUbFt0_Cg_Ki7X2jYa1_lS-rjiBm2gT0S3lw/gviz/tq?tqx=out:csv&sheet=0',
+        type: 'metaTts' as const,
+      },
+      {
+        name: 'Formulário Mentoria (Meta)',
+        url: 'https://docs.google.com/spreadsheets/d/1TL6hzQ8EpJDnGFZq00umUDTUtMQ3o4GxjW1Rt3v_rs4/gviz/tq?tqx=out:csv&sheet=0',
+        type: 'metaMentoria' as const,
+      },
+      {
         name: 'Respondi 2',
         url: 'https://docs.google.com/spreadsheets/d/1YZ14lNMh4iE4x8bUHkFLTI6o3IJFvUwIVL58aKhd47I/gviz/tq?tqx=out:csv&sheet=0',
         type: 'respondi2' as const,
@@ -822,7 +832,9 @@ export class CrmService {
             const lead = sheet.type === 'meta'
               ? this.parseMetaLead(record)
               : sheet.type === 'metaTts'
-                ? this.parseMetaTtsLead(record)
+                ? this.parseMetaFormLead(record, 'form_tiktok_meta', 'TTS')
+              : sheet.type === 'metaMentoria'
+                ? this.parseMetaFormLead(record, 'form_mentoria_meta', null)
               : sheet.type === 'respondi2'
                 ? this.parseRespondi2Lead(record)
                 : this.parseRespondiLead(record)
@@ -969,11 +981,12 @@ export class CrmService {
   }
 
   /**
-   * Formulário Meta "TikTok Scale | GOON" (colunas: nome_completo, número_do_whatsapp,
-   * nome_da_empresa, modelo do negócio, estoque, faturamento MENSAL). Respostas vêm
-   * com "_" no lugar de espaço.
+   * Formulários Meta Lead Ads (TikTok Scale e Aplicação Mentoria). Colunas:
+   * nome_completo, número_do_whatsapp, nome_da_empresa, modelo do negócio,
+   * faturamento MENSAL, + estoque (TikTok) ou principal desafio (Mentoria).
+   * Respostas vêm com "_" no lugar de espaço.
    */
-  private parseMetaTtsLead(r: Record<string, string>) {
+  private parseMetaFormLead(r: Record<string, string>, leadSource: string, suggestedProduct: string | null) {
     const pick = (kw: string) => {
       const key = Object.keys(r).find(k => k.toLowerCase().includes(kw))
       return key ? r[key]?.trim().replace(/_/g, ' ') : undefined
@@ -983,15 +996,20 @@ export class CrmService {
     const whatsapp = pick('whatsapp') || null
     const modelo = pick('modelo_principal')
     const estoque = pick('estoque')
+    const desafio = pick('desafio')
     const faturamento = pick('faturamento')
     const website = pick('site')
     const campaign = r['campaign_name']?.trim()
     const platform = r['platform']?.trim()
     const createdTime = r['created_time']?.trim()
+    // WhatsApp às vezes vem sem DDI ("51997718921"): completa com 55
+    const digits = (whatsapp ?? '').replace(/\D/g, '')
+    const phone = digits ? `+${digits.length <= 11 ? '55' + digits : digits}` : null
 
     const notes = [
       modelo ? `Modelo: ${modelo}` : null,
       estoque ? `Estoque: ${estoque}` : null,
+      desafio ? `Desafio: ${desafio}` : null,
       website ? `Site: ${website}` : null,
       campaign ? `Campanha: ${campaign}` : null,
       `Plataforma: ${platform === 'fb' ? 'Facebook' : 'Instagram'}`,
@@ -1000,15 +1018,15 @@ export class CrmService {
     return {
       companyName: companyName || responsible || '',
       responsible: responsible || companyName || '',
-      whatsapp: whatsapp ? `+${whatsapp.replace(/\D/g, '')}` : null,
-      phone: whatsapp ? `+${whatsapp.replace(/\D/g, '')}` : null,
+      whatsapp: phone,
+      phone,
       email: null,
       estimatedRevenue: faturamento || null,
-      suggestedProduct: 'TTS',
+      suggestedProduct,
       segment: 'Moda',
       status: 'PROSPECT',
       leadStage: 'NOVO',
-      leadSource: 'meta_ads',
+      leadSource,
       leadNotes: notes || null,
       stageChangedAt: this.parseSheetDate(createdTime),
       createdAt: this.parseSheetDate(createdTime),
@@ -1112,6 +1130,8 @@ export class CrmService {
     const cargo = (raw['qual_é_seu_cargo_na_empresa?'] || raw['E qual é o seu cargo na empresa?'] || '').toLowerCase()
     const faturamento = (raw['qual_é_seu_faturamento_anual?'] || raw['Qual é o seu faturamento anual?'] || '').toLowerCase()
 
+    // Lead de teste do Meta ("<test lead: dummy data for ...>")
+    if (/test lead|dummy data/i.test(name)) return true
     // Name too short or numeric
     if (name.length < 3 || /^\d+$/.test(name)) return true
     // Name is a single letter repeated (nnnn, jjj, aaaa) — junk/test entry
