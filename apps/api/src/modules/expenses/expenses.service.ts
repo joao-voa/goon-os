@@ -20,7 +20,8 @@ export class ExpensesService {
     const where: Record<string, unknown> = { ...giuFilter }
 
     if (category) where.category = category
-    if (costCenter) where.costCenter = costCenter
+    // aceita vários centros separados por vírgula (ex.: "GLOBAL,TIKTOK")
+    if (costCenter) where.costCenter = { in: costCenter.split(',').map(c => c.trim()).filter(Boolean) }
     if (status) where.status = status
     if (recurrence) where.recurrence = recurrence
 
