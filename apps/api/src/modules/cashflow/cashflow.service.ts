@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
-import { STANDBY_FROZEN_COMMISSION, STANDBY_FROZEN_PAYMENT, mentorExpenseOfClients } from '../../shared/constants'
+import { NOT_CARTEIRA_CLIENT_FILTER, STANDBY_FROZEN_COMMISSION, STANDBY_FROZEN_PAYMENT, mentorExpenseOfClients } from '../../shared/constants'
 
 @Injectable()
 export class CashflowService {
@@ -150,5 +150,111 @@ export class CashflowService {
     )
 
     return { year, months, totals }
+  }
+
+  /**
+   * Resumo financeiro (entradas × saídas) de um período, com filtros.
+   * Sem `year` = mês corrente. `product` filtra entradas e comissões (planos);
+   * `category`/`costCenter` filtram as despesas. Mesmas exclusões do fluxo:
+   * carteira de cobrança, standby, pessoal do Giulliano.
+   * Cada card traz a lista de itens pra abrir ao clicar.
+   */
+  async getSummary(params: { month?: number; year?: number; product?: string; category?: string; costCenter?: string }) {
+    const { month, year } = params
+    const now = new Date()
+    const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()))
+    const start = month && year ? new Date(Date.UTC(year, month - 1, 1)) : year ? new Date(Date.UTC(year, 0, 1)) : new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
+    const end = month && year ? new Date(Date.UTC(year, month, 1)) : year ? new Date(Date.UTC(year + 1, 0, 1)) : new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1))
+    const split = (v?: string) => (v ?? '').split(',').map(x => x.trim()).filter(Boolean)
+    const codes = split(params.product).map(c => c.toUpperCase())
+    const cats = split(params.category)
+    const centers = split(params.costCenter)
+    const planWhere = codes.length ? { clientPlan: { product: { code: { in: codes } } } } : {}
+    const period = { gte: start, lt: end }
+
+    const standbyClients = await this.prisma.client.findMany({ where: { standby: true }, select: { companyName: true } })
+    const isFrozenExpense = mentorExpenseOfClients(standbyClients.map(c => c.companyName))
+
+    const paySelect = {
+      id: true, value: true, dueDate: true, paidAt: true, status: true, installment: true, totalInstallments: true,
+      client: { select: { id: true, companyName: true } },
+      clientPlan: { select: { product: { select: { code: true } } } },
+    } as const
+    const includeCommissions = cats.length === 0 || cats.includes('COMISSAO')
+
+    const [recebidos, aReceber, vencidos, expenses, commissions] = await this.prisma.$transaction([
+      this.prisma.payment.findMany({ where: { status: 'PAID', paidAt: period, ...planWhere }, select: paySelect, orderBy: { paidAt: 'asc' } }),
+      this.prisma.payment.findMany({
+        where: { status: { in: ['PENDING', 'SCHEDULED'] }, dueDate: { gte: start > today ? start : today, lt: end }, inCarteira: false, ...planWhere, ...NOT_CARTEIRA_CLIENT_FILTER },
+        select: paySelect, orderBy: { dueDate: 'asc' },
+      }),
+      this.prisma.payment.findMany({
+        where: {
+          dueDate: { gte: start, lt: end < today ? end : today }, inCarteira: false, ...planWhere,
+          OR: [{ status: 'OVERDUE' }, { status: 'PENDING' }],
+          NOT: STANDBY_FROZEN_PAYMENT,
+          client: { leadStage: { notIn: ['RECUPERAR', 'PERDIDO'] }, payments: { none: { inCarteira: true } } },
+        },
+        select: paySelect, orderBy: { dueDate: 'asc' },
+      }),
+      this.prisma.expense.findMany({
+        where: {
+          dueDate: period,
+          NOT: { AND: [{ category: 'MENTORIA' }, { description: { contains: 'Giulliano' } }] },
+          ...(cats.length ? { category: { in: cats } } : {}),
+          ...(centers.length ? { costCenter: { in: centers } } : {}),
+        },
+        select: { id: true, description: true, category: true, costCenter: true, value: true, dueDate: true, status: true },
+        orderBy: { dueDate: 'asc' },
+      }),
+      this.prisma.commission.findMany({
+        where: includeCommissions ? {
+          NOT: STANDBY_FROZEN_COMMISSION,
+          ...(codes.length ? { payment: planWhere } : {}),
+          OR: [
+            { status: 'PAID', paidAt: period },
+            { status: 'PENDING', payment: { dueDate: period } },
+          ],
+        } : { id: '__none__' },
+        select: { id: true, salesRep: true, value: true, status: true, paidAt: true, installment: true, totalInstallments: true, payment: { select: { dueDate: true } }, client: { select: { id: true, companyName: true } } },
+      }),
+    ])
+
+    type Item = { id: string; date: string; name: string; detail: string; value: number; status: string; clientId?: string }
+    const payItem = (p: typeof recebidos[number], date: Date): Item => ({
+      id: p.id, date: date.toISOString(), name: p.client.companyName, clientId: p.client.id,
+      detail: `${p.clientPlan?.product?.code ?? ''} · parcela ${p.installment}/${p.totalInstallments}`.replace(/^ · /, ''),
+      value: Number(p.value), status: p.status,
+    })
+    const bucket = (items: Item[]) => ({ total: items.reduce((s, i) => s + i.value, 0), count: items.length, items })
+
+    const exp = expenses.filter(e => !isFrozenExpense(e))
+    const expItem = (e: typeof exp[number]): Item => ({
+      id: e.id, date: e.dueDate.toISOString(), name: e.description,
+      detail: [e.category, e.costCenter].filter(Boolean).join(' · '), value: Number(e.value), status: e.status,
+    })
+    const pago = exp.filter(e => e.status === 'PAGO').map(expItem)
+    const aPagar = exp.filter(e => e.status !== 'PAGO' && e.dueDate >= today).map(expItem)
+    const atrasado = exp.filter(e => e.status !== 'PAGO' && e.dueDate < today).map(expItem)
+    const com = commissions.map(c => ({
+      id: c.id, date: (c.status === 'PAID' && c.paidAt ? c.paidAt : c.payment.dueDate).toISOString(),
+      name: c.client.companyName, clientId: c.client.id, detail: `${c.salesRep} · parcela ${c.installment}/${c.totalInstallments}`,
+      value: Number(c.value), status: c.status,
+    }))
+
+    const entradas = { recebido: bucket(recebidos.map(p => payItem(p, p.paidAt ?? p.dueDate))), aReceber: bucket(aReceber.map(p => payItem(p, p.dueDate))), vencido: bucket(vencidos.map(p => payItem(p, p.dueDate))) }
+    const comBucket = bucket(com)
+    const comPago = com.filter(c => c.status === 'PAID').reduce((s, c) => s + c.value, 0)
+    const saidas = { pago: bucket(pago), aPagar: bucket(aPagar), atrasado: bucket(atrasado), comissoes: { ...comBucket, pago: comPago, pendente: comBucket.total - comPago } }
+
+    const totalEntradas = entradas.recebido.total + entradas.aReceber.total + entradas.vencido.total
+    const totalSaidas = saidas.pago.total + saidas.aPagar.total + saidas.atrasado.total + comBucket.total
+    return {
+      period: { start: start.toISOString(), end: end.toISOString() },
+      entradas, saidas,
+      saldoRealizado: entradas.recebido.total - saidas.pago.total - comPago,
+      saldoProjetado: totalEntradas - totalSaidas,
+      totalEntradas, totalSaidas,
+    }
   }
 }

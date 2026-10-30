@@ -59,12 +59,18 @@ export const STANDBY_FROZEN_COMMISSION = {
 }
 
 /**
- * Repasse de mentoria (despesa MENTORIA não paga) de algum dos clientes dados.
- * A despesa só se liga ao cliente pela descrição "Mentoria <Nome> — <cliente> (...)".
+ * Despesas ligadas às parcelas de um cliente: repasse de mentoria, imposto 6% e
+ * comissão lançados por parcela. Só se ligam ao cliente pela descrição:
+ *   "Mentoria <Nome> — <cliente> (<produto>) parcela N"
+ *   "Imposto 6% — <cliente> P1" · "Comissao <quem> — <cliente> P2"
  */
+export const PARCEL_LINKED_CATEGORIES = ['MENTORIA', 'IMPOSTOS', 'COMISSAO']
+export const parcelExpenseMarkers = (companyName: string) => [`— ${companyName} (`, `— ${companyName} P`]
+
+/** Despesa ainda não paga ligada a parcela de algum dos clientes dados (ex.: clientes em standby). */
 export function mentorExpenseOfClients(companyNames: string[]) {
-  const names = companyNames.map(n => n.toLowerCase()).filter(Boolean)
+  const markers = companyNames.filter(Boolean).flatMap(n => parcelExpenseMarkers(n.toLowerCase()))
   return (e: { category: string; status: string; description: string }) =>
-    names.length > 0 && e.category === 'MENTORIA' && e.status !== 'PAGO' &&
-    names.some(n => e.description.toLowerCase().includes(`— ${n} (`))
+    markers.length > 0 && PARCEL_LINKED_CATEGORIES.includes(e.category) && e.status !== 'PAGO' &&
+    markers.some(m => e.description.toLowerCase().includes(m))
 }

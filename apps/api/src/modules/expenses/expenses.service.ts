@@ -1,19 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
+import { PARCEL_LINKED_CATEGORIES, parcelExpenseMarkers } from '../../shared/constants'
 
 @Injectable()
 export class ExpensesService {
   constructor(private prisma: PrismaService) {}
 
-  /** Repasses de mentoria não pagos de clientes em standby (congelados): fora da lista e do resumo. */
+  /** Repasses, impostos e comissões não pagos de clientes em standby (congelados): fora da lista e do resumo. */
   private async standbyMentorFilter() {
     const clients = await this.prisma.client.findMany({ where: { standby: true }, select: { companyName: true } })
     if (clients.length === 0) return []
     return [{
       NOT: {
-        category: 'MENTORIA',
+        category: { in: PARCEL_LINKED_CATEGORIES },
         status: { not: 'PAGO' },
-        OR: clients.map(c => ({ description: { contains: `— ${c.companyName} (`, mode: 'insensitive' } })),
+        OR: clients.flatMap(c => parcelExpenseMarkers(c.companyName).map(m => ({ description: { contains: m, mode: 'insensitive' } }))),
       },
     }]
   }

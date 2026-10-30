@@ -8,8 +8,10 @@ const ExpensesPage = dynamic(() => import('../expenses/page'), { ssr: false })
 const CommissionsPage = dynamic(() => import('../commissions/page'), { ssr: false })
 const CashflowPage = dynamic(() => import('../cashflow/page'), { ssr: false })
 const PartnerCashflow = dynamic(() => import('./PartnerCashflow'), { ssr: false })
+const FinanceSummary = dynamic(() => import('./FinanceSummary'), { ssr: false })
 
 const TABS = [
+  { key: 'resumo', label: 'Resumo' },
   { key: 'fluxo', label: 'Fluxo de Caixa' },
   { key: 'giulliano', label: 'Fluxo Giulliano' },
   { key: 'joao', label: 'Fluxo João' },
@@ -21,7 +23,7 @@ const TABS = [
 type TabKey = typeof TABS[number]['key']
 
 export default function FinanceiroPage() {
-  const [activeTab, setActiveTab] = useState<TabKey>('fluxo')
+  const [activeTab, setActiveTab] = useState<TabKey>('resumo')
 
   return (
     <div style={{ padding: 24 }}>
@@ -47,6 +49,7 @@ export default function FinanceiroPage() {
         })}
       </div>
 
+      {activeTab === 'resumo' && <FinanceSummary />}
       {activeTab === 'fluxo' && <CashflowPage />}
       {activeTab === 'giulliano' && <PartnerCashflow partnerKey="giulliano" />}
       {activeTab === 'joao' && <PartnerCashflow partnerKey="joao" />}
