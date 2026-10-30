@@ -159,13 +159,17 @@ export class CashflowService {
    * carteira de cobrança, standby, pessoal do Giulliano.
    * Cada card traz a lista de itens pra abrir ao clicar.
    */
-  async getSummary(params: { month?: number; year?: number; product?: string; category?: string; costCenter?: string }) {
-    const { month, year } = params
+  async getSummary(params: { months?: string; year?: number; product?: string; category?: string; costCenter?: string }) {
+    const { year } = params
+    const split = (v?: string) => (v ?? '').split(',').map(x => x.trim()).filter(Boolean)
+    // meses escolhidos (1-12, vários): busca do 1º ao último e filtra os do meio que não foram marcados
+    const months = year ? split(params.months).map(Number).filter(m => m >= 1 && m <= 12) : []
+    const monthSet = months.length ? new Set(months) : null
+    const inSel = (d: Date | null | undefined) => !monthSet || (!!d && monthSet.has(d.getUTCMonth() + 1))
     const now = new Date()
     const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()))
-    const start = month && year ? new Date(Date.UTC(year, month - 1, 1)) : year ? new Date(Date.UTC(year, 0, 1)) : new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
-    const end = month && year ? new Date(Date.UTC(year, month, 1)) : year ? new Date(Date.UTC(year + 1, 0, 1)) : new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1))
-    const split = (v?: string) => (v ?? '').split(',').map(x => x.trim()).filter(Boolean)
+    const start = year ? new Date(Date.UTC(year, months.length ? Math.min(...months) - 1 : 0, 1)) : new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
+    const end = year ? new Date(Date.UTC(year, months.length ? Math.max(...months) : 12, 1)) : new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1))
     const codes = split(params.product).map(c => c.toUpperCase())
     const cats = split(params.category)
     const centers = split(params.costCenter)
@@ -182,7 +186,7 @@ export class CashflowService {
     } as const
     const includeCommissions = cats.length === 0 || cats.includes('COMISSAO')
 
-    const [recebidos, aReceber, vencidos, expenses, commissions] = await this.prisma.$transaction([
+    const [recebidosAll, aReceberAll, vencidosAll, expensesAll, commissionsAll, standbyAll] = await this.prisma.$transaction([
       this.prisma.payment.findMany({ where: { status: 'PAID', paidAt: period, ...planWhere }, select: paySelect, orderBy: { paidAt: 'asc' } }),
       this.prisma.payment.findMany({
         where: { status: { in: ['PENDING', 'SCHEDULED'] }, dueDate: { gte: start > today ? start : today, lt: end }, inCarteira: false, ...planWhere, ...NOT_CARTEIRA_CLIENT_FILTER },
@@ -218,7 +222,18 @@ export class CashflowService {
         } : { id: '__none__' },
         select: { id: true, salesRep: true, value: true, status: true, paidAt: true, installment: true, totalInstallments: true, payment: { select: { dueDate: true } }, client: { select: { id: true, companyName: true } } },
       }),
+      // Standby: parcelas congeladas (informativo, fora dos totais)
+      this.prisma.payment.findMany({
+        where: { dueDate: period, inCarteira: false, ...planWhere, ...STANDBY_FROZEN_PAYMENT },
+        select: paySelect, orderBy: { dueDate: 'asc' },
+      }),
     ])
+    const recebidos = recebidosAll.filter(p => inSel(p.paidAt))
+    const aReceber = aReceberAll.filter(p => inSel(p.dueDate))
+    const vencidos = vencidosAll.filter(p => inSel(p.dueDate))
+    const expenses = expensesAll.filter(e => inSel(e.dueDate))
+    const commissions = commissionsAll.filter(c => inSel(c.status === 'PAID' ? c.paidAt : c.payment.dueDate))
+    const standby = standbyAll.filter(p => inSel(p.dueDate))
 
     type Item = { id: string; date: string; name: string; detail: string; value: number; status: string; clientId?: string }
     const payItem = (p: typeof recebidos[number], date: Date): Item => ({
@@ -252,6 +267,7 @@ export class CashflowService {
     return {
       period: { start: start.toISOString(), end: end.toISOString() },
       entradas, saidas,
+      standby: bucket(standby.map(p => payItem(p, p.dueDate))),
       saldoRealizado: entradas.recebido.total - saidas.pago.total - comPago,
       saldoProjetado: totalEntradas - totalSaidas,
       totalEntradas, totalSaidas,

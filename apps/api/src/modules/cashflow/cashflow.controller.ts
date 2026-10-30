@@ -15,14 +15,14 @@ export class CashflowController {
 
   @Get('summary')
   getSummary(
-    @Query('month') month?: string,
+    @Query('months') months?: string,
     @Query('year') year?: string,
     @Query('product') product?: string,
     @Query('category') category?: string,
     @Query('costCenter') costCenter?: string,
   ) {
     return this.service.getSummary({
-      month: month ? parseInt(month, 10) : undefined,
+      months,
       year: year ? parseInt(year, 10) : undefined,
       product, category, costCenter,
     })

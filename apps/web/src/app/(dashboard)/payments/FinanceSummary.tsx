@@ -10,13 +10,14 @@ interface Summary {
   period: { start: string; end: string }
   entradas: { recebido: Bucket; aReceber: Bucket; vencido: Bucket }
   saidas: { pago: Bucket; aPagar: Bucket; atrasado: Bucket; comissoes: Bucket & { pago: number; pendente: number } }
+  standby: Bucket
   saldoRealizado: number
   saldoProjetado: number
   totalEntradas: number
   totalSaidas: number
 }
 
-type CardKey = 'recebido' | 'aReceber' | 'vencido' | 'pago' | 'aPagar' | 'atrasado' | 'comissoes'
+type CardKey = 'recebido' | 'aReceber' | 'vencido' | 'pago' | 'aPagar' | 'atrasado' | 'comissoes' | 'standby'
 
 const PLAN_OPTIONS = [
   { value: 'GE', label: 'GOON ELITE' }, { value: 'GI', label: 'GOON INFINITY' }, { value: 'TTS', label: 'TIK TOK SCALE' },
@@ -27,6 +28,7 @@ const CATEGORY_OPTIONS = [
   { value: 'IMPOSTOS', label: 'Impostos' }, { value: 'MARKETING', label: 'Marketing' }, { value: 'PESSOAS', label: 'Pessoas' },
   { value: 'SISTEMAS', label: 'Sistemas' }, { value: 'ESTRUTURA', label: 'Estrutura' }, { value: 'OUTRO', label: 'Outro' },
 ]
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: new Date(2000, i).toLocaleString('pt-BR', { month: 'long' }) }))
 const CENTER_OPTIONS = [{ value: 'GLOBAL', label: 'GOON Global' }, { value: 'INFINITY', label: 'GOON Infinity' }, { value: 'TIKTOK', label: 'GOON TikTok' }]
 const CATEGORY_LABEL: Record<string, string> = Object.fromEntries(CATEGORY_OPTIONS.map(o => [o.value, o.label]))
 const CENTER_LABEL: Record<string, string> = Object.fromEntries(CENTER_OPTIONS.map(o => [o.value, o.label]))
@@ -38,6 +40,7 @@ const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-sans)', fontSi
 const selStyle: React.CSSProperties = { height: 36, padding: '0 12px', border: '1px solid #e2e8f0', borderRadius: 8, background: '#fff', fontFamily: 'var(--font-sans)', fontSize: 13, color: '#0f172a', cursor: 'pointer' }
 
 const CARDS: Record<CardKey, { label: string; accent: string; side: 'entrada' | 'saida'; empty: string }> = {
+  standby: { label: 'Congelado em standby', accent: '#d97706', side: 'entrada', empty: 'Nenhuma parcela congelada no período.' },
   recebido: { label: 'Recebido', accent: '#16a34a', side: 'entrada', empty: 'Nenhum recebimento no período.' },
   aReceber: { label: 'A receber', accent: '#2563eb', side: 'entrada', empty: 'Nada a receber no período.' },
   vencido: { label: 'Vencido (clientes)', accent: '#dc2626', side: 'entrada', empty: 'Nenhuma parcela vencida. Tudo em dia.' },
@@ -65,7 +68,7 @@ function Card({ k, bucket, sub, active, onClick }: { k: CardKey; bucket: Bucket;
 export default function FinanceSummary() {
   const now = new Date()
   const [mode, setMode] = useState<'filtro' | 'total'>('filtro')
-  const [month, setMonth] = useState<number | null>(now.getMonth() + 1)
+  const [months, setMonths] = useState<string[]>([String(now.getMonth() + 1)]) // vazio = ano inteiro
   const [year, setYear] = useState(now.getFullYear())
   const [plans, setPlans] = useState<string[]>([])
   const [cats, setCats] = useState<string[]>([])
@@ -79,23 +82,26 @@ export default function FinanceSummary() {
     const q = new URLSearchParams()
     if (mode === 'filtro') {
       if (year) q.set('year', String(year))
-      if (year && month) q.set('month', String(month))
+      if (year && months.length) q.set('months', months.join(','))
       if (plans.length) q.set('product', plans.join(','))
       if (cats.length) q.set('category', cats.join(','))
       if (centers.length) q.set('costCenter', centers.join(','))
     }
     try { setData(await apiFetch<Summary>(`/api/cashflow/summary?${q.toString()}`)) } catch { setData(null) } finally { setLoading(false) }
-  }, [mode, month, year, plans, cats, centers])
+  }, [mode, months, year, plans, cats, centers])
   useEffect(() => { load() }, [load])
 
   const isFiltro = mode === 'filtro'
   const periodLabel = !isFiltro
     ? new Date().toLocaleString('pt-BR', { month: 'long', year: 'numeric' })
-    : month && year ? new Date(year, month - 1, 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' }) : year ? String(year) : 'mês corrente'
+    : !year ? 'mês corrente'
+    : months.length === 0 ? `todo o ano de ${year}`
+    : `${[...months].sort((a, b) => +a - +b).map(m => MONTH_OPTIONS[+m - 1].label).join(', ')} de ${year}`
   const toggle = (k: CardKey) => setOpen(o => (o === k ? null : k))
 
   const bucketOf = (k: CardKey): Bucket | null => {
     if (!data) return null
+    if (k === 'standby') return data.standby
     if (k === 'recebido' || k === 'aReceber' || k === 'vencido') return data.entradas[k]
     return data.saidas[k]
   }
@@ -129,11 +135,8 @@ export default function FinanceSummary() {
       {isFiltro && (
         <div style={{ display: 'flex', gap: 10, marginBottom: 6, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div>
-            <label style={labelStyle}>Mês</label>
-            <select className="goon-select" value={month ?? ''} onChange={e => setMonth(e.target.value ? parseInt(e.target.value, 10) : null)}>
-              <option value="">Ano inteiro</option>
-              {Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={i + 1}>{new Date(2000, i).toLocaleString('pt-BR', { month: 'long' })}</option>)}
-            </select>
+            <label style={labelStyle}>Meses</label>
+            <MultiSelect options={MONTH_OPTIONS} selected={months} onChange={setMonths} allLabel="Ano inteiro" style={selStyle} />
           </div>
           <div>
             <label style={labelStyle}>Ano</label>
@@ -190,6 +193,13 @@ export default function FinanceSummary() {
             ))}
             <Card k="comissoes" bucket={data.saidas.comissoes} active={open === 'comissoes'} onClick={() => toggle('comissoes')}
               sub={`${fmtBRL(data.saidas.comissoes.pago)} pagas · ${fmtBRL(data.saidas.comissoes.pendente)} pendentes`} />
+          </div>
+
+          {/* Standby: informativo, fora dos totais */}
+          {sectionTitle('Clientes em standby', data.standby.total, '#d97706')}
+          <div style={grid}>
+            <Card k="standby" bucket={data.standby} active={open === 'standby'} onClick={() => toggle('standby')}
+              sub={`${data.standby.count} parcelas congeladas, fora dos totais`} />
           </div>
 
           {/* Detalhe do card clicado */}
