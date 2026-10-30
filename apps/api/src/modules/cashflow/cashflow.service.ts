@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
+import { STANDBY_FROZEN_COMMISSION, STANDBY_FROZEN_PAYMENT, mentorExpenseOfClients } from '../../shared/constants'
 
 @Injectable()
 export class CashflowService {
@@ -22,12 +23,17 @@ export class CashflowService {
     })
     const carteiraSet = new Set(carteiraClients.map(c => c.id))
 
+    // Clientes em standby: parcelas não pagas, comissões pendentes e repasses
+    // de mentoria ainda não pagos ficam congelados (fora do fluxo).
+    const standbyClients = await this.prisma.client.findMany({ where: { standby: true }, select: { companyName: true } })
+    const isStandbyMentorExpense = mentorExpenseOfClients(standbyClients.map(c => c.companyName))
+
     // Fetch all data for the year in 3 queries
     const [payments, expenses, commissions] = await this.prisma.$transaction([
       this.prisma.payment.findMany({
         // Parcelas em carteira de cobrança (98/98, 99/99 — churn) ficam FORA do
         // fluxo de caixa, independente do status (inclusive as que venceram).
-        where: { dueDate: { gte: yearStart, lt: yearEnd }, inCarteira: false },
+        where: { dueDate: { gte: yearStart, lt: yearEnd }, inCarteira: false, NOT: STANDBY_FROZEN_PAYMENT },
         select: { dueDate: true, paidAt: true, value: true, status: true, client: { select: { id: true, companyName: true } } },
       }),
       this.prisma.expense.findMany({
@@ -39,6 +45,7 @@ export class CashflowService {
       }),
       this.prisma.commission.findMany({
         where: {
+          NOT: STANDBY_FROZEN_COMMISSION,
           OR: [
             { createdAt: { gte: yearStart, lt: yearEnd } },
             { paidAt: { gte: yearStart, lt: yearEnd } },
@@ -82,6 +89,7 @@ export class CashflowService {
 
     // Distribute expenses into months (with category breakdown)
     for (const e of expenses) {
+      if (isStandbyMentorExpense(e)) continue
       const m = new Date(e.dueDate).getMonth()
       const val = Number(e.value)
       const cat = (e as any).category ?? 'OUTRO'

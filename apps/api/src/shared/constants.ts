@@ -38,5 +38,33 @@ export const NOT_CARTEIRA_CLIENT_FILTER = {
   client: {
     leadStage: { notIn: ['RECUPERAR', 'PERDIDO'] as string[] },
     payments: { none: { inCarteira: true } },
+    standby: false,
   },
+}
+
+/**
+ * Cliente em STANDBY: todas as parcelas ainda não pagas ficam congeladas.
+ * Não entram em fluxo, recebíveis, comissões, splits de mentores nem impostos.
+ * Parcelas já pagas continuam no histórico. Usar como `NOT: STANDBY_FROZEN_PAYMENT`.
+ */
+export const UNPAID_STATUSES = ['PENDING', 'OVERDUE', 'SCHEDULED'] as string[]
+export const STANDBY_FROZEN_PAYMENT = {
+  status: { in: UNPAID_STATUSES },
+  client: { standby: true },
+}
+/** Comissão congelada: ainda pendente, de cliente em standby. Usar como `NOT: STANDBY_FROZEN_COMMISSION`. */
+export const STANDBY_FROZEN_COMMISSION = {
+  status: 'PENDING',
+  client: { standby: true },
+}
+
+/**
+ * Repasse de mentoria (despesa MENTORIA não paga) de algum dos clientes dados.
+ * A despesa só se liga ao cliente pela descrição "Mentoria <Nome> — <cliente> (...)".
+ */
+export function mentorExpenseOfClients(companyNames: string[]) {
+  const names = companyNames.map(n => n.toLowerCase()).filter(Boolean)
+  return (e: { category: string; status: string; description: string }) =>
+    names.length > 0 && e.category === 'MENTORIA' && e.status !== 'PAGO' &&
+    names.some(n => e.description.toLowerCase().includes(`— ${n} (`))
 }

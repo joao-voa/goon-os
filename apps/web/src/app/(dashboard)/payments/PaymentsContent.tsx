@@ -5,12 +5,22 @@ import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 import { useIsMobile } from '@/hooks/useMediaQuery'
-import { PAYMENT_STATUS_COLORS, PAYMENT_STATUS_LABELS, PRODUCT_COLORS, PRODUCT_NAMES } from '@/lib/constants'
+import { PAYMENT_STATUS_COLORS, PAYMENT_STATUS_LABELS } from '@/lib/constants'
+import MultiSelect from '@/components/MultiSelect'
 
 // ---- Types ----
 interface Client {
   id: string
   companyName: string
+  standby?: boolean
+}
+
+interface StandbyClient {
+  id: string
+  companyName: string
+  standbyAt: string | null
+  frozenCount: number
+  frozenValue: number
 }
 
 interface Payment {
@@ -69,53 +79,18 @@ function rowBackground(payment: Payment): string {
   return ''
 }
 
-// ---- Program Selector ----
-function ProgramSelector({ active, onChange }: { active: string; onChange: (v: string) => void }) {
-  const programs = [
-    { code: '', label: 'TODOS' },
-    { code: 'GE', label: 'GE' },
-    { code: 'GI', label: 'GI' },
-    { code: 'TTS', label: 'TTS' },
-    { code: 'TTSG', label: 'TTS Grupo' },
-    { code: 'GA', label: 'GA' },
-  ]
-  return (
-    <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-      {programs.map(p => {
-        const isActive = active === p.code
-        const bg = isActive
-          ? (p.code === '' ? '#0f172a' : (PRODUCT_COLORS[p.code] ?? '#0f172a'))
-          : '#fff'
-        return (
-          <button
-            key={p.code}
-            onClick={() => onChange(p.code)}
-            style={{
-              background: bg,
-              color: isActive ? 'white' : '#64748b',
-              border: `1px solid ${isActive ? bg : '#e2e8f0'}`,
-              borderRadius: 100,
-              padding: '7px 16px',
-              fontFamily: 'var(--font-sans)',
-              fontSize: 12,
-              fontWeight: isActive ? 700 : 500,
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
-            title={p.code ? PRODUCT_NAMES[p.code] : 'Todos os programas'}
-          >
-            {p.label}
-          </button>
-        )
-      })}
-      {active && (
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: '#94a3b8', alignSelf: 'center', marginLeft: 4 }}>
-          — {PRODUCT_NAMES[active]}
-        </span>
-      )}
-    </div>
-  )
-}
+// ---- Planos (filtro) ----
+const PLAN_OPTIONS = [
+  { value: 'GE', label: 'GOON ELITE' },
+  { value: 'GI', label: 'GOON INFINITY' },
+  { value: 'TTS', label: 'TIK TOK SCALE' },
+  { value: 'TTSG', label: 'TIKTOK SCALE GRUPO' },
+  { value: 'GA', label: 'GOON ADVISOR' },
+  { value: 'GS', label: 'GOON SCALE' },
+  { value: 'AURA', label: 'AURA 360' },
+]
+
+const filterLabelStyle: React.CSSProperties = { fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 5 }
 
 // ---- KPI Cards ----
 function KpiCard({
@@ -346,7 +321,7 @@ function NewPaymentModal({ onClose, onCreated }: NewPaymentModalProps) {
 }
 
 // ---- Mobile Payment Card ----
-function PaymentCard({ payment, onPay }: { payment: Payment; onPay: (id: string) => void }) {
+function PaymentCard({ payment, onPay, onStandby }: { payment: Payment; onPay: (id: string) => void; onStandby: (c: Client, standby: boolean) => void }) {
   return (
     <div
       style={{
@@ -393,6 +368,15 @@ function PaymentCard({ payment, onPay }: { payment: Payment; onPay: (id: string)
           Marcar Pago
         </button>
       )}
+      {payment.status !== 'PAID' && payment.status !== 'CANCELLED' && (
+        <button
+          className="goon-btn-secondary"
+          style={{ fontSize: 9, padding: '6px 12px', marginLeft: 8 }}
+          onClick={() => onStandby(payment.client, !payment.client.standby)}
+        >
+          {payment.client.standby ? 'Reativar' : 'Standby'}
+        </button>
+      )}
     </div>
   )
 }
@@ -410,7 +394,9 @@ export default function PaymentsPage() {
   const [kpis, setKpis] = useState<{ recebidoMes: number; recebidoMesCount: number; aReceberMes: number; aReceberMesCount: number; totalPendente: number; totalPendenteCount: number; totalVencido: number; totalVencidoCount: number; totalPago: number; totalPagoCount: number; receitaContratada: number } | null>(null)
 
   const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') ?? '')
-  const [productFilter, setProductFilter] = useState(() => searchParams.get('product') ?? '')
+  const [productFilter, setProductFilter] = useState<string[]>(() => (searchParams.get('product') ?? '').split(',').filter(Boolean)) // vazio = todos
+  const [standbyView, setStandbyView] = useState(false)
+  const [standbyClients, setStandbyClients] = useState<StandbyClient[]>([])
   const now = new Date()
   const [monthFilter, setMonthFilter] = useState<number | null>(now.getMonth() + 1)
   const [yearFilter, setYearFilter] = useState(now.getFullYear())
@@ -445,9 +431,13 @@ export default function PaymentsPage() {
       const params = new URLSearchParams()
       if (statusFilter) params.set('status', statusFilter)
       if (debouncedSearch) params.set('search', debouncedSearch)
-      if (productFilter) params.set('product', productFilter)
-      if (monthFilter) params.set('month', String(monthFilter))
-      if (yearFilter) params.set('year', String(yearFilter))
+      if (productFilter.length) params.set('product', productFilter.join(','))
+      // standby: mostra todas as parcelas congeladas, sem recorte de mês/ano
+      if (standbyView) params.set('standby', 'only')
+      else {
+        if (monthFilter) params.set('month', String(monthFilter))
+        if (yearFilter) params.set('year', String(yearFilter))
+      }
       params.set('page', String(page))
       params.set('limit', String(limit))
       const result = await apiFetch<PaginatedPayments>(`/api/payments?${params.toString()}`)
@@ -458,18 +448,36 @@ export default function PaymentsPage() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, productFilter, monthFilter, yearFilter, debouncedSearch, page])
+  }, [statusFilter, productFilter, monthFilter, yearFilter, debouncedSearch, page, standbyView])
 
   useEffect(() => {
     apiFetch('/api/payments/check-overdue', { method: 'POST' }).catch(() => {})
     fetchPayments()
   }, [fetchPayments])
 
-  useEffect(() => { setPage(1) }, [statusFilter, productFilter, debouncedSearch])
+  useEffect(() => { setPage(1) }, [statusFilter, productFilter, debouncedSearch, standbyView])
 
-  useEffect(() => {
+  const fetchKpis = useCallback(() => {
     apiFetch<typeof kpis>('/api/payments/kpis').then(setKpis).catch(() => {})
+    apiFetch<StandbyClient[]>('/api/payments/standby').then(setStandbyClients).catch(() => {})
   }, [])
+  useEffect(() => { fetchKpis() }, [fetchKpis])
+
+  // Standby: congela as parcelas não pagas do cliente (fora de fluxo, comissões e splits)
+  const handleStandby = async (client: Client, standby: boolean) => {
+    const msg = standby
+      ? `Colocar ${client.companyName} em STANDBY?\n\nTodas as parcelas não pagas ficam congeladas: saem do fluxo, das comissões e dos splits até o cliente ser reativado.`
+      : `Reativar ${client.companyName}?\n\nAs parcelas não pagas voltam para o fluxo, comissões e splits.`
+    if (!confirm(msg)) return
+    try {
+      await apiFetch(`/api/clients/${client.id}/standby`, { method: 'PATCH', body: JSON.stringify({ standby }) })
+      toast.success(standby ? `${client.companyName} em standby` : `${client.companyName} reativado`)
+      fetchPayments()
+      fetchKpis()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Falha ao alterar standby')
+    }
+  }
 
   const receitaMes = kpis?.recebidoMes ?? 0
   const totalPendente = kpis?.totalPendente ?? 0
@@ -539,11 +547,37 @@ export default function PaymentsPage() {
         </div>
       </div>
 
-      {/* Program Selector */}
-      <ProgramSelector active={productFilter} onChange={setProductFilter} />
+      {/* Clientes em standby */}
+      {standbyClients.length > 0 && (
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderLeft: '3px solid #f59e0b', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Clientes em standby ({standbyClients.length}) · {fmtBRL(standbyClients.reduce((s, c) => s + c.frozenValue, 0))} congelados
+            </span>
+            <button className="goon-btn-ghost" style={{ fontSize: 11, padding: '5px 10px' }} onClick={() => setStandbyView(v => !v)}>
+              {standbyView ? 'Voltar aos pagamentos' : 'Ver parcelas congeladas'}
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {standbyClients.map(c => (
+              <div key={c.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, padding: '6px 10px' }}>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600, color: '#0f172a' }}>{c.companyName}</span>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: '#64748b' }}>{c.frozenCount} parc. · {fmtBRL(c.frozenValue)}{c.standbyAt ? ` · desde ${fmtDate(c.standbyAt)}` : ''}</span>
+                <button className="goon-btn-accent" style={{ fontSize: 10, padding: '4px 8px' }} onClick={() => handleStandby({ id: c.id, companyName: c.companyName }, false)}>Reativar</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {standbyView && (
+        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12.5, color: '#92400e', marginBottom: 12 }}>
+          Mostrando só as parcelas congeladas (clientes em standby), de todos os meses. Elas não entram no fluxo, nas comissões nem nos splits.
+        </div>
+      )}
 
       {/* Active filter indicators */}
-      {(statusFilter || productFilter) && (
+      {statusFilter && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
           {statusFilter && (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: '#C7F900', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
@@ -599,6 +633,16 @@ export default function PaymentsPage() {
             placeholder="Buscar cliente..."
             value={search}
             onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+        <div>
+          <label style={filterLabelStyle}>Plano</label>
+          <MultiSelect
+            options={PLAN_OPTIONS}
+            selected={productFilter}
+            onChange={setProductFilter}
+            allLabel="Todos os planos"
+            style={{ height: 36, padding: '0 12px', border: '1px solid #e2e8f0', borderRadius: 8, background: '#fff', fontFamily: 'var(--font-sans)', fontSize: 13, color: '#0f172a', cursor: 'pointer' }}
           />
         </div>
         <div>
@@ -792,6 +836,16 @@ export default function PaymentsPage() {
                             Reverter
                           </button>
                         )}
+                        {payment.status !== 'PAID' && payment.status !== 'CANCELLED' && (
+                          <button
+                            className="goon-btn-secondary"
+                            style={{ fontSize: 8, padding: '5px 8px', whiteSpace: 'nowrap' }}
+                            title={payment.client.standby ? 'Reativar o cliente (descongela as parcelas)' : 'Congela todas as parcelas não pagas do cliente'}
+                            onClick={() => handleStandby(payment.client, !payment.client.standby)}
+                          >
+                            {payment.client.standby ? 'Reativar' : 'Standby'}
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -807,7 +861,7 @@ export default function PaymentsPage() {
       {!loading && payments.length > 0 && isMobile && (
         <div>
           {payments.map(payment => (
-            <PaymentCard key={payment.id} payment={payment} onPay={handlePay} />
+            <PaymentCard key={payment.id} payment={payment} onPay={handlePay} onStandby={handleStandby} />
           ))}
         </div>
       )}

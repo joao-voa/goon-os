@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { daysUntil } from '../clients/renewal.util'
-import { NOT_CARTEIRA_CLIENT_FILTER } from '../../shared/constants'
+import { NOT_CARTEIRA_CLIENT_FILTER, STANDBY_FROZEN_PAYMENT } from '../../shared/constants'
 
 @Injectable()
 export class DashboardService {
@@ -100,7 +100,7 @@ export class DashboardService {
       }),
       // Total vencido
       this.prisma.payment.aggregate({
-        where: { status: 'OVERDUE' },
+        where: { status: 'OVERDUE', NOT: STANDBY_FROZEN_PAYMENT },
         _sum: { value: true },
         _count: true,
       }),

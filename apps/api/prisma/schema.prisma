@@ -70,6 +70,8 @@ model Client {
   hasBilling       Boolean  @default(false)
   isClientActive   Boolean  @default(false)
   mentorshipEnded  Boolean  @default(false) // mentoria encerrada: sai da agenda, mantém pagamentos
+  standby          Boolean  @default(false) // cliente em standby: parcelas não pagas congeladas (fora de fluxo, comissões, splits)
+  standbyAt        DateTime?
 
   status           String   @default("ACTIVE")
 

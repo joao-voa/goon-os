@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
-import { NOT_CARTEIRA_CLIENT_FILTER } from '../../shared/constants'
+import { NOT_CARTEIRA_CLIENT_FILTER, STANDBY_FROZEN_PAYMENT, UNPAID_STATUSES } from '../../shared/constants'
 
 @Injectable()
 export class PaymentsService {
@@ -30,7 +30,7 @@ export class PaymentsService {
       }),
       // Total vencido (exclui parcelas em carteira de cobrança / churn)
       this.prisma.payment.aggregate({
-        where: { status: 'OVERDUE', inCarteira: false },
+        where: { status: 'OVERDUE', inCarteira: false, NOT: STANDBY_FROZEN_PAYMENT },
         _sum: { value: true },
         _count: true,
       }),
@@ -85,7 +85,7 @@ export class PaymentsService {
       }),
       this.prisma.clientPlan.findMany({
         where: { status: 'ACTIVE' },
-        select: { id: true, clientId: true, value: true, endDate: true, product: { select: { code: true, name: true } }, client: { select: { companyName: true, leadStage: true } } },
+        select: { id: true, clientId: true, value: true, endDate: true, product: { select: { code: true, name: true } }, client: { select: { companyName: true, leadStage: true, standby: true } } },
       }),
     ])
 
@@ -109,6 +109,8 @@ export class PaymentsService {
 
     const recovery = new Set<string>()
     for (const p of activePlans) if (p.client.leadStage === 'RECUPERAR') recovery.add(p.clientId)
+    // standby: valores congelados, fora da carteira de recebíveis
+    for (const p of activePlans) if (p.client.standby) recovery.add(p.clientId)
     for (const pay of payments) if (pay.inCarteira) recovery.add(pay.clientId)
 
     const plans = activePlans.filter(p => !recovery.has(p.clientId))
@@ -164,8 +166,9 @@ export class PaymentsService {
     page?: number
     limit?: number
     includeCarteira?: boolean
+    standby?: 'only' | 'include'
   }) {
-    const { clientId, status, product, month, year, page = 1, limit = 20, includeCarteira = false } = params
+    const { clientId, status, product, month, year, page = 1, limit = 20, includeCarteira = false, standby } = params
 
     // Parcelas em carteira de cobrança (98/98, 99/99 — churn) não aparecem no
     // Financeiro > Pagamentos nem no fluxo: são desconsideradas — a menos que
@@ -173,11 +176,15 @@ export class PaymentsService {
     const where: Record<string, unknown> = includeCarteira ? {} : { inCarteira: false }
     if (clientId) where.clientId = clientId
     if (status) where.status = status
+    // aceita vários programas separados por vírgula (ex.: "GE,TTS")
     if (product) {
-      where.clientPlan = {
-        product: { code: product.toUpperCase() },
-      }
+      const codes = product.split(',').map(c => c.trim().toUpperCase()).filter(Boolean)
+      where.clientPlan = { product: { code: { in: codes } } }
     }
+    // Standby: parcelas não pagas de cliente em standby ficam congeladas e somem
+    // da lista; só aparecem quando o filtro pede ("only").
+    if (standby === 'only') Object.assign(where, STANDBY_FROZEN_PAYMENT)
+    else if (standby !== 'include') where.NOT = STANDBY_FROZEN_PAYMENT
     if (month && year) {
       const start = new Date(year, month - 1, 1)
       const end = new Date(year, month, 1)
@@ -197,7 +204,7 @@ export class PaymentsService {
         skip,
         take: limit,
         include: {
-          client: { select: { id: true, companyName: true } },
+          client: { select: { id: true, companyName: true, standby: true } },
           clientPlan: { select: { id: true, product: { select: { code: true, name: true } } } },
         },
       }),
@@ -430,6 +437,36 @@ export class PaymentsService {
       },
     })
     await this.prisma.clientPlan.update({ where: { id: plan.id }, data: { installments: maxInst + 1, endDate: next } })
+  }
+
+  /** Coloca / tira o cliente de standby (congela as parcelas não pagas). */
+  async setStandby(clientId: string, standby: boolean) {
+    const client = await this.prisma.client.findUnique({ where: { id: clientId }, select: { id: true, companyName: true } })
+    if (!client) throw new NotFoundException(`Cliente ${clientId} não encontrado`)
+    await this.prisma.client.update({ where: { id: clientId }, data: { standby, standbyAt: standby ? new Date() : null } })
+    await this.activityLog.log({
+      clientId, entityType: 'CLIENT', entityId: clientId,
+      action: standby ? 'STANDBY_ON' : 'STANDBY_OFF',
+      description: `${client.companyName} ${standby ? 'entrou em' : 'saiu de'} standby`,
+    })
+    return { clientId, standby }
+  }
+
+  /** Clientes em standby com o total congelado (parcelas não pagas). */
+  async getStandbyClients() {
+    const clients = await this.prisma.client.findMany({
+      where: { standby: true },
+      select: {
+        id: true, companyName: true, standbyAt: true,
+        payments: { where: { status: { in: UNPAID_STATUSES }, inCarteira: false }, select: { value: true } },
+      },
+      orderBy: { companyName: 'asc' },
+    })
+    return clients.map(c => ({
+      id: c.id, companyName: c.companyName, standbyAt: c.standbyAt,
+      frozenCount: c.payments.length,
+      frozenValue: c.payments.reduce((s, p) => s + Number(p.value), 0),
+    }))
   }
 
   async toggleCarteira(id: string, inCarteira: boolean) {

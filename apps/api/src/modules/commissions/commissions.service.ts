@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
-import { getNextCommissionPaymentDate, getNextClosingCutoff } from '../../shared/constants'
+import { getNextCommissionPaymentDate, getNextClosingCutoff, STANDBY_FROZEN_COMMISSION } from '../../shared/constants'
 
 @Injectable()
 export class CommissionsService {
@@ -20,7 +20,8 @@ export class CommissionsService {
     limit?: number
   }) {
     const { salesRep, status, clientId, month, year, page = 1, limit = 20 } = params
-    const where: Record<string, unknown> = {}
+    // standby: comissão pendente de cliente congelado não aparece
+    const where: Record<string, unknown> = { NOT: STANDBY_FROZEN_COMMISSION }
 
     if (salesRep) where.salesRep = salesRep
     if (status) where.status = status
@@ -74,7 +75,8 @@ export class CommissionsService {
 
   async getSummary(params: { month?: number; year?: number }) {
     const { month, year } = params
-    const where: Record<string, unknown> = {}
+    // standby: comissão pendente de cliente congelado não aparece
+    const where: Record<string, unknown> = { NOT: STANDBY_FROZEN_COMMISSION }
 
     if (month && year) {
       const start = new Date(year, month - 1, 1)
@@ -111,6 +113,7 @@ export class CommissionsService {
       where: {
         status: 'PENDING',
         createdAt: { lte: nextClosingDate },
+        client: { standby: false },
       },
       _sum: { value: true },
       _count: true,
@@ -121,6 +124,7 @@ export class CommissionsService {
       where: {
         status: 'PENDING',
         createdAt: { gt: nextClosingDate },
+        client: { standby: false },
       },
       _sum: { value: true },
       _count: true,

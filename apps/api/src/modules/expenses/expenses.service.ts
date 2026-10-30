@@ -5,6 +5,19 @@ import { PrismaService } from '../../prisma/prisma.service'
 export class ExpensesService {
   constructor(private prisma: PrismaService) {}
 
+  /** Repasses de mentoria não pagos de clientes em standby (congelados): fora da lista e do resumo. */
+  private async standbyMentorFilter() {
+    const clients = await this.prisma.client.findMany({ where: { standby: true }, select: { companyName: true } })
+    if (clients.length === 0) return []
+    return [{
+      NOT: {
+        category: 'MENTORIA',
+        status: { not: 'PAGO' },
+        OR: clients.map(c => ({ description: { contains: `— ${c.companyName} (`, mode: 'insensitive' } })),
+      },
+    }]
+  }
+
   async findAll(params: {
     category?: string
     costCenter?: string
@@ -17,7 +30,7 @@ export class ExpensesService {
   }) {
     const { category, costCenter, status, recurrence, month, year, page = 1, limit = 20 } = params
     const giuFilter = { NOT: { AND: [{ category: 'MENTORIA' }, { description: { contains: 'Giulliano' } }] } }
-    const where: Record<string, unknown> = { ...giuFilter }
+    const where: Record<string, unknown> = { ...giuFilter, AND: await this.standbyMentorFilter() }
 
     if (category) where.category = { in: category.split(',').map(c => c.trim()).filter(Boolean) }
     // aceita vários centros separados por vírgula (ex.: "GLOBAL,TIKTOK")
@@ -58,7 +71,7 @@ export class ExpensesService {
   async getSummary(params: { month?: number; year?: number }) {
     const { month, year } = params
     const giuFilter = { NOT: { AND: [{ category: 'MENTORIA' }, { description: { contains: 'Giulliano' } }] } }
-    const where: Record<string, unknown> = { ...giuFilter }
+    const where: Record<string, unknown> = { ...giuFilter, AND: await this.standbyMentorFilter() }
 
     if (month && year) {
       const start = new Date(year, month - 1, 1)

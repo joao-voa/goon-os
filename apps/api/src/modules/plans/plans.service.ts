@@ -221,6 +221,11 @@ export class PlansService {
     })
     const carteiraSet = new Set(carteiraClients.map(c => c.id))
 
+    // Standby: parcela não paga de cliente congelado não gera split pra ninguém
+    const standbyClients = await this.prisma.client.findMany({ where: { standby: true }, select: { id: true } })
+    const standbySet = new Set(standbyClients.map(c => c.id))
+    const frozen = (clientId: string, status: string) => standbySet.has(clientId) && status !== 'PAID'
+
     // Group mentors by plan to calculate Giulliano's remaining share
     const planMap = new Map<string, typeof mentors>()
     for (const m of mentors) {
@@ -250,6 +255,7 @@ export class PlansService {
       const installments: Array<{ date: string; value: number; status: string }> = []
       const isExMentora = /ex-mentora/i.test(m.mentorName)
       for (const pay of m.plan.payments) {
+        if (frozen(m.plan.client.id, pay.status)) continue
         const proportion = totalPayments > 0 ? Number(pay.value) / totalPayments : 0
         const mentorInstallment = Math.round(mentorValue * proportion * 100) / 100
         const monthKey = `${pay.dueDate.getFullYear()}-${String(pay.dueDate.getMonth() + 1).padStart(2, '0')}`
@@ -296,6 +302,7 @@ export class PlansService {
       const totalPayments = plan.payments.reduce((s, p) => s + Number(p.value), 0)
       const monthlyBreakdown: Record<string, number> = {}
       for (const pay of plan.payments) {
+        if (frozen(plan.client.id, pay.status)) continue
         const proportion = totalPayments > 0 ? Number(pay.value) / totalPayments : 0
         const mentorInstallment = Math.round(giullianoValue * proportion * 100) / 100
         const monthKey = `${pay.dueDate.getFullYear()}-${String(pay.dueDate.getMonth() + 1).padStart(2, '0')}`

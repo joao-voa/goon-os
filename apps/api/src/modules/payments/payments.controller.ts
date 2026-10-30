@@ -37,6 +37,7 @@ export class PaymentsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('includeCarteira') includeCarteira?: string,
+    @Query('standby') standby?: string,
   ) {
     return this.paymentsService.findAll({
       clientId,
@@ -47,7 +48,18 @@ export class PaymentsController {
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
       includeCarteira: includeCarteira === 'true',
+      standby: standby === 'only' || standby === 'include' ? standby : undefined,
     })
+  }
+
+  @Get('api/payments/standby')
+  getStandbyClients() {
+    return this.paymentsService.getStandbyClients()
+  }
+
+  @Patch('api/clients/:clientId/standby')
+  setStandby(@Param('clientId') clientId: string, @Body() body: { standby: boolean }) {
+    return this.paymentsService.setStandby(clientId, !!body.standby)
   }
 
   @Get('api/clients/:clientId/payments')

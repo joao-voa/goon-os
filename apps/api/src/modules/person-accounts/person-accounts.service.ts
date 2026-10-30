@@ -10,8 +10,9 @@ export class PersonAccountsService {
   // mentor não recebe esse valor. Esses lançamentos são desconsiderados na
   // visão de pagamento por pessoa. Retorna os sourceId (id da despesa) a excluir.
   private async carteiraMentorSourceIds(): Promise<Set<string>> {
+    // inclui clientes em standby (valores congelados: repasse não pago some)
     const carteira = await this.prisma.client.findMany({
-      where: { payments: { some: { inCarteira: true } } },
+      where: { OR: [{ payments: { some: { inCarteira: true } } }, { standby: true }] },
       select: { companyName: true },
     })
     const names = carteira.map(c => c.companyName.toLowerCase())
