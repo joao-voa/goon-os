@@ -5,6 +5,7 @@
 ---
 
 ## 2026-10-30
+- **Despesas atrasadas até 30/09 marcadas como PAGO** (paidAt = vencimento): 221 lançamentos / R$ 136.213 (impostos 175, pessoal 17, sistemas 16, pessoas 7, marketing 3, estrutura 2, comissão 1). Ficaram de fora: MENTORIA (40) e 11 impostos de parcelas não pagas/canceladas (R$ 1.811,68).
 - **Despesas:** categoria nova **DEVOLUCAO**. Lançadas 4 devoluções (PREVISTO, venc. 30/10, centro TikTok): Cris Semi Joias R$ 2.500, Durante R$ 5.000, Skopos R$ 5.000, Noul R$ 2.500.
 - **Financeiro:** aba Resumo (entradas × saídas, cards clicáveis, standby); meses com checkbox no Resumo e em Pagamentos.
 - **Pagamentos:** filtro de Plano virou lista suspensa com checkbox; novo **cliente em standby** (colunas `Client.standby`/`standbyAt` criadas via db push aditivo) congela parcelas não pagas, comissões pendentes e splits.
