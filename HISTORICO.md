@@ -5,6 +5,8 @@
 ---
 
 ## 2026-10-30
+- **Despesas:** categoria nova **DEVOLUCAO**. Lançadas 4 devoluções (PREVISTO, venc. 30/10, centro TikTok): Cris Semi Joias R$ 2.500, Durante R$ 5.000, Skopos R$ 5.000, Noul R$ 2.500.
+- **Financeiro:** aba Resumo (entradas × saídas, cards clicáveis, standby); meses com checkbox no Resumo e em Pagamentos.
 - **Pagamentos:** filtro de Plano virou lista suspensa com checkbox; novo **cliente em standby** (colunas `Client.standby`/`standbyAt` criadas via db push aditivo) congela parcelas não pagas, comissões pendentes e splits.
 - **Despesas futuras removidas** (PREVISTO com vencimento ≥ 30/10/2026), 25 lançamentos / R$ 21.898: Mentoria João Afonso de Andressa Marchiori (6), Lehua (6) e Star Shop (5); Salário - Agatha (8). Os 17 DEBITs ligados na conta de pessoas (João Afonso) também saíram. Claudia e Bronson não tinham despesa futura (só o pagamento de out/26).
 - **Despesas:** filtro de Categoria virou lista suspensa com checkbox (API aceita `category` separado por vírgula).

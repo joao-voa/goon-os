@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common'
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import { PaymentsService } from './payments.service'
+import { parseMonths } from '../../shared/constants'
 
 @Controller()
 @UseGuards(JwtAuthGuard)
@@ -21,11 +22,12 @@ export class PaymentsController {
   getKpis(
     @Query('product') product?: string,
     @Query('month') month?: string,
+    @Query('months') months?: string,
     @Query('year') year?: string,
   ) {
     return this.paymentsService.getKpis({
       product,
-      month: month ? parseInt(month, 10) : undefined,
+      months: parseMonths(months ?? month),
       year: year ? parseInt(year, 10) : undefined,
     })
   }
@@ -41,6 +43,7 @@ export class PaymentsController {
     @Query('status') status?: string,
     @Query('product') product?: string,
     @Query('month') month?: string,
+    @Query('months') months?: string,
     @Query('year') year?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
@@ -52,6 +55,7 @@ export class PaymentsController {
       status,
       product,
       month: month ? parseInt(month, 10) : undefined,
+      months: parseMonths(months),
       year: year ? parseInt(year, 10) : undefined,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,

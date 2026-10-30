@@ -25,11 +25,11 @@ interface Summary {
   byCostCenter: Array<{ costCenter: string; total: number }>
 }
 
-const CATEGORIES = ['PESSOAL', 'MENTORIA', 'COMISSAO', 'IMPOSTOS', 'MARKETING', 'PESSOAS', 'SISTEMAS', 'ESTRUTURA', 'OUTRO']
+const CATEGORIES = ['PESSOAL', 'MENTORIA', 'COMISSAO', 'IMPOSTOS', 'MARKETING', 'PESSOAS', 'SISTEMAS', 'ESTRUTURA', 'DEVOLUCAO', 'OUTRO']
 const RECURRENCES = ['UNICA', 'MENSAL', 'TRIMESTRAL', 'ANUAL']
 const COST_CENTERS = ['GLOBAL', 'INFINITY', 'TIKTOK']
-const CATEGORY_LABELS: Record<string, string> = { PESSOAL: 'Pessoal Giu', MENTORIA: 'Mentoria', COMISSAO: 'Comissao', IMPOSTOS: 'Impostos', SISTEMAS: 'Sistemas', MARKETING: 'Marketing', PESSOAS: 'Pessoas', ESTRUTURA: 'Estrutura', OUTRO: 'Outro' }
-const CATEGORY_COLORS: Record<string, string> = { PESSOAL: '#000080', MENTORIA: '#4A78FF', COMISSAO: '#e6a800', IMPOSTOS: '#cc0000', MARKETING: '#7c3aed', PESSOAS: '#059669', SISTEMAS: '#06b6d4', ESTRUTURA: '#475569', OUTRO: '#888' }
+const CATEGORY_LABELS: Record<string, string> = { PESSOAL: 'Pessoal Giu', MENTORIA: 'Mentoria', COMISSAO: 'Comissao', IMPOSTOS: 'Impostos', SISTEMAS: 'Sistemas', MARKETING: 'Marketing', PESSOAS: 'Pessoas', ESTRUTURA: 'Estrutura', DEVOLUCAO: 'Devolução', OUTRO: 'Outro' }
+const CATEGORY_COLORS: Record<string, string> = { PESSOAL: '#000080', MENTORIA: '#4A78FF', COMISSAO: '#e6a800', IMPOSTOS: '#cc0000', MARKETING: '#7c3aed', PESSOAS: '#059669', SISTEMAS: '#06b6d4', ESTRUTURA: '#475569', DEVOLUCAO: '#be123c', OUTRO: '#888' }
 const COST_CENTER_LABELS: Record<string, string> = { GLOBAL: 'GOON Global', INFINITY: 'GOON Infinity', TIKTOK: 'GOON TikTok', SEM: 'Sem centro' }
 const COST_CENTER_COLORS: Record<string, string> = { GLOBAL: '#475569', INFINITY: '#4A78FF', TIKTOK: '#ec4899', SEM: '#cbd5e1' }
 const RECURRENCE_LABELS: Record<string, string> = { UNICA: 'Unica', MENSAL: 'Mensal', TRIMESTRAL: 'Trimestral', ANUAL: 'Anual' }

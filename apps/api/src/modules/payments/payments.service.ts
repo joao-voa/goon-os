@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
-import { NOT_CARTEIRA_CLIENT_FILTER, STANDBY_FROZEN_PAYMENT, UNPAID_STATUSES } from '../../shared/constants'
+import { NOT_CARTEIRA_CLIENT_FILTER, STANDBY_FROZEN_PAYMENT, UNPAID_STATUSES, periodRanges, inRanges } from '../../shared/constants'
 
 @Injectable()
 export class PaymentsService {
@@ -16,22 +16,22 @@ export class PaymentsService {
    * todos os cards respeitam o filtro: datas de vencimento no período (recebido: data do
    * pagamento) e só parcelas dos planos escolhidos.
    */
-  async getKpis(params: { product?: string; month?: number; year?: number } = {}) {
-    const { product, month, year } = params
+  async getKpis(params: { product?: string; months?: number[]; year?: number } = {}) {
+    const { product, months = [], year } = params
     const now = new Date()
     const codes = product ? product.split(',').map(c => c.trim().toUpperCase()).filter(Boolean) : []
     const planWhere = codes.length ? { clientPlan: { product: { code: { in: codes } } } } : {}
 
     // período: mês escolhido, ano inteiro, ou (visão total) o mês corrente só p/ os cards "do mês"
-    const hasPeriod = !!year
-    const pStart = month && year ? new Date(Date.UTC(year, month - 1, 1)) : year ? new Date(Date.UTC(year, 0, 1)) : new Date(now.getFullYear(), now.getMonth(), 1)
-    const pEnd = month && year ? new Date(Date.UTC(year, month, 1)) : year ? new Date(Date.UTC(year + 1, 0, 1)) : new Date(now.getFullYear(), now.getMonth() + 1, 1)
-    const due = hasPeriod ? { dueDate: { gte: pStart, lt: pEnd } } : {}
+    // vários meses = várias faixas; visão total = mês corrente nos cards "do mês"
+    const ranges = periodRanges(year, months)
+    const monthRanges = ranges ?? [{ gte: new Date(now.getFullYear(), now.getMonth(), 1), lt: new Date(now.getFullYear(), now.getMonth() + 1, 1) }]
+    const due = inRanges('dueDate', ranges)
 
     const [recebidoMes, totalPendente, totalVencido, totalPago, receitaTotal, receitaPorMes] = await this.prisma.$transaction([
       // Recebido no período (data do pagamento)
       this.prisma.payment.aggregate({
-        where: { status: 'PAID', paidAt: { gte: pStart, lt: pEnd }, ...planWhere },
+        where: { status: 'PAID', ...inRanges('paidAt', monthRanges), ...planWhere },
         _sum: { value: true },
         _count: true,
       }),
@@ -60,7 +60,7 @@ export class PaymentsService {
       }),
       // A receber no período (pendentes com vencimento no período)
       this.prisma.payment.aggregate({
-        where: { status: 'PENDING', dueDate: { gte: pStart, lt: pEnd }, ...planWhere, ...NOT_CARTEIRA_CLIENT_FILTER },
+        where: { status: 'PENDING', ...inRanges('dueDate', monthRanges), ...planWhere, ...NOT_CARTEIRA_CLIENT_FILTER },
         _sum: { value: true },
         _count: true,
       }),
@@ -175,13 +175,14 @@ export class PaymentsService {
     status?: string
     product?: string
     month?: number
+    months?: number[]
     year?: number
     page?: number
     limit?: number
     includeCarteira?: boolean
     standby?: 'only' | 'include'
   }) {
-    const { clientId, status, product, month, year, page = 1, limit = 20, includeCarteira = false, standby } = params
+    const { clientId, status, product, month, months, year, page = 1, limit = 20, includeCarteira = false, standby } = params
 
     // Parcelas em carteira de cobrança (98/98, 99/99 — churn) não aparecem no
     // Financeiro > Pagamentos nem no fluxo: são desconsideradas — a menos que
@@ -198,15 +199,8 @@ export class PaymentsService {
     // da lista; só aparecem quando o filtro pede ("only").
     if (standby === 'only') Object.assign(where, STANDBY_FROZEN_PAYMENT)
     else if (standby !== 'include') where.NOT = STANDBY_FROZEN_PAYMENT
-    if (month && year) {
-      const start = new Date(year, month - 1, 1)
-      const end = new Date(year, month, 1)
-      where.dueDate = { gte: start, lt: end }
-    } else if (year) {
-      const start = new Date(year, 0, 1)
-      const end = new Date(year + 1, 0, 1)
-      where.dueDate = { gte: start, lt: end }
-    }
+    // período: ano inteiro ou só os meses escolhidos (vários)
+    Object.assign(where, inRanges('dueDate', periodRanges(year, months?.length ? months : month ? [month] : [])))
 
     const skip = (page - 1) * limit
 

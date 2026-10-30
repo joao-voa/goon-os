@@ -26,7 +26,7 @@ const PLAN_OPTIONS = [
 const CATEGORY_OPTIONS = [
   { value: 'PESSOAL', label: 'Pessoal Giu' }, { value: 'MENTORIA', label: 'Mentoria' }, { value: 'COMISSAO', label: 'Comissão' },
   { value: 'IMPOSTOS', label: 'Impostos' }, { value: 'MARKETING', label: 'Marketing' }, { value: 'PESSOAS', label: 'Pessoas' },
-  { value: 'SISTEMAS', label: 'Sistemas' }, { value: 'ESTRUTURA', label: 'Estrutura' }, { value: 'OUTRO', label: 'Outro' },
+  { value: 'SISTEMAS', label: 'Sistemas' }, { value: 'ESTRUTURA', label: 'Estrutura' }, { value: 'DEVOLUCAO', label: 'Devolução' }, { value: 'OUTRO', label: 'Outro' },
 ]
 const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: new Date(2000, i).toLocaleString('pt-BR', { month: 'long' }) }))
 const CENTER_OPTIONS = [{ value: 'GLOBAL', label: 'GOON Global' }, { value: 'INFINITY', label: 'GOON Infinity' }, { value: 'TIKTOK', label: 'GOON TikTok' }]

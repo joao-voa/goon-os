@@ -74,3 +74,17 @@ export function mentorExpenseOfClients(companyNames: string[]) {
     markers.length > 0 && PARCEL_LINKED_CATEGORIES.includes(e.category) && e.status !== 'PAGO' &&
     markers.some(m => e.description.toLowerCase().includes(m))
 }
+
+/**
+ * Faixas de datas de um filtro de período: ano inteiro, ou só os meses escolhidos (1-12).
+ * Sem ano = null (sem recorte). Usar com `inRanges(campo, faixas)` num where do Prisma.
+ */
+export function periodRanges(year?: number, months: number[] = []) {
+  if (!year) return null
+  const ms = months.filter(m => m >= 1 && m <= 12)
+  if (ms.length === 0) return [{ gte: new Date(Date.UTC(year, 0, 1)), lt: new Date(Date.UTC(year + 1, 0, 1)) }]
+  return ms.map(m => ({ gte: new Date(Date.UTC(year, m - 1, 1)), lt: new Date(Date.UTC(year, m, 1)) }))
+}
+export const inRanges = (field: string, ranges: Array<{ gte: Date; lt: Date }> | null) =>
+  ranges ? { OR: ranges.map(r => ({ [field]: r })) } : {}
+export const parseMonths = (v?: string) => (v ?? '').split(',').map(x => parseInt(x, 10)).filter(m => m >= 1 && m <= 12)

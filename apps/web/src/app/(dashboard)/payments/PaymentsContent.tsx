@@ -90,6 +90,8 @@ const PLAN_OPTIONS = [
   { value: 'AURA', label: 'AURA 360' },
 ]
 
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: new Date(2000, i).toLocaleString('pt-BR', { month: 'long' }) }))
+
 const filterLabelStyle: React.CSSProperties = { fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 5 }
 
 // ---- KPI Cards ----
@@ -405,7 +407,7 @@ export default function PaymentsPage() {
   const [standbyView, setStandbyView] = useState(false)
   const [standbyClients, setStandbyClients] = useState<StandbyClient[]>([])
   const now = new Date()
-  const [monthFilter, setMonthFilter] = useState<number | null>(now.getMonth() + 1)
+  const [monthFilter, setMonthFilter] = useState<string[]>([String(now.getMonth() + 1)]) // vazio = ano inteiro
   const [yearFilter, setYearFilter] = useState(now.getFullYear())
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -442,7 +444,7 @@ export default function PaymentsPage() {
       // standby: mostra todas as parcelas congeladas, sem recorte de mês/ano
       if (standbyView) params.set('standby', 'only')
       else {
-        if (monthFilter) params.set('month', String(monthFilter))
+        if (monthFilter.length) params.set('months', monthFilter.join(','))
         if (yearFilter) params.set('year', String(yearFilter))
       }
       params.set('page', String(page))
@@ -471,7 +473,7 @@ export default function PaymentsPage() {
     if (kpiMode === 'filtro') {
       if (productFilter.length) q.set('product', productFilter.join(','))
       if (yearFilter) q.set('year', String(yearFilter))
-      if (yearFilter && monthFilter) q.set('month', String(monthFilter))
+      if (yearFilter && monthFilter.length) q.set('months', monthFilter.join(','))
     }
     apiFetch<typeof kpis>(`/api/payments/kpis?${q.toString()}`).then(setKpis).catch(() => {})
     apiFetch<StandbyClient[]>('/api/payments/standby').then(setStandbyClients).catch(() => {})
@@ -496,9 +498,9 @@ export default function PaymentsPage() {
 
   const receitaMes = kpis?.recebidoMes ?? 0
   const isFiltro = kpiMode === 'filtro'
-  const periodLabel = monthFilter && yearFilter
-    ? new Date(yearFilter, monthFilter - 1, 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' })
-    : yearFilter ? String(yearFilter) : 'todo o período'
+  const periodLabel = !yearFilter ? 'todo o período'
+    : monthFilter.length === 0 ? `todo o ano de ${yearFilter}`
+    : `${[...monthFilter].sort((a, b) => +a - +b).map(m => MONTH_OPTIONS[+m - 1].label).join(', ')} de ${yearFilter}`
   const totalPendente = kpis?.totalPendente ?? 0
   const totalVencido = kpis?.totalVencido ?? 0
 
@@ -694,15 +696,14 @@ export default function PaymentsPage() {
           </select>
         </div>
         <div>
-          <label style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.04em', display: 'block', marginBottom: 5 }}>
-            Mes
-          </label>
-          <select className="goon-select" value={monthFilter ?? ''} onChange={e => { setMonthFilter(e.target.value ? parseInt(e.target.value, 10) : null); setPage(1) }}>
-            <option value="">Todos</option>
-            {Array.from({ length: 12 }, (_, i) => (
-              <option key={i + 1} value={i + 1}>{new Date(2000, i).toLocaleString('pt-BR', { month: 'long' })}</option>
-            ))}
-          </select>
+          <label style={filterLabelStyle}>Meses</label>
+          <MultiSelect
+            options={MONTH_OPTIONS}
+            selected={monthFilter}
+            onChange={v => { setMonthFilter(v); setPage(1) }}
+            allLabel="Ano inteiro"
+            style={{ height: 36, padding: '0 12px', border: '1px solid #e2e8f0', borderRadius: 8, background: '#fff', fontFamily: 'var(--font-sans)', fontSize: 13, color: '#0f172a', cursor: 'pointer' }}
+          />
         </div>
         <div>
           <label style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.04em', display: 'block', marginBottom: 5 }}>
