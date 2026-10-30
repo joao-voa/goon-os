@@ -5,6 +5,7 @@
 ---
 
 ## 2026-10-30
+- **Pagamentos:** filtro de Plano virou lista suspensa com checkbox; novo **cliente em standby** (colunas `Client.standby`/`standbyAt` criadas via db push aditivo) congela parcelas não pagas, comissões pendentes e splits.
 - **Despesas futuras removidas** (PREVISTO com vencimento ≥ 30/10/2026), 25 lançamentos / R$ 21.898: Mentoria João Afonso de Andressa Marchiori (6), Lehua (6) e Star Shop (5); Salário - Agatha (8). Os 17 DEBITs ligados na conta de pessoas (João Afonso) também saíram. Claudia e Bronson não tinham despesa futura (só o pagamento de out/26).
 - **Despesas:** filtro de Categoria virou lista suspensa com checkbox (API aceita `category` separado por vírgula).
 - **Vercel:** projetos `web`, `voa-ats-web` e `monte-leste-os` apagados.

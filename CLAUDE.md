@@ -143,6 +143,13 @@ parcela que o cliente não pagou = ela não recebe** (fatia vai pro Giulliano). 
 - Filtro `NOT_CARTEIRA_CLIENT_FILTER` (`apps/api/src/shared/constants.ts`) exclui
   `leadStage RECUPERAR/PERDIDO` **ou** cliente com qualquer parcela `inCarteira`.
 
+### Cliente em standby
+`Client.standby` (+ `standbyAt`), ligado/desligado em Financeiro > Pagamentos (botão Standby/Reativar).
+Parcelas **não pagas** do cliente ficam congeladas: fora de fluxo, KPIs, recebíveis, comissões
+pendentes, splits de mentores (getAllMentors), conta de pessoas e despesas MENTORIA não pagas.
+Parcelas pagas seguem no histórico. Filtros em `shared/constants.ts` (`STANDBY_FROZEN_PAYMENT`,
+`STANDBY_FROZEN_COMMISSION`, `mentorExpenseOfClients`).
+
 ### Datas (bug D-1 resolvido)
 Datas de dia-cheio (vencimento/vigência) são salvas em **UTC meia-noite**. Exibição
 **sempre com `timeZone: 'UTC'`** (helper `fmtDate` em `apps/web/src/lib/format.ts` e
