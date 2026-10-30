@@ -98,15 +98,22 @@ function KpiCard({
   value,
   accent,
   sub,
+  onClick,
+  active,
 }: {
   label: string
   value: string
   accent: string
   sub?: string
+  onClick?: () => void
+  active?: boolean
 }) {
   return (
     <div
+      onClick={onClick}
       style={{
+        cursor: onClick ? 'pointer' : 'default',
+        outline: active ? `2px solid ${accent}` : 'none',
         background: 'white',
         border: '1px solid #e2e8f0',
         borderTop: `3px solid ${accent}`,
@@ -457,10 +464,18 @@ export default function PaymentsPage() {
 
   useEffect(() => { setPage(1) }, [statusFilter, productFilter, debouncedSearch, standbyView])
 
+  // Resumo: "filtro" segue plano/mês/ano escolhidos; "total" = visão geral (mês corrente, todos os planos)
+  const [kpiMode, setKpiMode] = useState<'filtro' | 'total'>('filtro')
   const fetchKpis = useCallback(() => {
-    apiFetch<typeof kpis>('/api/payments/kpis').then(setKpis).catch(() => {})
+    const q = new URLSearchParams()
+    if (kpiMode === 'filtro') {
+      if (productFilter.length) q.set('product', productFilter.join(','))
+      if (yearFilter) q.set('year', String(yearFilter))
+      if (yearFilter && monthFilter) q.set('month', String(monthFilter))
+    }
+    apiFetch<typeof kpis>(`/api/payments/kpis?${q.toString()}`).then(setKpis).catch(() => {})
     apiFetch<StandbyClient[]>('/api/payments/standby').then(setStandbyClients).catch(() => {})
-  }, [])
+  }, [kpiMode, productFilter, monthFilter, yearFilter])
   useEffect(() => { fetchKpis() }, [fetchKpis])
 
   // Standby: congela as parcelas não pagas do cliente (fora de fluxo, comissões e splits)
@@ -480,6 +495,10 @@ export default function PaymentsPage() {
   }
 
   const receitaMes = kpis?.recebidoMes ?? 0
+  const isFiltro = kpiMode === 'filtro'
+  const periodLabel = monthFilter && yearFilter
+    ? new Date(yearFilter, monthFilter - 1, 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' })
+    : yearFilter ? String(yearFilter) : 'todo o período'
   const totalPendente = kpis?.totalPendente ?? 0
   const totalVencido = kpis?.totalVencido ?? 0
 
@@ -593,13 +612,25 @@ export default function PaymentsPage() {
       )}
 
       {/* KPI Cards */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+        <div style={{ display: 'inline-flex', border: '1px solid #e2e8f0', borderRadius: 8, overflow: 'hidden' }}>
+          {(['filtro', 'total'] as const).map(m => (
+            <button key={m} onClick={() => setKpiMode(m)} style={{ padding: '6px 14px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, background: kpiMode === m ? '#0f172a' : '#fff', color: kpiMode === m ? '#fff' : '#64748b' }}>
+              {m === 'filtro' ? 'Pelo filtro' : 'Visão total'}
+            </button>
+          ))}
+        </div>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: '#64748b' }}>
+          {isFiltro ? `Resumo de ${periodLabel}${productFilter.length ? ` · ${productFilter.join(', ')}` : ' · todos os planos'}` : 'Resumo geral: mês corrente e todos os planos, sem filtro'}
+        </span>
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 20 }}>
-        <KpiCard label="Recebido no Mes" value={fmtBRL(receitaMes)} accent="#006600" sub={`${kpis?.recebidoMesCount ?? 0} pagamentos`} />
-        <KpiCard label="A Receber no Mes" value={fmtBRL(kpis?.aReceberMes ?? 0)} accent="var(--retro-blue)" sub={`${kpis?.aReceberMesCount ?? 0} parcelas`} />
-        <KpiCard label="Total Pendente" value={fmtBRL(totalPendente)} accent="#e6a800" sub={`${kpis?.totalPendenteCount ?? 0} parcelas`} />
-        <KpiCard label="Total Vencido" value={fmtBRL(totalVencido)} accent="var(--danger)" sub={`${kpis?.totalVencidoCount ?? 0} boletos atrasados`} />
-        <KpiCard label="Total Recebido" value={fmtBRL(kpis?.totalPago ?? 0)} accent="var(--success)" sub={`${kpis?.totalPagoCount ?? 0} pagamentos`} />
-        <KpiCard label="Receita Contratada" value={fmtBRL(kpis?.receitaContratada ?? 0)} accent="black" sub="Todos os planos ativos" />
+        <KpiCard label={isFiltro ? 'Recebido no período' : 'Recebido no Mês'} value={fmtBRL(receitaMes)} accent="#006600" sub={`${kpis?.recebidoMesCount ?? 0} pagamentos`} />
+        <KpiCard label={isFiltro ? 'A receber no período' : 'A Receber no Mês'} value={fmtBRL(kpis?.aReceberMes ?? 0)} accent="var(--retro-blue)" sub={`${kpis?.aReceberMesCount ?? 0} parcelas`} />
+        <KpiCard label={isFiltro ? 'Pendente no período' : 'Total Pendente'} value={fmtBRL(totalPendente)} accent="#e6a800" sub={`${kpis?.totalPendenteCount ?? 0} parcelas · ver`} active={statusFilter === 'PENDING'} onClick={() => setStatusFilter(statusFilter === 'PENDING' ? '' : 'PENDING')} />
+        <KpiCard label={isFiltro ? 'Vencido no período' : 'Total Vencido'} value={fmtBRL(totalVencido)} accent="var(--danger)" sub={`${kpis?.totalVencidoCount ?? 0} boletos atrasados · ver`} active={statusFilter === 'OVERDUE'} onClick={() => setStatusFilter(statusFilter === 'OVERDUE' ? '' : 'OVERDUE')} />
+        <KpiCard label={isFiltro ? 'Parcelas do período pagas' : 'Total Recebido'} value={fmtBRL(kpis?.totalPago ?? 0)} accent="var(--success)" sub={`${kpis?.totalPagoCount ?? 0} pagamentos · ver`} active={statusFilter === 'PAID'} onClick={() => setStatusFilter(statusFilter === 'PAID' ? '' : 'PAID')} />
+        <KpiCard label="Receita Contratada" value={fmtBRL(kpis?.receitaContratada ?? 0)} accent="black" sub={productFilter.length && isFiltro ? 'Planos ativos dos programas filtrados' : 'Todos os planos ativos'} />
       </div>
 
       {/* Info Banner */}

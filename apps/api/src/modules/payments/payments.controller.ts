@@ -18,8 +18,16 @@ export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Get('api/payments/kpis')
-  getKpis() {
-    return this.paymentsService.getKpis()
+  getKpis(
+    @Query('product') product?: string,
+    @Query('month') month?: string,
+    @Query('year') year?: string,
+  ) {
+    return this.paymentsService.getKpis({
+      product,
+      month: month ? parseInt(month, 10) : undefined,
+      year: year ? parseInt(year, 10) : undefined,
+    })
   }
 
   @Get('api/payments/receivables')

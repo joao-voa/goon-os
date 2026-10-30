@@ -10,44 +10,57 @@ export class PaymentsService {
     private activityLog: ActivityLogService,
   ) {}
 
-  async getKpis() {
+  /**
+   * KPIs da tela de Pagamentos. Sem parâmetros = visão total (mês corrente, todos os planos).
+   * Com `product` (códigos separados por vírgula) e/ou período (`month`+`year` ou só `year`),
+   * todos os cards respeitam o filtro: datas de vencimento no período (recebido: data do
+   * pagamento) e só parcelas dos planos escolhidos.
+   */
+  async getKpis(params: { product?: string; month?: number; year?: number } = {}) {
+    const { product, month, year } = params
     const now = new Date()
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    const codes = product ? product.split(',').map(c => c.trim().toUpperCase()).filter(Boolean) : []
+    const planWhere = codes.length ? { clientPlan: { product: { code: { in: codes } } } } : {}
+
+    // período: mês escolhido, ano inteiro, ou (visão total) o mês corrente só p/ os cards "do mês"
+    const hasPeriod = !!year
+    const pStart = month && year ? new Date(Date.UTC(year, month - 1, 1)) : year ? new Date(Date.UTC(year, 0, 1)) : new Date(now.getFullYear(), now.getMonth(), 1)
+    const pEnd = month && year ? new Date(Date.UTC(year, month, 1)) : year ? new Date(Date.UTC(year + 1, 0, 1)) : new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    const due = hasPeriod ? { dueDate: { gte: pStart, lt: pEnd } } : {}
 
     const [recebidoMes, totalPendente, totalVencido, totalPago, receitaTotal, receitaPorMes] = await this.prisma.$transaction([
-      // Recebido este mês
+      // Recebido no período (data do pagamento)
       this.prisma.payment.aggregate({
-        where: { status: 'PAID', paidAt: { gte: startOfMonth, lt: endOfMonth } },
+        where: { status: 'PAID', paidAt: { gte: pStart, lt: pEnd }, ...planWhere },
         _sum: { value: true },
         _count: true,
       }),
       // Total pendente
       this.prisma.payment.aggregate({
-        where: { status: 'PENDING', ...NOT_CARTEIRA_CLIENT_FILTER },
+        where: { status: 'PENDING', ...due, ...planWhere, ...NOT_CARTEIRA_CLIENT_FILTER },
         _sum: { value: true },
         _count: true,
       }),
       // Total vencido (exclui parcelas em carteira de cobrança / churn)
       this.prisma.payment.aggregate({
-        where: { status: 'OVERDUE', inCarteira: false, NOT: STANDBY_FROZEN_PAYMENT },
+        where: { status: 'OVERDUE', inCarteira: false, NOT: STANDBY_FROZEN_PAYMENT, ...due, ...planWhere },
         _sum: { value: true },
         _count: true,
       }),
-      // Total pago (all time)
+      // Total pago: parcelas com vencimento no período que já foram pagas (visão total = sempre)
       this.prisma.payment.aggregate({
-        where: { status: 'PAID' },
+        where: { status: 'PAID', ...due, ...planWhere },
         _sum: { value: true },
         _count: true,
       }),
-      // Receita total contratada (todos os planos ativos)
+      // Receita contratada (planos ativos dos programas escolhidos)
       this.prisma.clientPlan.aggregate({
-        where: { status: 'ACTIVE' },
+        where: { status: 'ACTIVE', ...(codes.length ? { product: { code: { in: codes } } } : {}) },
         _sum: { value: true },
       }),
-      // A receber este mês (pendentes com vencimento no mês)
+      // A receber no período (pendentes com vencimento no período)
       this.prisma.payment.aggregate({
-        where: { status: 'PENDING', dueDate: { gte: startOfMonth, lt: endOfMonth }, ...NOT_CARTEIRA_CLIENT_FILTER },
+        where: { status: 'PENDING', dueDate: { gte: pStart, lt: pEnd }, ...planWhere, ...NOT_CARTEIRA_CLIENT_FILTER },
         _sum: { value: true },
         _count: true,
       }),
