@@ -40,7 +40,7 @@ export default function ExpensesPage() {
   const [summary, setSummary] = useState<Summary | null>(null)
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
-  const [categoryFilter, setCategoryFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([]) // vazio = todas
   const [costCenterFilter, setCostCenterFilter] = useState<string[]>([]) // vazio = todos
   const [statusFilter, setStatusFilter] = useState('')
   const now = new Date()
@@ -64,7 +64,7 @@ export default function ExpensesPage() {
   const loadData = useCallback(async () => {
     try {
       const params = new URLSearchParams()
-      if (categoryFilter) params.set('category', categoryFilter)
+      if (categoryFilter.length) params.set('category', categoryFilter.join(','))
       if (costCenterFilter.length) params.set('costCenter', costCenterFilter.join(','))
       if (statusFilter) params.set('status', statusFilter)
       if (month) params.set('month', String(month))
@@ -177,9 +177,9 @@ export default function ExpensesPage() {
           ))}
           {summary.byCategory.map(c => {
             const color = CATEGORY_COLORS[c.category] ?? '#94a3b8'
-            const isActive = categoryFilter === c.category
+            const isActive = categoryFilter.includes(c.category)
             return (
-              <div key={c.category} onClick={() => setCategoryFilter(isActive ? '' : c.category)} style={{
+              <div key={c.category} onClick={() => setCategoryFilter(f => isActive ? f.filter(x => x !== c.category) : [...f, c.category])} style={{
                 background: isActive ? color : '#fff', color: isActive ? 'white' : '#0f172a',
                 border: `1px solid ${isActive ? color : '#e2e8f0'}`, borderLeft: `3px solid ${color}`, borderRadius: 10,
                 boxShadow: '0 1px 2px rgba(0,0,0,0.04)', padding: '14px 18px', cursor: 'pointer', minWidth: 120,
@@ -218,10 +218,13 @@ export default function ExpensesPage() {
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div>
           <label style={labelStyle}>Categoria</label>
-          <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={selStyle}>
-            <option value="">Todas categorias</option>
-            {CATEGORIES.map(c => <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>)}
-          </select>
+          <MultiSelect
+            options={CATEGORIES.map(c => ({ value: c, label: CATEGORY_LABELS[c] }))}
+            selected={categoryFilter}
+            onChange={setCategoryFilter}
+            allLabel="Todas categorias"
+            style={selStyle}
+          />
         </div>
         <div>
           <label style={labelStyle}>Centro de custo</label>

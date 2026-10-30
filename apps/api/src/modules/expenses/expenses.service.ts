@@ -19,7 +19,7 @@ export class ExpensesService {
     const giuFilter = { NOT: { AND: [{ category: 'MENTORIA' }, { description: { contains: 'Giulliano' } }] } }
     const where: Record<string, unknown> = { ...giuFilter }
 
-    if (category) where.category = category
+    if (category) where.category = { in: category.split(',').map(c => c.trim()).filter(Boolean) }
     // aceita vários centros separados por vírgula (ex.: "GLOBAL,TIKTOK")
     if (costCenter) where.costCenter = { in: costCenter.split(',').map(c => c.trim()).filter(Boolean) }
     if (status) where.status = status
