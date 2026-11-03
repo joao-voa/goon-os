@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-11-03
+- **ARY NARAH**: cancelamento de 21/10 revertido (não foi cancelado). Parcela 20/10 → **PAID** (paga em 20/10), 20/11 → PENDING, plano TTS → ACTIVE, cliente → FECHADO/ACTIVE. Repasses e imposto de P4/P5 seguem previstos.
+
 ## 2026-10-30
 - **Despesas atrasadas até 30/09 marcadas como PAGO** (paidAt = vencimento): 221 lançamentos / R$ 136.213 (impostos 175, pessoal 17, sistemas 16, pessoas 7, marketing 3, estrutura 2, comissão 1). Ficaram de fora: MENTORIA (40) e 11 impostos de parcelas não pagas/canceladas (R$ 1.811,68).
 - **Despesas:** categoria nova **DEVOLUCAO**. Lançadas 4 devoluções (PREVISTO, venc. 30/10, centro TikTok): Cris Semi Joias R$ 2.500, Durante R$ 5.000, Skopos R$ 5.000, Noul R$ 2.500.
