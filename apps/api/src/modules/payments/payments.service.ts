@@ -189,7 +189,8 @@ export class PaymentsService {
     // o chamador peça explicitamente (Pendências > A recuperar).
     const where: Record<string, unknown> = includeCarteira ? {} : { inCarteira: false }
     if (clientId) where.clientId = clientId
-    if (status) where.status = status
+    // Cancelados não aparecem na lista; só se o filtro pedir explicitamente.
+    where.status = status ? status : { not: 'CANCELLED' }
     // aceita vários programas separados por vírgula (ex.: "GE,TTS")
     if (product) {
       const codes = product.split(',').map(c => c.trim().toUpperCase()).filter(Boolean)
