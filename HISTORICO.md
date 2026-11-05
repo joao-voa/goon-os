@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-05
+- **CRM sync:** data de corte da importação das planilhas movida para **05/11/2026 19:08**. Leads anteriores (incluindo os excluídos) não voltam mais no sync.
 - **CRM:** etapa nova **Contatar** (entre Novo e Em Contato). Os 10 leads que estavam em Novo foram movidos para Contatar. Lead qualificado/desqualificado (chave + filtro).
 
 ## 2026-11-03

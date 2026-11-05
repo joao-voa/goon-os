@@ -7,8 +7,9 @@ import { CommissionsService } from '../commissions/commissions.service'
 import { ExpensesService } from '../expenses/expenses.service'
 import { TAX_RATE, getNextCommissionPaymentDate } from '../../shared/constants'
 
-// Leads mais antigos que esta data não são reimportados no sync (já entraram)
-const SYNC_CUTOFF = new Date('2026-07-21T00:00:00Z')
+// Leads mais antigos que esta data não são reimportados no sync (já entraram ou
+// foram excluídos de propósito). Corte movido para 05/11/2026 19:08 (BRT).
+const SYNC_CUTOFF = new Date('2026-11-05T22:08:00Z')
 
 const VALID_LEAD_STAGES = [
   'NOVO',
@@ -847,8 +848,7 @@ export class CrmService {
               continue
             }
 
-            // Corte de importação: leads mais antigos que 15/07/2026 já foram
-            // importados — não sobem de novo.
+            // Corte de importação (SYNC_CUTOFF): leads anteriores não sobem de novo.
             if (lead.createdAt && new Date(lead.createdAt) < SYNC_CUTOFF) {
               skipped++
               continue
