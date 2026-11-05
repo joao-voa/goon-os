@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-11-05
+- **CRM:** etapa nova **Contatar** (entre Novo e Em Contato). Os 10 leads que estavam em Novo foram movidos para Contatar. Lead qualificado/desqualificado (chave + filtro).
+
 ## 2026-11-03
 - **ARY NARAH**: cancelamento de 21/10 revertido (não foi cancelado). Parcela 20/10 → **PAID** (paga em 20/10), 20/11 → PENDING, plano TTS → ACTIVE, cliente → FECHADO/ACTIVE. Repasses e imposto de P4/P5 seguem previstos.
 
