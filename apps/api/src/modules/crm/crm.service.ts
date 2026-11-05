@@ -83,6 +83,7 @@ export class CrmService {
         segment: true,
         suggestedProduct: true,
         cardResponsible: true,
+        qualified: true,
         stageChangedAt: true,
         createdAt: true,
         closedAt: true,

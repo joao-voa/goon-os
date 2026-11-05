@@ -57,6 +57,7 @@ interface LeadItem {
   segment: string | null
   suggestedProduct: string | null
   cardResponsible: string | null
+  qualified: boolean | null
   productCode: string | null
   stageChangedAt: string | null
   createdAt: string
@@ -737,6 +738,19 @@ function LeadDetailModal({
 
   const inputStyle: CSSProperties = { width: '100%', padding: '6px 10px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 12 }
   const noteFields = parseLeadNotes(lead.leadNotes)
+  // @ da marca (vem das respostas do formulário); sempre com "@" na frente
+  const igRaw = noteFields.fields.find(f => f.label.toLowerCase() === 'instagram')?.value
+    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[/?].*$/, '').replace(/^@+/, '').trim()
+  const instagram = igRaw ? `@${igRaw}` : null
+  const [qualified, setQualified] = useState<boolean | null>(lead.qualified)
+  async function toggleQualified() {
+    const next = !qualified
+    setQualified(next)
+    try {
+      await apiFetch(`/api/clients/${lead.id}`, { method: 'PUT', body: JSON.stringify({ qualified: next }) })
+      onUpdated()
+    } catch { setQualified(qualified); toast.error('Erro ao salvar') }
+  }
 
   return (
     <div
@@ -752,6 +766,15 @@ function LeadDetailModal({
         </div>
 
         <div style={{ padding: 16 }}>
+          {/* Qualificação (on/off) */}
+          <button onClick={toggleQualified} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', marginBottom: 14, border: `1px solid ${C.line}`, borderRadius: 8, background: C.bg, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+            <span style={{ position: 'relative', width: 38, height: 22, borderRadius: 100, background: qualified ? C.green : '#cbd5e1', transition: 'background .15s', flexShrink: 0 }}>
+              <span style={{ position: 'absolute', top: 3, left: qualified ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .15s', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }} />
+            </span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: qualified ? C.green : qualified === false ? C.red : C.mid }}>
+              {qualified ? 'Qualificado' : qualified === false ? 'Desqualificado' : 'Não avaliado'}
+            </span>
+          </button>
           {/* Info Grid - with edit button */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid }}>Dados</div>
@@ -899,16 +922,22 @@ function LeadDetailModal({
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16, fontFamily: 'var(--font-sans)', fontSize: 12, color: C.ink }}>
+              <div><strong>Empresa:</strong> {lead.companyName}</div>
               <div><strong>Responsavel:</strong> {lead.responsible}</div>
               <div><strong>Vendedor:</strong> {lead.salesRep ?? '-'}</div>
               <div><strong>Telefone:</strong> {lead.phone ?? '-'}</div>
               <div><strong>WhatsApp:</strong> {lead.whatsapp ?? '-'}</div>
               <div><strong>Email:</strong> {lead.email ?? '-'}</div>
+              {instagram && (
+                <div><strong>Instagram:</strong>{' '}
+                  <a href={`https://instagram.com/${instagram.slice(1)}`} target="_blank" rel="noopener noreferrer" style={{ color: C.ink, textDecoration: 'underline' }}>{instagram}</a>
+                </div>
+              )}
               <div><strong>Origem:</strong> {lead.leadSource ? (LEAD_SOURCE_LABELS[lead.leadSource] ?? lead.leadSource) : '-'}</div>
               <div><strong>Programa:</strong> {lead.suggestedProduct ?? lead.productCode ?? '-'}</div>
               <div><strong>Segmento:</strong> {lead.segment ?? '-'}</div>
               <div><strong>Faturamento:</strong> {lead.estimatedRevenue ?? '-'}</div>
-              {noteFields.fields.map(f => <div key={f.label}><strong>{f.label}:</strong> {f.value}</div>)}
+              {noteFields.fields.filter(f => f.label.toLowerCase() !== 'instagram').map(f => <div key={f.label}><strong>{f.label}:</strong> {f.value}</div>)}
               {lead.saleValue && <div><strong>Valor:</strong> {fmt(lead.saleValue)}</div>}
               {lead.saleInstallments && (
                 lead.entryValue && lead.entryValue > 0 ? (
@@ -1172,6 +1201,7 @@ export default function CrmPage() {
   useEffect(() => { loadCommercialMeetings() }, [loadCommercialMeetings])
   const [searchQuery, setSearchQuery] = useState('')
   const [faturamentoFilter, setFaturamentoFilter] = useState('ALL')
+  const [qualFilter, setQualFilter] = useState<'ALL' | 'SIM' | 'NAO' | 'NULL'>('ALL')
   const [crmView, setCrmView] = useState<'kanban' | 'dashboard'>('kanban')
   const isMobile = useIsMobile()
 
@@ -1279,6 +1309,9 @@ export default function CrmPage() {
   }
 
   const activeLeads = leads.filter(l => {
+    if (qualFilter === 'SIM' && l.qualified !== true) return false
+    if (qualFilter === 'NAO' && l.qualified !== false) return false
+    if (qualFilter === 'NULL' && l.qualified != null) return false
     if (faturamentoFilter && faturamentoFilter !== 'ALL') {
       if (faturamentoFilter === 'ICP') { if (!l.isICP) return false }
       else if (faturamentoFilter === 'FORA') { if (l.isICP || l.faturamentoBand === 'NAO_INFORMADO') return false }
@@ -1769,6 +1802,25 @@ export default function CrmPage() {
             const bg = on ? (icpBand ? C.green : C.ink) : '#fff'
             return (
               <button key={val} onClick={() => setFaturamentoFilter(val)} style={{
+                padding: '5px 12px', border: `1px solid ${on ? 'transparent' : C.line}`, borderRadius: 100, fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                background: bg, color: on ? 'white' : C.slate,
+              }}>{label}</button>
+            )
+          })}
+        </div>
+        {/* Qualificação */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid }}>Qualificação:</span>
+          {([
+            ['ALL', 'TODOS'],
+            ['SIM', 'QUALIFICADOS'],
+            ['NAO', 'DESQUALIFICADOS'],
+            ['NULL', 'NÃO AVALIADOS'],
+          ] as const).map(([val, label]) => {
+            const on = qualFilter === val
+            const bg = on ? (val === 'SIM' ? C.green : val === 'NAO' ? C.red : C.ink) : '#fff'
+            return (
+              <button key={val} onClick={() => setQualFilter(val)} style={{
                 padding: '5px 12px', border: `1px solid ${on ? 'transparent' : C.line}`, borderRadius: 100, fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
                 background: bg, color: on ? 'white' : C.slate,
               }}>{label}</button>
