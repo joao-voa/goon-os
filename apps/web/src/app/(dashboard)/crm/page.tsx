@@ -563,6 +563,22 @@ interface CommissionItem {
 }
 
 // ---- Lead Detail Modal with Timeline ----
+// Formulários (Meta, páginas de inscrição) gravam as respostas nas notas como
+// "Rótulo: valor | Rótulo: valor" (ou " · "). Separa em campos para exibir.
+function parseLeadNotes(notes: string | null): { fields: { label: string; value: string }[]; text: string } {
+  if (!notes) return { fields: [], text: '' }
+  const fields: { label: string; value: string }[] = []
+  const free: string[] = []
+  for (const raw of notes.split(/\s+·\s+|\s*\|\s*(?=[A-Za-zÀ-ú ]{2,25}:)/)) {
+    const part = raw.trim()
+    if (!part) continue
+    const m = part.match(/^([A-Za-zÀ-ú ]{2,25}):\s*(.+)$/)
+    if (m && !fields.some(f => f.label === m[1].trim())) fields.push({ label: m[1].trim(), value: m[2].trim() })
+    else free.push(part)
+  }
+  return { fields, text: free.join('\n') }
+}
+
 function LeadDetailModal({
   lead,
   onClose,
@@ -647,6 +663,7 @@ function LeadDetailModal({
   const [editSuggestedProduct, setEditSuggestedProduct] = useState(lead.suggestedProduct ?? '')
   const [editCardResponsible, setEditCardResponsible] = useState(lead.cardResponsible ?? '')
   const [editEstimatedRevenue, setEditEstimatedRevenue] = useState(lead.estimatedRevenue ?? '')
+  const [editSegment, setEditSegment] = useState(lead.segment ?? '')
   const [editLeadNotes, setEditLeadNotes] = useState(lead.leadNotes ?? '')
   const [saving, setSaving] = useState(false)
 
@@ -719,6 +736,7 @@ function LeadDetailModal({
     : Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / (1000 * 60 * 60 * 24))
 
   const inputStyle: CSSProperties = { width: '100%', padding: '6px 10px', border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 12 }
+  const noteFields = parseLeadNotes(lead.leadNotes)
 
   return (
     <div
@@ -766,9 +784,15 @@ function LeadDetailModal({
                   <input value={editWhatsapp} onChange={e => setEditWhatsapp(e.target.value)} style={inputStyle} />
                 </div>
               </div>
-              <div>
-                <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>EMAIL</label>
-                <input value={editEmail} onChange={e => setEditEmail(e.target.value)} style={inputStyle} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                <div>
+                  <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>EMAIL</label>
+                  <input value={editEmail} onChange={e => setEditEmail(e.target.value)} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 3 }}>SEGMENTO</label>
+                  <input value={editSegment} onChange={e => setEditSegment(e.target.value)} style={inputStyle} />
+                </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 <div>
@@ -854,6 +878,7 @@ function LeadDetailModal({
                         suggestedProduct: editSuggestedProduct || null,
                         cardResponsible: editCardResponsible || null,
                         estimatedRevenue: editEstimatedRevenue.trim() || null,
+                        segment: editSegment.trim() || null,
                         paymentMethod: editPaymentMethod || null,
                         saleValue: parseFloat(editSaleValue) || null,
                         saleInstallments: parseInt(editInstallments) || null,
@@ -881,7 +906,9 @@ function LeadDetailModal({
               <div><strong>Email:</strong> {lead.email ?? '-'}</div>
               <div><strong>Origem:</strong> {lead.leadSource ? (LEAD_SOURCE_LABELS[lead.leadSource] ?? lead.leadSource) : '-'}</div>
               <div><strong>Programa:</strong> {lead.suggestedProduct ?? lead.productCode ?? '-'}</div>
-              {lead.estimatedRevenue && <div><strong>Faturamento:</strong> {lead.estimatedRevenue}</div>}
+              <div><strong>Segmento:</strong> {lead.segment ?? '-'}</div>
+              <div><strong>Faturamento:</strong> {lead.estimatedRevenue ?? '-'}</div>
+              {noteFields.fields.map(f => <div key={f.label}><strong>{f.label}:</strong> {f.value}</div>)}
               {lead.saleValue && <div><strong>Valor:</strong> {fmt(lead.saleValue)}</div>}
               {lead.saleInstallments && (
                 lead.entryValue && lead.entryValue > 0 ? (
@@ -911,9 +938,9 @@ function LeadDetailModal({
               </div>
             ) : null
           })()}
-          {lead.leadNotes && (
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.ink, background: C.bg, padding: 12, border: `1px solid ${C.line}`, borderRadius: 8, marginBottom: 16 }}>
-              <strong>Notas:</strong> {lead.leadNotes}
+          {!editing && noteFields.text && (
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.ink, background: C.bg, padding: 12, border: `1px solid ${C.line}`, borderRadius: 8, marginBottom: 16, whiteSpace: 'pre-wrap' }}>
+              <strong>Notas:</strong> {noteFields.text}
             </div>
           )}
 
