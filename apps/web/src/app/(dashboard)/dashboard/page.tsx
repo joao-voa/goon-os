@@ -42,9 +42,9 @@ const num: React.CSSProperties = { fontFamily: 'var(--font-sans)', fontVariantNu
 const card: React.CSSProperties = { background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }
 const gaugeColor = (pct: number) => pct >= 1 ? C.green : pct >= 0.6 ? C.amber : C.red
 
-const STAGE_LABEL: Record<string, string> = { NOVO: 'Novo', FUP: 'Em contato', REUNIAO_AGENDADA: 'Agendado', EM_NEGOCIACAO: 'Em negociação', REPESCAGEM: 'Repescagem', PERDIDO: 'Perdido', FECHADO: 'Ganho' }
-const STAGE_COLOR: Record<string, string> = { NOVO: '#94a3b8', FUP: '#4A78FF', REUNIAO_AGENDADA: '#7c3aed', EM_NEGOCIACAO: '#f59e0b', REPESCAGEM: '#06b6d4', PERDIDO: '#dc2626', FECHADO: '#16a34a' }
-const PIPE_ORDER = ['NOVO', 'FUP', 'REUNIAO_AGENDADA', 'EM_NEGOCIACAO', 'REPESCAGEM', 'FECHADO']
+const STAGE_LABEL: Record<string, string> = { NOVO: 'Novo', CONTATAR: 'Contatar', FUP: 'Em contato', REUNIAO_AGENDADA: 'Agendado', EM_NEGOCIACAO: 'Em negociação', REPESCAGEM: 'Repescagem', PERDIDO: 'Perdido', FECHADO: 'Ganho' }
+const STAGE_COLOR: Record<string, string> = { NOVO: '#94a3b8', CONTATAR: '#6366f1', FUP: '#4A78FF', REUNIAO_AGENDADA: '#7c3aed', EM_NEGOCIACAO: '#f59e0b', REPESCAGEM: '#06b6d4', PERDIDO: '#dc2626', FECHADO: '#16a34a' }
+const PIPE_ORDER = ['NOVO', 'CONTATAR', 'FUP', 'REUNIAO_AGENDADA', 'EM_NEGOCIACAO', 'REPESCAGEM', 'FECHADO']
 
 // ── Velocímetro ───────────────────────────────────────────────────────────────
 function Gauge({ value, target, label, sub }: { value: number; target: number; label: string; sub?: string }) {

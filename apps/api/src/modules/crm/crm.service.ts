@@ -12,6 +12,7 @@ const SYNC_CUTOFF = new Date('2026-07-21T00:00:00Z')
 
 const VALID_LEAD_STAGES = [
   'NOVO',
+  'CONTATAR',
   'FUP', // "Em Contato"
   'REUNIAO_AGENDADA', // "Agendado"
   'EM_NEGOCIACAO',
@@ -22,6 +23,7 @@ const VALID_LEAD_STAGES = [
 
 const STAGE_LABELS: Record<string, string> = {
   NOVO: 'Novo',
+  CONTATAR: 'Contatar',
   FOLLOW_UP: 'Em Contato',
   FUP: 'Em Contato',
   REUNIAO_AGENDADA: 'Agendado',
@@ -677,7 +679,7 @@ export class CrmService {
   }
 
   // ===== Faturamento / ICP helpers =====
-  static readonly PIPE = ['NOVO', 'FUP', 'REUNIAO_AGENDADA', 'EM_NEGOCIACAO', 'FECHADO']
+  static readonly PIPE = ['NOVO', 'CONTATAR', 'FUP', 'REUNIAO_AGENDADA', 'EM_NEGOCIACAO', 'FECHADO']
   static readonly ICP_THRESHOLD = 100000 // R$/mês
 
   /** Best-effort parse of messy free-text monthly revenue into a number (R$/mês). Returns null when unparseable. */

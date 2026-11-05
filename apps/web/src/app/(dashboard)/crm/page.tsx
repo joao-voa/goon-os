@@ -1437,7 +1437,7 @@ export default function CrmPage() {
               const selDays = selKey ? leads.filter(l => dayKey(new Date(l.createdAt)) === selKey) : []
               const wLabel: Record<number, string> = { 7: '7 dias', 14: '14 dias', 30: '30 dias', 90: '90 dias' }
               const stageLabel: Record<string, string> = {
-                NOVO: 'Novo', FOLLOW_UP: 'Em Contato', FUP: 'Em Contato', REUNIAO_AGENDADA: 'Agendado',
+                NOVO: 'Novo', CONTATAR: 'Contatar', FOLLOW_UP: 'Em Contato', FUP: 'Em Contato', REUNIAO_AGENDADA: 'Agendado',
                 EM_NEGOCIACAO: 'Em Negociação', REPESCAGEM: 'Repescagem', PERDIDO: 'Perdido', FECHADO: 'Ganho',
               }
               return (

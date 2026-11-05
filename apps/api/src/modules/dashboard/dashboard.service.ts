@@ -190,7 +190,7 @@ export class DashboardService {
     const negotiationLeads = await this.prisma.client.findMany({
       where: {
         status: 'PROSPECT',
-        leadStage: { in: ['NOVO', 'FOLLOW_UP', 'EM_NEGOCIACAO'] },
+        leadStage: { in: ['NOVO', 'CONTATAR', 'FOLLOW_UP', 'EM_NEGOCIACAO'] },
         saleValue: { not: null },
       },
       select: {
