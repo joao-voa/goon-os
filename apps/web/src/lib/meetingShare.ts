@@ -1,6 +1,6 @@
 // Envio do link da reunião (Google Meet) para o cliente: mensagem pronta + WhatsApp.
 
-type ShareMeeting = { date: string; type?: string; category?: string; meetLink?: string | null; mentorName?: string | null }
+type ShareMeeting = { date: string; type?: string; category?: string; meetLink?: string | null }
 type ShareClient = { responsible?: string | null; whatsapp?: string | null; phone?: string | null } | null | undefined
 
 export function meetingInviteText(m: ShareMeeting, client: ShareClient) {
@@ -11,7 +11,7 @@ export function meetingInviteText(m: ShareMeeting, client: ShareClient) {
   const oque = m.category === 'COMERCIAL' || m.type === 'COMERCIAL' ? 'nossa conversa' : 'nossa mentoria'
   return [
     `Olá${firstName ? `, ${firstName}` : ''}! Tudo bem?`,
-    `Confirmando ${oque}${m.mentorName ? ` com ${m.mentorName}` : ''} ${dia}, às ${hora}.`,
+    `Confirmando ${oque} ${dia}, às ${hora}.`,
     m.meetLink ? `Link da reunião: ${m.meetLink}` : null,
     'Até lá!',
   ].filter(Boolean).join('\n')

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 import GoogleCalendarSettings, { type CalendarConfig } from './GoogleCalendarSettings'
-import { meetingInviteText, whatsappLink } from '@/lib/meetingShare'
+import MeetingShareActions from '@/components/MeetingShareActions'
 
 interface Meeting {
   id: string
@@ -288,14 +288,6 @@ export default function AgendaPage() {
       await apiFetch(`/api/meetings/${id}`, { method: 'PUT', body: JSON.stringify({ status }) })
       toast.success(STATUS_LABELS[status] ?? status)
       loadMeetings()
-    } catch { toast.error('Erro') }
-  }
-
-  async function handleResync(id: string) {
-    try {
-      await apiFetch(`/api/meetings/${id}/sync`, { method: 'POST' })
-      await loadMeetings()
-      toast.success('Sincronização tentada de novo')
     } catch { toast.error('Erro') }
   }
 
@@ -652,28 +644,7 @@ export default function AgendaPage() {
                       {m.mentorName && <> • {m.mentorName}</>}
                     </div>
                     {m.notes && <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.dim, marginTop: 4 }}>{m.notes}</div>}
-                    {(m.meetLink || m.googleEventId || m.googleSyncError) && (
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6, flexWrap: 'wrap', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
-                        {m.googleEventId && !m.googleSyncError && <span style={{ color: C.green, fontWeight: 600 }}>✓ Na agenda Google</span>}
-                        {m.meetLink && <a href={m.meetLink} target="_blank" rel="noopener noreferrer" style={{ color: '#1a73e8', fontWeight: 600 }}>Entrar no Meet</a>}
-                        {m.meetLink && (
-                          <button onClick={() => { navigator.clipboard.writeText(m.meetLink!); toast.success('Link copiado') }} style={{ border: `1px solid ${C.line}`, background: '#fff', borderRadius: 6, padding: '2px 8px', fontSize: 11, cursor: 'pointer', color: C.ink, fontWeight: 600 }}>Copiar link</button>
-                        )}
-                        {m.meetLink && (
-                          <button onClick={() => { navigator.clipboard.writeText(meetingInviteText(m, m.client)); toast.success('Convite copiado') }} style={{ border: `1px solid ${C.line}`, background: '#fff', borderRadius: 6, padding: '2px 8px', fontSize: 11, cursor: 'pointer', color: C.ink, fontWeight: 600 }}>Copiar convite</button>
-                        )}
-                        {m.meetLink && (() => {
-                          const wa = whatsappLink(m.client, meetingInviteText(m, m.client))
-                          return wa ? <a href={wa} target="_blank" rel="noopener noreferrer" style={{ background: '#25d366', color: '#fff', borderRadius: 6, padding: '3px 9px', fontSize: 11, fontWeight: 700, textDecoration: 'none' }}>Enviar no WhatsApp</a> : null
-                        })()}
-                        {m.googleSyncError && (
-                          <>
-                            <span style={{ color: C.red, fontWeight: 600 }} title={m.googleSyncError}>Google não sincronizou</span>
-                            <button onClick={() => handleResync(m.id)} style={{ border: `1px solid ${C.line}`, background: '#fff', borderRadius: 6, padding: '2px 8px', fontSize: 11, cursor: 'pointer', color: C.ink }}>Tentar de novo</button>
-                          </>
-                        )}
-                      </div>
-                    )}
+                    <MeetingShareActions meeting={m} contact={m.client} onChanged={loadMeetings} />
                   </div>
                   <div style={{ display: 'flex', gap: 4, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     {m.status === 'SCHEDULED' && (

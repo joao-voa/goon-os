@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, type CSSProperties } from 'react'
 import { toast } from 'sonner'
 import { meetingInviteText, whatsappLink } from '@/lib/meetingShare'
+import MeetingShareActions from '@/components/MeetingShareActions'
 import { apiFetch } from '@/lib/api'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 import {
@@ -734,7 +735,38 @@ function LeadDetailModal({
   useEffect(() => { loadInteractions() }, [loadInteractions])
 
   // Reuniões marcadas com o lead (link do Meet para mandar ao cliente)
-  const [leadMeetings, setLeadMeetings] = useState<Array<{ id: string; date: string; type: string; category: string; status: string; mentorName: string | null; meetLink: string | null; googleSyncError: string | null }>>([])
+  const [leadMeetings, setLeadMeetings] = useState<Array<{ id: string; date: string; type: string; category: string; status: string; mentorName: string | null; meetLink: string | null; googleEventId: string | null; googleSyncError: string | null }>>([])
+  // reagendar inline
+  const [resched, setResched] = useState<{ id: string; date: string; time: string; owner: 'Giulliano' | 'João' } | null>(null)
+  async function saveResched() {
+    if (!resched?.date || !resched.time) return
+    try {
+      const updated = await apiFetch<{ id: string; date: string; type: string; category: string; meetLink: string | null; mentorName: string | null; googleSyncError: string | null }>(`/api/meetings/${resched.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ date: new Date(`${resched.date}T${resched.time}:00`).toISOString(), mentorName: resched.owner }),
+      })
+      const d = new Date(updated.date)
+      await apiFetch(`/api/crm/${lead.id}/interactions`, {
+        method: 'POST',
+        body: JSON.stringify({ type: 'REUNIAO', description: `Reunião reagendada para ${d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} com ${resched.owner}.${updated.meetLink ? ` Meet: ${updated.meetLink}` : ''}` }),
+      }).catch(() => {})
+      toast.success('Reunião reagendada')
+      if (updated.googleSyncError) toast.warning('Não foi para o Google Agenda: ' + updated.googleSyncError)
+      setResched(null)
+      setJustScheduled(updated)
+      loadLeadMeetings(); loadInteractions(); onUpdated()
+    } catch { toast.error('Erro ao reagendar') }
+  }
+  async function cancelLeadMeeting(id: string) {
+    if (!confirm('Cancelar esta reunião? Ela sai da agenda Google.')) return
+    try {
+      await apiFetch(`/api/meetings/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'CANCELLED' }) })
+      await apiFetch(`/api/crm/${lead.id}/interactions`, { method: 'POST', body: JSON.stringify({ type: 'REUNIAO', description: 'Reunião cancelada.' }) }).catch(() => {})
+      toast.success('Reunião cancelada')
+      if (justScheduled?.id === id) setJustScheduled(null)
+      loadLeadMeetings(); loadInteractions(); onUpdated()
+    } catch { toast.error('Erro ao cancelar') }
+  }
   const loadLeadMeetings = useCallback(async () => {
     try {
       const data = await apiFetch<typeof leadMeetings>(`/api/meetings/client/${lead.id}`)
@@ -1042,22 +1074,38 @@ function LeadDetailModal({
               <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid, marginBottom: 8 }}>Reuniões marcadas</div>
               {[...leadMeetings].sort((a, b) => a.date.localeCompare(b.date)).map(m => {
                 const d = new Date(m.date)
-                const wa = m.meetLink ? whatsappLink(lead, meetingInviteText(m, lead)) : null
+                const small: CSSProperties = { border: `1px solid ${C.line}`, background: 'white', borderRadius: 6, padding: '3px 9px', fontSize: 11, fontWeight: 600, cursor: 'pointer', color: C.ink, fontFamily: 'var(--font-sans)' }
                 return (
                   <div key={m.id} style={{ background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, marginBottom: 6, fontFamily: 'var(--font-sans)', fontSize: 12 }}>
-                    <div style={{ fontWeight: 700, color: C.ink, marginBottom: 6 }}>
-                      {d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })} às {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                      {m.mentorName && <span style={{ fontWeight: 400, color: C.mid }}> · {m.mentorName}</span>}
-                    </div>
-                    {m.meetLink ? (
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                        <a href={m.meetLink} target="_blank" rel="noopener noreferrer" style={{ color: '#1a73e8', fontWeight: 600, wordBreak: 'break-all' }}>{m.meetLink.replace('https://', '')}</a>
-                        <button type="button" onClick={() => { navigator.clipboard.writeText(m.meetLink!); toast.success('Link copiado') }} style={{ border: `1px solid ${C.line}`, background: 'white', borderRadius: 6, padding: '3px 9px', fontSize: 11, fontWeight: 600, cursor: 'pointer', color: C.ink }}>Copiar link</button>
-                        <button type="button" onClick={() => { navigator.clipboard.writeText(meetingInviteText(m, lead)); toast.success('Convite copiado') }} style={{ border: `1px solid ${C.line}`, background: 'white', borderRadius: 6, padding: '3px 9px', fontSize: 11, fontWeight: 600, cursor: 'pointer', color: C.ink }}>Copiar convite</button>
-                        {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={{ background: '#25d366', color: 'white', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 700, textDecoration: 'none' }}>Enviar no WhatsApp</a>}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                      <div style={{ fontWeight: 700, color: C.ink }}>
+                        {d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })} às {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        {m.mentorName && <span style={{ fontWeight: 400, color: C.mid }}> · {m.mentorName}</span>}
                       </div>
-                    ) : (
-                      <div style={{ color: m.googleSyncError ? C.red : C.mid }}>{m.googleSyncError ? 'Não foi para o Google Agenda: sem link do Meet' : 'Sem link do Meet: defina Giulliano ou João como responsável'}</div>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button type="button" onClick={() => setResched(resched?.id === m.id ? null : {
+                          id: m.id,
+                          date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+                          time: d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                          owner: m.mentorName === 'João' ? 'João' : 'Giulliano',
+                        })} style={small}>Reagendar</button>
+                        <button type="button" onClick={() => cancelLeadMeeting(m.id)} style={{ ...small, color: C.red }}>Cancelar</button>
+                      </div>
+                    </div>
+                    {m.meetLink || m.googleEventId || m.googleSyncError
+                      ? <MeetingShareActions meeting={m} contact={lead} onChanged={loadLeadMeetings} />
+                      : <div style={{ color: C.mid, marginTop: 4 }}>Sem link do Meet: use Reagendar para escolher a agenda (Giulliano ou João).</div>}
+                    {resched?.id === m.id && (
+                      <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${C.line}`, display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <input type="date" value={resched.date} onChange={e => setResched({ ...resched, date: e.target.value })} style={{ ...inputStyle, width: 'auto', fontSize: 11, padding: '4px 6px' }} />
+                        <input type="time" value={resched.time} onChange={e => setResched({ ...resched, time: e.target.value })} style={{ ...inputStyle, width: 90, fontSize: 11, padding: '4px 6px' }} />
+                        {(['Giulliano', 'João'] as const).map(name => (
+                          <label key={name} style={{ display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer', fontWeight: resched.owner === name ? 700 : 400 }}>
+                            <input type="checkbox" checked={resched.owner === name} onChange={() => setResched({ ...resched, owner: name })} />{name}
+                          </label>
+                        ))}
+                        <button type="button" onClick={saveResched} style={{ ...small, background: C.green, color: 'white', border: 'none' }}>Salvar</button>
+                      </div>
                     )}
                   </div>
                 )
@@ -1277,7 +1325,7 @@ export default function CrmPage() {
   const [dashPeriod, setDashPeriod] = useState<'dia' | 'semana' | 'mes' | 'ano'>('mes')
   const [leadDay, setLeadDay] = useState('') // dia selecionado no gráfico de novos leads (YYYY-MM-DD | '')
   const [leadWindow, setLeadWindow] = useState<7 | 14 | 30 | 90>(30)
-  const [commercialMeetings, setCommercialMeetings] = useState<Array<{ id: string; title: string; type: string; category?: string; date: string; duration: number; mentorName: string | null; notes: string | null; status: string; client?: { id: string; companyName: string } | null }>>([])
+  const [commercialMeetings, setCommercialMeetings] = useState<Array<{ id: string; title: string; type: string; category?: string; date: string; duration: number; mentorName: string | null; notes: string | null; status: string; meetLink?: string | null; googleEventId?: string | null; googleSyncError?: string | null; client?: { id: string; companyName: string; responsible?: string | null; whatsapp?: string | null; phone?: string | null } | null }>>([])
   const [comMonth, setComMonth] = useState(new Date().getMonth())
   const [comYear, setComYear] = useState(new Date().getFullYear())
   const [comSelectedDate, setComSelectedDate] = useState<string | null>(null)
@@ -1760,8 +1808,9 @@ export default function CrmPage() {
                           {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {m.duration}min{m.mentorName && <> • {m.mentorName}</>}
                         </div>
                         {m.notes && <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.dim, marginTop: 2 }}>{m.notes}</div>}
+                        <MeetingShareActions meeting={m} contact={m.client} onChanged={loadCommercialMeetings} />
                       </div>
-                      <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                      <div style={{ display: 'flex', gap: 4, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                         {m.status === 'SCHEDULED' && (
                           <>
                             <button onClick={async () => {
