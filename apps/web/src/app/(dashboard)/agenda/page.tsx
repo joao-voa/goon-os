@@ -196,7 +196,7 @@ export default function AgendaPage() {
     setFormGroupDone(false)
     setFormDate(dateStr)
     setFormTime('10:00')
-    setFormDuration('60')
+    setFormDuration('120')
     setFormMentor('')
     setFormNotes('')
     setFormInvite(false)
@@ -230,7 +230,12 @@ export default function AgendaPage() {
       toast.error('Preencha o cliente')
       return
     }
-    if (!formTitle || !formDate) {
+    // título em branco: usa o padrão da agenda ("Mentoria - GOON & Cliente" / "Conversa - GOON & Cliente")
+    const clientName = [...clients, ...leadClients].find(c => c.id === formClientId)?.companyName
+    const autoTitle = formType === 'COMERCIAL' ? (clientName ? `Conversa - GOON & ${clientName}` : 'Conversa - GOON')
+      : clientName ? `Mentoria - GOON & ${clientName}` : formType === 'GRUPO' ? 'Mentoria em grupo - GOON' : ''
+    const title = formTitle.trim() || autoTitle
+    if (!title || !formDate) {
       toast.error('Preencha titulo e data')
       return
     }
@@ -239,7 +244,7 @@ export default function AgendaPage() {
       const dateTime = new Date(`${formDate}T${formTime}:00`)
       const body = {
         clientId: formClientId || undefined,
-        title: formTitle,
+        title,
         type: formType,
         date: dateTime.toISOString(),
         duration: parseInt(formDuration, 10) || 60,
@@ -253,7 +258,7 @@ export default function AgendaPage() {
           method: 'POST',
           body: JSON.stringify({
             program: formProgram,
-            title: formTitle,
+            title,
             date: dateTime.toISOString(),
             duration: parseInt(formDuration, 10) || 60,
             mentorName: formMentor || undefined,
@@ -692,7 +697,15 @@ export default function AgendaPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
                   <label style={labelStyle}>Tipo</label>
-                  <select value={formType} onChange={e => setFormType(e.target.value)} style={inputStyle}>
+                  <select value={formType} onChange={e => {
+                    const t = e.target.value
+                    setFormType(t)
+                    if (!selectedMeeting) {
+                      // padrões: call de venda 1h (agenda do João), mentoria 2h
+                      if (t === 'COMERCIAL') { setFormDuration('60'); if (!formMentor) setFormMentor('João') }
+                      else if (t === 'INDIVIDUAL' || t === 'GRUPO') setFormDuration('120')
+                    }
+                  }} style={inputStyle}>
                     {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>
                 </div>
@@ -743,8 +756,8 @@ export default function AgendaPage() {
                 </div>
               )}
               <div>
-                <label style={labelStyle}>Titulo *</label>
-                <input value={formTitle} onChange={e => setFormTitle(e.target.value)} style={inputStyle} placeholder="Ex: Mentoria Individual" />
+                <label style={labelStyle}>Titulo</label>
+                <input value={formTitle} onChange={e => setFormTitle(e.target.value)} style={inputStyle} placeholder={formType === 'COMERCIAL' ? 'Em branco: Conversa - GOON & Cliente' : 'Em branco: Mentoria - GOON & Cliente'} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>

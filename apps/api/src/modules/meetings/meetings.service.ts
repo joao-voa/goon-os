@@ -66,7 +66,11 @@ export class MeetingsService {
         ? [...new Set(group.map(g => g.client?.email?.trim().toLowerCase()).filter((e): e is string => !!e))]
         : []
       const input = {
-        summary: m.type === 'GRUPO' || names.length !== 1 ? m.title : `${m.title} · ${names[0]}`,
+        // padrão da agenda: "Mentoria - GOON & Cliente" / "Conversa - GOON & Cliente" (call de venda)
+        summary: m.type === 'GRUPO' || names.length !== 1 ? m.title
+          : m.category === 'MENTORIA' ? `Mentoria - GOON & ${names[0]}`
+          : m.category === 'COMERCIAL' ? `Conversa - GOON & ${names[0]}`
+          : `${m.title} · ${names[0]}`,
         description: [
           TYPE_LABELS[m.type] ?? m.type,
           names.length ? `Cliente${names.length > 1 ? 's' : ''}: ${names.join(', ')}` : null,

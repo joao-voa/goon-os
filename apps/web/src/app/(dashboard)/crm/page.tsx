@@ -621,7 +621,7 @@ function LeadDetailModal({
   const [showSchedule, setShowSchedule] = useState(false)
   const [schedDate, setSchedDate] = useState(new Date().toISOString().split('T')[0])
   const [schedTime, setSchedTime] = useState('10:00')
-  const [schedTitle, setSchedTitle] = useState('Reuniao Comercial')
+  const [schedTitle, setSchedTitle] = useState(`Conversa - GOON & ${lead.companyName}`)
   const [schedNotes, setSchedNotes] = useState('')
   const [scheduling, setScheduling] = useState(false)
 
@@ -637,7 +637,8 @@ function LeadDetailModal({
           title: schedTitle,
           type: 'COMERCIAL',
           date: new Date(schedDate + 'T' + schedTime + ':00').toISOString(),
-          duration: 30,
+          duration: 60,
+          mentorName: 'João', // call de venda vai para a agenda do João
           notes: schedNotes || undefined,
         }),
       })
