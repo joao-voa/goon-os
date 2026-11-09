@@ -1,6 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { GoogleCalendarService } from './google-calendar.service'
+import { MentoriaBridgeService } from './mentoria-bridge.service'
+
+// fromMentoria: a mudança veio do GOON Mentoria; não devolve para lá (evita loop)
+type SyncOpts = { fromMentoria?: boolean }
 
 const TYPE_LABELS: Record<string, string> = {
   INDIVIDUAL: 'Mentoria individual', GRUPO: 'Mentoria em grupo', CS: 'CS', DIAGNOSTICO: 'Diagnóstico',
@@ -10,7 +14,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 @Injectable()
 export class MeetingsService {
-  constructor(private prisma: PrismaService, private gcal: GoogleCalendarService) {}
+  constructor(private prisma: PrismaService, private gcal: GoogleCalendarService, private mentoria: MentoriaBridgeService) {}
 
   // ===== Google Agenda =====
 
@@ -107,11 +111,21 @@ export class MeetingsService {
       this.prisma.mentorCalendar.findMany({ orderBy: { name: 'asc' } }),
       this.prisma.meeting.findMany({ where: { mentorName: { not: null } }, distinct: ['mentorName'], select: { mentorName: true } }),
     ])
+    const links = await this.prisma.mentoriaTenantLink.findMany({ orderBy: { tenantName: 'asc' } })
+    const clients = await this.prisma.client.findMany({ where: { id: { in: links.map(l => l.clientId) } }, select: { id: true, companyName: true } })
+    const nameOf = new Map(clients.map(c => [c.id, c.companyName]))
     return {
       ...this.gcal.info(),
       mentors: mentorCalendars,
       knownMentorNames: used.map(u => u.mentorName).filter(Boolean),
+      mentoriaEnabled: this.mentoria.enabled,
+      mentoriaLinks: links.map(l => ({ ...l, clientName: nameOf.get(l.clientId) ?? null })),
     }
+  }
+
+  async setMentoriaLinkMentor(id: string, mentorName: string) {
+    if (!mentorName?.trim()) throw new BadRequestException('Informe o mentor')
+    return this.prisma.mentoriaTenantLink.update({ where: { id }, data: { mentorName: mentorName.trim() } })
   }
 
   async upsertMentorCalendar(dto: { name: string; email: string; isActive?: boolean }) {
@@ -203,7 +217,7 @@ export class MeetingsService {
     mentorName?: string
     notes?: string
     inviteClient?: boolean
-  }) {
+  }, opts: SyncOpts = {}) {
     if (dto.clientId) {
       const client = await this.prisma.client.findUnique({ where: { id: dto.clientId } })
       if (!client) throw new NotFoundException('Cliente nao encontrado')
@@ -229,6 +243,7 @@ export class MeetingsService {
       },
     })
     await this.syncToGoogle(created.id)
+    if (!opts.fromMentoria) await this.mentoria.push(created.id)
     return this.prisma.meeting.findUnique({
       where: { id: created.id },
       include: { client: { select: { id: true, companyName: true, responsible: true, whatsapp: true, phone: true, email: true } } },
@@ -302,7 +317,7 @@ export class MeetingsService {
     notes?: string
     status?: string
     inviteClient?: boolean
-  }) {
+  }, opts: SyncOpts = {}) {
     const existing = await this.prisma.meeting.findUnique({ where: { id } })
     if (!existing) throw new NotFoundException('Reuniao nao encontrada')
 
@@ -325,14 +340,16 @@ export class MeetingsService {
       || data.status === 'CANCELLED' || data.status === 'RESCHEDULED'
       || (data.status === 'SCHEDULED' && ['CANCELLED', 'RESCHEDULED'].includes(existing.status))
     if (touchesEvent) await this.syncToGoogle(id)
+    if (!opts.fromMentoria && (touchesEvent || data.status !== undefined)) await this.mentoria.push(id)
     return this.prisma.meeting.findUnique({
       where: { id },
       include: { client: { select: { id: true, companyName: true, responsible: true, whatsapp: true, phone: true, email: true } } },
     })
   }
 
-  async remove(id: string) {
+  async remove(id: string, opts: SyncOpts = {}) {
     const m = await this.prisma.meeting.findUnique({ where: { id } })
+    if (m && !opts.fromMentoria) await this.mentoria.remove(m)
     if (m?.googleEventId && m.googleCalendar && this.gcal.enabled) {
       const others = await this.prisma.meeting.count({ where: { googleEventId: m.googleEventId, id: { not: id } } })
       if (others === 0) {

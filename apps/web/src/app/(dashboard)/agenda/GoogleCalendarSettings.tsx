@@ -11,6 +11,8 @@ export interface CalendarConfig {
   scopes: string[]
   mentors: Array<{ id: string; name: string; email: string; isActive: boolean }>
   knownMentorNames: string[]
+  mentoriaEnabled?: boolean
+  mentoriaLinks?: Array<{ id: string; tenantSlug: string; tenantName: string; clientId: string; clientName: string | null; mentorName: string }>
 }
 
 const C = {
@@ -52,6 +54,14 @@ export default function GoogleCalendarSettings({ onClose, onChanged }: { onClose
       await apiFetch(`/api/meetings/calendar/mentors/${id}`, { method: 'DELETE' })
       await load()
     } catch { toast.error('Erro ao remover') }
+  }
+
+  async function setLinkMentor(id: string, mentorName: string) {
+    try {
+      await apiFetch(`/api/meetings/calendar/mentoria-links/${id}`, { method: 'PUT', body: JSON.stringify({ mentorName }) })
+      await load()
+      toast.success('Agenda da marca atualizada')
+    } catch { toast.error('Erro ao salvar') }
   }
 
   async function test(mEmail: string) {
@@ -111,6 +121,21 @@ export default function GoogleCalendarSettings({ onClose, onChanged }: { onClose
               {unmapped.length > 0 && (
                 <div style={{ fontSize: 12, color: C.dim, marginTop: 8 }}>Mentores na agenda sem e-mail: {unmapped.join(', ')}</div>
               )}
+            </div>
+
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid, marginBottom: 4 }}>Marcas do GOON Mentoria</div>
+              <div style={{ fontSize: 12, color: C.mid, marginBottom: 8 }}>
+                {cfg.mentoriaEnabled ? 'Encontros marcados lá aparecem aqui e vice-versa. Agenda padrão de cada marca:' : 'Ligação com o GOON Mentoria ainda não ativada no servidor.'}
+              </div>
+              {(cfg.mentoriaLinks ?? []).map(l => (
+                <div key={l.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderTop: `1px solid ${C.bg}`, flexWrap: 'wrap' }}>
+                  <strong style={{ fontSize: 13, color: C.ink, flex: 1, minWidth: 120 }}>{l.tenantName}{l.clientName && l.clientName !== l.tenantName ? <span style={{ fontWeight: 400, color: C.dim }}> · {l.clientName}</span> : null}</strong>
+                  <select value={l.mentorName} onChange={e => setLinkMentor(l.id, e.target.value)} style={{ ...input, padding: '5px 8px', fontSize: 12 }}>
+                    {[...new Set([l.mentorName, ...cfg.mentors.map(m => m.name)])].map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+              ))}
             </div>
           </>}
         </div>

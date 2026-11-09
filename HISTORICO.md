@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-09
+- **GOON OS × GOON Mentoria (agendas):** encontros marcados no GOON Mentoria viram reunião no GOON OS (e no Google, com Meet) e vice-versa. Marca ↔ cliente em `MentoriaTenantLink` (Zapone, LM Fashion LAB, Barriere, Be You Store/Beyousto, Inóbvia); agenda padrão por marca em Agenda > Agendas Google. Segredo compartilhado `MENTORIA_SYNC_SECRET`.
 - **Convite ao cliente** traz o nome da call ("Conversa - GOON & Cliente" / "Mentoria - GOON & Cliente"). Calls futuras renomeadas para esse padrão no GOON. Reunião de teste da Flordelins excluída.
 - **CRM, agendar call pelo lead:** título já vem "Conversa - GOON & Cliente"; ao agendar cria nota no histórico (data, hora, Meet), move o lead para Agendado e mostra o convite pronto (copiar / WhatsApp). Card do lead ganha etiqueta com a data da próxima call.
 - **Link do Meet para o cliente:** no detalhe do lead (CRM) aparecem as reuniões marcadas com o link, "Copiar link" e "Enviar no WhatsApp" (mensagem pronta com dia, hora e link). Mesmo botão no dia da Agenda.

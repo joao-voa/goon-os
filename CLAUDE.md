@@ -190,6 +190,12 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
   (`MeetingsService.syncToGoogle`). Erro do Google não derruba: vai para `googleSyncError`.
 - Reunião em grupo = 1 evento; todas as linhas guardam o mesmo `googleEventId`.
 - Convite ao cliente (`inviteClient`) manda e-mail com link do Meet. Reunião passada não vira evento.
+- **GOON Mentoria** (app separado, ~/Desktop/GOONMENTORIA): agendas conversam nos dois sentidos.
+  Marca (tenant slug) ↔ cliente em `MentoriaTenantLink` (com mentor padrão da agenda). Entrada:
+  `POST/DELETE /api/integrations/mentoria/meetings` (Bearer `MENTORIA_SYNC_SECRET`, sem login).
+  Saída: `MentoriaBridgeService` chama `{MENTORIA_API_URL}/api/integrations/goonos/meetings`.
+  Só mentoria individual (não GRUPO). `Meeting.externalSource/externalId` = encontro de lá.
+  Mudança vinda de lá usa `{ fromMentoria: true }` para não voltar (evita loop).
 
 ---
 

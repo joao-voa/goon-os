@@ -144,6 +144,10 @@ model Meeting {
   inviteClient    Boolean   @default(false) // cliente recebe convite por e-mail
   googleSyncError String?   // último erro ao sincronizar (null = ok)
 
+  // Espelho do GOON Mentoria (encontro de mentoria da marca). Origem + id lá.
+  externalSource  String?   // "goonmentoria"
+  externalId      String?   // app.mentoring_meetings.id
+
   client      Client?   @relation(fields: [clientId], references: [id])
 
   createdAt   DateTime  @default(now())
@@ -154,6 +158,21 @@ model Meeting {
   @@index([mentorName])
   @@index([status])
   @@index([googleEventId])
+  @@unique([externalSource, externalId])
+}
+
+// Marca do GOON Mentoria (tenant) <-> cliente do GOON OS, para as agendas conversarem.
+// mentorName = agenda padrão da marca (o GOON Mentoria pode mandar o mentor da mentoria).
+model MentoriaTenantLink {
+  id         String   @id @default(cuid())
+  tenantSlug String   @unique
+  tenantName String
+  clientId   String
+  mentorName String   @default("Giulliano")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([clientId])
 }
 
 // Mentor -> agenda Google (e-mail do Workspace). name = como aparece em Meeting.mentorName

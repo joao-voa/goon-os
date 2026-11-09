@@ -50,6 +50,11 @@ export class MeetingsController {
     return this.service.removeMentorCalendar(id)
   }
 
+  @Put('calendar/mentoria-links/:id')
+  setMentoriaLinkMentor(@Param('id') id: string, @Body() dto: { mentorName: string }) {
+    return this.service.setMentoriaLinkMentor(id, dto.mentorName)
+  }
+
   @Post('calendar/test')
   testCalendar(@Body() dto: { email: string }) {
     return this.service.testCalendar(dto.email ?? '')
