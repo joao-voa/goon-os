@@ -200,7 +200,7 @@ export default function AgendaPage() {
     setFormDuration('120')
     setFormMentor('')
     setFormNotes('')
-    setFormInvite(false)
+    setFormInvite(true) // convite ao cliente sai marcado por padrão
     setShowModal(true)
   }
 

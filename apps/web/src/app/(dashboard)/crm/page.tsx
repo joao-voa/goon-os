@@ -627,6 +627,7 @@ function LeadDetailModal({
   const [schedTitle, setSchedTitle] = useState(`Conversa - GOON & ${lead.companyName}`)
   const [schedNotes, setSchedNotes] = useState('')
   const [schedOwner, setSchedOwner] = useState<'Giulliano' | 'João'>('Giulliano') // agenda Google que recebe a call
+  const [schedInvite, setSchedInvite] = useState(true) // Google manda o convite (com Meet) para o e-mail do lead
   // compromissos do dia escolhido (GOON + Google da agenda escolhida) pra não marcar em cima de mentoria
   const [dayAgenda, setDayAgenda] = useState<{ loading: boolean; items: Array<{ start: Date; end: Date; label: string; owner: string | null }> }>({ loading: false, items: [] })
   useEffect(() => {
@@ -677,6 +678,7 @@ function LeadDetailModal({
           date: new Date(schedDate + 'T' + schedTime + ':00').toISOString(),
           duration: 60,
           mentorName: schedOwner, // agenda Google de quem faz a call
+          inviteClient: schedInvite && !!lead.email,
           notes: schedNotes || undefined,
         }),
       })
@@ -775,7 +777,7 @@ function LeadDetailModal({
     try {
       const updated = await apiFetch<{ id: string; date: string; type: string; category: string; meetLink: string | null; mentorName: string | null; googleSyncError: string | null }>(`/api/meetings/${resched.id}`, {
         method: 'PUT',
-        body: JSON.stringify({ date: new Date(`${resched.date}T${resched.time}:00`).toISOString(), mentorName: resched.owner }),
+        body: JSON.stringify({ date: new Date(`${resched.date}T${resched.time}:00`).toISOString(), mentorName: resched.owner, inviteClient: !!lead.email }),
       })
       const d = new Date(updated.date)
       await apiFetch(`/api/crm/${lead.id}/interactions`, {
@@ -1171,6 +1173,10 @@ function LeadDetailModal({
                     </label>
                   ))}
                 </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6, fontFamily: 'var(--font-sans)', fontSize: 12, color: lead.email ? C.ink : C.dim, cursor: lead.email ? 'pointer' : 'default' }}>
+                  <input type="checkbox" checked={schedInvite && !!lead.email} disabled={!lead.email} onChange={e => setSchedInvite(e.target.checked)} />
+                  {lead.email ? <>Enviar convite do Google para <strong>{lead.email}</strong></> : 'Lead sem e-mail: o convite do Google não sai (use Copiar convite / WhatsApp)'}
+                </label>
                 {schedDate && (() => {
                   const sameOwner = dayAgenda.items.filter(i => overlaps(i) && (!i.owner || i.owner === schedOwner))
                   const otherOwner = dayAgenda.items.filter(i => overlaps(i) && i.owner && i.owner !== schedOwner)

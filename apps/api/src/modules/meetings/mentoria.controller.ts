@@ -93,6 +93,7 @@ export class MentoriaController {
         duration: 120,
         mentorName,
         notes: `Encontro ${KIND_LABEL[kind] ?? kind} (GOON Mentoria)`,
+        inviteClient: true, // a marca recebe o convite do Google com o Meet
       }, { fromMentoria: true })
       id = created!.id
       await this.prisma.meeting.update({ where: { id }, data: { externalSource: MENTORIA_SOURCE, externalId: dto.externalId } })
