@@ -66,18 +66,24 @@ export class GoogleCalendarService {
       this.clients.set(asEmail, client)
     }
     const { token } = await client.getAccessToken()
-    const res = await fetch(`${API}${path}`, {
-      method,
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: body ? JSON.stringify(body) : undefined,
-    })
-    if (res.status === 204) return undefined as T
-    const data = await res.json().catch(() => ({}))
-    if (!res.ok) {
+    // Google limita rajadas por usuário (403 rateLimitExceeded / 429): tenta de novo com espera crescente
+    for (let attempt = 0; ; attempt++) {
+      const res = await fetch(`${API}${path}`, {
+        method,
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : undefined,
+      })
+      if (res.status === 204) return undefined as T
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) return data as T
       const msg = (data as { error?: { message?: string } }).error?.message ?? res.statusText
+      const retryable = res.status === 429 || res.status >= 500 || (res.status === 403 && /rate limit/i.test(msg))
+      if (retryable && attempt < 4) {
+        await new Promise(r => setTimeout(r, 800 * 2 ** attempt + Math.random() * 300))
+        continue
+      }
       throw new Error(`Google ${res.status}: ${msg}`)
     }
-    return data as T
   }
 
   /** E-mail da agenda do mentor (MentorCalendar.name, sem diferenciar maiúsculas). */
