@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
 import GoogleCalendarSettings, { type CalendarConfig } from './GoogleCalendarSettings'
+import { meetingInviteText, whatsappLink } from '@/lib/meetingShare'
 
 interface Meeting {
   id: string
@@ -16,7 +17,7 @@ interface Meeting {
   mentorName: string | null
   notes: string | null
   status: string
-  client: { id: string; companyName: string }
+  client: { id: string; companyName: string; responsible?: string | null; whatsapp?: string | null; phone?: string | null; email?: string | null }
   googleEventId?: string | null
   meetLink?: string | null
   inviteClient?: boolean
@@ -655,6 +656,13 @@ export default function AgendaPage() {
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6, flexWrap: 'wrap', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
                         {m.googleEventId && !m.googleSyncError && <span style={{ color: C.green, fontWeight: 600 }}>✓ Na agenda Google</span>}
                         {m.meetLink && <a href={m.meetLink} target="_blank" rel="noopener noreferrer" style={{ color: '#1a73e8', fontWeight: 600 }}>Entrar no Meet</a>}
+                        {m.meetLink && (
+                          <button onClick={() => { navigator.clipboard.writeText(m.meetLink!); toast.success('Link copiado') }} style={{ border: `1px solid ${C.line}`, background: '#fff', borderRadius: 6, padding: '2px 8px', fontSize: 11, cursor: 'pointer', color: C.ink, fontWeight: 600 }}>Copiar link</button>
+                        )}
+                        {m.meetLink && (() => {
+                          const wa = whatsappLink(m.client, meetingInviteText(m, m.client))
+                          return wa ? <a href={wa} target="_blank" rel="noopener noreferrer" style={{ background: '#25d366', color: '#fff', borderRadius: 6, padding: '3px 9px', fontSize: 11, fontWeight: 700, textDecoration: 'none' }}>Enviar no WhatsApp</a> : null
+                        })()}
                         {m.googleSyncError && (
                           <>
                             <span style={{ color: C.red, fontWeight: 600 }} title={m.googleSyncError}>Google não sincronizou</span>

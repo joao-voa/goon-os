@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, type CSSProperties } from 'react'
 import { toast } from 'sonner'
+import { meetingInviteText, whatsappLink } from '@/lib/meetingShare'
 import { apiFetch } from '@/lib/api'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 import {
@@ -644,6 +645,7 @@ function LeadDetailModal({
       })
       toast.success('Reuniao agendada com ' + lead.companyName)
       setShowSchedule(false)
+      loadLeadMeetings()
       setSchedNotes('')
     } catch { toast.error('Erro ao agendar') }
     setScheduling(false)
@@ -707,6 +709,16 @@ function LeadDetailModal({
   }, [])
 
   useEffect(() => { loadInteractions() }, [loadInteractions])
+
+  // Reuniões marcadas com o lead (link do Meet para mandar ao cliente)
+  const [leadMeetings, setLeadMeetings] = useState<Array<{ id: string; date: string; type: string; category: string; status: string; mentorName: string | null; meetLink: string | null; googleSyncError: string | null }>>([])
+  const loadLeadMeetings = useCallback(async () => {
+    try {
+      const data = await apiFetch<typeof leadMeetings>(`/api/meetings/client/${lead.id}`)
+      setLeadMeetings(data.filter(m => m.status === 'SCHEDULED' && new Date(m.date).getTime() > Date.now() - 3 * 3600000))
+    } catch { /* ignore */ }
+  }, [lead.id])
+  useEffect(() => { loadLeadMeetings() }, [loadLeadMeetings])
   useEffect(() => { loadCommissions() }, [loadCommissions])
   useEffect(() => { loadPlans() }, [loadPlans])
   useEffect(() => { plans.forEach(p => loadMentors(p.id)) }, [plans, loadMentors])
@@ -983,6 +995,34 @@ function LeadDetailModal({
           )}
 
           {/* Add Interaction */}
+          {/* Reuniões marcadas: link do Meet para enviar ao cliente */}
+          {leadMeetings.length > 0 && (
+            <div style={{ borderTop: `1px solid ${C.line}`, paddingTop: 12, marginBottom: 12 }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid, marginBottom: 8 }}>Reuniões marcadas</div>
+              {[...leadMeetings].sort((a, b) => a.date.localeCompare(b.date)).map(m => {
+                const d = new Date(m.date)
+                const wa = m.meetLink ? whatsappLink(lead, meetingInviteText(m, lead)) : null
+                return (
+                  <div key={m.id} style={{ background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, marginBottom: 6, fontFamily: 'var(--font-sans)', fontSize: 12 }}>
+                    <div style={{ fontWeight: 700, color: C.ink, marginBottom: 6 }}>
+                      {d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })} às {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      {m.mentorName && <span style={{ fontWeight: 400, color: C.mid }}> · {m.mentorName}</span>}
+                    </div>
+                    {m.meetLink ? (
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <a href={m.meetLink} target="_blank" rel="noopener noreferrer" style={{ color: '#1a73e8', fontWeight: 600, wordBreak: 'break-all' }}>{m.meetLink.replace('https://', '')}</a>
+                        <button type="button" onClick={() => { navigator.clipboard.writeText(m.meetLink!); toast.success('Link copiado') }} style={{ border: `1px solid ${C.line}`, background: 'white', borderRadius: 6, padding: '3px 9px', fontSize: 11, fontWeight: 600, cursor: 'pointer', color: C.ink }}>Copiar link</button>
+                        {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={{ background: '#25d366', color: 'white', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 700, textDecoration: 'none' }}>Enviar no WhatsApp</a>}
+                      </div>
+                    ) : (
+                      <div style={{ color: m.googleSyncError ? C.red : C.mid }}>{m.googleSyncError ? 'Não foi para o Google Agenda: sem link do Meet' : 'Sem link do Meet (responsável sem agenda Google)'}</div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
           {/* Quick Schedule Meeting */}
           <div style={{ borderTop: `1px solid ${C.line}`, paddingTop: 12, marginBottom: 12 }}>
             {!showSchedule ? (

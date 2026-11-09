@@ -5,6 +5,8 @@
 ---
 
 ## 2026-11-09
+- **Link do Meet para o cliente:** no detalhe do lead (CRM) aparecem as reuniões marcadas com o link, "Copiar link" e "Enviar no WhatsApp" (mensagem pronta com dia, hora e link). Mesmo botão no dia da Agenda.
+- **Calls já marcadas (Toulon 09/11, Mariá Mariotti 10/11, Lavi 10/11)** subidas na agenda do Giulliano, 1h cada, com Meet.
 - **Agenda × Google Agenda (Workspace):** reuniões marcadas no GOON vão para a agenda do mentor (com Meet), mostrando conflitos do dia e convite opcional ao cliente. Config em Agenda > Agendas Google.
   - Agendas ligadas: Giulliano (giulliano@goon-global.com) e João (joao@goon-global.com). Teste real ok (evento + Meet criados e apagados).
   - Eventos: "Mentoria - GOON & Cliente" (2h) e "Conversa - GOON & Cliente" (call de venda, 1h, agenda do Giulliano). Título em branco usa o padrão.

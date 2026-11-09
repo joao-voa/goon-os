@@ -181,7 +181,7 @@ export class MeetingsService {
 
     return this.prisma.meeting.findMany({
       where,
-      include: { client: { select: { id: true, companyName: true } } },
+      include: { client: { select: { id: true, companyName: true, responsible: true, whatsapp: true, phone: true, email: true } } },
       orderBy: { date: 'asc' },
     })
   }
@@ -231,7 +231,7 @@ export class MeetingsService {
     await this.syncToGoogle(created.id)
     return this.prisma.meeting.findUnique({
       where: { id: created.id },
-      include: { client: { select: { id: true, companyName: true } } },
+      include: { client: { select: { id: true, companyName: true, responsible: true, whatsapp: true, phone: true, email: true } } },
     })
   }
 
@@ -327,7 +327,7 @@ export class MeetingsService {
     if (touchesEvent) await this.syncToGoogle(id)
     return this.prisma.meeting.findUnique({
       where: { id },
-      include: { client: { select: { id: true, companyName: true } } },
+      include: { client: { select: { id: true, companyName: true, responsible: true, whatsapp: true, phone: true, email: true } } },
     })
   }
 
