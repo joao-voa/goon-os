@@ -58,13 +58,13 @@ interface CrmKanbanBoardProps {
 const C = { ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0', bg: '#f8fafc', neon: '#C7F900', green: '#16a34a', red: '#dc2626', amber: '#f59e0b', slate: '#475569' }
 const num: CSSProperties = { fontFamily: 'var(--font-sans)', fontVariantNumeric: 'tabular-nums' }
 
-// Faixas de faturamento: 5 degraus (discreto: só as barrinhas indicam o nível)
-const TIERS: Record<string, { step: number; label: string }> = {
-  ATE_50K: { step: 1, label: 'Até 50K' },
-  '50_100K': { step: 2, label: '50–100K' },
-  '100_500K': { step: 3, label: '100–500K' },
-  '500K_1M': { step: 4, label: '500K–1M' },
-  ACIMA_1M: { step: 5, label: '+1M' },
+// Faixas de faturamento: 5 degraus; só as barrinhas têm cor (esquenta conforme sobe)
+const TIERS: Record<string, { step: number; label: string; color: string }> = {
+  ATE_50K: { step: 1, label: 'Até 50K', color: '#94a3b8' },
+  '50_100K': { step: 2, label: '50–100K', color: '#0ea5e9' },
+  '100_500K': { step: 3, label: '100–500K', color: '#22c55e' },
+  '500K_1M': { step: 4, label: '500K–1M', color: '#16a34a' },
+  ACIMA_1M: { step: 5, label: '+1M', color: '#84cc16' },
 }
 
 const QUAL = {
@@ -82,7 +82,7 @@ function TierBadge({ band, raw }: { band: string | null; raw: string | null }) {
     <span title="Faturamento mensal" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: C.slate }}>
       <span style={{ display: 'inline-flex', alignItems: 'flex-end', gap: 1.5, height: 10 }}>
         {[1, 2, 3, 4, 5].map(i => (
-          <span key={i} style={{ width: 2.5, height: 2 + i * 1.6, borderRadius: 1, background: i <= t.step ? C.slate : C.line }} />
+          <span key={i} style={{ width: 2.5, height: 2 + i * 1.6, borderRadius: 1, background: i <= t.step ? t.color : C.line }} />
         ))}
       </span>
       <span style={{ ...num, fontSize: 11, fontWeight: 600 }}>R$ {t.label}/mês</span>
