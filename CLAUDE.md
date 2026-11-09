@@ -180,6 +180,17 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
   (troca no 1º login) salvo se definida explícita.
 - Tela de **Vendas** é exclusiva do dono (`canSeeSales`).
 
+### Google Agenda (Workspace)
+- Conta de serviço com **delegação em todo o domínio**: o GOON escreve direto na agenda do
+  mentor (subject = e-mail dele). Credencial em `GOOGLE_SERVICE_ACCOUNT_JSON` (Vercel, projeto
+  goon-os-api; JSON puro ou base64). Sem ela, a integração fica desligada e nada quebra.
+- Mentor -> e-mail em `MentorCalendar` (name = como aparece em `Meeting.mentorName`). Tela:
+  Agenda > "Agendas Google".
+- Criar/editar/trocar mentor/cancelar/reagendar/excluir reunião espelha no Google
+  (`MeetingsService.syncToGoogle`). Erro do Google não derruba: vai para `googleSyncError`.
+- Reunião em grupo = 1 evento; todas as linhas guardam o mesmo `googleEventId`.
+- Convite ao cliente (`inviteClient`) manda e-mail com link do Meet. Reunião passada não vira evento.
+
 ---
 
 ## 6. Endpoints úteis

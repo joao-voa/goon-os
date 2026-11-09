@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-09
+- **Agenda × Google Agenda (Workspace):** reuniões marcadas no GOON vão para a agenda do mentor (com Meet), mostrando conflitos do dia e convite opcional ao cliente. Config em Agenda > Agendas Google.
 - **CRM sync:** importa só leads criados depois da última sincronização (margem de 1h); lead excluído não volta. Toast mostra a data da última sync.
 - **CRM card:** etiqueta de qualificação (Qualificado/Desqualificado/Sem qualificação) no lugar de ICP/FORA; faixa de faturamento em destaque (degraus + cor por faixa).
 

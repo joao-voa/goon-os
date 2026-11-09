@@ -137,6 +137,13 @@ model Meeting {
   status      String    @default("SCHEDULED") // SCHEDULED, DONE, CANCELLED, RESCHEDULED, NO_SHOW
   doneAt      DateTime?
 
+  // Google Agenda (Workspace): evento espelhado na agenda do mentor
+  googleEventId   String?   // id do evento no Google (reunião em grupo: o mesmo id em todas as linhas)
+  googleCalendar  String?   // e-mail da agenda onde o evento está
+  meetLink        String?   // link do Google Meet
+  inviteClient    Boolean   @default(false) // cliente recebe convite por e-mail
+  googleSyncError String?   // último erro ao sincronizar (null = ok)
+
   client      Client?   @relation(fields: [clientId], references: [id])
 
   createdAt   DateTime  @default(now())
@@ -146,6 +153,17 @@ model Meeting {
   @@index([date])
   @@index([mentorName])
   @@index([status])
+  @@index([googleEventId])
+}
+
+// Mentor -> agenda Google (e-mail do Workspace). name = como aparece em Meeting.mentorName
+model MentorCalendar {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  email     String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Task {
