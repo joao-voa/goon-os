@@ -1,17 +1,25 @@
 // Envio do link da reunião (Google Meet) para o cliente: mensagem pronta + WhatsApp.
 
-type ShareMeeting = { date: string; type?: string; category?: string; meetLink?: string | null }
-type ShareClient = { responsible?: string | null; whatsapp?: string | null; phone?: string | null } | null | undefined
+type ShareMeeting = { date: string; type?: string; category?: string; title?: string; meetLink?: string | null }
+type ShareClient = { companyName?: string | null; responsible?: string | null; whatsapp?: string | null; phone?: string | null } | null | undefined
+
+/** Nome da call igual ao do Google Agenda: "Conversa - GOON & Cliente" / "Mentoria - GOON & Cliente". */
+export function meetingName(m: ShareMeeting, client: ShareClient) {
+  const company = client?.companyName?.trim()
+  const comercial = m.category === 'COMERCIAL' || m.type === 'COMERCIAL'
+  if (company && m.type !== 'GRUPO') return `${comercial ? 'Conversa' : 'Mentoria'} - GOON & ${company}`
+  return m.title ?? (comercial ? 'Conversa - GOON' : 'Mentoria - GOON')
+}
 
 export function meetingInviteText(m: ShareMeeting, client: ShareClient) {
   const d = new Date(m.date)
   const dia = d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' })
   const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
   const firstName = client?.responsible?.trim().split(/\s+/)[0]
-  const oque = m.category === 'COMERCIAL' || m.type === 'COMERCIAL' ? 'nossa conversa' : 'nossa mentoria'
   return [
     `Olá${firstName ? `, ${firstName}` : ''}! Tudo bem?`,
-    `Confirmando ${oque} ${dia}, às ${hora}.`,
+    `Confirmando nossa reunião: ${meetingName(m, client)}`,
+    `Dia: ${dia}, às ${hora}`,
     m.meetLink ? `Link da reunião: ${m.meetLink}` : null,
     'Até lá!',
   ].filter(Boolean).join('\n')

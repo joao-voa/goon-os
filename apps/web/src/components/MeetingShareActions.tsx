@@ -11,11 +11,12 @@ export type ShareableMeeting = {
   date: string
   type?: string
   category?: string
+  title?: string
   meetLink?: string | null
   googleEventId?: string | null
   googleSyncError?: string | null
 }
-type Contact = { responsible?: string | null; whatsapp?: string | null; phone?: string | null } | null | undefined
+type Contact = { companyName?: string | null; responsible?: string | null; whatsapp?: string | null; phone?: string | null } | null | undefined
 
 const btn: React.CSSProperties = { border: '1px solid #e2e8f0', background: '#fff', borderRadius: 6, padding: '3px 9px', fontSize: 11, cursor: 'pointer', color: '#0f172a', fontWeight: 600, fontFamily: 'var(--font-sans)' }
 

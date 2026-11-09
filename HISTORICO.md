@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-09
+- **Convite ao cliente** traz o nome da call ("Conversa - GOON & Cliente" / "Mentoria - GOON & Cliente"). Calls futuras renomeadas para esse padrão no GOON. Reunião de teste da Flordelins excluída.
 - **CRM, agendar call pelo lead:** título já vem "Conversa - GOON & Cliente"; ao agendar cria nota no histórico (data, hora, Meet), move o lead para Agendado e mostra o convite pronto (copiar / WhatsApp). Card do lead ganha etiqueta com a data da próxima call.
 - **Link do Meet para o cliente:** no detalhe do lead (CRM) aparecem as reuniões marcadas com o link, "Copiar link" e "Enviar no WhatsApp" (mensagem pronta com dia, hora e link). Mesmo botão no dia da Agenda.
 - **Calls já marcadas (Toulon 09/11, Mariá Mariotti 10/11, Lavi 10/11)** subidas na agenda do Giulliano, 1h cada, com Meet.
