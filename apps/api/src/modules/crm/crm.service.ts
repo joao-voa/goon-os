@@ -96,6 +96,13 @@ export class CrmService {
           take: 1,
           include: { product: { select: { code: true } } },
         },
+        // próxima reunião marcada (etiqueta no card)
+        meetings: {
+          where: { status: 'SCHEDULED', date: { gte: new Date(Date.now() - 3 * 3600000) } },
+          orderBy: { date: 'asc' },
+          take: 1,
+          select: { date: true, type: true },
+        },
       },
       orderBy: [{ kanbanOrder: 'asc' }, { createdAt: 'desc' }],
     })
@@ -111,6 +118,8 @@ export class CrmService {
         installmentValue: lead.installmentValue ? Number(lead.installmentValue) : null,
         entryValue: lead.entryValue ? Number(lead.entryValue) : null,
         productCode: lead.plans[0]?.product?.code ?? null,
+        nextMeeting: lead.meetings[0] ?? null,
+        meetings: undefined,
         faturamentoBand: CrmService.revenueBand(fat),
         isICP: CrmService.isICP(fat),
         plans: undefined,

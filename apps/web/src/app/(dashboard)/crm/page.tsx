@@ -60,6 +60,7 @@ interface LeadItem {
   cardResponsible: string | null
   qualified: boolean | null
   productCode: string | null
+  nextMeeting?: { date: string; type: string } | null
   stageChangedAt: string | null
   createdAt: string
   closedAt: string | null
@@ -625,13 +626,15 @@ function LeadDetailModal({
   const [schedTitle, setSchedTitle] = useState(`Conversa - GOON & ${lead.companyName}`)
   const [schedNotes, setSchedNotes] = useState('')
   const [scheduling, setScheduling] = useState(false)
+  // reunião recém-agendada: mostra o convite pronto para mandar ao cliente
+  const [justScheduled, setJustScheduled] = useState<{ id: string; date: string; type: string; category: string; meetLink: string | null } | null>(null)
 
   async function handleScheduleMeeting(e: React.FormEvent) {
     e.preventDefault()
     if (!schedDate || !schedTitle) return
     setScheduling(true)
     try {
-      await apiFetch('/api/meetings', {
+      const meeting = await apiFetch<{ id: string; date: string; type: string; category: string; meetLink: string | null; googleSyncError: string | null }>('/api/meetings', {
         method: 'POST',
         body: JSON.stringify({
           clientId: lead.id,
@@ -643,9 +646,28 @@ function LeadDetailModal({
           notes: schedNotes || undefined,
         }),
       })
+      // nota no histórico do lead
+      const d = new Date(meeting.date)
+      const quando = `${d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+      await apiFetch(`/api/crm/${lead.id}/interactions`, {
+        method: 'POST',
+        body: JSON.stringify({
+          type: 'REUNIAO',
+          description: [`Reunião comercial agendada: ${quando} com Giulliano.`, meeting.meetLink ? `Meet: ${meeting.meetLink}` : null, schedNotes ? `Obs.: ${schedNotes}` : null].filter(Boolean).join(' '),
+        }),
+      }).catch(() => {})
+      // etiqueta: lead vai para "Agendado"
+      if (['NOVO', 'CONTATAR', 'FUP', 'REPESCAGEM', 'PERDIDO'].includes(stage)) {
+        await apiFetch(`/api/crm/${lead.id}/stage`, { method: 'PATCH', body: JSON.stringify({ toStage: 'REUNIAO_AGENDADA' }) })
+          .then(() => setStage('REUNIAO_AGENDADA')).catch(() => {})
+      }
       toast.success('Reuniao agendada com ' + lead.companyName)
+      if (meeting.googleSyncError) toast.warning('Não foi para o Google Agenda: ' + meeting.googleSyncError)
       setShowSchedule(false)
+      setJustScheduled(meeting)
       loadLeadMeetings()
+      loadInteractions()
+      onUpdated()
       setSchedNotes('')
     } catch { toast.error('Erro ao agendar') }
     setScheduling(false)
@@ -995,6 +1017,24 @@ function LeadDetailModal({
           )}
 
           {/* Add Interaction */}
+          {/* Recém-agendada: convite pronto */}
+          {justScheduled && (() => {
+            const text = meetingInviteText(justScheduled, lead)
+            const wa = whatsappLink(lead, text)
+            return (
+              <div style={{ border: `2px solid ${C.green}`, borderRadius: 10, padding: 12, marginBottom: 12, background: '#f0fdf4', fontFamily: 'var(--font-sans)' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.ink, marginBottom: 8 }}>Reunião agendada. Envie o convite ao cliente:</div>
+                <div style={{ whiteSpace: 'pre-wrap', fontSize: 12, color: C.ink, background: 'white', border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, marginBottom: 8 }}>{text}</div>
+                {!justScheduled.meetLink && <div style={{ fontSize: 11, color: C.red, marginBottom: 8 }}>Sem link do Meet: a reunião não foi para o Google Agenda.</div>}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <button type="button" onClick={() => { navigator.clipboard.writeText(text); toast.success('Convite copiado') }} style={{ border: `1px solid ${C.line}`, background: 'white', borderRadius: 6, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', color: C.ink }}>Copiar convite</button>
+                  {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={{ background: '#25d366', color: 'white', borderRadius: 6, padding: '7px 12px', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Enviar no WhatsApp</a>}
+                  <button type="button" onClick={() => setJustScheduled(null)} style={{ border: 'none', background: 'transparent', fontSize: 12, color: C.mid, cursor: 'pointer', marginLeft: 'auto' }}>Fechar</button>
+                </div>
+              </div>
+            )
+          })()}
+
           {/* Reuniões marcadas: link do Meet para enviar ao cliente */}
           {leadMeetings.length > 0 && (
             <div style={{ borderTop: `1px solid ${C.line}`, paddingTop: 12, marginBottom: 12 }}>

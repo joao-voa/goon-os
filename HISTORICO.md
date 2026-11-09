@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-09
+- **CRM, agendar call pelo lead:** título já vem "Conversa - GOON & Cliente"; ao agendar cria nota no histórico (data, hora, Meet), move o lead para Agendado e mostra o convite pronto (copiar / WhatsApp). Card do lead ganha etiqueta com a data da próxima call.
 - **Link do Meet para o cliente:** no detalhe do lead (CRM) aparecem as reuniões marcadas com o link, "Copiar link" e "Enviar no WhatsApp" (mensagem pronta com dia, hora e link). Mesmo botão no dia da Agenda.
 - **Calls já marcadas (Toulon 09/11, Mariá Mariotti 10/11, Lavi 10/11)** subidas na agenda do Giulliano, 1h cada, com Meet.
 - **Agenda × Google Agenda (Workspace):** reuniões marcadas no GOON vão para a agenda do mentor (com Meet), mostrando conflitos do dia e convite opcional ao cliente. Config em Agenda > Agendas Google.

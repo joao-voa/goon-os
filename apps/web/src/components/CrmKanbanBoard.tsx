@@ -39,6 +39,7 @@ interface LeadItem {
   faturamentoBand: string | null
   isICP: boolean
   qualified: boolean | null
+  nextMeeting?: { date: string; type: string } | null
   segment: string | null
   suggestedProduct: string | null
   cardResponsible: string | null
@@ -114,6 +115,14 @@ function CardBody({ item }: { item: LeadItem }) {
         })()}
       </div>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+        {item.nextMeeting && (() => {
+          const d = new Date(item.nextMeeting.date)
+          return (
+            <span title="Reunião agendada" style={{ ...num, fontSize: 10, fontWeight: 700, color: '#0369a1', background: '#e0f2fe', padding: '2px 8px', borderRadius: 999, border: '1px solid #bae6fd' }}>
+              {item.nextMeeting.type === 'COMERCIAL' ? 'Call' : 'Reunião'} {d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )
+        })()}
         {sourceLabel && (
           <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.slate, background: C.bg, padding: '2px 8px', borderRadius: 999, border: `1px solid ${C.line}` }}>
             {sourceLabel}
