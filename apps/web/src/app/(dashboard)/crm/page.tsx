@@ -627,6 +627,38 @@ function LeadDetailModal({
   const [schedTitle, setSchedTitle] = useState(`Conversa - GOON & ${lead.companyName}`)
   const [schedNotes, setSchedNotes] = useState('')
   const [schedOwner, setSchedOwner] = useState<'Giulliano' | 'João'>('Giulliano') // agenda Google que recebe a call
+  // compromissos do dia escolhido (GOON + Google da agenda escolhida) pra não marcar em cima de mentoria
+  const [dayAgenda, setDayAgenda] = useState<{ loading: boolean; items: Array<{ start: Date; end: Date; label: string; owner: string | null }> }>({ loading: false, items: [] })
+  useEffect(() => {
+    if (!showSchedule || !schedDate) return
+    let alive = true
+    const from = new Date(`${schedDate}T00:00:00`)
+    const to = new Date(from.getTime() + 86400000)
+    setDayAgenda(d => ({ ...d, loading: true }))
+    const qs = new URLSearchParams({ mentor: schedOwner, from: from.toISOString(), to: to.toISOString() })
+    Promise.all([
+      apiFetch<Array<{ id: string; title: string; type: string; category?: string; date: string; duration: number; status: string; mentorName: string | null; googleEventId?: string | null; client?: { companyName: string } | null }>>(`/api/meetings?year=${from.getFullYear()}&month=${from.getMonth() + 1}`).catch(() => []),
+      apiFetch<{ events: Array<{ start: string; end: string; allDay: boolean; goon: unknown }> }>(`/api/meetings/calendar/busy?${qs}`).catch(() => ({ events: [] })),
+    ]).then(([meetings, busy]) => {
+      if (!alive) return
+      const seen = new Set<string>()
+      const goon = meetings
+        .filter(m => m.status === 'SCHEDULED' && new Date(m.date) >= from && new Date(m.date) < to)
+        .filter(m => { const k = m.googleEventId ?? m.id; if (seen.has(k)) return false; seen.add(k); return true })
+        .map(m => {
+          const start = new Date(m.date)
+          const kind = m.type === 'COMERCIAL' ? 'Call' : m.category === 'GESTAO' ? 'Interno' : 'Mentoria'
+          return { start, end: new Date(start.getTime() + m.duration * 60000), label: `${kind}: ${m.type === 'GRUPO' ? m.title : m.client?.companyName ?? m.title}`, owner: m.mentorName }
+        })
+      const google = busy.events.filter(e => !e.goon && !e.allDay)
+        .map(e => ({ start: new Date(e.start), end: new Date(e.end), label: 'Ocupado (Google)', owner: schedOwner as string | null }))
+      setDayAgenda({ loading: false, items: [...goon, ...google].sort((a, b) => a.start.getTime() - b.start.getTime()) })
+    })
+    return () => { alive = false }
+  }, [showSchedule, schedDate, schedOwner])
+  const slotStart = schedDate && schedTime ? new Date(`${schedDate}T${schedTime}:00`) : null
+  const slotEnd = slotStart ? new Date(slotStart.getTime() + 60 * 60000) : null
+  const overlaps = (i: { start: Date; end: Date }) => !!slotStart && !!slotEnd && i.start < slotEnd && i.end > slotStart
   const [scheduling, setScheduling] = useState(false)
   // reunião recém-agendada: mostra o convite pronto para mandar ao cliente
   const [justScheduled, setJustScheduled] = useState<{ id: string; date: string; type: string; category: string; meetLink: string | null; mentorName: string | null } | null>(null)
@@ -1139,6 +1171,27 @@ function LeadDetailModal({
                     </label>
                   ))}
                 </div>
+                {schedDate && (() => {
+                  const sameOwner = dayAgenda.items.filter(i => overlaps(i) && (!i.owner || i.owner === schedOwner))
+                  const otherOwner = dayAgenda.items.filter(i => overlaps(i) && i.owner && i.owner !== schedOwner)
+                  return (
+                    <div style={{ marginBottom: 6, padding: 8, borderRadius: 6, background: sameOwner.length ? '#fef2f2' : 'white', border: `1px solid ${sameOwner.length ? '#fecaca' : C.line}`, fontFamily: 'var(--font-sans)', fontSize: 11 }}>
+                      <div style={{ fontWeight: 700, color: sameOwner.length ? C.red : C.ink, marginBottom: 3 }}>
+                        {dayAgenda.loading ? 'Lendo a agenda do dia...'
+                          : sameOwner.length ? `Conflito: ${schedOwner} já tem compromisso nesse horário`
+                          : otherOwner.length ? 'Horário livre para ' + schedOwner + ', mas há compromisso de outra agenda'
+                          : 'Agenda do dia'}
+                      </div>
+                      {!dayAgenda.loading && (dayAgenda.items.length === 0
+                        ? <div style={{ color: C.green }}>Nenhum compromisso nesse dia</div>
+                        : dayAgenda.items.map((i, k) => (
+                          <div key={k} style={{ color: sameOwner.includes(i) ? C.red : otherOwner.includes(i) ? '#b45309' : C.mid, fontWeight: overlaps(i) ? 700 : 400 }}>
+                            {i.start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}–{i.end.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} · {i.label}{i.owner ? ` · ${i.owner}` : ''}
+                          </div>
+                        )))}
+                    </div>
+                  )
+                })()}
                 <input value={schedNotes} onChange={e => setSchedNotes(e.target.value)} placeholder="Observacoes..." style={{ ...inputStyle, fontSize: 11, padding: '5px 8px', marginBottom: 6, width: '100%' }} />
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button type="button" onClick={() => setShowSchedule(false)} style={{ flex: 1, padding: '7px', border: `1px solid ${C.line}`, borderRadius: 6, background: 'white', color: C.ink, fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
@@ -1311,6 +1364,15 @@ function LeadDetailModal({
 }
 
 // ---- Main Page ----
+// Cores da agenda por categoria (iguais nas duas agendas)
+const AGENDA_CAT: Record<string, { label: string; color: string }> = {
+  COMERCIAL: { label: 'Call de venda', color: '#16a34a' },
+  MENTORIA: { label: 'Mentoria', color: '#4A78FF' },
+  GESTAO: { label: 'Interno', color: '#475569' },
+}
+const agendaColor = (m: { type: string; category?: string }) =>
+  AGENDA_CAT[m.type === 'COMERCIAL' ? 'COMERCIAL' : m.category ?? 'MENTORIA']?.color ?? '#888'
+
 export default function CrmPage() {
   const [leads, setLeads] = useState<LeadItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -1325,7 +1387,9 @@ export default function CrmPage() {
   const [dashPeriod, setDashPeriod] = useState<'dia' | 'semana' | 'mes' | 'ano'>('mes')
   const [leadDay, setLeadDay] = useState('') // dia selecionado no gráfico de novos leads (YYYY-MM-DD | '')
   const [leadWindow, setLeadWindow] = useState<7 | 14 | 30 | 90>(30)
-  const [commercialMeetings, setCommercialMeetings] = useState<Array<{ id: string; title: string; type: string; category?: string; date: string; duration: number; mentorName: string | null; notes: string | null; status: string; meetLink?: string | null; googleEventId?: string | null; googleSyncError?: string | null; client?: { id: string; companyName: string; responsible?: string | null; whatsapp?: string | null; phone?: string | null } | null }>>([])
+  // Agenda do CRM = a mesma da Agenda geral (todos os compromissos), pra não marcar call em cima de mentoria
+  const [agendaMeetings, setAgendaMeetings] = useState<Array<{ id: string; title: string; type: string; category?: string; date: string; duration: number; mentorName: string | null; notes: string | null; status: string; meetLink?: string | null; googleEventId?: string | null; googleSyncError?: string | null; client?: { id: string; companyName: string; responsible?: string | null; whatsapp?: string | null; phone?: string | null } | null }>>([])
+  const commercialMeetings = agendaMeetings.filter(m => m.type === 'COMERCIAL' || m.category === 'COMERCIAL')
   const [comMonth, setComMonth] = useState(new Date().getMonth())
   const [comYear, setComYear] = useState(new Date().getFullYear())
   const [comSelectedDate, setComSelectedDate] = useState<string | null>(null)
@@ -1333,8 +1397,16 @@ export default function CrmPage() {
   const loadCommercialMeetings = useCallback(async () => {
     if (crmTab !== 'agenda') return
     try {
-      const data = await apiFetch<Array<typeof commercialMeetings[0]>>(`/api/meetings?year=${comYear}&month=${comMonth + 1}`)
-      setCommercialMeetings(data.filter(m => m.type === 'COMERCIAL' || m.category === 'COMERCIAL'))
+      const data = await apiFetch<Array<typeof agendaMeetings[0]>>(`/api/meetings?year=${comYear}&month=${comMonth + 1}`)
+      // mentoria em grupo = uma linha por cliente; na agenda vira um compromisso só
+      const seen = new Set<string>()
+      setAgendaMeetings(data.filter(m => {
+        if (m.type !== 'GRUPO') return true
+        const k = m.googleEventId ?? `${m.title}|${m.date}`
+        if (seen.has(k)) return false
+        seen.add(k)
+        return true
+      }))
     } catch { /* ignore */ }
   }, [crmTab, comMonth, comYear])
 
@@ -1718,8 +1790,8 @@ export default function CrmPage() {
         const daysInMonth = new Date(comYear, comMonth + 1, 0).getDate()
         const firstDay = new Date(comYear, comMonth, 1).getDay()
         const todayDay = new Date().getMonth() === comMonth && new Date().getFullYear() === comYear ? new Date().getDate() : -1
-        const meetingsByDay: Record<number, typeof commercialMeetings> = {}
-        commercialMeetings.forEach(m => {
+        const meetingsByDay: Record<number, typeof agendaMeetings> = {}
+        agendaMeetings.forEach(m => {
           const d = new Date(m.date).getDate()
           if (!meetingsByDay[d]) meetingsByDay[d] = []
           meetingsByDay[d].push(m)
@@ -1728,7 +1800,14 @@ export default function CrmPage() {
         return (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em', color: C.ink, margin: 0 }}>Agenda comercial</h2>
+            <div>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em', color: C.ink, margin: 0 }}>Agenda</h2>
+              <div style={{ display: 'flex', gap: 10, marginTop: 4, fontFamily: 'var(--font-sans)', fontSize: 11, color: C.mid, flexWrap: 'wrap' }}>
+                {Object.entries(AGENDA_CAT).map(([k, v]) => (
+                  <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: v.color }} />{v.label}</span>
+                ))}
+              </div>
+            </div>
             <a href="/agenda" style={{ padding: '8px 16px', border: 'none', borderRadius: 6, background: C.green, color: 'white', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
               + Agendar reunião
             </a>
@@ -1764,8 +1843,8 @@ export default function CrmPage() {
                       <span>{day}</span>
                       {dayMeetings.length > 0 && <span style={{ background: C.green, color: 'white', borderRadius: '50%', width: 15, height: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9 }}>{dayMeetings.length}</span>}
                     </div>
-                    {dayMeetings.slice(0, 2).map(m => {
-                      const mStyle: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-sans)', fontSize: 8, padding: '1px 3px', marginTop: 2, background: C.green, color: 'white', borderRadius: 3, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', opacity: m.status === 'DONE' ? 0.6 : 1, textDecoration: 'none', cursor: 'pointer' }
+                    {dayMeetings.slice(0, 3).map(m => {
+                      const mStyle: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-sans)', fontSize: 8, padding: '1px 3px', marginTop: 2, background: agendaColor(m), color: 'white', borderRadius: 3, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', opacity: m.status === 'DONE' || m.status === 'CANCELLED' || m.status === 'RESCHEDULED' ? 0.5 : 1, textDecoration: m.status === 'CANCELLED' ? 'line-through' : 'none', cursor: 'pointer' }
                       const mLabel = `${new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} ${m.client?.companyName ?? m.title}`
                       return m.client?.id ? (
                         <a key={m.id} href="#"
@@ -1792,7 +1871,7 @@ export default function CrmPage() {
                 </div>
                 <div style={{ padding: '4px 16px' }}>
                   {dayMeetings.length === 0 ? (
-                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.dim, textAlign: 'center', padding: 16 }}>Sem reunioes comerciais</div>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.dim, textAlign: 'center', padding: 16 }}>Sem compromissos</div>
                   ) : dayMeetings.map(m => (
                     <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${C.bg}`, gap: 8 }}>
                       <div style={{ flex: 1 }}>
@@ -1804,7 +1883,8 @@ export default function CrmPage() {
                         ) : (
                           <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, color: C.ink }}>{m.title}</div>
                         )}
-                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.mid }}>
+                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.mid, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <span style={{ background: agendaColor(m), color: 'white', borderRadius: 999, padding: '1px 7px', fontSize: 10, fontWeight: 700 }}>{AGENDA_CAT[m.type === 'COMERCIAL' ? 'COMERCIAL' : m.category ?? 'MENTORIA']?.label ?? m.type}</span>
                           {new Date(m.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {m.duration}min{m.mentorName && <> • {m.mentorName}</>}
                         </div>
                         {m.notes && <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.dim, marginTop: 2 }}>{m.notes}</div>}

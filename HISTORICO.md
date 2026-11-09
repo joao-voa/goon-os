@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-09
+- **Agenda do CRM = Agenda geral:** mostra todos os compromissos (mentorias, inclusive as do GOON Mentoria, calls e internos) com cor por tipo. Agendar call pelo lead mostra a agenda do dia e avisa conflito com a agenda escolhida.
 - **GOON OS × GOON Mentoria (agendas):** encontros marcados no GOON Mentoria viram reunião no GOON OS (e no Google, com Meet) e vice-versa. Marca ↔ cliente em `MentoriaTenantLink` (Zapone, LM Fashion LAB, Barriere, Be You Store/Beyousto, Inóbvia); agenda padrão por marca em Agenda > Agendas Google. Segredo compartilhado `MENTORIA_SYNC_SECRET`.
 - **Convite ao cliente** traz o nome da call ("Conversa - GOON & Cliente" / "Mentoria - GOON & Cliente"). Calls futuras renomeadas para esse padrão no GOON. Reunião de teste da Flordelins excluída.
 - **CRM, agendar call pelo lead:** título já vem "Conversa - GOON & Cliente"; ao agendar cria nota no histórico (data, hora, Meet), move o lead para Agendado e mostra o convite pronto (copiar / WhatsApp). Card do lead ganha etiqueta com a data da próxima call.
