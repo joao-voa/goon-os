@@ -31,20 +31,20 @@ export class MentoriaController {
     const end = to && !Number.isNaN(Date.parse(to)) ? new Date(to) : new Date(start.getTime() + 93 * 864e5)
     const rows = await this.prisma.meeting.findMany({
       where: { date: { gte: start, lt: end }, OR: [{ externalSource: null }, { externalSource: { not: MENTORIA_SOURCE } }] },
-      select: { id: true, googleEventId: true, title: true, type: true, category: true, date: true, duration: true, status: true, mentorName: true, meetLink: true, client: { select: { companyName: true } } },
+      select: { id: true, googleEventId: true, title: true, type: true, category: true, date: true, duration: true, status: true, mentorName: true, meetLink: true, client: { select: { companyName: true, responsible: true, whatsapp: true, phone: true } } },
       orderBy: { date: 'asc' },
       take: 1000,
     })
     // reunião em grupo: uma linha por cliente com o mesmo evento no Google -> um item só
-    const out = new Map<string, { id: string; title: string; type: string; category: string; date: string; duration: number; status: string; mentorName: string | null; meetLink: string | null; clients: string[] }>()
+    type Contact = { companyName: string | null; responsible: string | null; whatsapp: string | null; phone: string | null }
+    const out = new Map<string, { id: string; title: string; type: string; category: string; date: string; duration: number; status: string; mentorName: string | null; meetLink: string | null; clients: string[]; contacts: Contact[] }>()
     for (const { client, date, googleEventId, ...m } of rows) {
       const key = googleEventId ?? m.id
-      const cur = out.get(key)
-      if (cur) {
-        if (client?.companyName) cur.clients.push(client.companyName)
-        continue
+      const cur = out.get(key) ?? out.set(key, { ...m, date: date.toISOString(), clients: [], contacts: [] }).get(key)!
+      if (client) {
+        if (client.companyName) cur.clients.push(client.companyName)
+        cur.contacts.push(client)
       }
-      out.set(key, { ...m, date: date.toISOString(), clients: client?.companyName ? [client.companyName] : [] })
     }
     return [...out.values()]
   }
