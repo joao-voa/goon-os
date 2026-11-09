@@ -34,6 +34,38 @@ export class MeetingsController {
     return this.service.getAllClientsCadence()
   }
 
+  // ---- Google Agenda ----
+  @Get('calendar/config')
+  calendarConfig() {
+    return this.service.calendarConfig()
+  }
+
+  @Post('calendar/mentors')
+  upsertMentorCalendar(@Body() dto: { name: string; email: string; isActive?: boolean }) {
+    return this.service.upsertMentorCalendar(dto)
+  }
+
+  @Delete('calendar/mentors/:id')
+  removeMentorCalendar(@Param('id') id: string) {
+    return this.service.removeMentorCalendar(id)
+  }
+
+  @Post('calendar/test')
+  testCalendar(@Body() dto: { email: string }) {
+    return this.service.testCalendar(dto.email ?? '')
+  }
+
+  @Get('calendar/busy')
+  mentorBusy(@Query('mentor') mentor: string, @Query('from') from: string, @Query('to') to: string) {
+    return this.service.mentorBusy(mentor ?? '', from, to)
+  }
+
+  @Post(':id/sync')
+  async sync(@Param('id') id: string) {
+    await this.service.syncToGoogle(id)
+    return { ok: true }
+  }
+
   @Get('client/:clientId')
   findByClient(@Param('clientId') clientId: string) {
     return this.service.findByClient(clientId)
@@ -54,6 +86,7 @@ export class MeetingsController {
     duration?: number
     mentorName?: string
     notes?: string
+    inviteClient?: boolean
   }) {
     return this.service.create(dto)
   }
@@ -68,6 +101,7 @@ export class MeetingsController {
     mentorName?: string
     notes?: string
     status?: string
+    inviteClient?: boolean
   }) {
     return this.service.createGroup(dto)
   }
@@ -81,6 +115,7 @@ export class MeetingsController {
     mentorName?: string
     notes?: string
     status?: string
+    inviteClient?: boolean
   }) {
     return this.service.update(id, dto)
   }

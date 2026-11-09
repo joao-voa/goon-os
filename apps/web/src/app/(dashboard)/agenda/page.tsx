@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
+import GoogleCalendarSettings, { type CalendarConfig } from './GoogleCalendarSettings'
 
 interface Meeting {
   id: string
@@ -16,7 +17,14 @@ interface Meeting {
   notes: string | null
   status: string
   client: { id: string; companyName: string }
+  googleEventId?: string | null
+  meetLink?: string | null
+  inviteClient?: boolean
+  googleSyncError?: string | null
 }
+
+type BusyEvent = { start: string; end: string; allDay: boolean; goon: { meetingId: string; title: string; client: string | null } | null }
+const hhmm = (d: Date) => d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 
 interface Client {
   id: string
@@ -97,6 +105,10 @@ export default function AgendaPage() {
   const [formDuration, setFormDuration] = useState('60')
   const [formMentor, setFormMentor] = useState('')
   const [formNotes, setFormNotes] = useState('')
+  const [formInvite, setFormInvite] = useState(false)
+  const [calCfg, setCalCfg] = useState<CalendarConfig | null>(null)
+  const [showCalCfg, setShowCalCfg] = useState(false)
+  const [busy, setBusy] = useState<{ loading: boolean; calendar: string | null; events: BusyEvent[]; error?: string }>({ loading: false, calendar: null, events: [] })
   const [saving, setSaving] = useState(false)
   const [cadenceData, setCadenceData] = useState<Array<{ clientId: string; companyName: string; programCode: string | null; programName: string | null; lastMeetingDate: string | null; nextMeetingDate: string | null; daysSinceLastMeeting: number | null; doneMeetingsCount: number; overdueCount: number; overdueValue: number; planExpired: boolean; reasons: string[]; health: string }>>([])
   const [stats, setStats] = useState<{ todayCount: number; weekCount: number; totalDone: number; totalScheduled: number } | null>(null)
@@ -140,7 +152,23 @@ export default function AgendaPage() {
       .then(res => setLeadClients(res.data || []))
       .catch(() => {})
     loadPanel()
+    apiFetch<CalendarConfig>('/api/meetings/calendar/config').then(setCalCfg).catch(() => {})
   }, [loadPanel])
+
+  // Agenda Google do mentor no dia escolhido (pra ver conflito antes de marcar)
+  const mentorHasCalendar = !!calCfg?.enabled && !!formMentor && !!calCfg.mentors.some(m => m.isActive && m.name.toLowerCase() === formMentor.trim().toLowerCase())
+  useEffect(() => {
+    if (!showModal || !mentorHasCalendar || !formDate) { setBusy({ loading: false, calendar: null, events: [] }); return }
+    let alive = true
+    const from = new Date(`${formDate}T00:00:00`)
+    const to = new Date(from.getTime() + 86400000)
+    setBusy(b => ({ ...b, loading: true }))
+    const qs = new URLSearchParams({ mentor: formMentor.trim(), from: from.toISOString(), to: to.toISOString() })
+    apiFetch<{ calendar: string | null; events: BusyEvent[] }>(`/api/meetings/calendar/busy?${qs}`)
+      .then(r => { if (alive) setBusy({ loading: false, calendar: r.calendar, events: r.events }) })
+      .catch(() => { if (alive) setBusy({ loading: false, calendar: null, events: [], error: 'Não foi possível ler a agenda do Google' }) })
+    return () => { alive = false }
+  }, [showModal, mentorHasCalendar, formMentor, formDate])
 
   async function handleRefresh() {
     setRefreshing(true)
@@ -149,7 +177,14 @@ export default function AgendaPage() {
     toast.success('Painel atualizado')
   }
 
-  const mentors = [...new Set(meetings.map(m => m.mentorName).filter(Boolean))] as string[]
+  const mentors = [...new Set([...(calCfg?.mentors.map(m => m.name) ?? []), ...meetings.map(m => m.mentorName)].filter(Boolean))] as string[]
+
+  // Conflito: compromisso no Google que cruza o horário escolhido (fora a própria reunião)
+  const slotStart = formDate ? new Date(`${formDate}T${formTime || '00:00'}:00`) : null
+  const slotEnd = slotStart ? new Date(slotStart.getTime() + (parseInt(formDuration, 10) || 60) * 60000) : null
+  const conflicts = slotStart && slotEnd
+    ? busy.events.filter(e => !e.allDay && e.goon?.meetingId !== selectedMeeting?.id && new Date(e.start) < slotEnd && new Date(e.end) > slotStart)
+    : []
 
   function openNewMeeting(dateStr: string) {
     setSelectedMeeting(null)
@@ -164,6 +199,7 @@ export default function AgendaPage() {
     setFormDuration('60')
     setFormMentor('')
     setFormNotes('')
+    setFormInvite(false)
     setShowModal(true)
   }
 
@@ -179,6 +215,7 @@ export default function AgendaPage() {
     setFormDuration(String(m.duration))
     setFormMentor(m.mentorName ?? '')
     setFormNotes(m.notes ?? '')
+    setFormInvite(!!m.inviteClient)
     setShowModal(true)
   }
 
@@ -208,6 +245,7 @@ export default function AgendaPage() {
         duration: parseInt(formDuration, 10) || 60,
         mentorName: formMentor || undefined,
         notes: formNotes || undefined,
+        inviteClient: formInvite,
       }
 
       if (isGroup) {
@@ -221,15 +259,17 @@ export default function AgendaPage() {
             mentorName: formMentor || undefined,
             notes: formNotes || undefined,
             status: formGroupDone ? 'DONE' : 'SCHEDULED',
+            inviteClient: formInvite,
           }),
         })
         toast.success(`Mentoria em grupo ${formGroupDone ? 'registrada (realizada)' : 'agendada'} para ${res.created} clientes`)
-      } else if (selectedMeeting) {
-        await apiFetch(`/api/meetings/${selectedMeeting.id}`, { method: 'PUT', body: JSON.stringify(body) })
-        toast.success('Reuniao atualizada')
       } else {
-        await apiFetch('/api/meetings', { method: 'POST', body: JSON.stringify(body) })
-        toast.success('Reuniao criada')
+        const saved = selectedMeeting
+          ? await apiFetch<Meeting>(`/api/meetings/${selectedMeeting.id}`, { method: 'PUT', body: JSON.stringify(body) })
+          : await apiFetch<Meeting>('/api/meetings', { method: 'POST', body: JSON.stringify(body) })
+        if (saved?.googleSyncError) toast.warning(`Salva no GOON, mas o Google recusou: ${saved.googleSyncError}`)
+        else if (saved?.googleEventId) toast.success(selectedMeeting ? 'Reuniao atualizada (Google Agenda também)' : 'Reuniao criada na agenda do mentor')
+        else toast.success(selectedMeeting ? 'Reuniao atualizada' : 'Reuniao criada')
       }
       setShowModal(false)
       loadMeetings()
@@ -242,6 +282,14 @@ export default function AgendaPage() {
       await apiFetch(`/api/meetings/${id}`, { method: 'PUT', body: JSON.stringify({ status }) })
       toast.success(STATUS_LABELS[status] ?? status)
       loadMeetings()
+    } catch { toast.error('Erro') }
+  }
+
+  async function handleResync(id: string) {
+    try {
+      await apiFetch(`/api/meetings/${id}/sync`, { method: 'POST' })
+      await loadMeetings()
+      toast.success('Sincronização tentada de novo')
     } catch { toast.error('Erro') }
   }
 
@@ -305,11 +353,21 @@ export default function AgendaPage() {
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', margin: 0, color: C.ink }}>Agenda</h1>
           <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: C.mid, margin: '4px 0 0' }}>Reunioes, cadencia de mentoria e saude dos clientes</p>
         </div>
-        <button onClick={() => openNewMeeting(new Date().toISOString().split('T')[0])} style={{
-          padding: '9px 16px', border: 'none', borderRadius: 6, background: C.neon, color: C.ink,
-          fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-        }}>+ Nova reuniao</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => setShowCalCfg(true)} style={{
+            padding: '9px 14px', border: `1px solid ${C.line}`, borderRadius: 6, background: '#fff', color: C.ink,
+            fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: calCfg?.enabled ? C.green : C.dim }} />
+            Agendas Google
+          </button>
+          <button onClick={() => openNewMeeting(new Date().toISOString().split('T')[0])} style={{
+            padding: '9px 16px', border: 'none', borderRadius: 6, background: C.neon, color: C.ink,
+            fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+          }}>+ Nova reuniao</button>
+        </div>
       </div>
+      {showCalCfg && <GoogleCalendarSettings onClose={() => setShowCalCfg(false)} onChanged={setCalCfg} />}
 
       {/* Abas */}
       <div style={{ display: 'flex', borderBottom: `1px solid ${C.line}` }}>
@@ -588,6 +646,18 @@ export default function AgendaPage() {
                       {m.mentorName && <> • {m.mentorName}</>}
                     </div>
                     {m.notes && <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.dim, marginTop: 4 }}>{m.notes}</div>}
+                    {(m.meetLink || m.googleEventId || m.googleSyncError) && (
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6, flexWrap: 'wrap', fontFamily: 'var(--font-sans)', fontSize: 11 }}>
+                        {m.googleEventId && !m.googleSyncError && <span style={{ color: C.green, fontWeight: 600 }}>✓ Na agenda Google</span>}
+                        {m.meetLink && <a href={m.meetLink} target="_blank" rel="noopener noreferrer" style={{ color: '#1a73e8', fontWeight: 600 }}>Entrar no Meet</a>}
+                        {m.googleSyncError && (
+                          <>
+                            <span style={{ color: C.red, fontWeight: 600 }} title={m.googleSyncError}>Google não sincronizou</span>
+                            <button onClick={() => handleResync(m.id)} style={{ border: `1px solid ${C.line}`, background: '#fff', borderRadius: 6, padding: '2px 8px', fontSize: 11, cursor: 'pointer', color: C.ink }}>Tentar de novo</button>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div style={{ display: 'flex', gap: 4, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     {m.status === 'SCHEDULED' && (
@@ -692,7 +762,36 @@ export default function AgendaPage() {
                 <datalist id="agenda-mentor-list">
                   {mentors.map(m => <option key={m} value={m} />)}
                 </datalist>
+                {calCfg?.enabled && formMentor.trim() && !mentorHasCalendar && (
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.dim, marginTop: 5 }}>Mentor sem agenda Google cadastrada: a reunião fica só no GOON.</div>
+                )}
+                {mentorHasCalendar && formDate && (
+                  <div style={{ marginTop: 8, padding: 10, borderRadius: 8, background: conflicts.length ? '#fef2f2' : C.bg, border: `1px solid ${conflicts.length ? '#fecaca' : C.line}`, fontFamily: 'var(--font-sans)', fontSize: 12 }}>
+                    <div style={{ fontWeight: 700, color: conflicts.length ? C.red : C.ink, marginBottom: 4 }}>
+                      {busy.loading ? 'Lendo agenda do Google...'
+                        : busy.error ? busy.error
+                        : conflicts.length ? `Conflito: ${formMentor} já tem compromisso nesse horário`
+                        : `Agenda de ${formMentor} nesse dia`}
+                    </div>
+                    {!busy.loading && !busy.error && (busy.events.length === 0
+                      ? <div style={{ color: C.green }}>Dia livre</div>
+                      : busy.events.map((e, i) => {
+                          const isConflict = conflicts.includes(e)
+                          return (
+                            <div key={i} style={{ color: isConflict ? C.red : C.mid, fontWeight: isConflict ? 700 : 400 }}>
+                              {e.allDay ? 'Dia todo' : `${hhmm(new Date(e.start))}–${hhmm(new Date(e.end))}`} · {e.goon ? `GOON: ${e.goon.client ?? e.goon.title}` : 'Ocupado'}
+                            </div>
+                          )
+                        }))}
+                  </div>
+                )}
               </div>
+              {mentorHasCalendar && formType !== 'RG' && formType !== 'ALINHAMENTO' && (
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 6, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 13, color: C.ink }}>
+                  <input type="checkbox" checked={formInvite} onChange={e => setFormInvite(e.target.checked)} style={{ marginTop: 2 }} />
+                  <span><strong>Enviar convite ao cliente</strong> por e-mail, com o link do Meet{formType === 'GRUPO' && !selectedMeeting ? ' (todos do programa)' : ''}</span>
+                </label>
+              )}
               <div>
                 <label style={labelStyle}>Observacoes</label>
                 <textarea value={formNotes} onChange={e => setFormNotes(e.target.value)} rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
