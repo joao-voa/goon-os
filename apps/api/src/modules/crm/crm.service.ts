@@ -757,7 +757,19 @@ export class CrmService {
     return value !== null && value >= CrmService.ICP_THRESHOLD
   }
 
-  async syncFromSheets(): Promise<{ imported: number; skipped: number; errors: string[] }> {
+  async syncFromSheets(): Promise<{ imported: number; skipped: number; errors: string[]; lastSync: Date | null }> {
+    // Só puxa leads criados depois da última sincronização (lead excluído no
+    // sistema continua na planilha e não pode voltar). Margem de 1h para o
+    // atraso entre o formulário e a planilha. A última sync vem do AuditLog.
+    const last = await this.prisma.auditLog.findFirst({
+      where: { method: 'POST', path: { contains: '/api/crm/sync-sheets' }, statusCode: { lt: 400 } },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true },
+    })
+    const lastSync = last?.createdAt ?? null
+    const sinceLast = lastSync ? new Date(lastSync.getTime() - 3600000) : SYNC_CUTOFF
+    const cutoff = sinceLast > SYNC_CUTOFF ? sinceLast : SYNC_CUTOFF
+
     const SHEETS = [
       {
         name: 'Meta Ads',
@@ -848,8 +860,8 @@ export class CrmService {
               continue
             }
 
-            // Corte de importação (SYNC_CUTOFF): leads anteriores não sobem de novo.
-            if (lead.createdAt && new Date(lead.createdAt) < SYNC_CUTOFF) {
+            // Corte de importação: anteriores à última sync (ou ao SYNC_CUTOFF) não sobem de novo.
+            if (lead.createdAt && new Date(lead.createdAt) < cutoff) {
               skipped++
               continue
             }
@@ -893,7 +905,7 @@ export class CrmService {
       }
     }
 
-    return { imported, skipped, errors }
+    return { imported, skipped, errors, lastSync }
   }
 
   private parseCsv(csv: string): string[][] {

@@ -38,6 +38,7 @@ interface LeadItem {
   estimatedRevenue: string | null
   faturamentoBand: string | null
   isICP: boolean
+  qualified: boolean | null
   segment: string | null
   suggestedProduct: string | null
   cardResponsible: string | null
@@ -57,6 +58,38 @@ interface CrmKanbanBoardProps {
 const C = { ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0', bg: '#f8fafc', neon: '#C7F900', green: '#16a34a', red: '#dc2626', amber: '#f59e0b', slate: '#475569' }
 const num: CSSProperties = { fontFamily: 'var(--font-sans)', fontVariantNumeric: 'tabular-nums' }
 
+// Faixas de faturamento: 5 degraus, cor esquenta conforme sobe
+const TIERS: Record<string, { step: number; label: string; color: string; bg: string }> = {
+  ATE_50K: { step: 1, label: 'Até 50K', color: '#64748b', bg: '#f1f5f9' },
+  '50_100K': { step: 2, label: '50–100K', color: '#0369a1', bg: '#e0f2fe' },
+  '100_500K': { step: 3, label: '100–500K', color: '#15803d', bg: '#dcfce7' },
+  '500K_1M': { step: 4, label: '500K–1M', color: '#047857', bg: '#d1fae5' },
+  ACIMA_1M: { step: 5, label: '+1M', color: '#0f172a', bg: '#C7F900' },
+}
+
+const QUAL = {
+  true: { label: 'QUALIFICADO', bg: C.green },
+  false: { label: 'DESQUALIFICADO', bg: C.red },
+  null: { label: 'SEM QUALIFICAÇÃO', bg: C.dim },
+} as const
+
+function TierBadge({ band, raw }: { band: string | null; raw: string | null }) {
+  const t = band ? TIERS[band] : undefined
+  if (!t) {
+    return <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.dim }}>{raw || 'Faturamento não informado'}</span>
+  }
+  return (
+    <span title="Faturamento mensal" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: t.bg, color: t.color, padding: '3px 8px', borderRadius: 6 }}>
+      <span style={{ display: 'inline-flex', alignItems: 'flex-end', gap: 2, height: 12 }}>
+        {[1, 2, 3, 4, 5].map(i => (
+          <span key={i} style={{ width: 3, height: 3 + i * 2, borderRadius: 1, background: i <= t.step ? t.color : 'rgba(15,23,42,0.15)' }} />
+        ))}
+      </span>
+      <span style={{ ...num, fontSize: 12, fontWeight: 800, letterSpacing: '-0.01em' }}>R$ {t.label}<span style={{ fontWeight: 600, fontSize: 10, opacity: 0.8 }}>/mês</span></span>
+    </span>
+  )
+}
+
 // Conteúdo visual do card (compartilhado entre o sortable e o overlay)
 function CardBody({ item }: { item: LeadItem }) {
   const sourceLabel = item.leadSource ? (LEAD_SOURCE_LABELS[item.leadSource] ?? item.leadSource) : null
@@ -68,21 +101,18 @@ function CardBody({ item }: { item: LeadItem }) {
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.mid, marginBottom: 2 }}>
         {item.responsible}
       </div>
-      {(item.estimatedRevenue || item.faturamentoBand !== 'NAO_INFORMADO') && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2, flexWrap: 'wrap' }}>
-          {item.faturamentoBand && item.faturamentoBand !== 'NAO_INFORMADO' && (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '6px 0 2px', flexWrap: 'wrap' }}>
+        <TierBadge band={item.faturamentoBand} raw={item.estimatedRevenue} />
+        {(() => {
+          const q = QUAL[String(item.qualified ?? null) as 'true' | 'false' | 'null']
+          return (
             <span style={{
               fontFamily: 'var(--font-sans)', fontSize: 9, fontWeight: 700, letterSpacing: '0.03em', padding: '1px 6px', borderRadius: 999, color: 'white',
-              background: item.isICP ? C.green : C.red,
-            }}>{item.isICP ? 'ICP' : 'FORA'}</span>
-          )}
-          {item.estimatedRevenue && (
-            <span style={{ ...num, fontSize: 11, color: C.dim }}>
-              {item.estimatedRevenue}
-            </span>
-          )}
-        </div>
-      )}
+              background: q.bg,
+            }}>{q.label}</span>
+          )
+        })()}
+      </div>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
         {sourceLabel && (
           <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 600, color: C.slate, background: C.bg, padding: '2px 8px', borderRadius: 999, border: `1px solid ${C.line}` }}>

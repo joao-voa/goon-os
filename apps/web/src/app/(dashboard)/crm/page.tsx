@@ -1735,13 +1735,14 @@ export default function CrmPage() {
             onClick={async () => {
               setSyncing(true)
               try {
-                const res = await apiFetch<{ imported: number; skipped: number; errors: string[] }>('/api/crm/sync-sheets', { method: 'POST' })
+                const res = await apiFetch<{ imported: number; skipped: number; errors: string[]; lastSync: string | null }>('/api/crm/sync-sheets', { method: 'POST' })
+                const desde = res.lastSync ? ` desde a última sincronização (${new Date(res.lastSync).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })})` : ''
                 if (res.imported > 0) {
-                  toast.success(`${res.imported} novos leads importados!`)
+                  toast.success(`${res.imported} novos leads importados${desde}`)
                   fetchLeads()
                   fetchMetrics()
                 } else {
-                  toast.info('Nenhum lead novo encontrado')
+                  toast.info(`Nenhum lead novo${desde}`)
                 }
                 if (res.errors.length > 0) {
                   toast.error(res.errors.join(', '))
@@ -1827,7 +1828,7 @@ export default function CrmPage() {
             )
           })}
           <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: C.mid, marginLeft: 4 }}>
-            {activeLeads.length} leads · {activeLeads.filter(l => l.isICP).length} no ICP
+            {activeLeads.length} leads · {activeLeads.filter(l => l.qualified === true).length} qualificados
           </span>
         </div>
       </div>
