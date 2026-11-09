@@ -638,7 +638,7 @@ function LeadDetailModal({
           type: 'COMERCIAL',
           date: new Date(schedDate + 'T' + schedTime + ':00').toISOString(),
           duration: 60,
-          mentorName: 'João', // call de venda vai para a agenda do João
+          mentorName: 'Giulliano', // call de venda vai para a agenda do Giulliano (por enquanto)
           notes: schedNotes || undefined,
         }),
       })

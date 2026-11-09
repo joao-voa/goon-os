@@ -701,8 +701,8 @@ export default function AgendaPage() {
                     const t = e.target.value
                     setFormType(t)
                     if (!selectedMeeting) {
-                      // padrões: call de venda 1h (agenda do João), mentoria 2h
-                      if (t === 'COMERCIAL') { setFormDuration('60'); if (!formMentor) setFormMentor('João') }
+                      // padrões: call de venda 1h (agenda do Giulliano), mentoria 2h
+                      if (t === 'COMERCIAL') { setFormDuration('60'); if (!formMentor) setFormMentor('Giulliano') }
                       else if (t === 'INDIVIDUAL' || t === 'GRUPO') setFormDuration('120')
                     }
                   }} style={inputStyle}>
