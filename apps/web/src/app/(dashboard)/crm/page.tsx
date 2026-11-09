@@ -1012,6 +1012,7 @@ function LeadDetailModal({
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                         <a href={m.meetLink} target="_blank" rel="noopener noreferrer" style={{ color: '#1a73e8', fontWeight: 600, wordBreak: 'break-all' }}>{m.meetLink.replace('https://', '')}</a>
                         <button type="button" onClick={() => { navigator.clipboard.writeText(m.meetLink!); toast.success('Link copiado') }} style={{ border: `1px solid ${C.line}`, background: 'white', borderRadius: 6, padding: '3px 9px', fontSize: 11, fontWeight: 600, cursor: 'pointer', color: C.ink }}>Copiar link</button>
+                        <button type="button" onClick={() => { navigator.clipboard.writeText(meetingInviteText(m, lead)); toast.success('Convite copiado') }} style={{ border: `1px solid ${C.line}`, background: 'white', borderRadius: 6, padding: '3px 9px', fontSize: 11, fontWeight: 600, cursor: 'pointer', color: C.ink }}>Copiar convite</button>
                         {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={{ background: '#25d366', color: 'white', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 700, textDecoration: 'none' }}>Enviar no WhatsApp</a>}
                       </div>
                     ) : (

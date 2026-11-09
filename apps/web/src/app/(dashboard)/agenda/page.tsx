@@ -659,6 +659,9 @@ export default function AgendaPage() {
                         {m.meetLink && (
                           <button onClick={() => { navigator.clipboard.writeText(m.meetLink!); toast.success('Link copiado') }} style={{ border: `1px solid ${C.line}`, background: '#fff', borderRadius: 6, padding: '2px 8px', fontSize: 11, cursor: 'pointer', color: C.ink, fontWeight: 600 }}>Copiar link</button>
                         )}
+                        {m.meetLink && (
+                          <button onClick={() => { navigator.clipboard.writeText(meetingInviteText(m, m.client)); toast.success('Convite copiado') }} style={{ border: `1px solid ${C.line}`, background: '#fff', borderRadius: 6, padding: '2px 8px', fontSize: 11, cursor: 'pointer', color: C.ink, fontWeight: 600 }}>Copiar convite</button>
+                        )}
                         {m.meetLink && (() => {
                           const wa = whatsappLink(m.client, meetingInviteText(m, m.client))
                           return wa ? <a href={wa} target="_blank" rel="noopener noreferrer" style={{ background: '#25d366', color: '#fff', borderRadius: 6, padding: '3px 9px', fontSize: 11, fontWeight: 700, textDecoration: 'none' }}>Enviar no WhatsApp</a> : null
