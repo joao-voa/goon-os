@@ -625,16 +625,17 @@ function LeadDetailModal({
   const [schedTime, setSchedTime] = useState('10:00')
   const [schedTitle, setSchedTitle] = useState(`Conversa - GOON & ${lead.companyName}`)
   const [schedNotes, setSchedNotes] = useState('')
+  const [schedOwner, setSchedOwner] = useState<'Giulliano' | 'João'>('Giulliano') // agenda Google que recebe a call
   const [scheduling, setScheduling] = useState(false)
   // reunião recém-agendada: mostra o convite pronto para mandar ao cliente
-  const [justScheduled, setJustScheduled] = useState<{ id: string; date: string; type: string; category: string; meetLink: string | null } | null>(null)
+  const [justScheduled, setJustScheduled] = useState<{ id: string; date: string; type: string; category: string; meetLink: string | null; mentorName: string | null } | null>(null)
 
   async function handleScheduleMeeting(e: React.FormEvent) {
     e.preventDefault()
     if (!schedDate || !schedTitle) return
     setScheduling(true)
     try {
-      const meeting = await apiFetch<{ id: string; date: string; type: string; category: string; meetLink: string | null; googleSyncError: string | null }>('/api/meetings', {
+      const meeting = await apiFetch<{ id: string; date: string; type: string; category: string; meetLink: string | null; mentorName: string | null; googleSyncError: string | null }>('/api/meetings', {
         method: 'POST',
         body: JSON.stringify({
           clientId: lead.id,
@@ -642,7 +643,7 @@ function LeadDetailModal({
           type: 'COMERCIAL',
           date: new Date(schedDate + 'T' + schedTime + ':00').toISOString(),
           duration: 60,
-          mentorName: 'Giulliano', // call de venda vai para a agenda do Giulliano (por enquanto)
+          mentorName: schedOwner, // agenda Google de quem faz a call
           notes: schedNotes || undefined,
         }),
       })
@@ -653,7 +654,7 @@ function LeadDetailModal({
         method: 'POST',
         body: JSON.stringify({
           type: 'REUNIAO',
-          description: [`Reunião comercial agendada: ${quando} com Giulliano.`, meeting.meetLink ? `Meet: ${meeting.meetLink}` : null, schedNotes ? `Obs.: ${schedNotes}` : null].filter(Boolean).join(' '),
+          description: [`Reunião comercial agendada: ${quando} com ${schedOwner}.`, meeting.meetLink ? `Meet: ${meeting.meetLink}` : null, schedNotes ? `Obs.: ${schedNotes}` : null].filter(Boolean).join(' '),
         }),
       }).catch(() => {})
       // etiqueta: lead vai para "Agendado"
@@ -1056,7 +1057,7 @@ function LeadDetailModal({
                         {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={{ background: '#25d366', color: 'white', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 700, textDecoration: 'none' }}>Enviar no WhatsApp</a>}
                       </div>
                     ) : (
-                      <div style={{ color: m.googleSyncError ? C.red : C.mid }}>{m.googleSyncError ? 'Não foi para o Google Agenda: sem link do Meet' : 'Sem link do Meet (responsável sem agenda Google)'}</div>
+                      <div style={{ color: m.googleSyncError ? C.red : C.mid }}>{m.googleSyncError ? 'Não foi para o Google Agenda: sem link do Meet' : 'Sem link do Meet: defina Giulliano ou João como responsável'}</div>
                     )}
                   </div>
                 )
@@ -1080,6 +1081,15 @@ function LeadDetailModal({
                 <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
                   <input type="date" value={schedDate} onChange={e => setSchedDate(e.target.value)} style={{ ...inputStyle, fontSize: 11, padding: '5px 8px' }} />
                   <input type="time" value={schedTime} onChange={e => setSchedTime(e.target.value)} style={{ ...inputStyle, width: 90, fontSize: 11, padding: '5px 8px' }} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6, fontFamily: 'var(--font-sans)', fontSize: 12, color: C.ink }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid }}>Agenda de</span>
+                  {(['Giulliano', 'João'] as const).map(name => (
+                    <label key={name} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontWeight: schedOwner === name ? 700 : 400 }}>
+                      <input type="checkbox" checked={schedOwner === name} onChange={() => setSchedOwner(name)} />
+                      {name}
+                    </label>
+                  ))}
                 </div>
                 <input value={schedNotes} onChange={e => setSchedNotes(e.target.value)} placeholder="Observacoes..." style={{ ...inputStyle, fontSize: 11, padding: '5px 8px', marginBottom: 6, width: '100%' }} />
                 <div style={{ display: 'flex', gap: 6 }}>
