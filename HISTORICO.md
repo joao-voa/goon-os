@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-11-16
+- **COLCCI USA (distribuidor):** forma de pagamento ajustada (total R$ 52.000 mantido): entrada R$ 2.500 PIX (paga 10/11) + boletos dia 11: dez a fev R$ 2.500, mar e abr R$ 5.000, mai a ago R$ 8.000 (10 parcelas, nova P9 em 11/08/27). Impostos 6% e comissões do Giulliano por parcela recalculados; comissão total R$ 4.888.
+
 ## 2026-11-09
 - **Agenda do CRM = Agenda geral:** mostra todos os compromissos (mentorias, inclusive as do GOON Mentoria, calls e internos) com cor por tipo. Agendar call pelo lead mostra a agenda do dia e avisa conflito com a agenda escolhida.
 - **GOON OS × GOON Mentoria (agendas):** encontros marcados no GOON Mentoria viram reunião no GOON OS (e no Google, com Meet) e vice-versa. Marca ↔ cliente em `MentoriaTenantLink` (Zapone, LM Fashion LAB, Barriere, Be You Store/Beyousto, Inóbvia); agenda padrão por marca em Agenda > Agendas Google. Segredo compartilhado `MENTORIA_SYNC_SECRET`.
