@@ -1255,9 +1255,16 @@ export class CrmService {
         cycleNumber: true,
         product: { select: { code: true } },
         client: { select: { companyName: true, salesRep: true } },
+        payments: { where: { status: 'PAID', paidAt: { not: null } }, select: { value: true, paidAt: true } },
       },
       orderBy: { startDate: 'asc' },
     })
+
+    // Cash collected: o que de fato entrou de cada venda no próprio mês da venda
+    // (parcelas pagas com paidAt no mesmo mês/ano do startDate do plano).
+    const collectedOf = (pl: (typeof plans)[number]) => pl.payments
+      .filter(p => p.paidAt!.getFullYear() === pl.startDate.getFullYear() && p.paidAt!.getMonth() === pl.startDate.getMonth())
+      .reduce((sum, p) => sum + Number(p.value), 0)
 
     // Totalizador por programa (sempre sobre o ano inteiro, independe do filtro)
     const progMap = new Map<string, { code: string; count: number; total: number }>()
@@ -1278,18 +1285,22 @@ export class CrmService {
       label: new Date(year, m, 1).toLocaleString('pt-BR', { month: 'short' }),
       count: 0,
       total: 0,
-      deals: [] as Array<{ companyName: string; value: number; date: string; salesRep: string | null; product: string | null; productCode: string }>,
+      collected: 0,
+      deals: [] as Array<{ companyName: string; value: number; collected: number; date: string; salesRep: string | null; product: string | null; productCode: string }>,
     }))
 
     for (const pl of filtered) {
       const m = pl.startDate.getMonth()
       const v = Number(pl.value ?? 0)
       const isRenewal = (pl.cycleNumber ?? 1) >= 2
+      const collected = collectedOf(pl)
       months[m].count++
       months[m].total += v
+      months[m].collected += collected
       months[m].deals.push({
         companyName: pl.client.companyName,
         value: v,
+        collected,
         date: pl.startDate.toISOString(),
         salesRep: pl.client.salesRep,
         product: isRenewal ? `${pl.product.code} · renovação` : pl.product.code,
@@ -1299,7 +1310,8 @@ export class CrmService {
 
     const totalYear = months.reduce((s, m) => s + m.total, 0)
     const countYear = months.reduce((s, m) => s + m.count, 0)
-    return { year, months, totalYear, countYear, byProgram }
+    const collectedYear = months.reduce((s, m) => s + m.collected, 0)
+    return { year, months, totalYear, countYear, collectedYear, byProgram }
   }
 
   // Visão consolidada: por mês, o total (= soma dos programas) + o detalhamento

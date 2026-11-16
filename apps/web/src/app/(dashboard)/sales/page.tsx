@@ -6,10 +6,10 @@ import { useAuth } from '@/hooks/useAuth'
 import { canSeeSales, PRODUCT_COLORS } from '@/lib/constants'
 import { toast } from 'sonner'
 
-interface Deal { companyName: string; value: number; date: string; salesRep: string | null; product: string | null; productCode: string }
-interface MonthSales { month: number; label: string; count: number; total: number; deals: Deal[] }
+interface Deal { companyName: string; value: number; collected: number; date: string; salesRep: string | null; product: string | null; productCode: string }
+interface MonthSales { month: number; label: string; count: number; total: number; collected: number; deals: Deal[] }
 interface ProgramTotal { code: string; count: number; total: number }
-interface SalesData { year: number; totalYear: number; countYear: number; months: MonthSales[]; byProgram: ProgramTotal[] }
+interface SalesData { year: number; totalYear: number; countYear: number; collectedYear: number; months: MonthSales[]; byProgram: ProgramTotal[] }
 interface Goal { month: number; targetValue: number; targetCount: number }
 interface GoalsData { year: number; product: string; months: Goal[]; totalValue: number; totalCount: number }
 interface OvProgram { product: string; metaValue: number; metaCount: number; soldValue: number; soldCount: number }
@@ -216,10 +216,16 @@ export default function SalesPage() {
             { label: productFilter ? `Total ${productFilter}` : 'Total no Ano', value: fmtBRL(data?.totalYear ?? 0), accent: C.ink },
             { label: 'Contratos', value: String(data?.countYear ?? 0), accent: '#4A78FF' },
             { label: 'Ticket Médio', value: fmtBRL(avgTicket), accent: C.green },
-          ].map(k => (
+            ...(year === nowYear ? (() => {
+              const mS = data?.months.find(x => x.month === curMonth)
+              return [{ label: `Cash collected · ${MONTH_FULL[curMonth - 1]}`, value: fmtBRL(mS?.collected ?? 0), accent: '#0d9488', sub: mS?.total ? `${Math.round((mS.collected / mS.total) * 100)}% de ${fmtBRL(mS.total)} vendidos no mês` : 'sem vendas no mês' }]
+            })() : []),
+            { label: `Cash collected · ${year}`, value: fmtBRL(data?.collectedYear ?? 0), accent: '#0d9488', sub: data?.totalYear ? `${Math.round(((data.collectedYear ?? 0) / data.totalYear) * 100)}% do vendido entrou no mês da venda` : undefined },
+          ].map((k: { label: string; value: string; accent: string; sub?: string }) => (
             <div key={k.label} style={{ ...card, borderTop: `3px solid ${k.accent}`, padding: '14px 16px' }}>
               <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.mid }}>{k.label}</div>
               <div style={{ ...num, fontSize: 22, fontWeight: 700, color: k.accent, marginTop: 4 }}>{k.value}</div>
+              {k.sub && <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: C.dim, marginTop: 2 }}>{k.sub}</div>}
             </div>
           ))}
         </div>
@@ -265,6 +271,7 @@ export default function SalesPage() {
                       <div style={{ width: `${(m.total / maxTotal) * 100}%`, background: isCur ? C.neon : C.slate, height: '100%', borderRadius: 6, transition: 'width 0.4s ease' }} />
                     </div>
                     <span style={{ width: 40, textAlign: 'center', color: C.mid, fontSize: 11, fontWeight: 600 }}>{m.count}x</span>
+                    <span title="Cash collected: entrou no mês da venda" style={{ ...num, width: 110, textAlign: 'right', fontSize: 11.5, fontWeight: 700, color: '#0d9488' }}>{fmtBRL(m.collected ?? 0)}</span>
                     <span style={{ ...num, width: 120, textAlign: 'right', fontWeight: 800, color: C.ink }}>{fmtBRL(m.total)}</span>
                   </div>
                   {open && (
@@ -272,7 +279,10 @@ export default function SalesPage() {
                       {m.deals.slice().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((d, i) => (
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '6px 0', fontFamily: 'var(--font-sans)', fontSize: 12, color: C.mid, borderBottom: `1px solid ${C.bg}` }}>
                           <span><span style={{ ...num, color: C.dim }}>{new Date(d.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}</span> · <strong style={{ color: C.ink }}>{d.companyName}</strong>{d.product ? <span style={{ color: C.dim }}> · {d.product}</span> : ''}{d.salesRep ? <span style={{ color: C.dim }}> · {d.salesRep}</span> : ''}</span>
-                          <span style={{ ...num, fontWeight: 700, color: C.green }}>{fmtBRL(d.value)}</span>
+                          <span style={{ ...num, whiteSpace: 'nowrap' }}>
+                            <span title="Entrou no mês da venda" style={{ color: '#0d9488', fontWeight: 600, marginRight: 10 }}>{fmtBRL(d.collected ?? 0)}</span>
+                            <span style={{ fontWeight: 700, color: C.green }}>{fmtBRL(d.value)}</span>
+                          </span>
                         </div>
                       ))}
                     </div>
