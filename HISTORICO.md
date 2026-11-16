@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-16
+- **StartCBO:** dados cadastrais (CBO Enterprise, CNPJ 62.201.977/0001-24, endereço Picada Café/RS, responsável Caio Brito de Oliveira; razão social, CPF e e-mail de assinatura nas observações). Entrada R$ 10.000 movida para **18/11** e voltou a pendente (estava marcada paga em 10/11 pelo fechamento); imposto P0 acompanha.
 - **COLCCI USA (distribuidor):** forma de pagamento ajustada (total R$ 52.000 mantido): entrada R$ 2.500 PIX (paga 10/11) + boletos dia 11: dez a fev R$ 2.500, mar e abr R$ 5.000, mai a ago R$ 8.000 (10 parcelas, nova P9 em 11/08/27). Impostos 6% e comissões do Giulliano por parcela recalculados; comissão total R$ 4.888.
 
 ## 2026-11-09
