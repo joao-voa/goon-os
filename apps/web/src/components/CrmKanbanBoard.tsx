@@ -40,6 +40,8 @@ interface LeadItem {
   isICP: boolean
   qualified: boolean | null
   nextMeeting?: { date: string; type: string } | null
+  leadMaterial?: string | null
+  materialSentAt?: string | null
   segment: string | null
   suggestedProduct: string | null
   cardResponsible: string | null
@@ -115,6 +117,11 @@ function CardBody({ item }: { item: LeadItem }) {
         })()}
       </div>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+        {item.leadMaterial && (
+          <span title={item.materialSentAt ? 'Material enviado' : 'Material a enviar'} style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700, color: item.materialSentAt ? '#15803d' : '#b45309', background: item.materialSentAt ? '#dcfce7' : '#fef3c7', padding: '2px 8px', borderRadius: 999, border: `1px solid ${item.materialSentAt ? '#bbf7d0' : '#fde68a'}` }}>
+            {item.materialSentAt ? '✓ ' : ''}Material: {item.leadMaterial}
+          </span>
+        )}
         {item.nextMeeting && (() => {
           const d = new Date(item.nextMeeting.date)
           return (

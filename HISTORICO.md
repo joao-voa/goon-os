@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-11-19
+- **Captação por CTA de post:** página pública `/material?m=<material>` (nome, marca, @ Instagram, WhatsApp, e-mail) que cria o lead no CRM com origem "CTA · Instagram" e o material a enviar (`Client.leadMaterial`, `materialSentAt`). CRM: botão "Link de material" (gera e copia o link), campo Material + "Material enviado" no lead, etiqueta no card e filtro A enviar / Enviado.
+
 ## 2026-11-16
 - **Bella Lina & Gekkopod (GI):** parcelas corrigidas para R$ 2.500 (eram R$ 2.750). Plano de R$ 30.000 = entrada + 11 parcelas (12x R$ 2.500), nova P11 em 18/08/27; parcela de out/26 já paga ajustada para R$ 2.500; impostos 6% = R$ 150 cada.
 - **Vendas:** indicador **Cash collected** (o que entrou de cada venda no próprio mês da venda: parcelas pagas com paidAt no mês do startDate). Card do mês atual e do ano, valor por mês na evolução e por venda no detalhe.

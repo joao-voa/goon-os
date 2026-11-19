@@ -60,6 +60,8 @@ interface LeadItem {
   suggestedProduct: string | null
   cardResponsible: string | null
   qualified: boolean | null
+  leadMaterial?: string | null
+  materialSentAt?: string | null
   productCode: string | null
   nextMeeting?: { date: string; type: string } | null
   stageChangedAt: string | null
@@ -845,6 +847,16 @@ function LeadDetailModal({
     .replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[/?].*$/, '').replace(/^@+/, '').trim()
   const instagram = igRaw ? `@${igRaw}` : null
   const [qualified, setQualified] = useState<boolean | null>(lead.qualified)
+  // CTA de post: material a enviar
+  const [material, setMaterial] = useState(lead.leadMaterial ?? '')
+  const [materialSentAt, setMaterialSentAt] = useState<string | null>(lead.materialSentAt ?? null)
+  async function saveMaterial(patch: { leadMaterial?: string | null; materialSentAt?: string | null }) {
+    try {
+      await apiFetch(`/api/clients/${lead.id}`, { method: 'PUT', body: JSON.stringify(patch) })
+      if ('materialSentAt' in patch) setMaterialSentAt(patch.materialSentAt ?? null)
+      onUpdated()
+    } catch { toast.error('Erro ao salvar o material') }
+  }
   async function toggleQualified() {
     const next = !qualified
     setQualified(next)
@@ -877,6 +889,21 @@ function LeadDetailModal({
               {qualified ? 'Qualificado' : qualified === false ? 'Desqualificado' : 'Não avaliado'}
             </span>
           </button>
+          {/* Material do CTA (qual post/conteúdo mandar) */}
+          {(lead.leadSource?.endsWith('_instagram') && lead.leadSource !== 'instagram' || material || materialSentAt) && (
+            <div style={{ border: `1px solid ${materialSentAt ? '#bbf7d0' : '#fde68a'}`, background: materialSentAt ? '#f0fdf4' : '#fffbeb', borderRadius: 8, padding: '10px 12px', marginBottom: 14, fontFamily: 'var(--font-sans)' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid, marginBottom: 6 }}>Material a enviar (CTA)</div>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                <input value={material} onChange={e => setMaterial(e.target.value)} onBlur={() => { if ((material.trim() || null) !== (lead.leadMaterial ?? null)) saveMaterial({ leadMaterial: material.trim() || null }) }}
+                  placeholder="De qual post/CTA veio? Ex.: guia-precificacao" style={{ ...inputStyle, flex: '1 1 180px' }} />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: materialSentAt ? C.green : C.ink, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  <input type="checkbox" checked={!!materialSentAt} onChange={e => saveMaterial({ materialSentAt: e.target.checked ? new Date().toISOString() : null })} />
+                  {materialSentAt ? `Enviado em ${new Date(materialSentAt).toLocaleDateString('pt-BR')}` : 'Material enviado'}
+                </label>
+              </div>
+            </div>
+          )}
+
           {/* Info Grid - with edit button */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid }}>Dados</div>
@@ -1420,6 +1447,7 @@ export default function CrmPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [faturamentoFilter, setFaturamentoFilter] = useState('ALL')
   const [qualFilter, setQualFilter] = useState<'ALL' | 'SIM' | 'NAO' | 'NULL'>('ALL')
+  const [materialFilter, setMaterialFilter] = useState<'ALL' | 'PEND' | 'SENT'>('ALL')
   const [crmView, setCrmView] = useState<'kanban' | 'dashboard'>('kanban')
   const isMobile = useIsMobile()
 
@@ -1530,6 +1558,10 @@ export default function CrmPage() {
     if (qualFilter === 'SIM' && l.qualified !== true) return false
     if (qualFilter === 'NAO' && l.qualified !== false) return false
     if (qualFilter === 'NULL' && l.qualified != null) return false
+    // CTA: a enviar = tem material ou veio de CTA e ainda não foi enviado
+    const isCta = !!l.leadMaterial || (l.leadSource?.endsWith('_instagram') && l.leadSource !== 'instagram')
+    if (materialFilter === 'PEND' && !(isCta && !l.materialSentAt)) return false
+    if (materialFilter === 'SENT' && !l.materialSentAt) return false
     if (faturamentoFilter && faturamentoFilter !== 'ALL') {
       if (faturamentoFilter === 'ICP') { if (!l.isICP) return false }
       else if (faturamentoFilter === 'FORA') { if (l.isICP || l.faturamentoBand === 'NAO_INFORMADO') return false }
@@ -1989,6 +2021,23 @@ export default function CrmPage() {
             {syncing ? 'Sincronizando…' : 'Sincronizar leads'}
           </button>
           <button
+            onClick={() => {
+              const m = prompt('Nome do material/post (vai no link e aparece no lead). Ex.: guia-precificacao')
+              if (m === null) return
+              const slug = m.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+              const url = `${window.location.origin}/material${slug ? `?m=${slug}` : ''}`
+              navigator.clipboard.writeText(url)
+              toast.success(`Link copiado: ${url}`)
+            }}
+            title="Gera o link da página de captação para mandar no direct"
+            style={{
+              padding: '8px 16px', border: `1px solid ${C.line}`, borderRadius: 6, background: '#fff', color: C.ink,
+              fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            Link de material
+          </button>
+          <button
             onClick={() => setShowNewLead(true)}
             style={{
               padding: '8px 16px', border: 'none', borderRadius: 6, background: C.neon, color: C.ink,
@@ -2032,6 +2081,19 @@ export default function CrmPage() {
               <button key={val} onClick={() => setFaturamentoFilter(val)} style={{
                 padding: '5px 12px', border: `1px solid ${on ? 'transparent' : C.line}`, borderRadius: 100, fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
                 background: bg, color: on ? 'white' : C.slate,
+              }}>{label}</button>
+            )
+          })}
+        </div>
+        {/* CTA / material */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: C.mid }}>Material CTA:</span>
+          {([['ALL', 'TODOS'], ['PEND', 'A ENVIAR'], ['SENT', 'ENVIADO']] as const).map(([val, label]) => {
+            const on = materialFilter === val
+            return (
+              <button key={val} onClick={() => setMaterialFilter(val)} style={{
+                padding: '5px 12px', border: `1px solid ${on ? 'transparent' : C.line}`, borderRadius: 100, fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                background: on ? (val === 'PEND' ? C.amber : val === 'SENT' ? C.green : C.ink) : '#fff', color: on ? 'white' : C.slate,
               }}>{label}</button>
             )
           })}

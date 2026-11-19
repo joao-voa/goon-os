@@ -87,6 +87,8 @@ export class CrmService {
         suggestedProduct: true,
         cardResponsible: true,
         qualified: true,
+        leadMaterial: true,
+        materialSentAt: true,
         stageChangedAt: true,
         createdAt: true,
         closedAt: true,
@@ -1416,6 +1418,7 @@ export class CrmService {
   async createEventLead(dto: {
     responsible: string; companyName?: string; whatsapp?: string; email?: string
     instagram?: string; segment?: string; estimatedRevenue?: string; notes?: string; eventName?: string; leadSource?: string
+    material?: string
   }) {
     if (!dto.responsible?.trim()) throw new BadRequestException('Nome é obrigatório')
     const source = dto.leadSource?.trim() || 'evento'
@@ -1423,6 +1426,9 @@ export class CrmService {
     const whatsapp = dto.whatsapp?.trim() || null
     const parts: string[] = []
     if (dto.eventName) parts.push(`Inscrição: ${dto.eventName}`)
+    // CTA de post: qual material mandar (vem do link ?m= da página /material)
+    const material = dto.material?.trim().slice(0, 120) || null
+    if (material) parts.push(`Material: ${material}`)
     if (dto.instagram) parts.push(`Instagram: ${dto.instagram.trim().replace(/^@?/, '@')}`)
     if (dto.notes?.trim()) parts.push(dto.notes.trim())
     const note = parts.join(' · ')
@@ -1440,6 +1446,8 @@ export class CrmService {
           segment: existing.segment ?? (dto.segment?.trim() || null),
           estimatedRevenue: existing.estimatedRevenue ?? (dto.estimatedRevenue?.trim() || null),
           leadNotes: note ? (existing.leadNotes ? `${existing.leadNotes}\n${note}` : note) : existing.leadNotes,
+          // pediu outro material: vale o mais recente e volta para "a enviar"
+          ...(material ? { leadMaterial: material, materialSentAt: null } : {}),
         },
       })
       await this.activityLog.log({ clientId: existing.id, entityType: 'CRM', entityId: existing.id, action: 'EVENT_SIGNUP', description: `${existing.companyName} se inscreveu (${dto.eventName ?? 'evento'})` })
@@ -1456,6 +1464,7 @@ export class CrmService {
         estimatedRevenue: dto.estimatedRevenue?.trim() || null,
         leadSource: source,
         leadNotes: note || null,
+        leadMaterial: material,
         status: 'PROSPECT',
         leadStage: 'NOVO',
         stageChangedAt: new Date(),

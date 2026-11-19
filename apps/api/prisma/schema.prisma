@@ -71,6 +71,8 @@ model Client {
   isClientActive   Boolean  @default(false)
   mentorshipEnded  Boolean  @default(false) // mentoria encerrada: sai da agenda, mantém pagamentos
   qualified        Boolean? // lead qualificado (true) / desqualificado (false); null = não avaliado
+  leadMaterial     String?   // CTA de post: qual material mandar (vem do link ?m= da página /material ou preenchido à mão)
+  materialSentAt   DateTime? // quando o material foi enviado (null = a enviar)
   standby          Boolean  @default(false) // cliente em standby: parcelas não pagas congeladas (fora de fluxo, comissões, splits)
   standbyAt        DateTime?
 

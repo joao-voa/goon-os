@@ -120,4 +120,10 @@ export class CreateClientDto {
 
   @IsOptional() @IsBoolean()
   qualified?: boolean
+
+  @IsOptional() @IsString()
+  leadMaterial?: string | null
+
+  @IsOptional() @IsString()
+  materialSentAt?: string | null
 }
