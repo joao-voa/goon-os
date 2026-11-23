@@ -634,3 +634,15 @@ model SalesGoal {
   @@unique([year, month, product])
   @@index([year])
 }
+
+// Saldo de caixa informado (extrato do banco). O mais recente ancora a projeção diária.
+model CashBalance {
+  id        String   @id @default(cuid())
+  date      DateTime // dia do saldo (UTC meia-noite)
+  value     Decimal  @db.Decimal(12, 2)
+  note      String?
+  userEmail String?
+  createdAt DateTime @default(now())
+
+  @@index([date])
+}

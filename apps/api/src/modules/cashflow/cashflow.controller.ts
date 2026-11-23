@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import { CashflowService } from './cashflow.service'
 
@@ -27,4 +27,20 @@ export class CashflowController {
       product, category, costCenter,
     })
   }
+
+  @Get('view')
+  getCashView(@Query('from') from?: string, @Query('to') to?: string) {
+    return this.service.getCashView(from, to)
+  }
+
+  @Get('stats')
+  getCashStats() {
+    return this.service.getCashStats()
+  }
+
+  @Post('balance')
+  setCashBalance(@Body() dto: { date?: string; value: number; note?: string }, @Req() req: { user?: { email?: string } }) {
+    return this.service.setCashBalance(dto, req.user?.email)
+  }
+
 }

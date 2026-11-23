@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { NOT_CARTEIRA_CLIENT_FILTER, STANDBY_FROZEN_COMMISSION, STANDBY_FROZEN_PAYMENT, mentorExpenseOfClients } from '../../shared/constants'
 
@@ -273,4 +273,125 @@ export class CashflowService {
       totalEntradas, totalSaidas,
     }
   }
+
+  // ===== Caixa: visão diária com projeção =====
+
+  private static dayKey(d: Date) { return d.toISOString().slice(0, 10) }
+
+  /**
+   * Movimento de caixa dia a dia no intervalo [from, to] (YYYY-MM-DD, UTC).
+   * Entradas: parcela paga entra no dia do pagamento; não paga entra no vencimento
+   * (se ainda não venceu). Saídas: despesa paga no dia do pagamento; prevista no
+   * vencimento; prevista já vencida entra HOJE (conta a pagar atrasada).
+   * Mesmas exclusões do fluxo: carteira, standby, perdidos e repasse do Giulliano
+   * (MENTORIA Giulliano). Comissões entram pelas despesas "Comissao ..." (sem
+   * contar o model Commission de novo). Parcelas vencidas e não pagas ficam fora
+   * do dia a dia: vão em `overdueIn` (risco, não caixa certo).
+   */
+  async getCashView(fromStr?: string, toStr?: string) {
+    const now = new Date()
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+    const parse = (v?: string) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(`${v}T00:00:00Z`) : null)
+    const from = parse(fromStr) ?? new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1))
+    const to = parse(toStr) ?? new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0))
+    const end = new Date(to.getTime() + 86400000)
+    const key = CashflowService.dayKey
+
+    const standbyClients = await this.prisma.client.findMany({ where: { standby: true }, select: { companyName: true } })
+    const isFrozenExpense = mentorExpenseOfClients(standbyClients.map(c => c.companyName))
+    const lostClient = { leadStage: { notIn: ['RECUPERAR', 'PERDIDO'] }, payments: { none: { inCarteira: true } } }
+
+    const paySel = { id: true, value: true, dueDate: true, paidAt: true, status: true, installment: true, totalInstallments: true, client: { select: { id: true, companyName: true } }, clientPlan: { select: { product: { select: { code: true } } } } } as const
+    const [paid, toReceive, overdue, expenses, balance] = await Promise.all([
+      this.prisma.payment.findMany({ where: { status: 'PAID', paidAt: { gte: from, lt: end }, inCarteira: false }, select: paySel }),
+      this.prisma.payment.findMany({
+        where: { status: { in: ['PENDING', 'SCHEDULED', 'OVERDUE'] }, dueDate: { gte: from > today ? from : today, lt: end }, inCarteira: false, NOT: STANDBY_FROZEN_PAYMENT, client: lostClient },
+        select: paySel,
+      }),
+      this.prisma.payment.findMany({
+        where: { status: { in: ['PENDING', 'OVERDUE'] }, dueDate: { lt: today }, inCarteira: false, NOT: STANDBY_FROZEN_PAYMENT, client: lostClient },
+        select: paySel, orderBy: { dueDate: 'asc' },
+      }),
+      this.prisma.expense.findMany({
+        where: {
+          NOT: { AND: [{ category: 'MENTORIA' }, { description: { contains: 'Giulliano' } }] },
+          OR: [
+            { status: 'PAGO', OR: [{ paidAt: { gte: from, lt: end } }, { paidAt: null, dueDate: { gte: from, lt: end } }] },
+            { status: { not: 'PAGO' }, dueDate: { lt: end } },
+          ],
+        },
+        select: { id: true, description: true, category: true, costCenter: true, value: true, dueDate: true, paidAt: true, status: true },
+      }),
+      this.prisma.cashBalance.findFirst({ orderBy: [{ date: 'desc' }, { createdAt: 'desc' }] }),
+    ])
+
+    type Item = { date: string; kind: 'in' | 'out'; realized: boolean; name: string; detail: string; value: number; category: string; late?: boolean }
+    const items: Item[] = []
+    const payName = (p: (typeof paid)[number]) => p.client?.companyName ?? 'Cliente'
+    const payDetail = (p: (typeof paid)[number]) => `${p.clientPlan?.product?.code ?? ''} parcela ${p.installment}/${p.totalInstallments}`.trim()
+    for (const p of paid) items.push({ date: key(p.paidAt!), kind: 'in', realized: true, name: payName(p), detail: payDetail(p), value: Number(p.value), category: 'RECEITA' })
+    for (const p of toReceive) items.push({ date: key(p.dueDate), kind: 'in', realized: false, name: payName(p), detail: payDetail(p), value: Number(p.value), category: 'RECEITA' })
+    for (const e of expenses) {
+      if (isFrozenExpense(e)) continue
+      const base = { kind: 'out' as const, name: e.description, detail: e.costCenter ?? '', value: Number(e.value), category: e.category }
+      if (e.status === 'PAGO') {
+        const d = e.paidAt ?? e.dueDate
+        if (d >= from && d < end) items.push({ ...base, date: key(d), realized: true })
+      } else if (e.dueDate < today) {
+        if (today >= from && today < end) items.push({ ...base, date: key(today), realized: false, late: true, detail: `venceu ${e.dueDate.toISOString().slice(8, 10)}/${e.dueDate.toISOString().slice(5, 7)}` })
+      } else if (e.dueDate >= from) {
+        items.push({ ...base, date: key(e.dueDate), realized: false })
+      }
+    }
+    items.sort((a, b) => a.date.localeCompare(b.date) || a.kind.localeCompare(b.kind) || b.value - a.value)
+
+    return {
+      from: key(from), to: key(to), today: key(today),
+      balance: balance ? { date: key(balance.date), value: Number(balance.value), note: balance.note, at: balance.createdAt } : null,
+      items,
+      overdueIn: {
+        total: overdue.reduce((s, p) => s + Number(p.value), 0),
+        items: overdue.map(p => ({ date: key(p.dueDate), name: payName(p), detail: payDetail(p), value: Number(p.value) })),
+      },
+    }
+  }
+
+  /** Referências para a projeção: ticket e caixa por venda, custo médio mensal. */
+  async getCashStats() {
+    const now = new Date()
+    const sixAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 6, 1))
+    const threeAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 3, 1))
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+    const [plans, costs] = await Promise.all([
+      this.prisma.clientPlan.findMany({
+        where: { startDate: { gte: sixAgo }, status: { not: 'CANCELLED' }, client: { leadStage: { notIn: ['RECUPERAR', 'PERDIDO'] } } },
+        select: { value: true, startDate: true, payments: { where: { status: 'PAID' }, select: { value: true, paidAt: true } } },
+      }),
+      this.prisma.expense.findMany({
+        where: { status: 'PAGO', dueDate: { gte: threeAgo, lt: monthStart }, category: { notIn: ['MENTORIA', 'IMPOSTOS'] }, NOT: { AND: [{ category: 'PESSOAL' }, { description: { contains: 'Giulliano' } }] } },
+        select: { value: true },
+      }),
+    ])
+    const sold = plans.reduce((s, p) => s + Number(p.value), 0)
+    // caixa que a venda traz no próprio mês (o que importa pra fechar o mês)
+    const firstMonthCash = plans.reduce((s, p) => s + p.payments
+      .filter(x => x.paidAt && x.paidAt.getUTCFullYear() === p.startDate.getUTCFullYear() && x.paidAt.getUTCMonth() === p.startDate.getUTCMonth())
+      .reduce((a, x) => a + Number(x.value), 0), 0)
+    const n = plans.length || 1
+    return {
+      salesLast6: plans.length,
+      avgTicket: Math.round(sold / n),
+      avgCashPerSale: Math.round(firstMonthCash / n),
+      avgSalesPerMonth: Math.round(plans.length / 6 * 10) / 10,
+      avgMonthlyCost: Math.round(costs.reduce((s, e) => s + Number(e.value), 0) / 3),
+    }
+  }
+
+  async setCashBalance(dto: { date?: string; value: number; note?: string }, userEmail?: string) {
+    const v = Number(dto.value)
+    if (!Number.isFinite(v)) throw new BadRequestException('Informe o saldo')
+    const d = dto.date && /^\d{4}-\d{2}-\d{2}$/.test(dto.date) ? new Date(`${dto.date}T00:00:00Z`) : (() => { const n = new Date(); return new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate())) })()
+    return this.prisma.cashBalance.create({ data: { date: d, value: v, note: dto.note?.trim() || null, userEmail: userEmail ?? null } })
+  }
+
 }
