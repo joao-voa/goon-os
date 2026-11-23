@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-11-23
+- **Repasses do João (despesas MENTORIA "Mentoria João Afonso", uma por parcela, a pagar):** LM Fashion Lab GA 1/3 do líquido (R$ 18.800); Bella Lina GI 10% do líquido (R$ 2.820); Colcci USA GE 10% (R$ 4.888); StartCBO GE 10% (R$ 11.280); 244 corrigido para R$ 940; Ary Narah já tinha (R$ 470/parcela). Splits do João (PlanMentor) criados em Bella Lina, Colcci, StartCBO.
+- **StartCBO:** pagou R$ 2.000 da entrada (18/11); saldo R$ 8.000 vencido em 18/11. Imposto da entrada dividido (R$ 120 + R$ 480).
+- **ORDO renovou:** plano GE ciclo 2, 6 meses (20/11/26 a 20/04/27), R$ 16.000/mês (R$ 96.000), imposto 6% R$ 960/mês, repasse João R$ 6.000/mês. Plano anterior marcado como concluído.
+
 ## 2026-11-19
 - **Captação por CTA de post:** página pública `/material?m=<material>` (nome, marca, @ Instagram, WhatsApp, e-mail) que cria o lead no CRM com origem "CTA · Instagram" e o material a enviar (`Client.leadMaterial`, `materialSentAt`). CRM: botão "Link de material" (gera e copia o link), campo Material + "Material enviado" no lead, etiqueta no card e filtro A enviar / Enviado.
 
