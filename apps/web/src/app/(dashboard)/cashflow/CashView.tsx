@@ -60,6 +60,7 @@ export default function CashView() {
   const [includeOverdueIn, setIncludeOverdueIn] = useState(false)
   const [hover, setHover] = useState<number | null>(null)
   const [selDay, setSelDay] = useState<string | null>(null)
+  const [showLate, setShowLate] = useState(false)
   const [editBal, setEditBal] = useState(false)
   const [balInput, setBalInput] = useState('')
   const [cushion, setCushion] = useState<number | null>(null)
@@ -266,15 +267,24 @@ export default function CashView() {
         <div style={{ padding: '4px 16px 12px' }}>
           {listDays.every(d => dayItems(d).length === 0) && <div style={{ color: C.dim, fontSize: 13, padding: '16px 0', textAlign: 'center' }}>Nada previsto.</div>}
           {listDays.map(d => {
-            const its = dayItems(d)
-            if (!its.length) return null
+            const all = dayItems(d)
+            if (!all.length) return null
             const idx = month.days.indexOf(d)
+            // contas vencidas sem baixa caem todas em hoje: resume numa linha
+            const late = all.filter(i => i.late && i.kind === 'out')
+            const its = showLate ? all : all.filter(i => !(i.late && i.kind === 'out'))
             return (
               <div key={d} style={{ padding: '8px 0', borderBottom: `1px solid ${C.bg}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: C.mid, fontWeight: 700, marginBottom: 4 }}>
                   <span>{new Date(`${d}T12:00:00Z`).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC' })}</span>
                   <span style={num}>saldo {brl(month.bal[idx])}</span>
                 </div>
+                {late.length > 0 && (
+                  <button onClick={() => setShowLate(v => !v)} style={{ display: 'flex', justifyContent: 'space-between', width: '100%', gap: 10, fontSize: 13, padding: '5px 8px', margin: '2px 0', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 6, cursor: 'pointer', fontFamily: sans, color: C.ink }}>
+                    <span>{showLate ? '▾' : '▸'} {late.length} contas vencidas sem baixa</span>
+                    <span style={{ ...num, fontWeight: 700 }}>−{brl(late.reduce((s, i) => s + i.value, 0))}</span>
+                  </button>
+                )}
                 {its.map((it, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 13, padding: '3px 0' }}>
                     <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -469,7 +479,7 @@ function FlowChart({ perDay, today, hover, setHover, onPick, sel, bal }: {
 }) {
   const H = 150, top = 8, bottom = 22
   const maxV = Math.max(1, ...perDay.map(p => Math.max(p.inn, p.out)))
-  const { hi } = niceTicks(0, maxV, 2)
+  const { hi } = niceTicks(0, maxV, 4)
   const n = perDay.length
   const bw = Math.max(3, ((W - PADL - PADR) / n) * 0.6)
   const x = (i: number) => PADL + (i + 0.5) * ((W - PADL - PADR) / n)
