@@ -140,6 +140,7 @@ parcela que o cliente não pagou = ela não recebe** (fatia vai pro Giulliano). 
 - **98/98** = parcela **futura** de cliente em churn.
 - **99/99** = parcela **antiga não paga**.
 - Todas com `inCarteira = true` → saem do fluxo futuro e dos recebíveis.
+- **Sem imposto futuro em carteira:** parcela em carteira não gera despesa de imposto 6% (nem fica imposto em aberto dela). Se o cliente pagar uma parcela da carteira, aí sim lança o imposto daquela parcela.
 - Filtro `NOT_CARTEIRA_CLIENT_FILTER` (`apps/api/src/shared/constants.ts`) exclui
   `leadStage RECUPERAR/PERDIDO` **ou** cliente com qualquer parcela `inCarteira`.
 
