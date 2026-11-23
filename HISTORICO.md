@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-23
+- **Impostos órfãos apagados (14, R$ 2.700):** Caffona 8, Talamonte 2 (carteira), Durante, CRIS SEMI JOIAS, Produtos em acrílico, S.comp personalizados.
 - **VVN COMPANY:** 9 impostos em aberto (out/26 a jun/27, R$ 1.350) apagados; o cliente não existe mais no sistema.
 - **Carteira de cobrança sem imposto futuro:** apagados 22 impostos em aberto de clientes só com parcelas em carteira (A FIRMA 7, Kilombo93 8, MataNativa 1, Star Shop 6; R$ 4.110). Regra registrada no CLAUDE.md.
 - **4fminas:** impostos duplicados apagados (P0 a P5, inclusive 4 pagos em duplicidade). Despesas refeitas pelo plano atual (parcelas R$ 2.500): imposto R$ 150 e repasse João R$ 235 por parcela (P4 a P9); P4/P5 vencidas em 03/01/27, P6 a P9 no vencimento. Repasse João P3 (set/26, sem parcela) apagado.
