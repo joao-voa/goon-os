@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-23
+- **MYMPPY:** impostos futuros apagados (P9 a P12, dez/26 a mar/27, R$ 756). Venda paga à vista em abr/26; impostos até nov/26 mantidos.
 - **Impostos órfãos apagados (14, R$ 2.700):** Caffona 8, Talamonte 2 (carteira), Durante, CRIS SEMI JOIAS, Produtos em acrílico, S.comp personalizados.
 - **VVN COMPANY:** 9 impostos em aberto (out/26 a jun/27, R$ 1.350) apagados; o cliente não existe mais no sistema.
 - **Carteira de cobrança sem imposto futuro:** apagados 22 impostos em aberto de clientes só com parcelas em carteira (A FIRMA 7, Kilombo93 8, MataNativa 1, Star Shop 6; R$ 4.110). Regra registrada no CLAUDE.md.
