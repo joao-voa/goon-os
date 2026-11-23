@@ -7,7 +7,7 @@ interface Layers { impostos: number; custoOperacao: number; distribuicao: number
 interface MonthData { month: number; year: number; entradas: { total: number }; layers: Layers }
 interface Totals { entradas: number; impostos: number; custoOperacao: number; distribuicao: number; pessoalGiu: number }
 interface CashflowData { year: number; months: MonthData[]; totals: Totals }
-interface Mentor { mentorName: string; client: string; product?: string; monthlyBreakdown: Record<string, number>; inCarteira?: boolean }
+interface Mentor { mentorName: string; client: string; product?: string; monthlyBreakdown: Record<string, number>; monthlyExpected?: Record<string, number>; inCarteira?: boolean }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 const fmtK = (v: number) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1).replace('.', ',')}M` : v >= 1000 ? `${Math.round(v / 1000)}k` : `${Math.round(v)}`
@@ -99,7 +99,8 @@ export default function PartnerCashflow({ partnerKey }: { partnerKey: 'giulliano
   const repasseByMonth: Record<number, number> = {}
   for (const mt of (mentors ?? [])) {
     if (!cfg.regex.test(mt.mentorName) || mt.inCarteira) continue
-    for (const [key, val] of Object.entries(mt.monthlyBreakdown)) {
+    // só o que entrou ou ainda vai vencer: parcela vencida e não paga não é repasse
+    for (const [key, val] of Object.entries(mt.monthlyExpected ?? mt.monthlyBreakdown)) {
       const [y, mo] = key.split('-')
       if (parseInt(y) !== year) continue
       repasseByMonth[parseInt(mo)] = (repasseByMonth[parseInt(mo)] ?? 0) + val
@@ -245,8 +246,8 @@ export default function PartnerCashflow({ partnerKey }: { partnerKey: 'giulliano
                   {(() => {
                     const monthKey = `${year}-${String(m.month).padStart(2, '0')}`
                     const detalhe = (mentors ?? [])
-                      .filter(mt => cfg.regex.test(mt.mentorName) && !mt.inCarteira && (mt.monthlyBreakdown[monthKey] ?? 0) !== 0)
-                      .map(mt => ({ client: mt.client, product: mt.product, value: mt.monthlyBreakdown[monthKey] }))
+                      .filter(mt => cfg.regex.test(mt.mentorName) && !mt.inCarteira && ((mt.monthlyExpected ?? mt.monthlyBreakdown)[monthKey] ?? 0) !== 0)
+                      .map(mt => ({ client: mt.client, product: mt.product, value: (mt.monthlyExpected ?? mt.monthlyBreakdown)[monthKey] }))
                       .sort((a, b) => b.value - a.value)
                     if (detalhe.length === 0) return null
                     return detalhe.map((d, i) => (

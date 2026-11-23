@@ -209,6 +209,7 @@ export class PlansService {
       id: string; mentorName: string; value: number; notes: string | null;
       createdAt: Date; client: string; clientId: string; product: string;
       productName: string; planValue: number; monthlyBreakdown: Record<string, number>;
+      monthlyExpected: Record<string, number>;
       inCarteira: boolean;
       installments?: Array<{ date: string; value: number; status: string }>;
     }> = []
@@ -225,6 +226,10 @@ export class PlansService {
     const standbyClients = await this.prisma.client.findMany({ where: { standby: true }, select: { id: true } })
     const standbySet = new Set(standbyClients.map(c => c.id))
     const frozen = (clientId: string, status: string) => standbySet.has(clientId) && status !== 'PAID'
+    // parcela cancelada não gera repasse; vencida e não paga não entra no esperado (fluxo dos sócios)
+    const now = new Date()
+    const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+    const expected = (pay: { dueDate: Date; status: string }) => pay.status === 'PAID' || pay.dueDate >= todayUtc
 
     // Group mentors by plan to calculate Giulliano's remaining share
     const planMap = new Map<string, typeof mentors>()
@@ -245,6 +250,7 @@ export class PlansService {
     })
 
     const exMentoraTransfer = new Map<string, Record<string, number>>() // planId -> mês -> valor
+    const exMentoraTransferExp = new Map<string, Record<string, number>>() // idem, só o esperado
 
     for (const m of mentors) {
       const planValue = Number(m.plan.value)
@@ -252,10 +258,11 @@ export class PlansService {
       const mentorValue = Number(m.value)
 
       const monthlyBreakdown: Record<string, number> = {}
+      const monthlyExpected: Record<string, number> = {}
       const installments: Array<{ date: string; value: number; status: string }> = []
       const isExMentora = /ex-mentora/i.test(m.mentorName)
       for (const pay of m.plan.payments) {
-        if (frozen(m.plan.client.id, pay.status)) continue
+        if (pay.status === 'CANCELLED' || frozen(m.plan.client.id, pay.status)) continue
         const proportion = totalPayments > 0 ? Number(pay.value) / totalPayments : 0
         const mentorInstallment = Math.round(mentorValue * proportion * 100) / 100
         const monthKey = `${pay.dueDate.getFullYear()}-${String(pay.dueDate.getMonth() + 1).padStart(2, '0')}`
@@ -265,9 +272,15 @@ export class PlansService {
           const t = exMentoraTransfer.get(m.planId) ?? {}
           t[monthKey] = (t[monthKey] ?? 0) + mentorInstallment
           exMentoraTransfer.set(m.planId, t)
+          if (expected(pay)) {
+            const te = exMentoraTransferExp.get(m.planId) ?? {}
+            te[monthKey] = (te[monthKey] ?? 0) + mentorInstallment
+            exMentoraTransferExp.set(m.planId, te)
+          }
           continue
         }
         monthlyBreakdown[monthKey] = (monthlyBreakdown[monthKey] ?? 0) + mentorInstallment
+        if (expected(pay)) monthlyExpected[monthKey] = (monthlyExpected[monthKey] ?? 0) + mentorInstallment
         installments.push({ date: pay.dueDate.toISOString(), value: mentorInstallment, status: pay.status })
       }
 
@@ -283,6 +296,7 @@ export class PlansService {
         productName: m.plan.product.name,
         planValue,
         monthlyBreakdown,
+        monthlyExpected,
         inCarteira: carteiraSet.has(m.plan.client.id),
         installments,
       })
@@ -301,12 +315,14 @@ export class PlansService {
 
       const totalPayments = plan.payments.reduce((s, p) => s + Number(p.value), 0)
       const monthlyBreakdown: Record<string, number> = {}
+      const monthlyExpected: Record<string, number> = {}
       for (const pay of plan.payments) {
-        if (frozen(plan.client.id, pay.status)) continue
+        if (pay.status === 'CANCELLED' || frozen(plan.client.id, pay.status)) continue
         const proportion = totalPayments > 0 ? Number(pay.value) / totalPayments : 0
         const mentorInstallment = Math.round(giullianoValue * proportion * 100) / 100
         const monthKey = `${pay.dueDate.getFullYear()}-${String(pay.dueDate.getMonth() + 1).padStart(2, '0')}`
         monthlyBreakdown[monthKey] = (monthlyBreakdown[monthKey] ?? 0) + mentorInstallment
+        if (expected(pay)) monthlyExpected[monthKey] = (monthlyExpected[monthKey] ?? 0) + mentorInstallment
       }
 
       result.push({
@@ -321,6 +337,7 @@ export class PlansService {
         productName: plan.product.name,
         planValue,
         monthlyBreakdown,
+        monthlyExpected,
         inCarteira: carteiraSet.has(plan.client.id),
       })
     }
@@ -336,7 +353,7 @@ export class PlansService {
           notes: 'Fatia da ex-mentora (não paga ou a partir de 01/10/2026)', createdAt: src.plan.createdAt,
           client: src.plan.client.companyName, clientId: src.plan.client.id,
           product: src.plan.product.code, productName: src.plan.product.name,
-          planValue: Number(src.plan.value), monthlyBreakdown: {},
+          planValue: Number(src.plan.value), monthlyBreakdown: {}, monthlyExpected: {},
           inCarteira: carteiraSet.has(src.plan.client.id),
         }
         result.push(giu)
@@ -344,6 +361,9 @@ export class PlansService {
       for (const [k, v] of Object.entries(months)) {
         giu.monthlyBreakdown[k] = (giu.monthlyBreakdown[k] ?? 0) + v
         giu.value += v
+      }
+      for (const [k, v] of Object.entries(exMentoraTransferExp.get(planId) ?? {})) {
+        giu.monthlyExpected[k] = (giu.monthlyExpected[k] ?? 0) + v
       }
     }
 

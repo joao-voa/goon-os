@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-23
+- **Repasses (Giulliano/João):** parcela CANCELADA não gera repasse (DITS, Cris Semi Joias, Andressa Polsse saíam em nov). No fluxo dos sócios, parcela vencida e não paga também não conta (`monthlyExpected`; ex.: 4F Minas nov).
 - **Fluxo de caixa novo (aba Caixa):** saldo dia a dia ancorado no saldo do banco informado (`CashBalance`), entradas/saídas por dia, lista do dia, avisos de atrasados (a receber e contas vencidas sem baixa, com chave para incluir), projeção 12 meses com colchão mínimo, falta vender (R$ e nº de vendas pelo caixa médio por venda), quanto dá para investir e simulador (vendas novas, investimento). Tela antiga virou aba Detalhado. Endpoints `/api/cashflow/view`, `/stats`, `POST /balance`.
 - **Fluxo de Caixa do Giulliano:** despesas comuns deixam de ser descontadas do repasse dele a partir de out/26 (antes: 100% dele). Linha some quando zerada.
 - **Impostos em aberto apagados:** Patrick Borinelli (3) e TEE FASHION (1). IZ Confecções mantido.
