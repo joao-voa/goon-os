@@ -5,6 +5,9 @@
 ---
 
 ## 2026-11-23
+- **4fminas:** impostos duplicados apagados (P0 a P5, inclusive 4 pagos em duplicidade). Despesas refeitas pelo plano atual (parcelas R$ 2.500): imposto R$ 150 e repasse João R$ 235 por parcela (P4 a P9); P4/P5 vencidas em 03/01/27, P6 a P9 no vencimento. Repasse João P3 (set/26, sem parcela) apagado.
+- **Volb:** deixou de ser cliente; volta só para o CRM (Em Negociação, PROSPECT). Plano GE cancelado, parcela de R$ 2.500 (13/11) e imposto excluídos.
+- **Califorstyle:** parcela em atraso (R$ 2.500, 25/09) excluída.
 - **4fminas:** despesas em aberto (impostos P4/P5 e repasse João P3, R$ 1.670) movidas para 03/01/2027.
 - **Edu Caduro (despesa, R$ 1.796,87):** restam só 2 parcelas (25/01/27 e 25/02/27). Apagadas a de out/26 em aberto, as duplicadas de jan/fev e as de mar a jul/27. Pagas (jun, ago, set) mantidas.
 - **StartCBO ajustado:** contrato passa a R$ 32.000 = R$ 2.000 pagos (18/11) + 12x R$ 2.500 (dia 11, dez/26 a nov/27). Removidos saldo de R$ 8.000 e parcelas 7 a 10 com impostos e repasses; imposto R$ 150 e repasse João R$ 235 por parcela.
