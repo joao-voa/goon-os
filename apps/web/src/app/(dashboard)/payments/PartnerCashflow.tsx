@@ -17,7 +17,7 @@ const C = { ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0', neo
 const num: React.CSSProperties = { fontFamily: 'var(--font-sans)', fontVariantNumeric: 'tabular-nums' }
 
 const RATEIO_YEAR = 2026, RATEIO_MONTH = 8, RATEIO_DAY = 8
-// A partir de out/2026 o custo comum volta 100% pro Giulliano
+// A partir de out/2026 as despesas comuns não são mais descontadas do repasse do Giulliano
 const CUSTO_OUT_YEAR = 2026, CUSTO_OUT_MONTH = 10
 function isCusto(cat: string, desc: string): boolean {
   if (cat === 'IMPOSTOS' || cat === 'MENTORIA') return false
@@ -27,7 +27,7 @@ function isCusto(cat: string, desc: string): boolean {
 
 interface Cfg { name: string; regex: RegExp; custoPre: number; custoPost: number; custoOut: number; personal: string | null; subtitle: string }
 const CONFIG: Record<string, Cfg> = {
-  giulliano: { name: 'Giulliano', regex: /giulliano/i, custoPre: 1, custoPost: 0.5, custoOut: 1, personal: 'Giulliano', subtitle: 'Seu repasse, menos sua parte das despesas comuns, menos seus gastos pessoais.' },
+  giulliano: { name: 'Giulliano', regex: /giulliano/i, custoPre: 1, custoPost: 0.5, custoOut: 0, personal: 'Giulliano', subtitle: 'Seu repasse menos seus gastos pessoais (despesas comuns não descontam mais desde 01/10/2026).' },
   joao: { name: 'João', regex: /jo[aã]o/i, custoPre: 0, custoPost: 0, custoOut: 0, personal: null, subtitle: 'Seu repasse da operação (10% dos clientes novos, sem despesas).' },
 }
 
@@ -117,14 +117,14 @@ export default function PartnerCashflow({ partnerKey }: { partnerKey: 'giulliano
   const custoHint = cfg.custoPre === cfg.custoPost
     ? (cfg.custoPost === 0 ? 'Não participa das despesas comuns' : `${cfg.custoPost * 100}% do custo da operação`)
     : (year < RATEIO_YEAR ? `${cfg.custoPre * 100}% do custo (antes do rateio 08/08)`
-      : year > RATEIO_YEAR ? `${cfg.custoOut * 100}% do custo`
-      : `${cfg.custoPre * 100}% até 07/08, ${cfg.custoPost * 100}% de 08/08 a 30/09, ${cfg.custoOut * 100}% de 01/10 em diante`)
+      : year > RATEIO_YEAR ? (cfg.custoOut === 0 ? 'Não participa das despesas comuns' : `${cfg.custoOut * 100}% do custo`)
+      : `${cfg.custoPre * 100}% até 07/08, ${cfg.custoPost * 100}% de 08/08 a 30/09, ${cfg.custoOut === 0 ? 'nada a partir de 01/10' : `${cfg.custoOut * 100}% de 01/10 em diante`}`)
 
   const card: React.CSSProperties = { background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }
 
   const statementRows = [
     { l: 'Repasse (sua fatia da receita)', v: repasseAno, hint: 'Da aba Repasses — exclui carteira', kind: 'base' },
-    { l: 'Sua parte das despesas comuns', v: -custoShareAno, hint: custoHint, kind: 'out' },
+    ...(custoShareAno !== 0 ? [{ l: 'Sua parte das despesas comuns', v: -custoShareAno, hint: custoHint, kind: 'out' as const }] : []),
     { l: 'Renda da operação', v: rendaAno, hint: 'O que sobra pra você da empresa', kind: 'sub' },
     ...(cfg.personal && incPessoal ? [{ l: 'Gastos pessoais', v: -gastosAno, hint: 'Cartão, aluguel, luz…', kind: 'out' as const }] : []),
     { l: 'Sobra pra você', v: sobraAno, hint: 'Depois de tudo', kind: 'result' },
@@ -258,10 +258,12 @@ export default function PartnerCashflow({ partnerKey }: { partnerKey: 'giulliano
                   })()}
                   {/* SAÍDAS — detalhadas */}
                   <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: C.red, fontWeight: 700, margin: '12px 0 2px' }}>Saídas</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${C.bg}` }}>
-                    <span style={{ fontSize: 13, color: C.ink }}>Sua parte das despesas comuns</span>
-                    <span style={{ ...num, fontSize: 13, color: C.red, fontWeight: 600 }}>{cs > 0 ? '−' : ''}{fmt(cs)}</span>
-                  </div>
+                  {cs !== 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${C.bg}` }}>
+                      <span style={{ fontSize: 13, color: C.ink }}>Sua parte das despesas comuns</span>
+                      <span style={{ ...num, fontSize: 13, color: C.red, fontWeight: 600 }}>{cs > 0 ? '−' : ''}{fmt(cs)}</span>
+                    </div>
+                  )}
                   {cfg.personal && incPessoal && <>
                     {!items[m.month] && <div style={{ color: C.dim, fontSize: 12, padding: '6px 0' }}>Carregando gastos pessoais…</div>}
                     {items[m.month]?.length === 0 && <div style={{ color: C.dim, fontSize: 12, padding: '6px 0' }}>Sem gastos pessoais neste mês.</div>}

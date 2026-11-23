@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-23
+- **Fluxo de Caixa do Giulliano:** despesas comuns deixam de ser descontadas do repasse dele a partir de out/26 (antes: 100% dele). Linha some quando zerada.
 - **Impostos em aberto apagados:** Patrick Borinelli (3) e TEE FASHION (1). IZ Confecções mantido.
 - **Star Shop:** só a 1ª parcela (jun/26) foi paga; o resto está na carteira. Apagados os impostos P1 a P3 (jul a set, R$ 1.800) que estavam como pagos. Fica só o imposto da parcela paga. Repasses das parcelas não pagas apagados (João 3x R$ 940, Giulliano 11x R$ 4.230; R$ 49.350).
 - **MYMPPY:** impostos futuros apagados (P9 a P12, dez/26 a mar/27, R$ 756). Venda paga à vista em abr/26; impostos até nov/26 mantidos.

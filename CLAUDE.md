@@ -131,8 +131,8 @@ Fernando Vaz foi **removido** dos splits e das despesas de mentoria a partir de 
 com vencimento ≥ 01/10: a fatia dela vai pro **Giulliano** (split novo: imposto 6% →
 João 10% do líquido → resto 100% Giulliano). O `PlanMentor` dela fica intacto (histórico);
 o corte é feito em código (`EX_MENTORA_EXIT` em `plans.service.getAllMentors`) e nas despesas
-MENTORIA (renomeadas pra Giulliano). Despesas comuns: 100% Giulliano a partir de out/26
-(`PartnerCashflow`). Mentorias TTS/TTSG passam a ser conduzidas pelo Giulliano.
+MENTORIA (renomeadas pra Giulliano). Despesas comuns: **não são mais descontadas** do repasse do Giulliano a partir de out/26
+(`PartnerCashflow`, `custoOut = 0`). Mentorias TTS/TTSG passam a ser conduzidas pelo Giulliano.
 Regra do que ela recebeu: **parcela que o cliente pagou (antes de 01/10) = repasse pago a ela;
 parcela que o cliente não pagou = ela não recebe** (fatia vai pro Giulliano). Conta corrente dela zerada.
 
