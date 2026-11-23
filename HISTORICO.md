@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-23
+- **Impostos em aberto apagados:** Patrick Borinelli (3) e TEE FASHION (1). IZ Confecções mantido.
 - **Star Shop:** só a 1ª parcela (jun/26) foi paga; o resto está na carteira. Apagados os impostos P1 a P3 (jul a set, R$ 1.800) que estavam como pagos. Fica só o imposto da parcela paga. Repasses das parcelas não pagas apagados (João 3x R$ 940, Giulliano 11x R$ 4.230; R$ 49.350).
 - **MYMPPY:** impostos futuros apagados (P9 a P12, dez/26 a mar/27, R$ 756). Venda paga à vista em abr/26; impostos até nov/26 mantidos.
 - **Impostos órfãos apagados (14, R$ 2.700):** Caffona 8, Talamonte 2 (carteira), Durante, CRIS SEMI JOIAS, Produtos em acrílico, S.comp personalizados.
