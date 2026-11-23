@@ -5,6 +5,8 @@
 ---
 
 ## 2026-11-23
+- **StartCBO ajustado:** contrato passa a R$ 17.000 = R$ 2.000 pagos (18/11) + 6x R$ 2.500 (dia 11, dez/26 a mai/27). Removidos saldo de R$ 8.000 e parcelas 7 a 10 com impostos e repasses; imposto R$ 150 e repasse João R$ 235 por parcela.
+- **ORDO:** 1ª parcela da renovação (R$ 16.000, 20/11) paga.
 - **Hellik Store (Alexandre):** cliente novo, GOON Elite 6 meses (23/11/26 a 23/05/27), mentoria individual com Giulliano. R$ 30.000 pagos no cartão em 23/11, sem comissão. Imposto 6% R$ 1.800; repasses: João R$ 2.820 (10% do líquido), Giulliano R$ 25.380.
 - **Repasses do João (despesas MENTORIA "Mentoria João Afonso", uma por parcela, a pagar):** LM Fashion Lab GA 1/3 do líquido (R$ 18.800); Bella Lina GI 10% do líquido (R$ 2.820); Colcci USA GE 10% (R$ 4.888); StartCBO GE 10% (R$ 11.280); 244 corrigido para R$ 940; Ary Narah já tinha (R$ 470/parcela). Splits do João (PlanMentor) criados em Bella Lina, Colcci, StartCBO.
 - **StartCBO:** pagou R$ 2.000 da entrada (18/11); saldo R$ 8.000 vencido em 18/11. Imposto da entrada dividido (R$ 120 + R$ 480).
