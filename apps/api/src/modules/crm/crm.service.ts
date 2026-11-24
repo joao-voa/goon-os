@@ -5,7 +5,7 @@ import { ActivityLogService } from '../activity-log/activity-log.service'
 import { PaymentsService } from '../payments/payments.service'
 import { CommissionsService } from '../commissions/commissions.service'
 import { ExpensesService } from '../expenses/expenses.service'
-import { TAX_RATE, getNextCommissionPaymentDate } from '../../shared/constants'
+import { TAX_RATE, VICTOR_FRAGA, getNextCommissionPaymentDate } from '../../shared/constants'
 
 // Leads mais antigos que esta data não são reimportados no sync (já entraram ou
 // foram excluídos de propósito). Corte movido para 05/11/2026 19:08 (BRT).
@@ -413,6 +413,27 @@ export class CrmService {
           recurrence: 'UNICA',
           dueDate: pay.dueDate,
           notes: `Imposto sobre parcela R$${pay.value}`,
+        })
+      }
+    }
+
+    // 7b. Repasse do Victor Fraga (5% de cada parcela de cliente novo, enquanto ele estiver na operação)
+    // cliente que já tinha plano (não cancelado) = renovação: não conta
+    const isRenewal = (await this.prisma.clientPlan.count({ where: { clientId: id, id: { not: plan.id }, status: { not: 'CANCELLED' } } })) > 0
+    if (!isRenewal && now >= VICTOR_FRAGA.start && (!VICTOR_FRAGA.end || now <= VICTOR_FRAGA.end)) {
+      await this.prisma.planMentor.create({
+        data: { planId: plan.id, mentorName: VICTOR_FRAGA.name, value: Math.round(dto.saleValue * VICTOR_FRAGA.percent * 100) / 100, notes: '5% do cash collected (cliente novo)' },
+      })
+      for (const pay of allPayments) {
+        const v = Math.round(pay.value * VICTOR_FRAGA.percent * 100) / 100
+        if (v <= 0) continue
+        await this.expensesService.create({
+          description: `Mentoria ${VICTOR_FRAGA.name} — ${client.companyName} (${product.name}) parcela ${pay.installment}`,
+          category: 'MENTORIA',
+          value: v,
+          recurrence: 'UNICA',
+          dueDate: pay.dueDate,
+          notes: `Repasse ${VICTOR_FRAGA.name} ${VICTOR_FRAGA.percent * 100}%`,
         })
       }
     }
