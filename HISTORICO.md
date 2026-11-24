@@ -5,7 +5,7 @@
 ---
 
 ## 2026-11-24
-- **Mentoria virou "Consultoria GOON Advisor" nos formulários:** página em `/consultoria` (e `/advisor`), `/mentoria` redireciona mantendo o ?c=. Leads novos com origem `{canal}_consultoria` (ex.: youtube_consultoria). Rótulos do CRM: Story/YouTube · Consultoria, FORMULÁRIO CONSULTORIA - META.
+- **Mentoria virou "Consultoria GOON Advisor" nos formulários:** link principal `/advisor`; `/mentoria` e `/consultoria` redirecionam mantendo o ?c=. As tags de origem continuam as mesmas (`story_mentoria`, `youtube_mentoria`), só o texto na tela mudou (Story/YouTube · Consultoria, FORMULÁRIO CONSULTORIA - META).
 - **João Afonso:** 10% do líquido de tudo que fecha agora é automático no fechamento do CRM. BULLS Champions recebeu o split (R$ 11.280) e 12 repasses de R$ 940.
 - **StartCBO:** entrada era R$ 2.500; pagou R$ 2.000 e falta R$ 500 (vence 30/11), com imposto R$ 30 e repasse João R$ 47. Contrato R$ 32.500.
 - **Hellik Store:** cartão de R$ 30.000 entrou líquido R$ 28.787,80; parcela, plano e venda ajustados para esse valor. Recalculados: imposto R$ 1.727,27, João R$ 2.706,05, Victor R$ 1.353,03, Giulliano R$ 23.001,45.

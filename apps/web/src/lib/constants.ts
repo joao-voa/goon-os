@@ -158,10 +158,8 @@ export const LEAD_SOURCE_LABELS: Record<string, string> = {
   base_clientes: 'Base de Clientes',
   // landings públicas (origem por canal + oferta)
   story_tiktok: 'Story · TikTok',
-  story_mentoria: 'Story · Consultoria', // antes do nome novo
-  story_consultoria: 'Story · Consultoria',
-  youtube_mentoria: 'YouTube · Consultoria', // antes do nome novo
-  youtube_consultoria: 'YouTube · Consultoria', // link /consultoria?c=youtube nas descrições dos vídeos
+  story_mentoria: 'Story · Consultoria', // tag antiga mantida; formulário /advisor
+  youtube_mentoria: 'YouTube · Consultoria', // /advisor?c=youtube nas descrições dos vídeos
   youtube_tiktok: 'YouTube · TikTok',
   cta_instagram: 'CTA · Instagram', // comentou no post, recebeu o link /material no direct
   // legado (dados antigos migrados; mantidos p/ exibição)
