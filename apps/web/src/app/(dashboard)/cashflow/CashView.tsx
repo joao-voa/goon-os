@@ -80,7 +80,8 @@ function simItems(sims: Sim[], withTax: boolean): Item[] {
 
 export default function CashView() {
   const now = new Date()
-  const todayLocal = iso(new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())))
+  // mesmo "hoje" do servidor (UTC), para o período não começar um dia antes à noite
+  const todayLocal = iso(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())))
   const [ym, setYm] = useState({ y: now.getFullYear(), m: now.getMonth() })
   const [horizon, setHorizon] = useState<Horizon>(() => { const v = lsGet('goon.caixa.horizonte'); return v === 'mes' || !v ? 'mes' : (Number(v) as Horizon) })
   const [view, setView] = useState<View | null>(null)
@@ -131,9 +132,13 @@ export default function CashView() {
 
   // filtros comuns: contas vencidas, impostos, parcelas atrasadas escolhidas, vendas simuladas
   const prepare = useCallback((v: View) => {
+    // atrasados (contas vencidas e parcelas escolhidas) caem no 1º dia depois do saldo informado:
+    // o saldo do banco ainda não tem esse movimento
+    const lateDate = v.balance && v.balance.date >= v.today ? addDays(v.balance.date, 1) : v.today
     let items = v.items.filter(i => (includeLate || !i.late) && (!noTax || i.category !== 'IMPOSTOS'))
+      .map(i => (i.late ? { ...i, date: lateDate } : i))
     const chosen = v.overdueIn.items.filter(o => overdueSel.includes(overdueKey(o)))
-    items = [...items, ...chosen.map(o => ({ date: v.today, kind: 'in' as const, realized: false, name: o.name, detail: `atrasada desde ${ddmm(o.date)}`, value: o.value, category: 'RECEITA', late: true }))]
+    items = [...items, ...chosen.map(o => ({ date: lateDate, kind: 'in' as const, realized: false, name: o.name, detail: `atrasada desde ${ddmm(o.date)}`, value: o.value, category: 'RECEITA', late: true }))]
     return [...items, ...simItems(sims, !noTax)]
   }, [includeLate, noTax, overdueSel, sims])
 
