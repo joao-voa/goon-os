@@ -258,7 +258,9 @@ export default function SalesPage() {
           <div style={{ padding: 12 }}>
             {activeMonths.length === 0 && <div style={{ fontSize: 12, color: C.dim, textAlign: 'center', padding: 24 }}>Nenhuma venda{productFilter ? ` de ${productFilter}` : ''} em {year}.</div>}
             {data?.months.map(m => {
-              if (m.count === 0) return null
+              // mês sem venda aparece zerado (até o mês atual; ano passado = todos os meses)
+              if (m.count === 0 && year === nowYear && m.month > curMonth) return null
+              if (m.count === 0 && year > nowYear) return null
               const isCur = m.month === curMonth && year === nowYear
               const open = expanded === m.month
               return (
