@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
+import { DocusignService } from './docusign.service'
 
 const VALID_STAGES = [
   'CLIENT_CLOSED',
@@ -28,6 +29,7 @@ export class OnboardingService {
   constructor(
     private prisma: PrismaService,
     private activityLog: ActivityLogService,
+    private docusign: DocusignService,
   ) {}
 
   async findAll() {
@@ -272,6 +274,7 @@ export class OnboardingService {
         kickoff: kickoff ? { date: kickoff.date, status: kickoff.status, meetLink: kickoff.meetLink } : null,
         daysSinceClose: daysAgo(since),
         notes: ob.notes,
+        signature: ob.signEnvelopeId ? { status: ob.signStatus, sentAt: ob.signSentAt, signers: ob.signSigners } : null,
       }
     })
   }
@@ -366,6 +369,71 @@ export class OnboardingService {
       description: `Dados do contrato colados (${Object.keys(data).join(', ') || 'sem campos reconhecidos'})`,
     })
     return { filled: data }
+  }
+
+
+  // ===== Assinatura pelo DocuSign =====
+  signatureInfo() {
+    return { enabled: this.docusign.enabled, consentUrl: this.docusign.consentUrl() }
+  }
+
+  async sendForSignature(id: string, dto: { filename: string; data: string; signers: Array<{ name: string; email: string }> }) {
+    if (!this.docusign.enabled) throw new BadRequestException('DocuSign ainda não está ligado')
+    const ob = await this.prisma.onboarding.findUnique({ where: { id }, include: { client: { select: { id: true, companyName: true } } } })
+    if (!ob) throw new NotFoundException('Onboarding não encontrado')
+    const signers = (dto.signers ?? []).map(s => ({ name: s.name?.trim(), email: s.email?.trim().toLowerCase() })).filter(s => s.name && s.email?.includes('@'))
+    if (!signers.length) throw new BadRequestException('Informe pelo menos um signatário com nome e e-mail')
+    if (!dto.data) throw new BadRequestException('Envie o arquivo do contrato')
+    const token = process.env.DOCUSIGN_WEBHOOK_TOKEN
+    const api = (process.env.PUBLIC_API_URL ?? 'https://goon-os-api.vercel.app').replace(/\/+$/, '')
+    const env = await this.docusign.send({
+      subject: `Contrato GOON · ${ob.client.companyName}`,
+      filename: dto.filename || 'Contrato.pdf',
+      base64: dto.data,
+      signers,
+      webhookUrl: token ? `${api}/api/integrations/docusign/webhook?token=${encodeURIComponent(token)}` : undefined,
+    })
+    const checklist = { ...((ob.checklist ?? {}) as Record<string, boolean>), contrato_elaborado: true, contrato_enviado: true }
+    await this.prisma.onboarding.update({
+      where: { id },
+      data: { signEnvelopeId: env.envelopeId, signStatus: env.status ?? 'sent', signSentAt: new Date(), signSigners: signers, checklist },
+    })
+    await this.activityLog.log({
+      clientId: ob.client.id, entityType: 'ONBOARDING', entityId: ob.id, action: 'SIGNATURE_SENT',
+      description: `Contrato enviado pelo DocuSign para ${signers.map(s => s.email).join(', ')}`,
+    })
+    return { envelopeId: env.envelopeId, status: env.status }
+  }
+
+  /** Atualiza o status do envelope; se concluído, anexa o PDF assinado no cliente. */
+  async syncSignature(envelopeId: string, knownStatus?: string) {
+    const ob = await this.prisma.onboarding.findFirst({ where: { signEnvelopeId: envelopeId }, include: { client: { select: { id: true, companyName: true } } } })
+    if (!ob) return { found: false }
+    const status = knownStatus ?? (await this.docusign.status(envelopeId)).status
+    if (status === ob.signStatus && status !== 'completed') return { found: true, status }
+    if (status === 'completed' && ob.signStatus !== 'completed') {
+      const pdf = await this.docusign.signedPdf(envelopeId)
+      await this.prisma.clientDocument.create({
+        data: {
+          clientId: ob.client.id, type: 'SIGNED_CONTRACT', mimeType: 'application/pdf', size: pdf.length,
+          filename: `Contrato assinado - ${ob.client.companyName}.pdf`, data: pdf.toString('base64'),
+          notes: `Assinado pelo DocuSign (envelope ${envelopeId})`,
+        },
+      })
+      await this.prisma.client.update({ where: { id: ob.client.id }, data: { hasContract: true } })
+      await this.activityLog.log({
+        clientId: ob.client.id, entityType: 'ONBOARDING', entityId: ob.id, action: 'SIGNATURE_COMPLETED',
+        description: `Contrato assinado no DocuSign e anexado (${ob.client.companyName})`,
+      })
+    }
+    await this.prisma.onboarding.update({ where: { id: ob.id }, data: { signStatus: status } })
+    return { found: true, status }
+  }
+
+  async refreshSignature(id: string) {
+    const ob = await this.prisma.onboarding.findUnique({ where: { id }, select: { signEnvelopeId: true } })
+    if (!ob?.signEnvelopeId) throw new BadRequestException('Nenhum envio pelo DocuSign')
+    return this.syncSignature(ob.signEnvelopeId)
   }
 
 }

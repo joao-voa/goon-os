@@ -22,6 +22,21 @@ export class OnboardingController {
     return this.onboardingService.setItem(id, body.key, body.done ?? null)
   }
 
+  @Get('signature/info')
+  signatureInfo() {
+    return this.onboardingService.signatureInfo()
+  }
+
+  @Post(':id/signature')
+  sendForSignature(@Param('id') id: string, @Body() body: { filename: string; data: string; signers: Array<{ name: string; email: string }> }) {
+    return this.onboardingService.sendForSignature(id, body)
+  }
+
+  @Post(':id/signature/refresh')
+  refreshSignature(@Param('id') id: string) {
+    return this.onboardingService.refreshSignature(id)
+  }
+
   @Patch(':id/contract-data')
   saveContractData(@Param('id') id: string, @Body() body: { text: string }) {
     return this.onboardingService.saveContractData(id, body.text ?? '')

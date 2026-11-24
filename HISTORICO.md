@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-24
+- **DocuSign no onboarding:** enviar contrato para assinatura do card (upload + signatários), status no card, aviso do DocuSign anexa o PDF assinado e marca "Contrato assinado". Desligado até as credenciais entrarem. Campos `Onboarding.sign*`.
 - **Victor Fraga, Hellik Store:** venda paga à vista no cartão, repasse dele (R$ 1.353,03) parcelado em 6x de 23/11/26 a 23/04/27 (R$ 225,50; última R$ 225,53), conforme o contrato de 6 meses.
 - **Onboarding:** item novo "Contrato elaborado" (entre Dados do contrato e Enviado para assinatura); marca sozinho quando há contrato gerado no sistema ou anexado. Checklist com 9 itens.
 - **Dados do contrato preenchidos:** Hellik Store (Hellik Comércio de Artigos do Vestuário LTDA, CNPJ 33.544.621/0002-76, Feliz/RS, resp. Alexandre Hans, contato@hellik.com.br) e BULLS Champions (CALMON RANCH INDUSTRIA E COMERCIO LTDA, CNPJ 38.924.167/0001-11, São Jorge do Patrocínio/PR, resp. Diogo Camilo de Campos Marta). Texto salvo no card do onboarding.

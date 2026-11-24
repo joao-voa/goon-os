@@ -316,11 +316,18 @@ model Onboarding {
   notes        String?
   // checklist (ordem livre): { [item]: true | false } marcado à mão; sem chave = vale o automático
   checklist    Json?
+  // assinatura pelo DocuSign (envelope do contrato)
+  signEnvelopeId String?
+  signStatus     String?   // sent, delivered, completed, declined, voided
+  signSentAt     DateTime?
+  signSigners    Json?     // [{ name, email }]
 
   client Client @relation(fields: [clientId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([signEnvelopeId])
 }
 
 model ActivityLog {

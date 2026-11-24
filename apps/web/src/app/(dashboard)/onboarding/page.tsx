@@ -19,7 +19,10 @@ type Board = {
   kickoff: { date: string; status: string; meetLink: string | null } | null
   daysSinceClose: number
   notes: string | null
+  signature: { status: string | null; sentAt: string | null; signers: Array<{ name: string; email: string }> | null } | null
 }
+
+const SIGN_STATUS: Record<string, string> = { sent: 'enviado', delivered: 'aberto pelo cliente', completed: 'assinado', declined: 'recusado', voided: 'cancelado' }
 
 const C = { ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0', bg: '#f8fafc', neon: '#C7F900', green: '#16a34a', red: '#dc2626', amber: '#d97706', slate: '#475569' }
 const sans = 'var(--font-sans)'
@@ -47,11 +50,47 @@ export default function OnboardingPage() {
   const [dataFor, setDataFor] = useState<Board | null>(null)
   const [dataText, setDataText] = useState('')
   const [savingData, setSavingData] = useState(false)
+  const [signInfo, setSignInfo] = useState<{ enabled: boolean; consentUrl: string | null } | null>(null)
+  const [signFor, setSignFor] = useState<Board | null>(null)
+  const [signFile, setSignFile] = useState<File | null>(null)
+  const [signers, setSigners] = useState<Array<{ name: string; email: string }>>([])
+  const [sending, setSending] = useState(false)
 
   const load = useCallback(async () => {
     try { setBoard(await apiFetch<Board[]>('/api/onboarding/board')) } catch { toast.error('Erro ao carregar o onboarding') }
   }, [])
   useEffect(() => { load() }, [load])
+  useEffect(() => { apiFetch<{ enabled: boolean; consentUrl: string | null }>('/api/onboarding/signature/info').then(setSignInfo).catch(() => {}) }, [])
+
+  function openSign(b: Board) {
+    // e-mail de assinatura colado nos dados do contrato tem preferência
+    const signEmail = b.notes?.match(/e-?mail[^:\n]*assinatura[^:\n]*:\s*(\S+@\S+)/i)?.[1]
+    setSignFor(b); setSignFile(null)
+    setSigners([{ name: b.client.responsible ?? '', email: signEmail ?? b.client.email ?? '' }])
+  }
+
+  async function sendSign() {
+    if (!signFor || !signFile) { toast.error('Escolha o arquivo do contrato'); return }
+    if (signFile.size > 3 * 1024 * 1024) { toast.error('Arquivo maior que 3MB. Comprima o PDF.'); return }
+    setSending(true)
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.onerror = reject; r.readAsDataURL(signFile) })
+      await apiFetch(`/api/onboarding/${signFor.id}/signature`, {
+        method: 'POST', body: JSON.stringify({ filename: signFile.name, data: dataUrl.split(',')[1] ?? '', signers: signers.filter(x => x.name && x.email) }),
+      })
+      toast.success('Contrato enviado para assinatura pelo DocuSign')
+      setSignFor(null); load()
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro ao enviar') }
+    setSending(false)
+  }
+
+  async function refreshSign(b: Board) {
+    try {
+      const r = await apiFetch<{ status?: string }>(`/api/onboarding/${b.id}/signature/refresh`, { method: 'POST' })
+      toast.success(`DocuSign: ${SIGN_STATUS[r.status ?? ''] ?? r.status}`)
+      load()
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro ao consultar o DocuSign') }
+  }
 
   async function toggle(b: Board, it: Item) {
     // clique alterna; se a marcação manual voltar ao que o sistema já sabe, limpa a manual
@@ -198,6 +237,9 @@ export default function OnboardingPage() {
                       <span style={{ textDecoration: 'none' }}>{it.label}</span>
                       {it.auto && <span style={{ fontSize: 10, color: C.dim }}>auto</span>}
                     </button>
+                    {it.key === 'contrato_enviado' && (b.signature
+                      ? <button onClick={() => refreshSign(b)} title="Atualizar status no DocuSign" style={{ ...btn, padding: '2px 8px', fontSize: 11, color: b.signature.status === 'completed' ? C.green : b.signature.status === 'declined' ? C.red : C.mid }}>{SIGN_STATUS[b.signature.status ?? ''] ?? b.signature.status} ↻</button>
+                      : signInfo?.enabled ? <button onClick={() => openSign(b)} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>DocuSign</button> : null)}
                     {it.key === 'dados_contrato' && (
                       <button onClick={() => { setDataFor(b); setDataText(b.notes ?? '') }} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>{b.notes ? 'ver' : 'colar'}</button>
                     )}
@@ -243,6 +285,32 @@ export default function OnboardingPage() {
           )
         })}
       </div>
+
+      {signFor && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          onClick={e => { if (e.target === e.currentTarget) setSignFor(null) }}>
+          <div style={{ ...card, width: '100%', maxWidth: 520, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>Enviar para assinatura · {signFor.client.companyName}</div>
+            <label style={{ fontSize: 12, color: C.mid }}>
+              Contrato (PDF ou Word, até 3MB)
+              <input type="file" accept=".pdf,.docx,.doc" onChange={e => setSignFile(e.target.files?.[0] ?? null)} style={{ display: 'block', marginTop: 6, fontSize: 13 }} />
+            </label>
+            <div style={{ fontSize: 12, color: C.mid }}>Quem assina, em ordem (o DocuSign manda o e-mail para cada um):</div>
+            {signers.map((sg, i) => (
+              <div key={i} style={{ display: 'flex', gap: 6 }}>
+                <input value={sg.name} onChange={e => setSigners(l => l.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Nome" style={{ ...inp, flex: 1, fontSize: 13, padding: 8 }} />
+                <input value={sg.email} onChange={e => setSigners(l => l.map((x, j) => j === i ? { ...x, email: e.target.value } : x))} placeholder="E-mail" style={{ ...inp, flex: 1.3, fontSize: 13, padding: 8 }} />
+                {signers.length > 1 && <button onClick={() => setSigners(l => l.filter((_, j) => j !== i))} style={{ ...btn, color: C.red }}>×</button>}
+              </div>
+            ))}
+            <button onClick={() => setSigners(l => [...l, { name: '', email: '' }])} style={{ ...btn, alignSelf: 'flex-start' }}>+ Signatário</button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setSignFor(null)} style={{ ...btn, marginLeft: 'auto' }}>Cancelar</button>
+              <button onClick={sendSign} disabled={sending || !signFile} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>{sending ? 'Enviando…' : 'Enviar pelo DocuSign'}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {dataFor && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
