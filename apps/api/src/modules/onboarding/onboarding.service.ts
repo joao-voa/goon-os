@@ -197,12 +197,13 @@ export class OnboardingService {
   // Itens do onboarding. Os automáticos vêm dos dados (contrato anexado, cobrança, pagamento,
   // kickoff na agenda); qualquer item pode ser marcado/desmarcado à mão (vale a marcação manual).
   static readonly ITEMS: Array<{ key: string; label: string }> = [
-    { key: 'contrato_enviado', label: 'Contrato enviado' },
-    { key: 'contrato_assinado', label: 'Contrato assinado' },
-    { key: 'cobranca', label: 'Cobrança criada' },
-    { key: 'primeiro_pagamento', label: '1º pagamento' },
-    { key: 'kickoff', label: 'Kickoff marcado' },
-    { key: 'boas_vindas', label: 'Boas-vindas' },
+    { key: 'dados_contrato', label: 'Dados do contrato' },
+    { key: 'contrato_assinado', label: 'Contrato' },
+    { key: 'mastermind', label: 'Mastermind' },
+    { key: 'apresentacao_mastermind', label: 'Apresentação Mastermind' },
+    { key: 'sistema_goon', label: 'Sistema GOON' },
+    { key: 'area_membros', label: 'Área de membros' },
+    { key: 'kickoff', label: 'D0 (kickoff)' },
   ]
 
   async board() {
@@ -218,6 +219,7 @@ export class OnboardingService {
         client: {
           select: {
             id: true, companyName: true, responsible: true, phone: true, whatsapp: true, email: true,
+            cnpj: true, address: true, city: true,
             status: true, leadStage: true, standby: true, hasContract: true, closedAt: true,
             plans: { where: { status: 'ACTIVE' }, take: 1, orderBy: { startDate: 'desc' }, select: { product: { select: { code: true } }, startDate: true } },
             documents: { where: { type: 'SIGNED_CONTRACT' }, select: { id: true }, take: 1 },
@@ -233,13 +235,15 @@ export class OnboardingService {
       const manual = (ob.checklist ?? {}) as Record<string, boolean>
       const kickoff = c.meetings[0] ?? null
       const auto: Record<string, boolean> = {
-        contrato_enviado: c.contracts.some(k => ['SENT', 'SIGNED'].includes(k.status)) || c.hasContract || c.documents.length > 0,
+        // dados para o contrato: CNPJ/CPF, endereço, cidade e e-mail preenchidos no cadastro
+        dados_contrato: !!(c.cnpj && c.address && c.city && c.email),
         // só vale com o contrato assinado ANEXADO (não marca à mão)
         contrato_assinado: c.documents.length > 0,
-        cobranca: c.payments.length > 0,
-        primeiro_pagamento: c.payments.some(p => p.status === 'PAID'),
+        mastermind: false,
+        apresentacao_mastermind: false,
+        sistema_goon: false,
+        area_membros: false,
         kickoff: !!kickoff,
-        boas_vindas: false,
       }
       const items = OnboardingService.ITEMS.map(it => {
         const hasManual = it.key !== 'contrato_assinado' && typeof manual[it.key] === 'boolean'
