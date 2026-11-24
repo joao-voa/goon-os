@@ -314,6 +314,8 @@ model Onboarding {
   clientId     String @unique
   currentStage String @default("CLIENT_CLOSED")
   notes        String?
+  // checklist (ordem livre): { [item]: true | false } marcado à mão; sem chave = vale o automático
+  checklist    Json?
 
   client Client @relation(fields: [clientId], references: [id])
 

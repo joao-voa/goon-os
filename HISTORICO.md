@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-24
+- **Onboarding em checklist (ordem livre):** kanban por etapa virou cards por cliente com 6 itens (contrato enviado, contrato assinado, cobrança, 1º pagamento, kickoff, boas-vindas). Automáticos pelos dados; os demais com um clique. Contrato assinado só conta ANEXADO (upload no card). Tudo feito = Concluídos (automático). Abas Em andamento / Concluídos / Inativos (cancelados, perdidos, standby, carteira). Kickoff marcado do card (Google + Meet + convite). `Onboarding.checklist` (Json).
 - **Mentoria virou "Consultoria GOON Advisor" nos formulários:** link principal `/advisor`; `/mentoria` e `/consultoria` redirecionam mantendo o ?c=. As tags de origem continuam as mesmas (`story_mentoria`, `youtube_mentoria`), só o texto na tela mudou (Story/YouTube · Consultoria, FORMULÁRIO CONSULTORIA - META).
 - **João Afonso:** 10% do líquido de tudo que fecha agora é automático no fechamento do CRM. BULLS Champions recebeu o split (R$ 11.280) e 12 repasses de R$ 940.
 - **StartCBO:** entrada era R$ 2.500; pagou R$ 2.000 e falta R$ 500 (vence 30/11), com imposto R$ 30 e repasse João R$ 47. Contrato R$ 32.500.

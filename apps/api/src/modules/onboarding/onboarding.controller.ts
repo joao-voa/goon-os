@@ -12,6 +12,21 @@ export class OnboardingController {
     return this.onboardingService.findAll()
   }
 
+  @Get('board')
+  board() {
+    return this.onboardingService.board()
+  }
+
+  @Patch(':id/checklist')
+  setItem(@Param('id') id: string, @Body() body: { key: string; done: boolean | null }) {
+    return this.onboardingService.setItem(id, body.key, body.done ?? null)
+  }
+
+  @Patch(':id/notes')
+  setNotes(@Param('id') id: string, @Body() body: { notes: string }) {
+    return this.onboardingService.setNotes(id, body.notes ?? '')
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() body: { clientId: string }) {

@@ -192,4 +192,106 @@ export class OnboardingService {
 
     return updated
   }
+
+  // ===== Checklist (ordem livre) =====
+  // Itens do onboarding. Os automáticos vêm dos dados (contrato anexado, cobrança, pagamento,
+  // kickoff na agenda); qualquer item pode ser marcado/desmarcado à mão (vale a marcação manual).
+  static readonly ITEMS: Array<{ key: string; label: string }> = [
+    { key: 'contrato_enviado', label: 'Contrato enviado' },
+    { key: 'contrato_assinado', label: 'Contrato assinado' },
+    { key: 'cobranca', label: 'Cobrança criada' },
+    { key: 'primeiro_pagamento', label: '1º pagamento' },
+    { key: 'kickoff', label: 'Kickoff marcado' },
+    { key: 'boas_vindas', label: 'Boas-vindas' },
+  ]
+
+  async board() {
+    const result = await this.boardRaw()
+    const toClose = result.filter(b => b.allDone && b.currentStage !== 'ONBOARDING_DONE').map(b => b.id)
+    if (toClose.length) await this.prisma.onboarding.updateMany({ where: { id: { in: toClose } }, data: { currentStage: 'ONBOARDING_DONE' } })
+    return result
+  }
+
+  private async boardRaw() {
+    const obs = await this.prisma.onboarding.findMany({
+      include: {
+        client: {
+          select: {
+            id: true, companyName: true, responsible: true, phone: true, whatsapp: true, email: true,
+            status: true, leadStage: true, standby: true, hasContract: true, closedAt: true,
+            plans: { where: { status: 'ACTIVE' }, take: 1, orderBy: { startDate: 'desc' }, select: { product: { select: { code: true } }, startDate: true } },
+            documents: { where: { type: 'SIGNED_CONTRACT' }, select: { id: true }, take: 1 },
+            contracts: { select: { status: true } },
+            payments: { where: { status: { not: 'CANCELLED' } }, select: { status: true, inCarteira: true } },
+            meetings: { where: { type: 'KICKOFF', status: { notIn: ['CANCELLED', 'RESCHEDULED'] } }, orderBy: { date: 'asc' }, take: 1, select: { date: true, status: true, meetLink: true } },
+          },
+        },
+      },
+    })
+    return obs.map(ob => {
+      const c = ob.client
+      const manual = (ob.checklist ?? {}) as Record<string, boolean>
+      const kickoff = c.meetings[0] ?? null
+      const auto: Record<string, boolean> = {
+        contrato_enviado: c.contracts.some(k => ['SENT', 'SIGNED'].includes(k.status)) || c.hasContract || c.documents.length > 0,
+        // só vale com o contrato assinado ANEXADO (não marca à mão)
+        contrato_assinado: c.documents.length > 0,
+        cobranca: c.payments.length > 0,
+        primeiro_pagamento: c.payments.some(p => p.status === 'PAID'),
+        kickoff: !!kickoff,
+        boas_vindas: false,
+      }
+      const items = OnboardingService.ITEMS.map(it => {
+        const hasManual = it.key !== 'contrato_assinado' && typeof manual[it.key] === 'boolean'
+        return { ...it, done: hasManual ? manual[it.key] : auto[it.key], auto: !hasManual && auto[it.key], manual: hasManual }
+      })
+      const doneCount = items.filter(i => i.done).length
+      const inactive = c.status !== 'ACTIVE' || ['PERDIDO', 'RECUPERAR'].includes(c.leadStage ?? '') || c.standby || c.payments.some(p => p.inCarteira)
+      const plan = c.plans[0]
+      const since = plan?.startDate ?? c.closedAt ?? ob.createdAt
+      return {
+        id: ob.id, clientId: c.id,
+        client: { companyName: c.companyName, responsible: c.responsible, phone: c.phone, whatsapp: c.whatsapp, email: c.email },
+        productCode: plan?.product?.code ?? null,
+        items, doneCount, total: items.length,
+        // concluído: tudo marcado (inclui contrato anexado), ou já finalizado no kanban antigo
+        completed: doneCount === items.length || ob.currentStage === 'ONBOARDING_DONE',
+        allDone: doneCount === items.length,
+        currentStage: ob.currentStage,
+        inactive,
+        kickoff: kickoff ? { date: kickoff.date, status: kickoff.status, meetLink: kickoff.meetLink } : null,
+        daysSinceClose: daysAgo(since),
+        notes: ob.notes,
+      }
+    })
+  }
+
+  async setItem(id: string, key: string, done: boolean | null) {
+    if (!OnboardingService.ITEMS.some(i => i.key === key)) throw new BadRequestException('Item inválido')
+    if (key === 'contrato_assinado') throw new BadRequestException('Contrato assinado só conta com o contrato anexado')
+    const ob = await this.prisma.onboarding.findUnique({ where: { id }, include: { client: { select: { id: true, companyName: true } } } })
+    if (!ob) throw new NotFoundException('Onboarding não encontrado')
+    const checklist = { ...((ob.checklist ?? {}) as Record<string, boolean>) }
+    if (done === null) delete checklist[key]
+    else checklist[key] = done
+    await this.prisma.onboarding.update({ where: { id }, data: { checklist } })
+    const label = OnboardingService.ITEMS.find(i => i.key === key)!.label
+    await this.activityLog.log({
+      clientId: ob.client.id, entityType: 'ONBOARDING', entityId: ob.id, action: 'CHECKLIST',
+      toValue: `${key}=${done}`, description: `${label}: ${done === null ? 'volta ao automático' : done ? 'feito' : 'pendente'} (${ob.client.companyName})`,
+    })
+    // fecha/reabre o onboarding conforme o checklist
+    const board = (await this.boardRaw()).find(b => b.id === id)
+    if (board) {
+      const all = board.items.every(i => i.done)
+      if (all && ob.currentStage !== 'ONBOARDING_DONE') await this.prisma.onboarding.update({ where: { id }, data: { currentStage: 'ONBOARDING_DONE' } })
+      if (!all && ob.currentStage === 'ONBOARDING_DONE' && done === false) await this.prisma.onboarding.update({ where: { id }, data: { currentStage: 'CLIENT_CLOSED' } })
+    }
+    return board
+  }
+
+  async setNotes(id: string, notes: string) {
+    return this.prisma.onboarding.update({ where: { id }, data: { notes: notes.trim() || null } })
+  }
+
 }
