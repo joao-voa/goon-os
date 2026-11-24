@@ -44,6 +44,9 @@ export default function OnboardingPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [clients, setClients] = useState<Array<{ id: string; companyName: string }>>([])
   const [newClientId, setNewClientId] = useState('')
+  const [dataFor, setDataFor] = useState<Board | null>(null)
+  const [dataText, setDataText] = useState('')
+  const [savingData, setSavingData] = useState(false)
 
   const load = useCallback(async () => {
     try { setBoard(await apiFetch<Board[]>('/api/onboarding/board')) } catch { toast.error('Erro ao carregar o onboarding') }
@@ -78,6 +81,18 @@ export default function OnboardingPage() {
       toast.success('Contrato anexado', { id: t })
       load()
     } catch { toast.error('Erro ao anexar o contrato', { id: t }) }
+  }
+
+  async function saveContractData() {
+    if (!dataFor || !dataText.trim()) return
+    setSavingData(true)
+    try {
+      const r = await apiFetch<{ filled: Record<string, string> }>(`/api/onboarding/${dataFor.id}/contract-data`, { method: 'PATCH', body: JSON.stringify({ text: dataText }) })
+      const n = Object.keys(r.filled).length
+      toast.success(n ? `Dados salvos e ${n} campos preenchidos no cadastro` : 'Dados salvos')
+      setDataFor(null); load()
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro ao salvar os dados') }
+    setSavingData(false)
   }
 
   async function scheduleKickoff(b: Board) {
@@ -183,6 +198,9 @@ export default function OnboardingPage() {
                       <span style={{ textDecoration: 'none' }}>{it.label}</span>
                       {it.auto && <span style={{ fontSize: 10, color: C.dim }}>auto</span>}
                     </button>
+                    {it.key === 'dados_contrato' && (
+                      <button onClick={() => { setDataFor(b); setDataText(b.notes ?? '') }} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>{b.notes ? 'ver' : 'colar'}</button>
+                    )}
                     {it.key === 'kickoff' && (b.kickoff
                       ? <span style={{ fontSize: 11, color: C.mid, whiteSpace: 'nowrap' }}>{new Date(b.kickoff.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
                       : <button onClick={() => { setKickoffFor(kickoffFor === b.id ? null : b.id); setKf(k => ({ ...k, date: '' })) }} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>marcar</button>)}
@@ -225,6 +243,23 @@ export default function OnboardingPage() {
           )
         })}
       </div>
+
+      {dataFor && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          onClick={e => { if (e.target === e.currentTarget) setDataFor(null) }}>
+          <div style={{ ...card, width: '100%', maxWidth: 520, padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>Dados do contrato · {dataFor.client.companyName}</div>
+            <div style={{ fontSize: 12, color: C.mid }}>Cole como o cliente mandou (razão social, CNPJ, endereço, responsável, CPF, e-mail…). O texto fica guardado aqui e o cadastro do cliente é preenchido com o que der.</div>
+            <textarea value={dataText} onChange={e => setDataText(e.target.value)} rows={12} autoFocus placeholder={'Razão Social: …\nCNPJ: …\nEndereço: …'}
+              style={{ ...inp, fontSize: 13, padding: 10, resize: 'vertical', lineHeight: 1.5 }} />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => { navigator.clipboard.writeText(dataText); toast.success('Copiado') }} disabled={!dataText} style={btn}>Copiar</button>
+              <button onClick={() => setDataFor(null)} style={{ ...btn, marginLeft: 'auto' }}>Fechar</button>
+              <button onClick={saveContractData} disabled={savingData || !dataText.trim()} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>{savingData ? 'Salvando…' : 'Salvar'}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showCreate && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}

@@ -301,4 +301,68 @@ export class OnboardingService {
     return this.prisma.onboarding.update({ where: { id }, data: { notes: notes.trim() || null } })
   }
 
+
+  /**
+   * Dados do contrato colados do jeito que o cliente mandou ("Rótulo: valor" por linha).
+   * Guarda o texto bruto no onboarding e preenche o que der no cadastro do cliente.
+   * E-mail e telefone só entram se o cadastro estiver vazio (o e-mail principal recebe os convites).
+   */
+  async saveContractData(id: string, text: string) {
+    const ob = await this.prisma.onboarding.findUnique({ where: { id }, include: { client: true } })
+    if (!ob) throw new NotFoundException('Onboarding não encontrado')
+    const raw = text.trim()
+    if (!raw) throw new BadRequestException('Cole os dados do contrato')
+
+    const norm = (v: string) => v.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    const fields: Record<string, string> = {}
+    for (const line of raw.split(/\r?\n/)) {
+      const m = line.match(/^\s*([^:]{2,60}):\s*(.+?)\s*$/)
+      if (m) fields[norm(m[1]).replace(/\s+/g, ' ').trim()] = m[2]
+    }
+    const pick = (...keys: string[]) => {
+      for (const k of Object.keys(fields)) if (keys.some(x => k.includes(x))) return fields[k]
+      return undefined
+    }
+    const data: Record<string, string> = {}
+    const trade = pick('nome fantasia')
+    if (trade) data.tradeName = trade
+    const doc = Object.entries(fields).find(([k]) => (k.includes('cnpj') || k === 'cpf/cnpj') && !k.includes('responsavel'))?.[1]
+    if (doc) data.cnpj = doc
+    const resp = pick('responsavel legal', 'nome do responsavel', 'responsavel')
+    if (resp && !/cpf/i.test(resp)) data.responsible = resp
+    const addr = pick('endereco')
+    if (addr) {
+      const cep = addr.match(/\d{5}-?\d{3}/)?.[0]
+      const uf = addr.match(/[–—-]\s*([A-Z]{2})\b/)?.[1]
+      const parts = addr.split(',').map(x => x.trim())
+      data.address = parts[0]
+      if (parts[1] && /^\d+[\w\s/-]*$/.test(parts[1])) data.addressNumber = parts[1]
+      const cityPart = parts.find(p => /[–—-]\s*[A-Z]{2}\b/.test(p))
+      if (cityPart) data.city = cityPart.split(/[–—-]/)[0].trim()
+      if (uf) data.state = uf
+      if (cep) data.zipCode = cep
+    }
+    const cep2 = pick('cep')
+    if (cep2 && !data.zipCode) data.zipCode = cep2
+    const cidade = pick('cidade')
+    if (cidade && !data.city) data.city = cidade
+    const email = pick('e-mail para assinatura', 'email para assinatura', 'e-mail', 'email')
+    if (email && !ob.client.email) data.email = email.toLowerCase()
+    const tel = pick('telefone', 'whatsapp', 'celular')
+    if (tel && !ob.client.phone) data.phone = tel
+
+    if (data.cnpj && data.cnpj !== ob.client.cnpj) {
+      const other = await this.prisma.client.findFirst({ where: { cnpj: data.cnpj, id: { not: ob.clientId } }, select: { companyName: true } })
+      if (other) throw new BadRequestException(`Esse CNPJ já está no cadastro de ${other.companyName}`)
+    }
+    await this.prisma.client.update({ where: { id: ob.clientId }, data })
+    const checklist = { ...((ob.checklist ?? {}) as Record<string, boolean>), dados_contrato: true }
+    await this.prisma.onboarding.update({ where: { id }, data: { notes: raw, checklist } })
+    await this.activityLog.log({
+      clientId: ob.clientId, entityType: 'ONBOARDING', entityId: ob.id, action: 'CONTRACT_DATA',
+      description: `Dados do contrato colados (${Object.keys(data).join(', ') || 'sem campos reconhecidos'})`,
+    })
+    return { filled: data }
+  }
+
 }

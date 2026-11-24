@@ -22,6 +22,11 @@ export class OnboardingController {
     return this.onboardingService.setItem(id, body.key, body.done ?? null)
   }
 
+  @Patch(':id/contract-data')
+  saveContractData(@Param('id') id: string, @Body() body: { text: string }) {
+    return this.onboardingService.saveContractData(id, body.text ?? '')
+  }
+
   @Patch(':id/notes')
   setNotes(@Param('id') id: string, @Body() body: { notes: string }) {
     return this.onboardingService.setNotes(id, body.notes ?? '')
