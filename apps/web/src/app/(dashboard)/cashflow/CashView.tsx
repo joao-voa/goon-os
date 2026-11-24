@@ -50,115 +50,146 @@ function balanceSeries(days: string[], items: Item[], anchor: { date: string; va
   return days.map(d => out.get(d) ?? 0)
 }
 
+type Sim = { id: string; date: string; entrada: number; parcelas: number; valor: number }
+type Horizon = 'mes' | 30 | 60 | 90 | 120 | 365
+const HORIZONS: Array<[Horizon, string]> = [['mes', 'Mês'], [30, '30 dias'], [60, '60'], [90, '90'], [120, '120'], [365, 'Ano']]
+const overdueKey = (o: { date: string; name: string; detail: string; value: number }) => `${o.date}|${o.name}|${o.detail}|${o.value}`
+const addMonths = (s: string, n: number) => {
+  const d = new Date(`${s}T00:00:00Z`)
+  const day = d.getUTCDate()
+  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + n, 1))
+  const last = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 0)).getUTCDate()
+  return iso(new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), Math.min(day, last))))
+}
+
+/** Vendas simuladas viram itens de caixa: entrada no dia da venda, parcelas mês a mês depois (com imposto 6% se ligado). */
+function simItems(sims: Sim[], withTax: boolean): Item[] {
+  const out: Item[] = []
+  sims.forEach((v, n) => {
+    const name = `Venda simulada ${n + 1}`
+    const push = (date: string, value: number, detail: string) => {
+      if (value <= 0) return
+      out.push({ date, kind: 'in', realized: false, name, detail, value, category: 'SIMULACAO' })
+      if (withTax) out.push({ date, kind: 'out', realized: false, name: `Imposto 6% · ${name}`, detail, value: Math.round(value * 6) / 100, category: 'IMPOSTOS' })
+    }
+    push(v.date, v.entrada, 'entrada')
+    for (let i = 1; i <= v.parcelas; i++) push(addMonths(v.date, i), v.valor, `parcela ${i}/${v.parcelas}`)
+  })
+  return out
+}
+
 export default function CashView() {
   const now = new Date()
+  const todayLocal = iso(new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())))
   const [ym, setYm] = useState({ y: now.getFullYear(), m: now.getMonth() })
+  const [horizon, setHorizon] = useState<Horizon>(() => { const v = lsGet('goon.caixa.horizonte'); return v === 'mes' || !v ? 'mes' : (Number(v) as Horizon) })
   const [view, setView] = useState<View | null>(null)
   const [proj, setProj] = useState<View | null>(null)
   const [stats, setStats] = useState<Stats | null>(null)
   const [includeLate, setIncludeLate] = useState(true)
-  const [includeOverdueIn, setIncludeOverdueIn] = useState(false)
+  const [noTax, setNoTax] = useState(() => lsGet('goon.caixa.semImposto') === '1')
+  const [overdueSel, setOverdueSel] = useState<string[]>([])
+  const [overdueOpen, setOverdueOpen] = useState(false)
   const [hover, setHover] = useState<number | null>(null)
   const [selDay, setSelDay] = useState<string | null>(null)
   const [showLate, setShowLate] = useState(false)
   const [editBal, setEditBal] = useState(false)
   const [balInput, setBalInput] = useState('')
   const [cushion, setCushion] = useState<number | null>(null)
-  const [simSales, setSimSales] = useState(0)
+  const [sims, setSims] = useState<Sim[]>(() => { try { return JSON.parse(lsGet('goon.caixa.simulacoes') ?? '[]') as Sim[] } catch { return [] } })
   const [simInvest, setSimInvest] = useState(0)
+  useEffect(() => { lsSet('goon.caixa.simulacoes', JSON.stringify(sims)) }, [sims])
 
-  const monthStart = iso(new Date(Date.UTC(ym.y, ym.m, 1)))
-  const monthEnd = iso(new Date(Date.UTC(ym.y, ym.m + 1, 0)))
+  const rangeStart = horizon === 'mes' ? iso(new Date(Date.UTC(ym.y, ym.m, 1))) : todayLocal
+  const rangeEnd = horizon === 'mes' ? iso(new Date(Date.UTC(ym.y, ym.m + 1, 0))) : addDays(todayLocal, horizon - 1)
 
   const load = useCallback(async () => {
     try {
-      let v = await apiFetch<View>(`/api/cashflow/view?from=${monthStart}&to=${monthEnd}`)
+      let v = await apiFetch<View>(`/api/cashflow/view?from=${rangeStart}&to=${rangeEnd}`)
       const b = v.balance
-      // saldo informado fora do mês: busca o intervalo até ele para levar o saldo até aqui
-      if (b && (b.date < monthStart || b.date > monthEnd)) {
-        const from = b.date < monthStart ? b.date : monthStart
-        const to = b.date > monthEnd ? b.date : monthEnd
+      // saldo informado fora do período: busca o intervalo até ele para levar o saldo até aqui
+      if (b && (b.date < rangeStart || b.date > rangeEnd)) {
+        const from = b.date < rangeStart ? b.date : rangeStart
+        const to = b.date > rangeEnd ? b.date : rangeEnd
         v = await apiFetch<View>(`/api/cashflow/view?from=${from}&to=${to}`)
       }
       setView(v)
       const pFrom = b && b.date < v.today ? b.date : v.today
-      const pTo = iso(new Date(Date.UTC(new Date(`${v.today}T00:00:00Z`).getUTCFullYear(), new Date(`${v.today}T00:00:00Z`).getUTCMonth() + 12, 0)))
+      const t = new Date(`${v.today}T00:00:00Z`)
+      const pTo = iso(new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 12, 0)))
       setProj(await apiFetch<View>(`/api/cashflow/view?from=${pFrom}&to=${pTo}`))
     } catch { toast.error('Erro ao carregar o caixa') }
-  }, [monthStart, monthEnd])
+  }, [rangeStart, rangeEnd])
   useEffect(() => { load() }, [load])
   useEffect(() => {
-    apiFetch<Stats>('/api/cashflow/stats').then(s => {
-      setStats(s)
+    apiFetch<Stats>('/api/cashflow/stats').then(st => {
+      setStats(st)
       const saved = Number(lsGet('goon.caixa.colchao'))
-      setCushion(Number.isFinite(saved) && saved > 0 ? saved : s.avgMonthlyCost)
+      setCushion(Number.isFinite(saved) && saved > 0 ? saved : st.avgMonthlyCost)
     }).catch(() => {})
   }, [])
 
-  const filterItems = useCallback((items: Item[]) => items.filter(i => includeLate || !i.late), [includeLate])
+  // filtros comuns: contas vencidas, impostos, parcelas atrasadas escolhidas, vendas simuladas
+  const prepare = useCallback((v: View) => {
+    let items = v.items.filter(i => (includeLate || !i.late) && (!noTax || i.category !== 'IMPOSTOS'))
+    const chosen = v.overdueIn.items.filter(o => overdueSel.includes(overdueKey(o)))
+    items = [...items, ...chosen.map(o => ({ date: v.today, kind: 'in' as const, realized: false, name: o.name, detail: `atrasada desde ${ddmm(o.date)}`, value: o.value, category: 'RECEITA', late: true }))]
+    return [...items, ...simItems(sims, !noTax)]
+  }, [includeLate, noTax, overdueSel, sims])
 
-  // ===== mês =====
-  const month = useMemo(() => {
+  // ===== período (mês ou N dias) =====
+  const period = useMemo(() => {
     if (!view) return null
     const days: string[] = []
-    for (let d = monthStart; d <= monthEnd; d = addDays(d, 1)) days.push(d)
-    let items = filterItems(view.items)
-    if (includeOverdueIn && view.today >= monthStart && view.today <= monthEnd) {
-      items = [...items, ...view.overdueIn.items.map(o => ({ date: view.today, kind: 'in' as const, realized: false, name: o.name, detail: `atrasada desde ${ddmm(o.date)}`, value: o.value, category: 'RECEITA', late: true }))]
-    }
-    const anchor = view.balance ? { date: view.balance.date, value: view.balance.value } : { date: addDays(monthStart, -1), value: 0 }
+    for (let d = rangeStart; d <= rangeEnd; d = addDays(d, 1)) days.push(d)
+    const items = prepare(view)
+    const anchor = view.balance ? { date: view.balance.date, value: view.balance.value } : { date: addDays(rangeStart, -1), value: 0 }
     const bal = balanceSeries(days, items, anchor)
-    const inMonth = items.filter(i => i.date >= monthStart && i.date <= monthEnd)
-    const perDay = days.map(d => ({
-      d,
-      inn: inMonth.filter(i => i.date === d && i.kind === 'in').reduce((s, i) => s + i.value, 0),
-      out: inMonth.filter(i => i.date === d && i.kind === 'out').reduce((s, i) => s + i.value, 0),
-    }))
-    const sum = (kind: 'in' | 'out', realized: boolean) => inMonth.filter(i => i.kind === kind && i.realized === realized).reduce((s, i) => s + i.value, 0)
+    const inRange = items.filter(i => i.date >= rangeStart && i.date <= rangeEnd)
+    const byDay = new Map<string, { inn: number; out: number }>()
+    for (const i of inRange) { const x = byDay.get(i.date) ?? { inn: 0, out: 0 }; if (i.kind === 'in') x.inn += i.value; else x.out += i.value; byDay.set(i.date, x) }
+    const perDay = days.map(d => ({ d, ...(byDay.get(d) ?? { inn: 0, out: 0 }) }))
+    const sum = (kind: 'in' | 'out', realized: boolean) => inRange.filter(i => i.kind === kind && i.realized === realized).reduce((acc, i) => acc + i.value, 0)
     const futureIdx = days.map((d, i) => ({ d, i })).filter(x => x.d >= view.today)
     const scope = futureIdx.length ? futureIdx : days.map((d, i) => ({ d, i }))
     const minI = scope.reduce((m, x) => (bal[x.i] < bal[m.i] ? x : m), scope[0])
     const todayIdx = days.indexOf(view.today)
+    const lateAll = view.items.filter(i => i.late)
     return {
-      days, bal, perDay, inMonth,
+      days, bal, perDay, inRange,
       received: sum('in', true), toReceive: sum('in', false), paid: sum('out', true), toPay: sum('out', false),
       end: bal[bal.length - 1], min: { value: bal[minI.i], day: minI.d },
       todayBal: todayIdx >= 0 ? bal[todayIdx] : null,
-      lateOut: view.items.filter(i => i.late).reduce((s, i) => s + i.value, 0),
-      lateOutCount: view.items.filter(i => i.late).length,
+      lateOut: lateAll.reduce((acc, i) => acc + i.value, 0), lateOutCount: lateAll.length,
       hasAnchor: !!view.balance,
     }
-  }, [view, monthStart, monthEnd, filterItems, includeOverdueIn])
+  }, [view, rangeStart, rangeEnd, prepare])
 
   // ===== projeção (12 meses a partir do mês atual) =====
   const projection = useMemo(() => {
     if (!proj || !stats || cushion == null) return null
-    let items = filterItems(proj.items)
-    if (includeOverdueIn) items = [...items, ...proj.overdueIn.items.map(o => ({ date: proj.today, kind: 'in' as const, realized: false, name: o.name, detail: '', value: o.value, category: 'RECEITA', late: true }))]
+    const items = prepare(proj)
     const start = proj.balance ? (proj.balance.date < proj.today ? proj.balance.date : proj.today) : addDays(proj.today, -1)
     let bal = proj.balance?.value ?? 0
     const t = new Date(`${proj.today}T00:00:00Z`)
-    // venda nova simulada: caixa médio no mês da venda + o resto do ticket em 10 meses
-    const tail = Math.max(0, (stats.avgTicket - stats.avgCashPerSale) / 10)
     const rows: Array<{ key: string; label: string; inn: number; out: number; sim: number; end: number; need: number; needSales: number }> = []
     for (let i = 0; i < 12; i++) {
-      const y = t.getUTCFullYear(), m = t.getUTCMonth() + i
-      const d0 = new Date(Date.UTC(y, m, 1)), key = iso(d0).slice(0, 7)
+      const d0 = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + i, 1)), key = iso(d0).slice(0, 7)
       const its = items.filter(x => x.date.slice(0, 7) === key && x.date > start)
-      const inn = its.filter(x => x.kind === 'in').reduce((s, x) => s + x.value, 0)
-      const out = its.filter(x => x.kind === 'out').reduce((s, x) => s + x.value, 0)
-      const cohortCash = simSales * (stats.avgCashPerSale + tail * Math.min(i, 10))
-      const sim = cohortCash - simInvest
+      const isSim = (x: Item) => x.category === 'SIMULACAO' || x.name.includes('Venda simulada')
+      const inn = its.filter(x => x.kind === 'in' && !isSim(x)).reduce((acc, x) => acc + x.value, 0)
+      const out = its.filter(x => x.kind === 'out' && !isSim(x)).reduce((acc, x) => acc + x.value, 0)
+      const sim = its.filter(isSim).reduce((acc, x) => acc + (x.kind === 'in' ? x.value : -x.value), 0) - simInvest
       bal += inn - out + sim
       // falta vender: o que precisa entrar a mais para o saldo não ficar abaixo do colchão
       const need = Math.max(0, cushion - bal)
       if (need > 0) bal += need
       rows.push({ key, label: `${MSHORT[d0.getUTCMonth()]}/${String(d0.getUTCFullYear()).slice(2)}`, inn, out, sim, end: bal - need, need, needSales: stats.avgCashPerSale > 0 ? Math.ceil(need / stats.avgCashPerSale) : 0 })
     }
-    const totalNeed = rows.reduce((s, r) => s + r.need, 0)
+    const totalNeed = rows.reduce((acc, r) => acc + r.need, 0)
     const minEnd = Math.min(...rows.map(r => r.end))
-    return { rows, totalNeed, canInvest: Math.max(0, minEnd - cushion), avgCost: stats.avgMonthlyCost }
-  }, [proj, stats, cushion, filterItems, includeOverdueIn, simSales, simInvest])
+    return { rows, totalNeed, canInvest: Math.max(0, minEnd - cushion) }
+  }, [proj, stats, cushion, prepare, simInvest])
 
   async function saveBalance() {
     const v = Number(balInput.replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, ''))
@@ -171,11 +202,14 @@ export default function CashView() {
     } catch { toast.error('Erro ao salvar o saldo') }
   }
 
-  if (!view || !month) return <div style={{ padding: 24, color: C.mid, fontFamily: sans }}>Carregando o caixa…</div>
+  if (!view || !period) return <div style={{ padding: 24, color: C.mid, fontFamily: sans }}>Carregando o caixa…</div>
 
-  const isCurMonth = view.today >= monthStart && view.today <= monthEnd
-  const dayItems = (d: string) => month.inMonth.filter(i => i.date === d)
-  const listDays = selDay ? [selDay] : month.days.filter(d => d >= (isCurMonth ? view.today : monthStart)).slice(0, isCurMonth ? 7 : 31)
+  const hasToday = view.today >= rangeStart && view.today <= rangeEnd
+  const dayItems = (d: string) => period.inRange.filter(i => i.date === d)
+  const listDays = selDay ? [selDay] : period.days.filter(d => d >= (hasToday ? view.today : rangeStart)).slice(0, hasToday ? 7 : 31)
+  const periodLabel = horizon === 'mes' ? MONTHS[ym.m].toLowerCase() : `${ddmm(rangeStart)} a ${ddmm(rangeEnd)}`
+  const overdueChosenTotal = view.overdueIn.items.filter(o => overdueSel.includes(overdueKey(o))).reduce((acc, o) => acc + o.value, 0)
+  const setH = (h: Horizon) => { setHorizon(h); setSelDay(null); lsSet('goon.caixa.horizonte', String(h)) }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, fontFamily: sans, color: C.ink }}>
@@ -185,15 +219,28 @@ export default function CashView() {
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Caixa</h1>
           <p style={{ margin: '2px 0 0', color: C.mid, fontSize: 13 }}>Saldo dia a dia: realizado até hoje, projetado daqui para frente.</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, border: `1px solid ${C.line}`, borderRadius: 100, padding: 4, background: '#fff' }}>
-          <button onClick={() => { setSelDay(null); setYm(p => (p.m === 0 ? { y: p.y - 1, m: 11 } : { y: p.y, m: p.m - 1 })) }} style={navBtn}>‹</button>
-          <span style={{ fontSize: 14, fontWeight: 700, minWidth: 150, textAlign: 'center' }}>{MONTHS[ym.m]} {ym.y}</span>
-          <button onClick={() => { setSelDay(null); setYm(p => (p.m === 11 ? { y: p.y + 1, m: 0 } : { y: p.y, m: p.m + 1 })) }} style={navBtn}>›</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 2, border: `1px solid ${C.line}`, borderRadius: 100, padding: 3, background: '#fff' }}>
+            {HORIZONS.map(([h, l]) => (
+              <button key={String(h)} onClick={() => setH(h)} style={{ padding: '5px 11px', border: 'none', borderRadius: 100, cursor: 'pointer', fontFamily: sans, fontSize: 12, fontWeight: 600, background: horizon === h ? C.ink : 'transparent', color: horizon === h ? '#fff' : C.mid }}>{l}</button>
+            ))}
+          </div>
+          {horizon === 'mes' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, border: `1px solid ${C.line}`, borderRadius: 100, padding: 3, background: '#fff' }}>
+              <button onClick={() => { setSelDay(null); setYm(p => (p.m === 0 ? { y: p.y - 1, m: 11 } : { y: p.y, m: p.m - 1 })) }} style={navBtn}>‹</button>
+              <span style={{ fontSize: 14, fontWeight: 700, minWidth: 140, textAlign: 'center' }}>{MONTHS[ym.m]} {ym.y}</span>
+              <button onClick={() => { setSelDay(null); setYm(p => (p.m === 11 ? { y: p.y + 1, m: 0 } : { y: p.y, m: p.m + 1 })) }} style={navBtn}>›</button>
+            </div>
+          )}
+          <button onClick={() => { const v = !noTax; setNoTax(v); lsSet('goon.caixa.semImposto', v ? '1' : '0') }}
+            style={{ ...btn, borderRadius: 100, background: noTax ? C.ink : '#fff', color: noTax ? '#fff' : C.ink }}>
+            {noTax ? '✓ Sem impostos' : 'Sem impostos'}
+          </button>
         </div>
       </div>
 
       {/* saldo informado */}
-      <div style={{ ...card, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', borderLeft: `4px solid ${month.hasAnchor ? C.neon : C.amber}` }}>
+      <div style={{ ...card, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', borderLeft: `4px solid ${period.hasAnchor ? C.neon : C.amber}` }}>
         {editBal ? (
           <>
             <span style={{ fontSize: 13, fontWeight: 600 }}>Saldo no banco hoje:</span>
@@ -215,52 +262,73 @@ export default function CashView() {
         )}
       </div>
 
-      {/* números do mês */}
+      {/* números do período */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
-        {isCurMonth && month.todayBal != null && <Tile label="Saldo hoje" value={brl(month.todayBal)} sub={month.hasAnchor ? 'com o que entrou e saiu desde o saldo informado' : 'sem saldo informado'} />}
-        <Tile label={`Saldo no fim de ${MONTHS[ym.m].toLowerCase()}`} value={brl(month.end)} tone={month.end < 0 ? 'bad' : undefined} sub="projetado" />
-        <Tile label="Menor saldo do mês" value={brl(month.min.value)} tone={month.min.value < (cushion ?? 0) ? 'bad' : undefined} sub={`dia ${ddmm(month.min.day)}${cushion ? (month.min.value < cushion ? ' · abaixo do colchão' : '') : ''}`} />
-        <Tile label="Entradas" value={brl(month.received + month.toReceive)} sub={`${brl(month.received)} recebido · ${brl(month.toReceive)} a receber`} />
-        <Tile label="Saídas" value={brl(month.paid + month.toPay)} sub={`${brl(month.paid)} pago · ${brl(month.toPay)} a pagar`} />
+        {hasToday && period.todayBal != null && <Tile label="Saldo hoje" value={brl(period.todayBal)} sub={period.hasAnchor ? 'com o que entrou e saiu desde o saldo informado' : 'sem saldo informado'} />}
+        <Tile label={horizon === 'mes' ? `Saldo no fim de ${periodLabel}` : `Saldo em ${ddmm(rangeEnd)}`} value={brl(period.end)} tone={period.end < 0 ? 'bad' : undefined} sub="projetado" />
+        <Tile label="Menor saldo do período" value={brl(period.min.value)} tone={period.min.value < (cushion ?? 0) ? 'bad' : undefined} sub={`dia ${ddmm(period.min.day)}${cushion && period.min.value < cushion ? ' · abaixo do colchão' : ''}`} />
+        <Tile label="Entradas" value={brl(period.received + period.toReceive)} sub={`${brl(period.received)} recebido · ${brl(period.toReceive)} a receber`} />
+        <Tile label="Saídas" value={brl(period.paid + period.toPay)} sub={`${brl(period.paid)} pago · ${brl(period.toPay)} a pagar`} />
       </div>
 
       {/* avisos */}
-      {(view.overdueIn.total > 0 || month.lateOutCount > 0) && (
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+      {(view.overdueIn.total > 0 || period.lateOutCount > 0) && (
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
           {view.overdueIn.total > 0 && (
-            <label style={notice}>
-              <input type="checkbox" checked={includeOverdueIn} onChange={e => setIncludeOverdueIn(e.target.checked)} />
-              <span><strong>{brl(view.overdueIn.total)}</strong> de parcelas atrasadas ({view.overdueIn.items.length}). Contar como se entrassem hoje</span>
-            </label>
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => setOverdueOpen(o => !o)} style={{ ...notice, fontFamily: sans }}>
+                <span><strong>{brl(view.overdueIn.total)}</strong> em {view.overdueIn.items.length} parcelas atrasadas · contando {overdueSel.length ? <strong>{overdueSel.length} ({brl(overdueChosenTotal)})</strong> : 'nenhuma'} como entrada hoje</span>
+                <span style={{ fontSize: 10, color: C.mid }}>▾</span>
+              </button>
+              {overdueOpen && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 30, background: '#fff', border: `1px solid ${C.line}`, borderRadius: 8, boxShadow: '0 8px 24px rgba(15,23,42,0.12)', padding: '4px 0', minWidth: 340, maxHeight: 340, overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', gap: 8, padding: '6px 12px', borderBottom: `1px solid ${C.bg}` }}>
+                    <button onClick={() => setOverdueSel(view.overdueIn.items.map(overdueKey))} style={btn}>Todas</button>
+                    <button onClick={() => setOverdueSel([])} style={btn}>Nenhuma</button>
+                    <button onClick={() => setOverdueOpen(false)} style={{ ...btn, marginLeft: 'auto' }}>Fechar</button>
+                  </div>
+                  {view.overdueIn.items.map(o => {
+                    const key = overdueKey(o), on = overdueSel.includes(key)
+                    return (
+                      <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', fontSize: 13 }}>
+                        <input type="checkbox" checked={on} onChange={() => setOverdueSel(sel => on ? sel.filter(x => x !== key) : [...sel, key])} />
+                        <span style={{ flex: 1, minWidth: 0 }}>{o.name}<span style={{ color: C.dim }}> · venceu {ddmm(o.date)}</span></span>
+                        <span style={{ ...num, fontWeight: 600 }}>{brl(o.value)}</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           )}
-          {month.lateOutCount > 0 && (
+          {period.lateOutCount > 0 && (
             <label style={notice}>
               <input type="checkbox" checked={includeLate} onChange={e => setIncludeLate(e.target.checked)} />
-              <span><strong>{brl(month.lateOut)}</strong> em {month.lateOutCount} contas vencidas sem baixa. Contar como pagas hoje</span>
+              <span><strong>{brl(period.lateOut)}</strong> em {period.lateOutCount} contas vencidas sem baixa. Contar como pagas hoje</span>
             </label>
           )}
         </div>
       )}
 
-      {/* gráficos do mês */}
+      {/* gráficos do período */}
       <div style={{ ...card, padding: '14px 16px 8px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Saldo ao longo do mês</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Saldo ao longo {horizon === 'mes' ? 'do mês' : `de ${periodLabel}`}</span>
           <Legend items={[['Realizado', C.ink, false], ['Projetado', C.ink, true], ...(cushion ? [['Colchão', C.amber, true] as [string, string, boolean]] : [])]} />
         </div>
-        <BalanceChart days={month.days} bal={month.bal} today={view.today} cushion={cushion} hover={hover} setHover={setHover} onPick={d => setSelDay(selDay === d ? null : d)} sel={selDay} />
+        <BalanceChart days={period.days} bal={period.bal} today={view.today} cushion={cushion} hover={hover} setHover={setHover} onPick={d => setSelDay(selDay === d ? null : d)} sel={selDay} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 10, flexWrap: 'wrap', gap: 8 }}>
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Entradas e saídas por dia</span>
           <Legend items={[['Entradas', C.green, false], ['Saídas', C.red, false]]} />
         </div>
-        <FlowChart perDay={month.perDay} today={view.today} hover={hover} setHover={setHover} onPick={d => setSelDay(selDay === d ? null : d)} sel={selDay} bal={month.bal} />
+        <FlowChart perDay={period.perDay} today={view.today} hover={hover} setHover={setHover} onPick={d => setSelDay(selDay === d ? null : d)} sel={selDay} bal={period.bal} />
       </div>
 
       {/* lista do dia / próximos dias */}
       <div style={{ ...card, overflow: 'hidden' }}>
         <div style={{ padding: '12px 16px', borderBottom: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>
-            {selDay ? `Dia ${ddmm(selDay)}` : isCurMonth ? 'Próximos 7 dias' : `Movimento de ${MONTHS[ym.m].toLowerCase()}`}
+            {selDay ? `Dia ${ddmm(selDay)}` : hasToday ? 'Próximos 7 dias' : `Movimento de ${periodLabel}`}
           </span>
           {selDay && <button onClick={() => setSelDay(null)} style={btn}>Ver próximos dias</button>}
         </div>
@@ -269,7 +337,7 @@ export default function CashView() {
           {listDays.map(d => {
             const all = dayItems(d)
             if (!all.length) return null
-            const idx = month.days.indexOf(d)
+            const idx = period.days.indexOf(d)
             // contas vencidas sem baixa caem todas em hoje: resume numa linha
             const late = all.filter(i => i.late && i.kind === 'out')
             const its = showLate ? all : all.filter(i => !(i.late && i.kind === 'out'))
@@ -277,18 +345,18 @@ export default function CashView() {
               <div key={d} style={{ padding: '8px 0', borderBottom: `1px solid ${C.bg}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: C.mid, fontWeight: 700, marginBottom: 4 }}>
                   <span>{new Date(`${d}T12:00:00Z`).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC' })}</span>
-                  <span style={num}>saldo {brl(month.bal[idx])}</span>
+                  <span style={num}>saldo {brl(period.bal[idx])}</span>
                 </div>
                 {late.length > 0 && (
                   <button onClick={() => setShowLate(v => !v)} style={{ display: 'flex', justifyContent: 'space-between', width: '100%', gap: 10, fontSize: 13, padding: '5px 8px', margin: '2px 0', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 6, cursor: 'pointer', fontFamily: sans, color: C.ink }}>
                     <span>{showLate ? '▾' : '▸'} {late.length} contas vencidas sem baixa</span>
-                    <span style={{ ...num, fontWeight: 700 }}>−{brl(late.reduce((s, i) => s + i.value, 0))}</span>
+                    <span style={{ ...num, fontWeight: 700 }}>−{brl(late.reduce((acc, i) => acc + i.value, 0))}</span>
                   </button>
                 )}
                 {its.map((it, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 13, padding: '3px 0' }}>
                     <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: it.kind === 'in' ? C.green : C.red, marginRight: 8 }} />
+                      <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: it.kind === 'in' ? C.green : C.red, marginRight: 8, opacity: it.category === 'SIMULACAO' ? 0.5 : 1 }} />
                       {it.name}{it.detail ? <span style={{ color: C.dim }}> · {it.detail}</span> : null}
                       {!it.realized && <span style={{ color: C.dim, fontSize: 11 }}> · {it.kind === 'in' ? 'a receber' : 'a pagar'}</span>}
                     </span>
@@ -301,20 +369,47 @@ export default function CashView() {
         </div>
       </div>
 
+      {/* simulação de vendas */}
+      <div style={{ ...card, overflow: 'hidden' }}>
+        <div style={{ padding: '12px 16px', borderBottom: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Simular vendas</div>
+            <div style={{ fontSize: 12, color: C.mid, marginTop: 2 }}>Cada venda entra no dia escolhido (entrada) e as parcelas nos meses seguintes, no mesmo dia{noTax ? '' : ', já com o imposto de 6%'}. Aparece no dia a dia e na projeção.</div>
+          </div>
+          <button onClick={() => setSims(s => [...s, { id: String(Date.now()), date: todayLocal, entrada: stats?.avgCashPerSale ?? 5000, parcelas: 10, valor: stats ? Math.round(Math.max(0, stats.avgTicket - stats.avgCashPerSale) / 10) : 2500 }])}
+            style={{ ...btn, background: C.neon, border: 'none', fontWeight: 700 }}>+ Adicionar venda</button>
+        </div>
+        <div style={{ padding: '8px 16px 12px' }}>
+          {sims.length === 0 && <div style={{ fontSize: 13, color: C.dim, padding: '8px 0' }}>Nenhuma venda simulada.</div>}
+          {sims.map((v, n) => {
+            const upd = (patch: Partial<Sim>) => setSims(s => s.map(x => (x.id === v.id ? { ...x, ...patch } : x)))
+            return (
+              <div key={v.id} style={{ display: 'grid', gridTemplateColumns: 'auto repeat(4, minmax(110px, 1fr)) auto', gap: 8, alignItems: 'end', padding: '8px 0', borderBottom: `1px solid ${C.bg}` }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: C.mid, paddingBottom: 9 }}>#{n + 1}</span>
+                <Field label="Dia da venda"><input type="date" value={v.date} onChange={e => e.target.value && upd({ date: e.target.value })} style={inp} /></Field>
+                <Field label="Entrada"><MoneyInput value={v.entrada} onChange={x => upd({ entrada: x })} /></Field>
+                <Field label="Parcelas"><input type="number" min={0} max={36} value={v.parcelas} onChange={e => upd({ parcelas: Math.max(0, Math.min(36, Number(e.target.value) || 0)) })} style={inp} /></Field>
+                <Field label="Valor da parcela"><MoneyInput value={v.valor} onChange={x => upd({ valor: x })} /></Field>
+                <button onClick={() => setSims(s => s.filter(x => x.id !== v.id))} title="Remover" style={{ ...btn, color: C.red, marginBottom: 1 }}>×</button>
+                <div style={{ gridColumn: '2 / -1', fontSize: 11.5, color: C.mid, marginTop: -2 }}>
+                  Total {brl(v.entrada + v.parcelas * v.valor)} · última parcela em {ddmm(addMonths(v.date, v.parcelas))}/{addMonths(v.date, v.parcelas).slice(2, 4)}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
       {/* projeção */}
       {projection && stats && cushion != null && (
         <div style={{ ...card, overflow: 'hidden' }}>
           <div style={{ padding: '12px 16px', borderBottom: `1px solid ${C.line}` }}>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15 }}>Projeção dos próximos 12 meses</div>
-            <div style={{ fontSize: 12, color: C.mid, marginTop: 2 }}>Com o que já está contratado e lançado. As despesas que ainda não foram lançadas não entram (custo médio dos últimos 3 meses: {brl(stats.avgMonthlyCost)}).</div>
+            <div style={{ fontSize: 12, color: C.mid, marginTop: 2 }}>Com o que já está contratado e lançado{sims.length ? ' e as vendas simuladas' : ''}{noTax ? ', sem impostos' : ''}. As despesas que ainda não foram lançadas não entram (custo médio dos últimos 3 meses: {brl(stats.avgMonthlyCost)}).</div>
           </div>
-          {/* simulador */}
           <div style={{ padding: '12px 16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, background: C.bg, borderBottom: `1px solid ${C.line}` }}>
             <Field label="Colchão mínimo de caixa" hint="o saldo não deve ficar abaixo disso">
               <MoneyInput value={cushion} onChange={v => { setCushion(v); lsSet('goon.caixa.colchao', String(v)) }} />
-            </Field>
-            <Field label="Simular vendas novas por mês" hint={`cada venda: ~${brl(stats.avgCashPerSale)} no 1º mês, ticket ${brl(stats.avgTicket)}`}>
-              <input type="number" min={0} max={50} value={simSales} onChange={e => setSimSales(Math.max(0, Number(e.target.value) || 0))} style={inp} />
             </Field>
             <Field label="Simular investimento por mês" hint="saída extra todo mês">
               <MoneyInput value={simInvest} onChange={setSimInvest} />
@@ -331,7 +426,7 @@ export default function CashView() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 640 }}>
               <thead>
                 <tr style={{ background: C.bg, color: C.mid, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  {['Mês', 'Entradas', 'Saídas', ...(simSales || simInvest ? ['Simulação'] : []), 'Saldo no fim', 'Falta vender'].map((h, i) => (
+                  {['Mês', 'Entradas', 'Saídas', ...(sims.length || simInvest ? ['Simulação'] : []), 'Saldo no fim', 'Falta vender'].map((h, i) => (
                     <th key={h} style={{ padding: '8px 14px', textAlign: i === 0 ? 'left' : 'right', fontWeight: 600 }}>{h}</th>
                   ))}
                 </tr>
@@ -342,7 +437,7 @@ export default function CashView() {
                     <td style={{ padding: '8px 14px', fontWeight: 700, textTransform: 'capitalize' }}>{r.label}</td>
                     <td style={{ ...num, padding: '8px 14px', textAlign: 'right' }}>{brl(r.inn)}</td>
                     <td style={{ ...num, padding: '8px 14px', textAlign: 'right' }}>{brl(r.out)}</td>
-                    {(simSales || simInvest) ? <td style={{ ...num, padding: '8px 14px', textAlign: 'right', color: r.sim >= 0 ? C.green : C.red }}>{r.sim >= 0 ? '+' : ''}{brl(r.sim)}</td> : null}
+                    {(sims.length || simInvest) ? <td style={{ ...num, padding: '8px 14px', textAlign: 'right' }}>{r.sim >= 0 ? '+' : ''}{brl(r.sim)}</td> : null}
                     <td style={{ ...num, padding: '8px 14px', textAlign: 'right', fontWeight: 700, color: r.end < cushion ? C.red : C.ink }}>{brl(r.end)}</td>
                     <td style={{ ...num, padding: '8px 14px', textAlign: 'right', color: r.need > 0 ? C.red : C.dim, fontWeight: r.need > 0 ? 700 : 400 }}>
                       {r.need > 0 ? `${brl(r.need)} · ${r.needSales} venda${r.needSales > 1 ? 's' : ''}` : 'nada'}
@@ -407,6 +502,7 @@ function Legend({ items }: { items: Array<[string, string, boolean]> }) {
 
 // ---- gráficos (SVG, eixo único cada) ----
 const W = 1000, PADL = 52, PADR = 12
+const labelStep = (n: number) => (n <= 31 ? 5 : Math.ceil(n / 9))
 
 function niceTicks(min: number, max: number, n = 4) {
   if (min === max) { min -= 1; max += 1 }
@@ -454,7 +550,7 @@ function BalanceChart({ days, bal, today, cushion, hover, setHover, onPick, sel 
         {cushion ? <line x1={PADL} x2={W - PADR} y1={y(cushion)} y2={y(cushion)} stroke={C.amber} strokeWidth={1.5} strokeDasharray="5 4" /> : null}
         {split > 0 && <path d={path(0, split)} fill="none" stroke={C.ink} strokeWidth={2} strokeLinejoin="round" />}
         {split < days.length && <path d={path(Math.max(0, split - 1), days.length)} fill="none" stroke={C.ink} strokeWidth={2} strokeDasharray="5 4" strokeLinejoin="round" />}
-        {days.map((d, i) => (i % 5 === 0 || i === days.length - 1) && <text key={d} x={x(i)} y={H - 6} textAnchor="middle" fontSize="11" fill={C.mid}>{d.slice(8, 10)}</text>)}
+        {days.map((d, i) => (i % labelStep(days.length) === 0 || i === days.length - 1) && <text key={d} x={x(i)} y={H - 6} textAnchor="middle" fontSize="11" fill={C.mid}>{days.length > 31 ? ddmm(d) : d.slice(8, 10)}</text>)}
         {sel && days.includes(sel) && <line x1={x(days.indexOf(sel))} x2={x(days.indexOf(sel))} y1={top} y2={H - bottom} stroke={C.neon} strokeWidth={3} />}
         {hover != null && (
           <g>
@@ -481,7 +577,7 @@ function FlowChart({ perDay, today, hover, setHover, onPick, sel, bal }: {
   const maxV = Math.max(1, ...perDay.map(p => Math.max(p.inn, p.out)))
   const { hi } = niceTicks(0, maxV, 4)
   const n = perDay.length
-  const bw = Math.max(3, ((W - PADL - PADR) / n) * 0.6)
+  const bw = Math.max(1.5, ((W - PADL - PADR) / n) * 0.6)
   const x = (i: number) => PADL + (i + 0.5) * ((W - PADL - PADR) / n)
   const mid = top + (H - top - bottom) / 2
   const sc = (v: number) => (v / hi) * ((H - top - bottom) / 2)
@@ -503,7 +599,7 @@ function FlowChart({ perDay, today, hover, setHover, onPick, sel, bal }: {
             </g>
           )
         })}
-        {perDay.map((p, i) => (i % 5 === 0 || i === n - 1) && <text key={p.d} x={x(i)} y={H - 6} textAnchor="middle" fontSize="11" fill={C.mid}>{p.d.slice(8, 10)}</text>)}
+        {perDay.map((p, i) => (i % labelStep(n) === 0 || i === n - 1) && <text key={p.d} x={x(i)} y={H - 6} textAnchor="middle" fontSize="11" fill={C.mid}>{n > 31 ? ddmm(p.d) : p.d.slice(8, 10)}</text>)}
         {sel && perDay.some(p => p.d === sel) && <line x1={x(perDay.findIndex(p => p.d === sel))} x2={x(perDay.findIndex(p => p.d === sel))} y1={top} y2={H - bottom} stroke={C.neon} strokeWidth={3} opacity={0.6} />}
         {hover != null && <line x1={x(hover)} x2={x(hover)} y1={top} y2={H - bottom} stroke={C.dim} strokeWidth={1} />}
         <HoverLayer n={n} h={H} x={x} setHover={setHover} onPick={i => onPick(perDay[i].d)} />
