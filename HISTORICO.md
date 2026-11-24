@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-24
+- **Onboarding:** item novo "Contrato elaborado" (entre Dados do contrato e Enviado para assinatura); marca sozinho quando há contrato gerado no sistema ou anexado. Checklist com 9 itens.
 - **Dados do contrato preenchidos:** Hellik Store (Hellik Comércio de Artigos do Vestuário LTDA, CNPJ 33.544.621/0002-76, Feliz/RS, resp. Alexandre Hans, contato@hellik.com.br) e BULLS Champions (CALMON RANCH INDUSTRIA E COMERCIO LTDA, CNPJ 38.924.167/0001-11, São Jorge do Patrocínio/PR, resp. Diogo Camilo de Campos Marta). Texto salvo no card do onboarding.
 - **Onboarding, dados do contrato:** botão "colar" no item Dados do contrato: guarda o texto como o cliente mandou (Onboarding.notes) e preenche o cadastro (nome fantasia, CNPJ, endereço, nº, cidade, UF, CEP, responsável; e-mail/telefone só se vazios). StartCBO já com os dados colados.
 - **Onboarding:** só clientes de novembro em andamento (StartCBO, Colcci USA, 244, Hellik Store, BULLS Champions). Os 11 anteriores foram marcados como finalizados (Concluídos): VESSEL, Patrick Borinelli, CAMISARTE, Barrière, ARY NARAH, Ana Paula Vieira, Califorstyle, Beni Petit, LGE, Bella Lina, Go Life.

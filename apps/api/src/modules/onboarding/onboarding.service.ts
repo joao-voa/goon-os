@@ -198,6 +198,7 @@ export class OnboardingService {
   // kickoff na agenda); qualquer item pode ser marcado/desmarcado à mão (vale a marcação manual).
   static readonly ITEMS: Array<{ key: string; label: string }> = [
     { key: 'dados_contrato', label: 'Dados do contrato' },
+    { key: 'contrato_elaborado', label: 'Contrato elaborado' },
     { key: 'contrato_enviado', label: 'Contrato enviado para assinatura' },
     { key: 'contrato_assinado', label: 'Contrato assinado' },
     { key: 'mastermind', label: 'Mastermind' },
@@ -239,6 +240,8 @@ export class OnboardingService {
       const auto: Record<string, boolean> = {
         // dados para o contrato: CNPJ/CPF, endereço, cidade e e-mail preenchidos no cadastro
         dados_contrato: !!(c.cnpj && c.address && c.city && c.email),
+        // contrato gerado no sistema (qualquer status, menos cancelado) ou já anexado
+        contrato_elaborado: c.contracts.some(k => k.status !== 'CANCELLED') || c.documents.length > 0,
         contrato_enviado: c.contracts.some(k => ['SENT', 'SIGNED'].includes(k.status)) || c.documents.length > 0,
         // só vale com o contrato assinado ANEXADO (não marca à mão)
         contrato_assinado: c.documents.length > 0,
