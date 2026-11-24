@@ -5,6 +5,8 @@
 ---
 
 ## 2026-11-24
+- **João Afonso:** 10% do líquido de tudo que fecha agora é automático no fechamento do CRM. BULLS Champions recebeu o split (R$ 11.280) e 12 repasses de R$ 940.
+- **StartCBO:** entrada era R$ 2.500; pagou R$ 2.000 e falta R$ 500 (vence 30/11), com imposto R$ 30 e repasse João R$ 47. Contrato R$ 32.500.
 - **Hellik Store:** cartão de R$ 30.000 entrou líquido R$ 28.787,80; parcela, plano e venda ajustados para esse valor. Recalculados: imposto R$ 1.727,27, João R$ 2.706,05, Victor R$ 1.353,03, Giulliano R$ 23.001,45.
 - **Victor Fraga, ajuste:** repasse só em vendas a partir de **16/11/2026**: saiu de 244, StartCBO e Colcci (Giulliano recebe de volta R$ 470 na 244); fica Hellik Store (R$ 1.410) e BULLS Champions (R$ 5.640).
 - **BULLS Champions:** plano duplicado de R$ 120 (12x R$ 10) excluído com parcelas e impostos.

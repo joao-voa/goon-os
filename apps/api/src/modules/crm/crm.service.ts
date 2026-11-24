@@ -417,6 +417,26 @@ export class CrmService {
       }
     }
 
+    // 7a. Repasse do João Afonso: 10% do líquido de tudo que fecha (se o plano ainda não tiver o João)
+    const hasJoao = await this.prisma.planMentor.count({ where: { planId: plan.id, mentorName: { contains: 'João', mode: 'insensitive' } } })
+    if (!hasJoao) {
+      await this.prisma.planMentor.create({
+        data: { planId: plan.id, mentorName: 'João Afonso', value: Math.round(dto.saleValue * (1 - TAX_RATE) * 0.1 * 100) / 100, notes: '10% do líquido' },
+      })
+      for (const pay of allPayments) {
+        const v = Math.round(pay.value * (1 - TAX_RATE) * 0.1 * 100) / 100
+        if (v <= 0) continue
+        await this.expensesService.create({
+          description: `Mentoria João Afonso — ${client.companyName} (${product.name}) parcela ${pay.installment}`,
+          category: 'MENTORIA',
+          value: v,
+          recurrence: 'UNICA',
+          dueDate: pay.dueDate,
+          notes: 'Repasse João 10% do líquido',
+        })
+      }
+    }
+
     // 7b. Repasse do Victor Fraga (5% de cada parcela de cliente novo, enquanto ele estiver na operação)
     // cliente que já tinha plano (não cancelado) = renovação: não conta
     const isRenewal = (await this.prisma.clientPlan.count({ where: { clientId: id, id: { not: plan.id }, status: { not: 'CANCELLED' } } })) > 0
