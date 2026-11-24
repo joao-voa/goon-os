@@ -6,11 +6,11 @@ import { GoonLogo } from '@/components/GoonLogo'
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 const NEON = '#C7F900'
 const sans = 'var(--font-sans)', disp = 'var(--font-display)'
-const INTEREST = 'Mentoria — GOON Global'
-// origem = {canal}_mentoria. canal vem de ?c= (default "story") → ex.: story_mentoria
+const INTEREST = 'Consultoria GOON Advisor'
+// origem = {canal}_consultoria. canal vem de ?c= (default "story") → ex.: story_consultoria, youtube_consultoria
 const leadSourceFor = () => {
   const c = (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('c') : null) || 'story'
-  return `${c.replace(/[^a-z0-9]/gi, '').toLowerCase()}_mentoria`
+  return `${c.replace(/[^a-z0-9]/gi, '').toLowerCase()}_consultoria`
 }
 
 const REVENUE_OPTIONS: { label: string; value: string }[] = [
@@ -22,7 +22,7 @@ const REVENUE_OPTIONS: { label: string; value: string }[] = [
   { label: 'Acima de R$ 1 milhão/mês', value: 'acima de 1 milhao/mês' },
 ]
 
-export default function MentoriaPage() {
+export default function ConsultoriaPage() {
   const [f, setF] = useState<Record<string, string>>({ estimatedRevenue: '' })
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(false)
@@ -64,12 +64,12 @@ export default function MentoriaPage() {
         <div>
           <a href="https://www.goon-global.com/" target="_blank" rel="noreferrer" style={{ display: 'inline-block' }}><GoonLogo height={30} fill="#F2F2F2" /></a>
           <div style={{ width: 30, height: 3, background: NEON, borderRadius: 2, margin: '18px 0 16px' }} />
-          <div style={{ fontFamily: disp, fontSize: 12, fontWeight: 700, letterSpacing: '0.32em', color: NEON, textTransform: 'uppercase' }}>GOON Global · Mentoria</div>
+          <div style={{ fontFamily: disp, fontSize: 12, fontWeight: 700, letterSpacing: '0.32em', color: NEON, textTransform: 'uppercase' }}>GOON Global · Consultoria Advisor</div>
           <h1 style={{ fontFamily: disp, fontSize: 34, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.05, margin: '14px 0 0' }}>
-            Aplique para a<br />mentoria da GOON
+            Aplique para a<br />Consultoria GOON Advisor
           </h1>
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.62)', lineHeight: 1.6, marginTop: 16, maxWidth: 420 }}>
-            Mentoria de marca, direção criativa e escala para quem quer construir algo grande. Preencha abaixo pra saber mais. Nosso time entra em contato com você.
+            Consultoria de marca, direção criativa e escala para quem quer construir algo grande. Preencha abaixo pra saber mais. Nosso time entra em contato com você.
           </p>
 
           <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -144,7 +144,7 @@ export default function MentoriaPage() {
                   </div>
                 </div>
                 <div>
-                  <label style={lbl}>O que você busca com a mentoria? <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>(opcional)</span></label>
+                  <label style={lbl}>O que você busca com a consultoria? <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>(opcional)</span></label>
                   <textarea value={f.notes ?? ''} onChange={e => set('notes', e.target.value)} rows={2} placeholder="Seu maior objetivo ou desafio hoje…" style={{ ...inp, resize: 'vertical', lineHeight: 1.5 }} onFocus={focus} onBlur={blur} />
                 </div>
 
@@ -154,7 +154,7 @@ export default function MentoriaPage() {
                   background: NEON, color: '#0A0A0C', border: 'none', borderRadius: 12, padding: '15px', fontFamily: sans,
                   fontSize: 15.5, fontWeight: 800, cursor: sending ? 'wait' : 'pointer', marginTop: 4,
                   boxShadow: '0 6px 20px rgba(199,249,0,0.35)', opacity: sending ? 0.7 : 1,
-                }}>{sending ? 'Enviando…' : 'Aplicar para a mentoria'}</button>
+                }}>{sending ? 'Enviando…' : 'Aplicar para a consultoria'}</button>
                 <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', textAlign: 'center', margin: 0 }}>
                   GOON Global · <span style={{ letterSpacing: '0.06em' }}>GLOBAL <span style={{ color: '#a3cc00' }}>OR</span> NOTHING</span>
                 </p>

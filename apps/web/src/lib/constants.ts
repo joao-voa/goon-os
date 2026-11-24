@@ -151,15 +151,17 @@ export const LEAD_SOURCE_LABELS: Record<string, string> = {
   instagram: 'Instagram',
   meta_ads: 'Meta Ads',
   form_tiktok_meta: 'FORMULÁRIO TIKTOK - META',
-  form_mentoria_meta: 'FORMULÁRIO MENTORIA - META',
+  form_mentoria_meta: 'FORMULÁRIO CONSULTORIA - META',
   respondi: 'Respondi',
   indicacao: 'Indicacao',
   evento: 'Evento',
   base_clientes: 'Base de Clientes',
   // landings públicas (origem por canal + oferta)
   story_tiktok: 'Story · TikTok',
-  story_mentoria: 'Story · Mentoria',
-  youtube_mentoria: 'YouTube · Mentoria', // link /mentoria?c=youtube nas descrições dos vídeos
+  story_mentoria: 'Story · Consultoria', // antes do nome novo
+  story_consultoria: 'Story · Consultoria',
+  youtube_mentoria: 'YouTube · Consultoria', // antes do nome novo
+  youtube_consultoria: 'YouTube · Consultoria', // link /consultoria?c=youtube nas descrições dos vídeos
   youtube_tiktok: 'YouTube · TikTok',
   cta_instagram: 'CTA · Instagram', // comentou no post, recebeu o link /material no direct
   // legado (dados antigos migrados; mantidos p/ exibição)

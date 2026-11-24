@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: '/hotseat', destination: '/masterclass', permanent: false },
+      // mentoria virou Consultoria GOON Advisor: links antigos (stories, YouTube) continuam funcionando, com o ?c=
+      { source: '/mentoria', destination: '/consultoria', permanent: false },
     ]
   },
 }
