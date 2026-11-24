@@ -83,6 +83,11 @@ export class ClicksignService {
     return Buffer.from(await res.arrayBuffer())
   }
 
+  /** Lembrete manual: reenvia o pedido de assinatura para quem ainda não assinou (envelope precisa estar em andamento). */
+  async remind(envelopeId: string, message?: string) {
+    return this.api('POST', `/envelopes/${envelopeId}/notifications`, { type: 'notifications', attributes: message ? { message } : {} })
+  }
+
   /** Confere o header Content-Hmac (sha256=<hex>) contra o corpo cru. */
   verifyWebhook(raw: Buffer | undefined, header: string | undefined) {
     const secret = process.env.CLICKSIGN_WEBHOOK_SECRET

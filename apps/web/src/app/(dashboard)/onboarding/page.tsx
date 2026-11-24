@@ -84,6 +84,13 @@ export default function OnboardingPage() {
     setSending(false)
   }
 
+  async function remindSign(b: Board) {
+    try {
+      await apiFetch(`/api/onboarding/${b.id}/signature/remind`, { method: 'POST' })
+      toast.success('Lembrete enviado por e-mail pela ClickSign')
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro ao enviar o lembrete') }
+  }
+
   async function refreshSign(b: Board) {
     try {
       const r = await apiFetch<{ status?: string }>(`/api/onboarding/${b.id}/signature/refresh`, { method: 'POST' })
@@ -249,6 +256,19 @@ export default function OnboardingPage() {
                   </div>
                 ))}
               </div>
+
+              {b.signature && b.signature.status !== 'completed' && (() => {
+                const wa = waLink(b.client.whatsapp || b.client.phone)
+                const first = b.client.responsible?.split(' ')[0] ?? ''
+                const msg = `Oi${first ? `, ${first}` : ''}! Tudo bem? Enviamos o contrato da GOON para assinatura pela ClickSign, no seu e-mail. Consegue dar uma olhada e assinar quando puder? Qualquer dúvida, estou por aqui.`
+                return (
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', fontSize: 11.5, color: C.mid, background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, padding: '6px 8px' }}>
+                    <span style={{ flex: 1, minWidth: 120 }}>Aguardando assinatura{b.signature.sentAt ? ` desde ${new Date(b.signature.sentAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}` : ''}</span>
+                    <button onClick={() => remindSign(b)} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>Lembrar por e-mail</button>
+                    {wa && <a href={`${wa}?text=${encodeURIComponent(msg)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, padding: '2px 8px', fontSize: 11, background: '#25d366', color: '#fff', border: 'none', textDecoration: 'none' }}>WhatsApp</a>}
+                  </div>
+                )
+              })()}
 
               {kickoffFor === b.id && (
                 <div style={{ background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>

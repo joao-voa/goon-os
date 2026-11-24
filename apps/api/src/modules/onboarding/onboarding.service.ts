@@ -438,6 +438,15 @@ export class OnboardingService {
     return { found: true }
   }
 
+  async remindSignature(id: string) {
+    const ob = await this.prisma.onboarding.findUnique({ where: { id }, include: { client: { select: { id: true, companyName: true } } } })
+    if (!ob?.signEnvelopeId) throw new BadRequestException('Nenhum envio para assinatura')
+    if (ob.signStatus === 'completed') throw new BadRequestException('O contrato já foi assinado')
+    await this.clicksign.remind(ob.signEnvelopeId, 'Lembrete: o contrato da GOON está aguardando a sua assinatura.')
+    await this.activityLog.log({ clientId: ob.client.id, entityType: 'ONBOARDING', entityId: ob.id, action: 'SIGNATURE_REMINDER', description: `Lembrete de assinatura reenviado pela ClickSign (${ob.client.companyName})` })
+    return { ok: true }
+  }
+
   /** Consulta manual (botão ↻ do card). */
   async refreshSignature(id: string) {
     const ob = await this.prisma.onboarding.findUnique({ where: { id }, include: { client: { select: { id: true, companyName: true } } } })

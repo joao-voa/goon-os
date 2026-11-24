@@ -32,6 +32,11 @@ export class OnboardingController {
     return this.onboardingService.sendForSignature(id, body)
   }
 
+  @Post(':id/signature/remind')
+  remindSignature(@Param('id') id: string) {
+    return this.onboardingService.remindSignature(id)
+  }
+
   @Post(':id/signature/refresh')
   refreshSignature(@Param('id') id: string) {
     return this.onboardingService.refreshSignature(id)
