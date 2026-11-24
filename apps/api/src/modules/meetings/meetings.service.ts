@@ -8,7 +8,7 @@ type SyncOpts = { fromMentoria?: boolean }
 
 const TYPE_LABELS: Record<string, string> = {
   INDIVIDUAL: 'Mentoria individual', GRUPO: 'Mentoria em grupo', CS: 'CS', DIAGNOSTICO: 'Diagnóstico',
-  PLANO_VOO: 'Plano de voo', KICKOFF: 'Kickoff', FOLLOW_UP: 'Follow up', RG: 'Ritual de gestão',
+  PLANO_VOO: 'Plano de voo', ONBOARDING: 'Onboarding (D0)', KICKOFF: 'Kickoff', FOLLOW_UP: 'Follow up', RG: 'Ritual de gestão',
   COMERCIAL: 'Reunião comercial', ALINHAMENTO: 'Alinhamento interno', OUTRO: 'Outro',
 }
 
@@ -72,6 +72,7 @@ export class MeetingsService {
       const input = {
         // padrão da agenda: "Mentoria - GOON & Cliente" / "Conversa - GOON & Cliente" (call de venda)
         summary: m.type === 'GRUPO' || names.length !== 1 ? m.title
+          : m.type === 'ONBOARDING' ? `Onboarding - GOON & ${names[0]}`
           : m.category === 'MENTORIA' ? `Mentoria - GOON & ${names[0]}`
           : m.category === 'COMERCIAL' ? `Conversa - GOON & ${names[0]}`
           : `${m.title} · ${names[0]}`,

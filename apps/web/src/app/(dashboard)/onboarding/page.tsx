@@ -86,15 +86,15 @@ export default function OnboardingPage() {
       const m = await apiFetch<{ meetLink?: string | null; googleSyncError?: string | null }>('/api/meetings', {
         method: 'POST',
         body: JSON.stringify({
-          clientId: b.clientId, title: `Kickoff - GOON & ${b.client.companyName}`, type: 'KICKOFF', category: 'MENTORIA',
+          clientId: b.clientId, title: `Onboarding (D0) - GOON & ${b.client.companyName}`, type: 'ONBOARDING', category: 'MENTORIA',
           date: new Date(`${kf.date}T${kf.time}:00`).toISOString(), duration: 60, mentorName: kf.owner, inviteClient: kf.invite && !!b.client.email,
         }),
       })
-      toast.success(m.meetLink ? 'Kickoff marcado na agenda, com Meet' : 'Kickoff marcado')
+      toast.success(m.meetLink ? 'D0 marcado na agenda, com Meet' : 'D0 marcado')
       if (m.googleSyncError) toast.warning('Não foi para o Google Agenda: ' + m.googleSyncError)
       setKickoffFor(null)
       load()
-    } catch { toast.error('Erro ao marcar o kickoff') }
+    } catch { toast.error('Erro ao marcar o D0') }
   }
 
   if (!board) return <div style={{ padding: 24, color: C.mid, fontFamily: sans }}>Carregando…</div>
@@ -207,7 +207,7 @@ export default function OnboardingPage() {
                     </label>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => scheduleKickoff(b)} style={{ ...btn, background: C.ink, color: '#fff', border: 'none', flex: 1 }}>Marcar kickoff</button>
+                    <button onClick={() => scheduleKickoff(b)} style={{ ...btn, background: C.ink, color: '#fff', border: 'none', flex: 1 }}>Marcar D0</button>
                     <button onClick={() => setKickoffFor(null)} style={btn}>Cancelar</button>
                   </div>
                 </div>
@@ -218,7 +218,7 @@ export default function OnboardingPage() {
               )}
               <div style={{ display: 'flex', gap: 6, marginTop: 'auto', paddingTop: 4, borderTop: `1px solid ${C.bg}` }}>
                 {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={{ ...btn, background: '#25d366', color: '#fff', border: 'none', textDecoration: 'none' }}>WhatsApp</a>}
-                {b.kickoff?.meetLink && <a href={b.kickoff.meetLink} target="_blank" rel="noopener noreferrer" style={{ ...btn, textDecoration: 'none' }}>Meet do kickoff</a>}
+                {b.kickoff?.meetLink && <a href={b.kickoff.meetLink} target="_blank" rel="noopener noreferrer" style={{ ...btn, textDecoration: 'none' }}>Meet do D0</a>}
                 <a href={`/clients/${b.clientId}`} style={{ ...btn, textDecoration: 'none', marginLeft: 'auto' }}>Ver cliente</a>
               </div>
             </div>

@@ -203,7 +203,7 @@ export class OnboardingService {
     { key: 'apresentacao_mastermind', label: 'Apresentação Mastermind' },
     { key: 'sistema_goon', label: 'Sistema GOON' },
     { key: 'area_membros', label: 'Área de membros' },
-    { key: 'kickoff', label: 'D0 (kickoff)' },
+    { key: 'kickoff', label: 'D0 (reunião de onboarding)' },
   ]
 
   async board() {
@@ -225,7 +225,8 @@ export class OnboardingService {
             documents: { where: { type: 'SIGNED_CONTRACT' }, select: { id: true }, take: 1 },
             contracts: { select: { status: true } },
             payments: { where: { status: { not: 'CANCELLED' } }, select: { status: true, inCarteira: true } },
-            meetings: { where: { type: 'KICKOFF', status: { notIn: ['CANCELLED', 'RESCHEDULED'] } }, orderBy: { date: 'asc' }, take: 1, select: { date: true, status: true, meetLink: true } },
+            // D0 = reunião de onboarding (tipo ONBOARDING). D1 do GOON Mentoria entra como KICKOFF e não conta aqui
+            meetings: { where: { type: 'ONBOARDING', status: { notIn: ['CANCELLED', 'RESCHEDULED'] } }, orderBy: { date: 'asc' }, take: 1, select: { date: true, status: true, meetLink: true } },
           },
         },
       },

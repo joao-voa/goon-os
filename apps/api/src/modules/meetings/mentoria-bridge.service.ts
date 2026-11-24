@@ -46,7 +46,8 @@ export class MentoriaBridgeService {
   async push(meetingId: string) {
     if (!this.cfg) return
     const m = await this.prisma.meeting.findUnique({ where: { id: meetingId } })
-    if (!m?.clientId || m.category !== 'MENTORIA' || m.type === 'GRUPO') return
+    // D0 (reunião de onboarding) não é encontro de mentoria
+    if (!m?.clientId || m.category !== 'MENTORIA' || m.type === 'GRUPO' || m.type === 'ONBOARDING') return
     const link = await this.prisma.mentoriaTenantLink.findFirst({ where: { clientId: m.clientId } })
     if (!link) return
     try {
