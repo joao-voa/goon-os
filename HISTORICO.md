@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-24
+- **Hellik Store:** cartão de R$ 30.000 entrou líquido R$ 28.787,80; parcela, plano e venda ajustados para esse valor. Recalculados: imposto R$ 1.727,27, João R$ 2.706,05, Victor R$ 1.353,03, Giulliano R$ 23.001,45.
 - **Victor Fraga, ajuste:** repasse só em vendas a partir de **16/11/2026**: saiu de 244, StartCBO e Colcci (Giulliano recebe de volta R$ 470 na 244); fica Hellik Store (R$ 1.410) e BULLS Champions (R$ 5.640).
 - **BULLS Champions:** plano duplicado de R$ 120 (12x R$ 10) excluído com parcelas e impostos.
 - **Victor Fraga:** repasse de 5% do cash collected líquido (após imposto de 6%) dos clientes novos desde nov/26 (renovação fora). Pessoa criada (VENDEDOR) e splits/repasses por parcela em 244 (R$ 500), StartCBO (R$ 1.600), Colcci USA (R$ 2.600), Hellik Store (R$ 1.500) e BULLS Champions (R$ 6.000). Giulliano absorve em 244 e Hellik. Vendas novas no CRM já geram o repasse sozinhas.
