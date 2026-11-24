@@ -5,10 +5,10 @@ export const COMMISSION_PAYMENT_DAY = 10
 // Tax rate on revenue
 export const TAX_RATE = 0.06 // 6%
 
-// Victor Fraga (comercial): 5% do cash collected LÍQUIDO (após o imposto de 6%) de cada cliente NOVO fechado a partir de 01/11/2026,
+// Victor Fraga (comercial): 5% do cash collected LÍQUIDO (após o imposto de 6%) de cada cliente NOVO fechado a partir de 16/11/2026,
 // só enquanto estiver na operação. Renovação não conta. Ao sair, preencher `end` (e apagar os
 // repasses previstos dele com vencimento depois da saída).
-export const VICTOR_FRAGA = { name: 'Victor Fraga', percent: 0.05, start: new Date('2026-11-01T00:00:00Z'), end: null as Date | null }
+export const VICTOR_FRAGA = { name: 'Victor Fraga', percent: 0.05, start: new Date('2026-11-16T00:00:00Z'), end: null as Date | null }
 
 export function getNextCommissionPaymentDate(now: Date): Date {
   const day = now.getDate()
