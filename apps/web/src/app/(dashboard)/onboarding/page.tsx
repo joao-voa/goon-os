@@ -50,7 +50,7 @@ export default function OnboardingPage() {
   const [dataFor, setDataFor] = useState<Board | null>(null)
   const [dataText, setDataText] = useState('')
   const [savingData, setSavingData] = useState(false)
-  const [signInfo, setSignInfo] = useState<{ enabled: boolean; consentUrl: string | null } | null>(null)
+  const [signInfo, setSignInfo] = useState<{ enabled: boolean; provider: string; env: string } | null>(null)
   const [signFor, setSignFor] = useState<Board | null>(null)
   const [signFile, setSignFile] = useState<File | null>(null)
   const [signers, setSigners] = useState<Array<{ name: string; email: string }>>([])
@@ -60,7 +60,7 @@ export default function OnboardingPage() {
     try { setBoard(await apiFetch<Board[]>('/api/onboarding/board')) } catch { toast.error('Erro ao carregar o onboarding') }
   }, [])
   useEffect(() => { load() }, [load])
-  useEffect(() => { apiFetch<{ enabled: boolean; consentUrl: string | null }>('/api/onboarding/signature/info').then(setSignInfo).catch(() => {}) }, [])
+  useEffect(() => { apiFetch<{ enabled: boolean; provider: string; env: string }>('/api/onboarding/signature/info').then(setSignInfo).catch(() => {}) }, [])
 
   function openSign(b: Board) {
     // e-mail de assinatura colado nos dados do contrato tem preferência
@@ -76,9 +76,9 @@ export default function OnboardingPage() {
     try {
       const dataUrl: string = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.onerror = reject; r.readAsDataURL(signFile) })
       await apiFetch(`/api/onboarding/${signFor.id}/signature`, {
-        method: 'POST', body: JSON.stringify({ filename: signFile.name, data: dataUrl.split(',')[1] ?? '', signers: signers.filter(x => x.name && x.email) }),
+        method: 'POST', body: JSON.stringify({ filename: signFile.name, mimeType: signFile.type || undefined, data: dataUrl.split(',')[1] ?? '', signers: signers.filter(x => x.name && x.email) }),
       })
-      toast.success('Contrato enviado para assinatura pelo DocuSign')
+      toast.success('Contrato enviado para assinatura pela ClickSign')
       setSignFor(null); load()
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro ao enviar') }
     setSending(false)
@@ -87,9 +87,9 @@ export default function OnboardingPage() {
   async function refreshSign(b: Board) {
     try {
       const r = await apiFetch<{ status?: string }>(`/api/onboarding/${b.id}/signature/refresh`, { method: 'POST' })
-      toast.success(`DocuSign: ${SIGN_STATUS[r.status ?? ''] ?? r.status}`)
+      toast.success(`ClickSign: ${SIGN_STATUS[r.status ?? ''] ?? r.status}`)
       load()
-    } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro ao consultar o DocuSign') }
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro ao consultar a ClickSign') }
   }
 
   async function toggle(b: Board, it: Item) {
@@ -238,8 +238,8 @@ export default function OnboardingPage() {
                       {it.auto && <span style={{ fontSize: 10, color: C.dim }}>auto</span>}
                     </button>
                     {it.key === 'contrato_enviado' && (b.signature
-                      ? <button onClick={() => refreshSign(b)} title="Atualizar status no DocuSign" style={{ ...btn, padding: '2px 8px', fontSize: 11, color: b.signature.status === 'completed' ? C.green : b.signature.status === 'declined' ? C.red : C.mid }}>{SIGN_STATUS[b.signature.status ?? ''] ?? b.signature.status} ↻</button>
-                      : signInfo?.enabled ? <button onClick={() => openSign(b)} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>DocuSign</button> : null)}
+                      ? <button onClick={() => refreshSign(b)} title="Atualizar status na ClickSign" style={{ ...btn, padding: '2px 8px', fontSize: 11, color: b.signature.status === 'completed' ? C.green : b.signature.status === 'declined' ? C.red : C.mid }}>{SIGN_STATUS[b.signature.status ?? ''] ?? b.signature.status} ↻</button>
+                      : signInfo?.enabled ? <button onClick={() => openSign(b)} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>ClickSign</button> : null)}
                     {it.key === 'dados_contrato' && (
                       <button onClick={() => { setDataFor(b); setDataText(b.notes ?? '') }} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>{b.notes ? 'ver' : 'colar'}</button>
                     )}
@@ -292,10 +292,10 @@ export default function OnboardingPage() {
           <div style={{ ...card, width: '100%', maxWidth: 520, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ fontWeight: 700, fontSize: 15 }}>Enviar para assinatura · {signFor.client.companyName}</div>
             <label style={{ fontSize: 12, color: C.mid }}>
-              Contrato (PDF ou Word, até 3MB)
+              Contrato (PDF, de preferência; até 3MB)
               <input type="file" accept=".pdf,.docx,.doc" onChange={e => setSignFile(e.target.files?.[0] ?? null)} style={{ display: 'block', marginTop: 6, fontSize: 13 }} />
             </label>
-            <div style={{ fontSize: 12, color: C.mid }}>Quem assina, em ordem (o DocuSign manda o e-mail para cada um):</div>
+            <div style={{ fontSize: 12, color: C.mid }}>Quem assina (nome e sobrenome; a ClickSign manda o e-mail para cada um):</div>
             {signers.map((sg, i) => (
               <div key={i} style={{ display: 'flex', gap: 6 }}>
                 <input value={sg.name} onChange={e => setSigners(l => l.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Nome" style={{ ...inp, flex: 1, fontSize: 13, padding: 8 }} />
@@ -306,7 +306,7 @@ export default function OnboardingPage() {
             <button onClick={() => setSigners(l => [...l, { name: '', email: '' }])} style={{ ...btn, alignSelf: 'flex-start' }}>+ Signatário</button>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setSignFor(null)} style={{ ...btn, marginLeft: 'auto' }}>Cancelar</button>
-              <button onClick={sendSign} disabled={sending || !signFile} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>{sending ? 'Enviando…' : 'Enviar pelo DocuSign'}</button>
+              <button onClick={sendSign} disabled={sending || !signFile} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>{sending ? 'Enviando…' : 'Enviar pela ClickSign'}</button>
             </div>
           </div>
         </div>

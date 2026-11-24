@@ -15,7 +15,7 @@ let cachedInstance: ExpressInstance | null = null
 let bootstrapPromise: Promise<ExpressInstance> | null = null
 
 async function bootstrap(): Promise<ExpressInstance> {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: ['error', 'warn'] })
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: ['error', 'warn'], rawBody: true }) // rawBody: assinatura HMAC do webhook da ClickSign
 
   // Body até 5MB (upload de PDF de contrato em base64). Padrão é 100kb.
   app.useBodyParser('json', { limit: '5mb' })

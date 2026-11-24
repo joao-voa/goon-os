@@ -5,7 +5,7 @@ import { AppModule } from './app.module'
 import { GlobalExceptionFilter } from './filters/http-exception.filter'
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule)
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true })
 
   // Body até 5MB (upload de PDF de contrato em base64). Padrão é 100kb.
   app.useBodyParser('json', { limit: '5mb' })

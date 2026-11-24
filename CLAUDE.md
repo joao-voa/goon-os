@@ -199,15 +199,16 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
   Só mentoria individual (não GRUPO). `Meeting.externalSource/externalId` = encontro de lá.
   Mudança vinda de lá usa `{ fromMentoria: true }` para não voltar (evita loop).
 
-### Assinatura pelo DocuSign (onboarding)
-- No card do onboarding, item "Contrato enviado para assinatura" → botão DocuSign: sobe o contrato (PDF/Word, até 3MB),
-  define os signatários em ordem e envia (envelope). Guarda em `Onboarding.signEnvelopeId/signStatus/signSigners`.
-- Aviso do DocuSign (Connect por envelope) em `POST /api/integrations/docusign/webhook?token=DOCUSIGN_WEBHOOK_TOKEN`;
-  concluído = baixa o PDF assinado, anexa em `ClientDocument` (SIGNED_CONTRACT) e o item "Contrato assinado" marca sozinho.
-  Botão ↻ no card consulta o status na mão.
-- Variáveis (Vercel goon-os-api): `DOCUSIGN_INTEGRATION_KEY`, `DOCUSIGN_USER_ID`, `DOCUSIGN_ACCOUNT_ID`,
-  `DOCUSIGN_PRIVATE_KEY` (PEM ou base64), `DOCUSIGN_ENV` (demo|prod), `DOCUSIGN_WEBHOOK_TOKEN`. Sem elas, desligado.
-- Se o plano do DocuSign não liberar API, a alternativa combinada é ClickSign (trocar só o conector `docusign.service.ts`).
+### Assinatura pela ClickSign (onboarding)
+- No card do onboarding, item "Contrato enviado para assinatura" → botão ClickSign: sobe o contrato (PDF de preferência,
+  até 3MB), signatários (nome e sobrenome + e-mail) e envia (API v3: envelope → documento → signatários com
+  requisitos "agree/sign" + "provide_evidence/email" → status running). Guarda em `Onboarding.signEnvelopeId/signStatus`
+  e `signSigners` = { provider, documentId, signers }.
+- Webhook `POST /api/integrations/clicksign/webhook`, conferido por HMAC (`Content-Hmac: sha256=...` sobre o corpo cru;
+  `rawBody: true` no NestFactory). document_closed/auto_close = baixa o PDF assinado (link vale 5 min), anexa em
+  `ClientDocument` (SIGNED_CONTRACT) e marca "Contrato assinado". Botão ↻ consulta na mão (a ClickSign proíbe polling automático).
+- Variáveis (Vercel goon-os-api): `CLICKSIGN_ACCESS_TOKEN`, `CLICKSIGN_ENV` (sandbox|prod), `CLICKSIGN_WEBHOOK_SECRET`.
+  Sem o token, desligado. DocuSign foi descartado (plano Standard sem API).
 
 ---
 

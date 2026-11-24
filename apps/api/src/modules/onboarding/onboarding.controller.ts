@@ -28,7 +28,7 @@ export class OnboardingController {
   }
 
   @Post(':id/signature')
-  sendForSignature(@Param('id') id: string, @Body() body: { filename: string; data: string; signers: Array<{ name: string; email: string }> }) {
+  sendForSignature(@Param('id') id: string, @Body() body: { filename: string; data: string; mimeType?: string; signers: Array<{ name: string; email: string }> }) {
     return this.onboardingService.sendForSignature(id, body)
   }
 
