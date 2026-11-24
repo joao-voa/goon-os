@@ -5,7 +5,7 @@
 ---
 
 ## 2026-11-24
-- **Victor Fraga:** repasse de 5% do cash collected dos clientes novos desde nov/26 (renovação fora). Pessoa criada (VENDEDOR) e splits/repasses por parcela em 244 (R$ 500), StartCBO (R$ 1.600), Colcci USA (R$ 2.600), Hellik Store (R$ 1.500) e BULLS Champions (R$ 6.000). Giulliano absorve em 244 e Hellik. Vendas novas no CRM já geram o repasse sozinhas.
+- **Victor Fraga:** repasse de 5% do cash collected líquido (após imposto de 6%) dos clientes novos desde nov/26 (renovação fora). Pessoa criada (VENDEDOR) e splits/repasses por parcela em 244 (R$ 500), StartCBO (R$ 1.600), Colcci USA (R$ 2.600), Hellik Store (R$ 1.500) e BULLS Champions (R$ 6.000). Giulliano absorve em 244 e Hellik. Vendas novas no CRM já geram o repasse sozinhas.
 
 ## 2026-11-23
 - **Caixa (melhorias):** horizonte de visão (mês, 30/60/90/120 dias, ano); botão "Sem impostos"; parcelas atrasadas escolhidas uma a uma (lista suspensa); simulador de vendas com dia da venda, entrada, nº e valor das parcelas (com imposto 6% se ligado), aplicado no dia a dia e na projeção.

@@ -422,10 +422,10 @@ export class CrmService {
     const isRenewal = (await this.prisma.clientPlan.count({ where: { clientId: id, id: { not: plan.id }, status: { not: 'CANCELLED' } } })) > 0
     if (!isRenewal && now >= VICTOR_FRAGA.start && (!VICTOR_FRAGA.end || now <= VICTOR_FRAGA.end)) {
       await this.prisma.planMentor.create({
-        data: { planId: plan.id, mentorName: VICTOR_FRAGA.name, value: Math.round(dto.saleValue * VICTOR_FRAGA.percent * 100) / 100, notes: '5% do cash collected (cliente novo)' },
+        data: { planId: plan.id, mentorName: VICTOR_FRAGA.name, value: Math.round(dto.saleValue * (1 - TAX_RATE) * VICTOR_FRAGA.percent * 100) / 100, notes: '5% do cash collected líquido (cliente novo)' },
       })
       for (const pay of allPayments) {
-        const v = Math.round(pay.value * VICTOR_FRAGA.percent * 100) / 100
+        const v = Math.round(pay.value * (1 - TAX_RATE) * VICTOR_FRAGA.percent * 100) / 100 // 5% do líquido (após imposto)
         if (v <= 0) continue
         await this.expensesService.create({
           description: `Mentoria ${VICTOR_FRAGA.name} — ${client.companyName} (${product.name}) parcela ${pay.installment}`,
