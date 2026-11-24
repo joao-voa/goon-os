@@ -172,7 +172,7 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
 - Comissão: **10%** pro "Time de Vendas" (Serginho divide internamente); desconta dos
   mentores (Giulliano absorve).
 - **João Afonso**: 10% do líquido de **tudo que fecha** (cliente novo e renovação). O `closeDeal` cria o split e os repasses por parcela sozinho (se o plano ainda não tiver o João).
-- **Victor Fraga** (comercial): 5% do **cash collected líquido** (parcela × 0,94, após o imposto) dos clientes **novos** fechados a partir de 16/11/2026, enquanto estiver na operação. Renovação não conta (ex.: ORDO). Split `PlanMentor` + despesas MENTORIA "Mentoria Victor Fraga — ..." por parcela; criado sozinho no `closeDeal` (`VICTOR_FRAGA` em `shared/constants.ts`; ao sair, preencher `end`). Onde o Giulliano tem split, o 5% sai da parte dele. Splits por
+- **Victor Fraga** (comercial): 5% do **cash collected líquido** (parcela × 0,94, após o imposto) dos clientes **novos** fechados a partir de 16/11/2026, enquanto estiver na operação. Renovação não conta (ex.: ORDO). Split `PlanMentor` + despesas MENTORIA "Mentoria Victor Fraga — ..." por parcela; criado sozinho no `closeDeal` (`VICTOR_FRAGA` em `shared/constants.ts`; ao sair, preencher `end`). Onde o Giulliano tem split, o 5% sai da parte dele. Venda paga adiantada/à vista (ex.: cartão): o repasse do Victor é parcelado pelos meses do contrato (ex.: Hellik 6x). Splits por
   cliente variam (Kan House 66/33 Ex-mentora/Giu sem João; Ary Narah/Star Shop com João).
 - Mentoria: GE individual+grupo, GI só grupo, TTS/AURA individual.
 
