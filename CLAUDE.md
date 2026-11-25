@@ -144,6 +144,12 @@ parcela que o cliente não pagou = ela não recebe** (fatia vai pro Giulliano). 
 - Filtro `NOT_CARTEIRA_CLIENT_FILTER` (`apps/api/src/shared/constants.ts`) exclui
   `leadStage RECUPERAR/PERDIDO` **ou** cliente com qualquer parcela `inCarteira`.
 
+### Entradas e Saídas (Financeiro)
+- Abas renomeadas: **Entradas** (antes Pagamentos, `/payments`) e **Saídas** (antes Despesas, `/expenses`).
+- **Carregar o que ficou em aberto:** ao ver o período que inclui hoje, entra também o que venceu antes e não foi
+  baixado (parcela PENDING/OVERDUE fora da carteira; saída != PAGO), marcado "de out, em aberto/sem baixa".
+  Saídas: filtro de status "Sem baixa (em aberto)" (`status=ABERTO`) e card "Sem baixa de meses anteriores".
+
 ### Cliente em standby
 `Client.standby` (+ `standbyAt`), ligado/desligado em Financeiro > Pagamentos (botão Standby/Reativar).
 Parcelas **não pagas** do cliente ficam congeladas: fora de fluxo, KPIs, recebíveis, comissões

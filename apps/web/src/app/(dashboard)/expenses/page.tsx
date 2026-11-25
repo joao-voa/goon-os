@@ -19,6 +19,7 @@ interface Expense {
 }
 
 interface Summary {
+  anteriores?: { total: number; count: number }
   totalPrevisto: number
   totalPago: number
   byCategory: Array<{ category: string; total: number }>
@@ -160,7 +161,7 @@ export default function ExpensesPage() {
   return (
     <div style={{ padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Despesas</h1>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Saídas</h1>
         <button onClick={() => { setEditId(null); setForm(emptyForm); setShowModal(true) }} style={{ background: '#C7F900', color: '#0f172a', border: 'none', borderRadius: 6, boxShadow: '0 1px 2px rgba(0,0,0,0.06)', padding: '9px 16px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700 }}>+ Nova despesa</button>
       </div>
 
@@ -170,6 +171,7 @@ export default function ExpensesPage() {
           {[
             { l: 'Previsto', v: summary.totalPrevisto, c: '#f59e0b' },
             { l: 'Pago', v: summary.totalPago, c: '#16a34a' },
+            ...(summary.anteriores?.count ? [{ l: `Sem baixa de meses anteriores (${summary.anteriores.count})`, v: summary.anteriores.total, c: '#dc2626' }] : []),
           ].map(k => (
             <div key={k.l} style={{ background: '#fff', border: '1px solid #e2e8f0', borderTop: `3px solid ${k.c}`, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)', padding: '14px 20px', minWidth: 150 }}>
               <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', fontWeight: 600 }}>{k.l}</div>
@@ -241,6 +243,7 @@ export default function ExpensesPage() {
           <label style={labelStyle}>Status</label>
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={selStyle}>
             <option value="">Todos status</option>
+            <option value="ABERTO">Sem baixa (em aberto)</option>
             <option value="PREVISTO">Previsto</option>
             <option value="PAGO">Pago</option>
           </select>
@@ -287,7 +290,12 @@ export default function ExpensesPage() {
                 </td>
                 <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700 }}>{fmt(e.value)}</td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>{RECURRENCE_LABELS[e.recurrence] ?? e.recurrence}</td>
-                <td style={{ padding: '8px 12px', textAlign: 'center' }}>{new Date(e.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
+                <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                  {new Date(e.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                  {e.status !== 'PAGO' && new Date(e.dueDate) < new Date(year, month - 1, 1) && (
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#dc2626' }}>de {new Date(e.dueDate).toLocaleString('pt-BR', { month: 'short', timeZone: 'UTC' }).replace('.', '')}, sem baixa</div>
+                  )}
+                </td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                   <span style={{ background: e.status === 'PAGO' ? '#006600' : '#e6a800', color: 'white', padding: '2px 8px', fontSize: 10, fontWeight: 700 }}>{e.status}</span>
                 </td>

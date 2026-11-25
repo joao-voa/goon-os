@@ -30,7 +30,7 @@ const menuItems = [
   { icon: Package, label: 'Programas', description: 'Produtos e programas', href: '/products', color: 'var(--success)' },
   { icon: GitBranch, label: 'Onboarding', description: 'Fluxo de onboarding de clientes', href: '/onboarding', color: 'var(--warning)' },
   { icon: GraduationCap, label: 'Mentorados', description: 'Acompanhamento de mentorados', href: '/mentorship', color: '#7c3aed' },
-  { icon: DollarSign, label: 'Financeiro', description: 'Pagamentos, despesas e fluxo', href: '/payments', color: '#22c55e' },
+  { icon: DollarSign, label: 'Financeiro', description: 'Entradas, saídas e fluxo', href: '/payments', color: '#22c55e' },
   { icon: CheckSquare, label: 'Tarefas', description: 'Gestao de tarefas e projetos', href: '/tasks', color: '#4A78FF' },
   { icon: AlertTriangle, label: 'Pendencias', description: 'Inadimplentes e contratos', href: '/pendencies', color: '#cc0000' },
   { icon: FileText, label: 'Contratos', description: 'Gestao de contratos', href: '/contracts', color: '#e6a800' },

@@ -15,8 +15,8 @@ const TABS = [
   { key: 'fluxo', label: 'Fluxo de Caixa' },
   { key: 'giulliano', label: 'Fluxo Giulliano' },
   { key: 'joao', label: 'Fluxo João' },
-  { key: 'pagamentos', label: 'Pagamentos' },
-  { key: 'despesas', label: 'Despesas' },
+  { key: 'pagamentos', label: 'Entradas' },
+  { key: 'despesas', label: 'Saídas' },
   { key: 'comissoes', label: 'Comissões & Repasses' },
 ] as const
 

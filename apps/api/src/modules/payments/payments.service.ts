@@ -201,7 +201,15 @@ export class PaymentsService {
     if (standby === 'only') Object.assign(where, STANDBY_FROZEN_PAYMENT)
     else if (standby !== 'include') where.NOT = STANDBY_FROZEN_PAYMENT
     // período: ano inteiro ou só os meses escolhidos (vários)
-    Object.assign(where, inRanges('dueDate', periodRanges(year, months?.length ? months : month ? [month] : [])))
+    const ranges = periodRanges(year, months?.length ? months : month ? [month] : [])
+    const period = inRanges('dueDate', ranges) as { OR?: Array<Record<string, unknown>> }
+    // parcela que ficou em aberto de um mês pro outro é carregada pro período que inclui hoje (não some de vista)
+    const now = new Date()
+    if (ranges && period.OR && !clientId && status !== 'PAID' && ranges.some(r => r.gte <= now && now < r.lt)) {
+      const start = ranges.reduce((a, r) => (r.gte < a ? r.gte : a), ranges[0].gte)
+      period.OR.push({ dueDate: { lt: start }, status: { in: ['PENDING', 'OVERDUE'] } })
+    }
+    Object.assign(where, period)
 
     const skip = (page - 1) * limit
 

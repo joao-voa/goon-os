@@ -25,7 +25,7 @@ const ALL_MODULES = [
   { href: '/tasks', label: 'Tarefas' },
   { href: '/payments', label: 'Financeiro' },
   { href: '/commissions', label: 'Comissoes' },
-  { href: '/expenses', label: 'Despesas' },
+  { href: '/expenses', label: 'Saídas' },
   { href: '/cashflow', label: 'Fluxo Caixa' },
   { href: '/pendencies', label: 'Pendencias' },
   { href: '/admin', label: 'Admin' },

@@ -552,10 +552,10 @@ export default function PaymentsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: '#0f172a', margin: 0 }}>
-            Pagamentos
+            Entradas
           </h1>
           <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: '#64748b', margin: '2px 0 0 0' }}>
-            {total} pagamento{total !== 1 ? 's' : ''} no total
+            {total} entrada{total !== 1 ? 's' : ''} no total
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -833,6 +833,10 @@ export default function PaymentsPage() {
                       >
                         {fmtDate(payment.dueDate)}
                       </span>
+                      {/* carregada de mês anterior: em aberto e com vencimento antes do período escolhido */}
+                      {payment.status !== 'PAID' && monthFilter.length > 0 && new Date(payment.dueDate) < new Date(Date.UTC(yearFilter, Math.min(...monthFilter.map(Number)) - 1, 1)) && (
+                        <div style={{ fontSize: 10, fontWeight: 700, color: '#dc2626' }}>de {new Date(payment.dueDate).toLocaleString('pt-BR', { month: 'short', timeZone: 'UTC' }).replace('.', '')}, em aberto</div>
+                      )}
                     </td>
                     <td>
                       <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700 }}>

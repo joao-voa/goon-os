@@ -36,13 +36,19 @@ export class ExpensesService {
     if (category) where.category = { in: category.split(',').map(c => c.trim()).filter(Boolean) }
     // aceita vários centros separados por vírgula (ex.: "GLOBAL,TIKTOK")
     if (costCenter) where.costCenter = { in: costCenter.split(',').map(c => c.trim()).filter(Boolean) }
-    if (status) where.status = status
+    // ABERTO = ainda sem baixa (previsto ou parcial)
+    if (status === 'ABERTO') where.status = { not: 'PAGO' }
+    else if (status) where.status = status
     if (recurrence) where.recurrence = recurrence
 
     if (month && year) {
       const start = new Date(year, month - 1, 1)
       const end = new Date(year, month, 1)
-      where.dueDate = { gte: start, lt: end }
+      const now = new Date()
+      // saída sem baixa de meses anteriores é carregada pro mês atual (não some de vista)
+      if (status !== 'PAGO' && start <= now && now < end) {
+        where.OR = [{ dueDate: { gte: start, lt: end } }, { dueDate: { lt: start }, status: { not: 'PAGO' } }]
+      } else where.dueDate = { gte: start, lt: end }
     } else if (year) {
       const start = new Date(year, 0, 1)
       const end = new Date(year + 1, 0, 1)
@@ -105,7 +111,19 @@ export class ExpensesService {
       _sum: { value: true },
     })
 
+    // sem baixa de meses anteriores (só quando o mês escolhido é o atual)
+    let anteriores = { total: 0, count: 0 }
+    if (month && year) {
+      const start = new Date(year, month - 1, 1), end = new Date(year, month, 1), now = new Date()
+      if (start <= now && now < end) {
+        const prevWhere: Record<string, unknown> = { ...giuFilter, AND: await this.standbyMentorFilter(), dueDate: { lt: start }, status: { not: 'PAGO' } }
+        const a = await this.prisma.expense.aggregate({ where: prevWhere, _sum: { value: true }, _count: { _all: true } })
+        anteriores = { total: Number(a._sum?.value ?? 0), count: a._count?._all ?? 0 }
+      }
+    }
+
     return {
+      anteriores,
       totalPrevisto: Number(previstoAgg._sum.value ?? 0),
       totalPago: Number(pagoAgg._sum.value ?? 0),
       byCategory: byCategory.map(c => ({ category: c.category, total: Number(c._sum.value ?? 0) })),
