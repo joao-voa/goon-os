@@ -32,6 +32,9 @@ export async function docxToPdf(docx: Buffer, footerLabel: string): Promise<Buff
   const puppeteer = await import('puppeteer-core')
   let launch: Parameters<typeof puppeteer.launch>[0]
   if (process.env.VERCEL || !existsSync(LOCAL_CHROME)) {
+    // o pacote só extrai as bibliotecas do sistema (libnss3 etc., imagem Amazon Linux 2023) quando reconhece
+    // o Lambda Node 20/22; o Vercel roda Node 24, então declaramos a imagem certa antes de carregar
+    if (process.env.VERCEL) process.env.AWS_EXECUTION_ENV = 'AWS_Lambda_nodejs22.x'
     const chromium = (await import('@sparticuz/chromium')).default
     launch = { args: chromium.args, executablePath: await chromium.executablePath(join(vendor, 'chromium')), headless: true }
   } else {
