@@ -148,7 +148,8 @@ parcela que o cliente não pagou = ela não recebe** (fatia vai pro Giulliano). 
 - Abas renomeadas: **Entradas** (antes Pagamentos, `/payments`) e **Saídas** (antes Despesas, `/expenses`).
 - **Carregar o que ficou em aberto:** ao ver o período que inclui hoje, entra também o que venceu antes e não foi
   baixado (parcela PENDING/OVERDUE fora da carteira; saída != PAGO), marcado "de out, em aberto/sem baixa".
-  Saídas: filtro de status "Sem baixa (em aberto)" (`status=ABERTO`) e card "Sem baixa de meses anteriores".
+  Saídas: filtro de status "Sem baixa (em aberto)" (`status=ABERTO`) e "Sem baixa de meses anteriores" (`status=ANTERIORES`,
+  também clicando no card de mesmo nome).
 
 ### Cliente em standby
 `Client.standby` (+ `standbyAt`), ligado/desligado em Financeiro > Pagamentos (botão Standby/Reativar).

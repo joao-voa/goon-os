@@ -37,7 +37,7 @@ export class ExpensesService {
     // aceita vários centros separados por vírgula (ex.: "GLOBAL,TIKTOK")
     if (costCenter) where.costCenter = { in: costCenter.split(',').map(c => c.trim()).filter(Boolean) }
     // ABERTO = ainda sem baixa (previsto ou parcial)
-    if (status === 'ABERTO') where.status = { not: 'PAGO' }
+    if (status === 'ABERTO' || status === 'ANTERIORES') where.status = { not: 'PAGO' }
     else if (status) where.status = status
     if (recurrence) where.recurrence = recurrence
 
@@ -46,7 +46,9 @@ export class ExpensesService {
       const end = new Date(year, month, 1)
       const now = new Date()
       // saída sem baixa de meses anteriores é carregada pro mês atual (não some de vista)
-      if (status !== 'PAGO' && start <= now && now < end) {
+      // ANTERIORES = só as sem baixa de meses anteriores ao escolhido
+      if (status === 'ANTERIORES') where.dueDate = { lt: start }
+      else if (status !== 'PAGO' && start <= now && now < end) {
         where.OR = [{ dueDate: { gte: start, lt: end } }, { dueDate: { lt: start }, status: { not: 'PAGO' } }]
       } else where.dueDate = { gte: start, lt: end }
     } else if (year) {
