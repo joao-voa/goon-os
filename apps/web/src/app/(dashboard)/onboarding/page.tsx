@@ -85,9 +85,7 @@ export default function OnboardingPage() {
   }
 
   function showSentMessage(company: string, name: string, email: string) {
-    // primeiro e último nome (ex.: Caio Brito de Oliveira -> Caio Oliveira)
-    const w = name.trim().split(/\s+/).filter(Boolean)
-    const short = w.length > 1 ? `${w[0]} ${w[w.length - 1]}` : (w[0] ?? '')
+    const short = name.trim().split(/\s+/)[0] ?? ''
     setSentMsg({ company, text: `Fala${short ? ` ${short}` : ''}! Acabamos de enviar o contrato da GOON para assinatura no seu e-mail (${email}). Qualquer dúvida, me chama.` })
   }
 
