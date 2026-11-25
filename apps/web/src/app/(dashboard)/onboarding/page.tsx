@@ -431,8 +431,8 @@ export default function OnboardingPage() {
                 <button onClick={() => setGenFor(null)} style={btn}>Fechar</button>
                 <span style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center', fontSize: 11.5 }}>
                   <button onClick={downloadGenerated} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={{ background: 'none', border: 'none', padding: 0, color: C.mid, textDecoration: 'underline', cursor: 'pointer', fontSize: 11.5 }} title="Para mudar alguma cláusula à mão">baixar Word</button>
-                  {signInfo?.enabled && <button onClick={sendCustomPdf} style={{ background: 'none', border: 'none', padding: 0, color: C.mid, textDecoration: 'underline', cursor: 'pointer', fontSize: 11.5 }} title="Contrato ajustado fora do padrão">enviar PDF ajustado</button>}
                 </span>
+                {signInfo?.enabled && <button onClick={sendCustomPdf} style={{ ...btn, border: `1px solid ${C.ink}` }} title="Contrato ajustado fora do padrão">Enviar meu PDF</button>}
                 <button onClick={previewPdf} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={btn}>{generating ? 'Gerando…' : 'Ver PDF'}</button>
                 {signInfo?.enabled && <button onClick={sendGenerated} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>{generating ? 'Enviando…' : 'Enviar para assinatura'}</button>}
               </div>
@@ -448,8 +448,11 @@ export default function OnboardingPage() {
             <div style={{ fontWeight: 700, fontSize: 15 }}>Enviar para assinatura · {signFor.client.companyName}</div>
             <label style={{ fontSize: 12, color: C.mid }}>
               Contrato em PDF, versão final (até 3MB)
-              {signFile && <div style={{ marginTop: 6, fontSize: 13, color: C.ink }}>Arquivo: <strong>{signFile.name}</strong></div>}
-              <input type="file" accept=".pdf,application/pdf" onChange={e => setSignFile(e.target.files?.[0] ?? null)} style={{ display: 'block', marginTop: 6, fontSize: 13 }} />
+              <span style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8, flexWrap: 'wrap' }}>
+                <span style={{ ...btn, background: C.ink, color: '#fff', border: 'none', padding: '9px 16px', fontSize: 13 }}>{signFile ? 'Trocar PDF' : 'Escolher PDF'}</span>
+                <span style={{ fontSize: 13, color: signFile ? C.ink : C.dim, fontWeight: signFile ? 600 : 400 }}>{signFile ? signFile.name : 'Nenhum arquivo escolhido'}</span>
+              </span>
+              <input type="file" accept=".pdf,application/pdf" onChange={e => setSignFile(e.target.files?.[0] ?? null)} style={{ display: 'none' }} />
             </label>
             <div style={{ fontSize: 12, color: C.mid }}>Quem assina (nome e sobrenome; a ClickSign manda o e-mail para cada um):</div>
             {signers.map((sg, i) => (
