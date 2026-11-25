@@ -41,6 +41,7 @@ export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [summary, setSummary] = useState<Summary | null>(null)
   const [total, setTotal] = useState(0)
+  const [totals, setTotals] = useState<{ value: number; paid: number; open: number } | null>(null)
   const [page, setPage] = useState(1)
   const [categoryFilter, setCategoryFilter] = useState<string[]>([]) // vazio = todas
   const [costCenterFilter, setCostCenterFilter] = useState<string[]>([]) // vazio = todos
@@ -75,12 +76,13 @@ export default function ExpensesPage() {
       params.set('limit', '20')
 
       const [list, sum] = await Promise.all([
-        apiFetch<{ data: Expense[]; total: number }>(`/api/expenses?${params}`),
+        apiFetch<{ data: Expense[]; total: number; totals?: { value: number; paid: number; open: number } }>(`/api/expenses?${params}`),
         apiFetch<Summary>(`/api/expenses/summary?month=${month}&year=${year}`),
       ])
 
       setExpenses(list.data)
       setTotal(list.total)
+      setTotals(list.totals ?? null)
       setSummary(sum)
     } catch { toast.error('Erro ao carregar despesas') }
   }, [categoryFilter, costCenterFilter, statusFilter, month, year, page])
@@ -328,6 +330,18 @@ export default function ExpensesPage() {
               <tr><td colSpan={8} style={{ padding: 24, textAlign: 'center', fontFamily: 'var(--font-mono)', color: '#888' }}>Nenhuma despesa encontrada</td></tr>
             )}
           </tbody>
+          {totals && (
+            <tfoot>
+              <tr style={{ borderTop: '2px solid #0f172a', background: '#f8fafc' }}>
+                <td colSpan={3} style={{ padding: '10px 12px', fontSize: 12, fontWeight: 700 }}>
+                  Total ({total} {total === 1 ? 'saída' : 'saídas'})
+                  <span style={{ fontWeight: 500, color: '#64748b', marginLeft: 10 }}>pago {fmt(totals.paid)} · sem baixa {fmt(totals.open)}</span>
+                </td>
+                <td style={{ padding: '10px 12px', textAlign: 'right', fontSize: 13, fontWeight: 800 }}>{fmt(totals.value)}</td>
+                <td colSpan={4} />
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
 

@@ -226,6 +226,9 @@ export class PaymentsService {
       }),
       this.prisma.payment.count({ where }),
     ])
+    // totalizador da lista inteira (não só da página): total, recebido e em aberto
+    const byStatus = await this.prisma.payment.groupBy({ by: ['status'], where, _sum: { value: true } })
+    const sumOf = (pred: (st: string) => boolean) => byStatus.filter(g => pred(g.status)).reduce((a, g) => a + Number(g._sum?.value ?? 0), 0)
 
     return {
       data: data.map(p => ({
@@ -235,6 +238,7 @@ export class PaymentsService {
         programName: p.clientPlan?.product?.name ?? null,
         productCode: p.clientPlan?.product?.code ?? null,
       })),
+      totals: { value: sumOf(() => true), paid: sumOf(st => st === 'PAID'), open: sumOf(st => st !== 'PAID') },
       total,
       page,
       limit,

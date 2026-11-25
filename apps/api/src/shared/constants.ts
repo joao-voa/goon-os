@@ -74,7 +74,8 @@ export const parcelExpenseMarkers = (companyName: string) => [`— ${companyName
 
 /** Despesa ainda não paga ligada a parcela de algum dos clientes dados (ex.: clientes em standby). */
 export function mentorExpenseOfClients(companyNames: string[]) {
-  const markers = companyNames.filter(Boolean).flatMap(n => parcelExpenseMarkers(n.toLowerCase()))
+  // marcador inteiro em minúsculas (o " P" do imposto também), comparado com a descrição em minúsculas
+  const markers = companyNames.filter(Boolean).flatMap(n => parcelExpenseMarkers(n).map(m => m.toLowerCase()))
   return (e: { category: string; status: string; description: string }) =>
     markers.length > 0 && PARCEL_LINKED_CATEGORIES.includes(e.category) && e.status !== 'PAGO' &&
     markers.some(m => e.description.toLowerCase().includes(m))

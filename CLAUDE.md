@@ -148,6 +148,8 @@ parcela que o cliente não pagou = ela não recebe** (fatia vai pro Giulliano). 
 - Abas renomeadas: **Entradas** (antes Pagamentos, `/payments`) e **Saídas** (antes Despesas, `/expenses`).
 - **Carregar o que ficou em aberto:** ao ver o período que inclui hoje, entra também o que venceu antes e não foi
   baixado (parcela PENDING/OVERDUE fora da carteira; saída != PAGO), marcado "de out, em aberto/sem baixa".
+  Fluxo de caixa e Saídas usam o mesmo corte de standby (`mentorExpenseOfClients`; o marcador " P" do imposto era
+  comparado em maiúscula e deixava passar imposto de cliente em standby, corrigido 25/11).
   Saídas: filtro de status "Sem baixa (em aberto)" (`status=ABERTO`) e "Sem baixa de meses anteriores" (`status=ANTERIORES`,
   também clicando no card de mesmo nome).
 
@@ -244,6 +246,10 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
   Sem o token, desligado. DocuSign foi descartado (plano Standard sem API).
 
 ---
+
+### Tabelas
+- **Toda tabela de valores tem totalizador embaixo** (pedido do João): soma da lista inteira filtrada, não só da página.
+  Entradas/Saídas: `totals { value, paid, open }` no `findAll` + `<tfoot>`.
 
 ## 6. Endpoints úteis
 

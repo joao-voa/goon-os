@@ -68,9 +68,13 @@ export class ExpensesService {
       }),
       this.prisma.expense.count({ where }),
     ])
+    // totalizador da lista inteira (não só da página): total, pago e sem baixa
+    const byStatus = await this.prisma.expense.groupBy({ by: ['status'], where, _sum: { value: true } })
+    const sumOf = (pred: (st: string) => boolean) => byStatus.filter(g => pred(g.status)).reduce((a, g) => a + Number(g._sum?.value ?? 0), 0)
 
     return {
       data: data.map(e => ({ ...e, value: Number(e.value), paidValue: Number(e.paidValue ?? 0) })),
+      totals: { value: sumOf(() => true), paid: sumOf(st => st === 'PAGO'), open: sumOf(st => st !== 'PAGO') },
       total,
       page,
       limit,

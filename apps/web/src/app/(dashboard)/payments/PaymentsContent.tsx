@@ -38,6 +38,7 @@ interface Payment {
 
 interface PaginatedPayments {
   data: Payment[]
+  totals?: { value: number; paid: number; open: number }
   total: number
   page: number
   limit: number
@@ -397,6 +398,7 @@ export default function PaymentsPage() {
 
   const [payments, setPayments] = useState<Payment[]>([])
   const [total, setTotal] = useState(0)
+  const [totals, setTotals] = useState<{ value: number; paid: number; open: number } | null>(null)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -452,6 +454,7 @@ export default function PaymentsPage() {
       const result = await apiFetch<PaginatedPayments>(`/api/payments?${params.toString()}`)
       setPayments(result.data)
       setTotal(result.total)
+      setTotals(result.totals ?? null)
     } catch (err: unknown) {
       toast.error(err instanceof Error ? `[ERRO] ${err.message}` : '[ERRO] Erro ao carregar pagamentos')
     } finally {
@@ -888,6 +891,18 @@ export default function PaymentsPage() {
                 )
               })}
             </tbody>
+            {totals && (
+              <tfoot>
+                <tr style={{ borderTop: '2px solid #0f172a', background: '#f8fafc' }}>
+                  <td colSpan={4} style={{ padding: '10px 12px', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700 }}>
+                    Total ({total} {total === 1 ? 'entrada' : 'entradas'})
+                    <span style={{ fontWeight: 500, color: '#64748b', marginLeft: 10 }}>recebido {fmtBRL(totals.paid)} · em aberto {fmtBRL(totals.open)}</span>
+                  </td>
+                  <td style={{ padding: '10px 12px', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 800 }}>{fmtBRL(totals.value)}</td>
+                  <td colSpan={2} />
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
         )
