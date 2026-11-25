@@ -248,6 +248,11 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
 
 ---
 
+### Mudou o vencimento da parcela → repasses acompanham
+- `PaymentsService.update` com `dueDate` novo chama `moveLinkedExpenses`: saídas MENTORIA/COMISSAO sem baixa
+  "— Cliente (PRODUTO) parcela N" vão para a nova data. Impostos não (ficam no dia 10 por convenção). Se o cliente tem
+  duas parcelas com o mesmo número (outro ciclo, ex.: ORDO), não mexe (ambíguo). Já pagos ficam como estão.
+
 ### Tabelas
 - **Toda tabela de valores tem totalizador embaixo** (pedido do João): soma da lista inteira filtrada, não só da página.
   Entradas/Saídas: `totals { value, paid, open }` no `findAll` + `<tfoot>`.

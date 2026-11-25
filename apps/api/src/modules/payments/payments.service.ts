@@ -384,8 +384,35 @@ export class PaymentsService {
 
     // TTS recorrente: se esta atualização marcou como PAGA, joga a próxima pro fluxo
     if (dto.status === 'PAID' && existing.status !== 'PAID') await this.maybeRenewTTS(id)
+    // mudou o vencimento: repasses, imposto e comissão ainda não pagos daquela parcela vão junto
+    if (dto.dueDate && existing.dueDate.getTime() !== payment.dueDate.getTime()) await this.moveLinkedExpenses(id)
 
     return { ...payment, value: payment.value.toNumber() }
+  }
+
+  /**
+   * Repasses ligados à parcela (MENTORIA/COMISSAO "— Cliente (PRODUTO) parcela N") ainda sem baixa acompanham
+   * o vencimento da parcela. Já pagos ficam como estão. Imposto não entra (é lançado no dia 10 por convenção).
+   * Se o cliente tem mais de uma parcela com o mesmo número (outro ciclo/plano), não mexe: seria ambíguo.
+   */
+  async moveLinkedExpenses(paymentId: string) {
+    const pay = await this.prisma.payment.findUnique({ where: { id: paymentId }, select: { installment: true, dueDate: true, clientId: true, client: { select: { companyName: true } } } })
+    if (!pay?.client) return 0
+    const same = await this.prisma.payment.count({ where: { clientId: pay.clientId, installment: pay.installment, status: { not: 'CANCELLED' } } })
+    if (same > 1) return 0
+    const name = pay.client.companyName
+    const cands = await this.prisma.expense.findMany({
+      where: { category: { in: ['MENTORIA', 'COMISSAO'] }, status: { not: 'PAGO' }, description: { contains: `— ${name}`, mode: 'insensitive' } },
+      select: { id: true, description: true },
+    })
+    const n = pay.installment
+    const mark = `— ${name}`.toLowerCase()
+    const ids = cands.filter(e => {
+      const d = e.description.trim().toLowerCase()
+      return d.includes(`${mark} (`) && d.endsWith(` parcela ${n}`)
+    }).map(e => e.id)
+    if (ids.length) await this.prisma.expense.updateMany({ where: { id: { in: ids } }, data: { dueDate: pay.dueDate } })
+    return ids.length
   }
 
   async markAsPaid(id: string, paidAt?: Date | string) {
