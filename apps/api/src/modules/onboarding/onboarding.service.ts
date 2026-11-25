@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
 import { ClicksignService } from './clicksign.service'
+import { docxToPdf } from './docx-pdf'
 import { CONTRACT_FIELDS, dataLonga, extenso, extensoF, fillDocx, reaisPorExtenso } from './contract-fill'
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -381,7 +382,7 @@ export class OnboardingService {
     return { enabled: this.clicksign.enabled, provider: 'clicksign', env: this.clicksign.env }
   }
 
-  async sendForSignature(id: string, dto: { filename: string; data: string; mimeType?: string; signers: Array<{ name: string; email: string }> }, generated = false) {
+  async sendForSignature(id: string, dto: { filename: string; data: string; mimeType?: string; signers: Array<{ name: string; email: string }> }) {
     if (!this.clicksign.enabled) throw new BadRequestException('ClickSign ainda não está ligada')
     const ob = await this.prisma.onboarding.findUnique({ where: { id }, include: { client: { select: { id: true, companyName: true } } } })
     if (!ob) throw new NotFoundException('Onboarding não encontrado')
@@ -390,9 +391,8 @@ export class OnboardingService {
     if (signers.some(s => s.name.split(/\s+/).length < 2)) throw new BadRequestException('A ClickSign pede nome e sobrenome de cada signatário')
     if (!dto.data) throw new BadRequestException('Envie o PDF do contrato')
     const filename = dto.filename || 'Contrato.pdf'
-    // upload manual só em PDF; o contrato gerado pelo sistema vai em .docx e a ClickSign converte
-    if (!generated && !filename.toLowerCase().endsWith('.pdf')) throw new BadRequestException('Envie o contrato em PDF (no Word: Arquivo > Salvar como > PDF)')
-    const mimeType = generated ? DOCX_MIME : 'application/pdf'
+    if (!filename.toLowerCase().endsWith('.pdf')) throw new BadRequestException('Envie o contrato em PDF (no Word: Arquivo > Salvar como > PDF)')
+    const mimeType = 'application/pdf'
     const size = Math.floor((dto.data.length * 3) / 4)
     if (size > 3 * 1024 * 1024) throw new BadRequestException('PDF maior que 3MB')
     // nova versão: o contrato anterior ainda em aberto é cancelado na ClickSign
@@ -404,14 +404,8 @@ export class OnboardingService {
     const r = await this.clicksign.send({
       name: `Contrato GOON · ${ob.client.companyName}`, filename, base64: dto.data, mimeType, signers, metadata: { onboardingId: ob.id },
     })
-    // guarda a versão enviada nos documentos do cliente; do gerado, guarda o PDF que a ClickSign montou
-    let sent = { mimeType, size, filename, data: dto.data }
-    if (generated) {
-      const pdf = await this.clicksign.downloadOriginal(r.envelopeId, r.documentId).catch(() => null)
-      if (pdf && pdf.subarray(0, 4).toString() === '%PDF') {
-        sent = { mimeType: 'application/pdf', size: pdf.length, filename: filename.replace(/\.docx$/i, '.pdf'), data: pdf.toString('base64') }
-      }
-    }
+    // guarda a versão enviada (PDF) nos documentos do cliente
+    const sent = { mimeType, size, filename, data: dto.data }
     await this.prisma.clientDocument.create({
       data: {
         clientId: ob.client.id, type: 'CONTRACT_SENT', mimeType: sent.mimeType, size: sent.size, filename: `Enviado para assinatura - ${sent.filename}`, data: sent.data,
@@ -593,12 +587,12 @@ export class OnboardingService {
 
   /** Gera pelo modelo e já manda pra ClickSign, sem baixar nada. */
   async sendGeneratedContract(id: string, dto: { template: string; fields: Record<string, string>; signers: Array<{ name: string; email: string }> }) {
-    const g = await this.generateContract(id, dto)
+    const g = await this.generateContract(id, dto, 'pdf')
     if (g.missing.length) throw new BadRequestException(`Preencha antes de enviar: ${g.missing.join(', ')}`)
-    return this.sendForSignature(id, { filename: g.filename, data: g.buffer.toString('base64'), signers: dto.signers }, true)
+    return this.sendForSignature(id, { filename: g.filename, data: g.buffer.toString('base64'), signers: dto.signers })
   }
 
-  async generateContract(id: string, dto: { template: string; fields: Record<string, string> }) {
+  async generateContract(id: string, dto: { template: string; fields: Record<string, string> }, format: 'docx' | 'pdf' = 'docx') {
     const ob = await this.prisma.onboarding.findUnique({ where: { id }, include: { client: { select: { id: true, companyName: true } } } })
     if (!ob) throw new NotFoundException('Onboarding não encontrado')
     const t = await this.prisma.contractTemplate.findUnique({ where: { code: dto.template } })
@@ -607,7 +601,9 @@ export class OnboardingService {
     const checklist = { ...((ob.checklist ?? {}) as Record<string, boolean>), contrato_elaborado: true }
     await this.prisma.onboarding.update({ where: { id }, data: { checklist } })
     const safe = (dto.fields?.NOME_FANTASIA || ob.client.companyName).toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '')
-    return { buffer, missing, filename: `CONTRATO_GOON_${t.name.toUpperCase().replace(/[^A-Z0-9]+/g, '_')}_${safe}.docx` }
+    const base = `CONTRATO_GOON_${t.name.toUpperCase().replace(/[^A-Z0-9]+/g, '_')}_${safe}`
+    if (format === 'pdf') return { buffer: await docxToPdf(buffer, t.name.toUpperCase()), missing, filename: `${base}.pdf`, mimeType: 'application/pdf' }
+    return { buffer, missing, filename: `${base}.docx`, mimeType: DOCX_MIME }
   }
 
 }

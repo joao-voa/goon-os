@@ -204,11 +204,15 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
   (CAMPOS_MODELOS_GOON.csv): RAZAO_SOCIAL, NOME_FANTASIA, CNPJ, ENDERECO, REPRESENTANTE, CPF, EMAIL, TELEFONE, CICLO,
   CICLO_CURTO, DATA_INICIO, VALOR_TOTAL, RESUMO_PAGAMENTO, CONDICAO_PAGAMENTO (minúscula no início, ponto no fim), DATA_ASSINATURA.
 - Card do onboarding, item "Contrato elaborado" → "gerar": sugere os campos (dados colados + cadastro + plano/parcelas),
-  revisa e **"Enviar para assinatura"**: gera o .docx no servidor e manda direto pra ClickSign (que converte em PDF),
-  signatário = REPRESENTANTE + EMAIL (`POST /api/onboarding/:id/contract/send`). Nada é baixado. O PDF montado pela
-  ClickSign (`links.files.original`) fica nos documentos do cliente (`CONTRACT_SENT`, "Enviado para assinatura - ...");
-  o assinado entra como `SIGNED_CONTRACT`. Caso fora do padrão: "baixar Word", ajustar, e "enviar PDF ajustado"
-  (upload manual aceita só PDF). Modelo novo/atualizado sobe pela própria tela ("trocar modelo").
+  revisa, **"Ver PDF"** e **"Enviar para assinatura"** (`POST /api/onboarding/:id/contract/send`): gera o .docx, converte
+  em **PDF** no servidor e manda o PDF pra ClickSign (signatário = REPRESENTANTE + EMAIL). Nada é baixado. O PDF enviado
+  fica nos documentos do cliente (`CONTRACT_SENT`, "Enviado para assinatura - ..."); o assinado entra como `SIGNED_CONTRACT`.
+  Caso fora do padrão: "baixar Word", ajustar, e "enviar PDF ajustado" (upload manual aceita só PDF).
+  Modelo novo/atualizado sobe pela própria tela ("trocar modelo"). Mandar .docx direto pra ClickSign desconfigura
+  (fontes): por isso a conversão é nossa.
+- Conversão .docx → PDF em `onboarding/docx-pdf.ts`: Chromium (`@sparticuz/chromium` no Vercel, Chrome local no Mac) +
+  `docx-preview` (usa as fontes embutidas no .docx), A4, margens 20mm, rodapé com o nome do programa e "página / total".
+  `vercel.json` inclui `@sparticuz/chromium/bin`, `docx-preview/dist` e `jszip/dist` no `includeFiles`; função com 2048MB/60s.
 - Preenchimento em `onboarding/contract-fill.ts` (jszip; troca no corpo, cabeçalhos e rodapés; valor por extenso).
 
 ### Assinatura pela ClickSign (onboarding)

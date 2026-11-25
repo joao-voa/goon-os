@@ -64,10 +64,10 @@ export class OnboardingController {
   }
 
   @Post(':id/contract/generate')
-  async generateContract(@Param('id') id: string, @Body() body: { template: string; fields: Record<string, string> }, @Res() res: Response) {
-    const r = await this.onboardingService.generateContract(id, body)
+  async generateContract(@Param('id') id: string, @Body() body: { template: string; fields: Record<string, string>; format?: 'docx' | 'pdf' }, @Res() res: Response) {
+    const r = await this.onboardingService.generateContract(id, body, body.format === 'pdf' ? 'pdf' : 'docx')
     res.set({
-      'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'Content-Type': r.mimeType,
       'Content-Disposition': `attachment; filename="${encodeURIComponent(r.filename)}"`,
       'X-Missing-Fields': r.missing.join(','),
       'Access-Control-Expose-Headers': 'Content-Disposition, X-Missing-Fields',

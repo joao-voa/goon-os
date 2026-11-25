@@ -101,18 +101,31 @@ export default function OnboardingPage() {
   }
 
   // gera o .docx no servidor e devolve o arquivo
-  async function generateFile(): Promise<File | null> {
+  async function generateFile(format: 'docx' | 'pdf' = 'docx'): Promise<File | null> {
     if (!genFor || !genTemplate) { toast.error('Escolha o modelo'); return null }
     const token = localStorage.getItem('access_token')
     const res = await fetch(`${API_URL}/api/onboarding/${genFor.id}/contract/generate`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify({ template: genTemplate, fields: genFields }),
+      body: JSON.stringify({ template: genTemplate, fields: genFields, format }),
     })
     if (!res.ok) { toast.error('Erro ao gerar o contrato'); return null }
     const missing = (res.headers.get('X-Missing-Fields') ?? '').split(',').filter(Boolean)
     if (missing.length) toast.warning(`Campos em branco no contrato: ${missing.join(', ')}`)
     const name = decodeURIComponent((res.headers.get('Content-Disposition') ?? '').match(/filename="([^"]+)"/)?.[1] ?? 'Contrato.docx')
-    return new File([await res.blob()], name, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+    const blob = await res.blob()
+    return new File([blob], name, { type: blob.type })
+  }
+
+  // abre o PDF do contrato (do jeito que vai pra assinatura) numa aba nova
+  async function previewPdf() {
+    const w = window.open('', '_blank')
+    setGenerating(true)
+    const f = await generateFile('pdf')
+    setGenerating(false)
+    if (!f) { w?.close(); return }
+    const url = URL.createObjectURL(f)
+    if (w) w.location.href = url
+    else { const a = document.createElement('a'); a.href = url; a.download = f.name; a.click() }
   }
 
   async function downloadGenerated() {
@@ -403,7 +416,7 @@ export default function OnboardingPage() {
                   <input type="file" accept=".docx" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadTemplate(f); e.target.value = '' }} />
                 </label>
               </div>
-              <div style={{ fontSize: 12, color: C.mid, lineHeight: 1.5 }}>Confira os campos e envie. O contrato é montado no modelo do programa, vai para a ClickSign no e-mail para assinatura do representante e o PDF fica guardado nos documentos do cliente.</div>
+              <div style={{ fontSize: 12, color: C.mid, lineHeight: 1.5 }}>Confira os campos e envie. Em "Ver PDF" você confere o contrato pronto. "Enviar para assinatura" manda esse PDF pela ClickSign para o e-mail do representante e guarda o PDF nos documentos do cliente.</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10 }}>
                 {draft.fieldList.map(f => (
                   <label key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 4, gridColumn: f.long || f.key === 'ENDERECO' || f.key === 'VALOR_TOTAL' ? '1 / -1' : undefined }}>
@@ -420,6 +433,7 @@ export default function OnboardingPage() {
                   <button onClick={downloadGenerated} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={{ background: 'none', border: 'none', padding: 0, color: C.mid, textDecoration: 'underline', cursor: 'pointer', fontSize: 11.5 }} title="Para mudar alguma cláusula à mão">baixar Word</button>
                   {signInfo?.enabled && <button onClick={sendCustomPdf} style={{ background: 'none', border: 'none', padding: 0, color: C.mid, textDecoration: 'underline', cursor: 'pointer', fontSize: 11.5 }} title="Contrato ajustado fora do padrão">enviar PDF ajustado</button>}
                 </span>
+                <button onClick={previewPdf} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={btn}>{generating ? 'Gerando…' : 'Ver PDF'}</button>
                 {signInfo?.enabled && <button onClick={sendGenerated} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>{generating ? 'Enviando…' : 'Enviar para assinatura'}</button>}
               </div>
             </>}
