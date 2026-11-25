@@ -67,6 +67,8 @@ export default function OnboardingPage() {
   const [genFields, setGenFields] = useState<Record<string, string>>({})
   const [generating, setGenerating] = useState(false)
   const [genTerms, setGenTerms] = useState<ContractTerms | null>(null)
+  // depois do envio: mensagem pronta para copiar e mandar ao cliente
+  const [sentMsg, setSentMsg] = useState<{ company: string; text: string } | null>(null)
   const [eq, setEq] = useState({ n: '', value: '', first: '' })
 
   const load = useCallback(async () => {
@@ -82,6 +84,11 @@ export default function OnboardingPage() {
     setSigners([{ name: b.client.responsible ?? '', email: signEmail ?? b.client.email ?? '' }, GOON_SIGNER])
   }
 
+  function showSentMessage(company: string, name: string, email: string) {
+    const first = name.trim().split(/\s+/)[0] ?? ''
+    setSentMsg({ company, text: `Oi${first ? `, ${first}` : ''}! Tudo bem? Acabamos de enviar o contrato da GOON para assinatura no seu e-mail (${email}). Ele chega pela ClickSign. Se não aparecer na caixa de entrada, confira o spam ou a aba Promoções. Qualquer dúvida, estou por aqui.` })
+  }
+
   async function sendSign() {
     if (!signFor || !signFile) { toast.error('Escolha o arquivo do contrato'); return }
     if (signFile.size > 3 * 1024 * 1024) { toast.error('Arquivo maior que 3MB. Comprima o PDF.'); return }
@@ -92,6 +99,8 @@ export default function OnboardingPage() {
         method: 'POST', body: JSON.stringify({ filename: signFile.name, mimeType: signFile.type || undefined, data: dataUrl.split(',')[1] ?? '', signers: signers.filter(x => x.name && x.email) }),
       })
       toast.success('Contrato enviado para assinatura pela ClickSign')
+      const cli = signers.find(x => x.email && x.email !== GOON_SIGNER.email) ?? signers[0]
+      if (cli) showSentMessage(signFor.client.companyName, cli.name, cli.email)
       setSignFor(null); load()
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro ao enviar') }
     setSending(false)
@@ -153,6 +162,7 @@ export default function OnboardingPage() {
     try {
       await apiFetch(`/api/onboarding/${genFor.id}/contract/send`, { method: 'POST', body: JSON.stringify({ template: genTemplate, fields: genFields, signers }) })
       toast.success(`Contrato enviado para ${signers.map(x => x.email).join(' e ')}`)
+      showSentMessage(genFor.client.companyName, signers[0].name, signers[0].email)
       setGenFor(null); load()
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro ao enviar') }
     setGenerating(false)
@@ -418,6 +428,21 @@ export default function OnboardingPage() {
           )
         })}
       </div>
+
+      {sentMsg && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          onClick={e => { if (e.target === e.currentTarget) setSentMsg(null) }}>
+          <div style={{ ...card, width: '100%', maxWidth: 480, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>Contrato enviado · {sentMsg.company}</div>
+            <div style={{ fontSize: 12, color: C.mid }}>Mensagem para avisar o cliente:</div>
+            <textarea value={sentMsg.text} onChange={e => setSentMsg(m => m && { ...m, text: e.target.value })} rows={6} style={{ ...inp, fontSize: 13, padding: 10, lineHeight: 1.5, resize: 'vertical' }} />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setSentMsg(null)} style={btn}>Fechar</button>
+              <button onClick={async () => { try { await navigator.clipboard.writeText(sentMsg.text); toast.success('Mensagem copiada') } catch { toast.error('Não consegui copiar') } }} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>Copiar mensagem</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {genFor && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
