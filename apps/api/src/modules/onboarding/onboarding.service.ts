@@ -558,6 +558,20 @@ export class OnboardingService {
       resumo = `${Forma}, ${entry ? `entrada de ${brl(Number(entry.value))} em ${dmy(entry.dueDate)} e ` : ''}${parc}${dia ? ` todo dia ${dia}` : ''}`
       condicao = `pago por ${forma}, ${entry ? `com entrada de ${brl(Number(entry.value))} em ${dmy(entry.dueDate)} e ` : 'em '}${same ? `${rest.length} (${extensoF(rest.length)}) parcelas mensais de ${brl(Number(rest[0].value))}` : `${rest.length} (${extensoF(rest.length)}) parcelas mensais conforme cronograma`}${rest[0] ? `, a primeira em ${dmy(rest[0].dueDate)}` : ''}${dia ? `, com vencimento todo dia ${dia}` : ''}.`
     }
+    // condições estruturadas (prazo, forma, parcelas) para configurar o contrato na tela
+    const entryPays = pays.filter(p => p.installment === 0)
+    const iso = (d: Date) => d.toISOString().slice(0, 10)
+    const terms = {
+      months,
+      startDate: plan?.startDate ? iso(plan.startDate) : iso(new Date()),
+      paymentType: plan?.paymentType === 'CARTAO' ? 'CARTAO' : plan?.paymentType === 'PIX' ? 'PIX' : 'BOLETO',
+      paidUpfront: pays.length === 1 && pays[0].status === 'PAID',
+      cardInstallments: plan?.paymentType === 'CARTAO' ? (plan.installments ?? 1) : 1,
+      installments: [
+        ...(entryPays.length ? [{ dueDate: iso(entryPays[0].dueDate), value: entryPays.reduce((a, p) => a + Number(p.value), 0), entry: true }] : []),
+        ...pays.filter(p => p.installment !== 0).map(p => ({ dueDate: iso(p.dueDate), value: Number(p.value), entry: false })),
+      ],
+    }
     const code = plan?.product?.code ?? null
     const fields: Record<string, string> = {
       RAZAO_SOCIAL: fromNotes('razao social') || c.companyName,
@@ -579,7 +593,7 @@ export class OnboardingService {
     }
     const templates = await this.listTemplates()
     return {
-      fields, fieldList: CONTRACT_FIELDS, templates,
+      fields, fieldList: CONTRACT_FIELDS, templates, terms,
       suggestedTemplate: templates.some(t => t.code === code) ? code : null,
       productCode: code, productName: plan?.product?.name ?? null,
     }

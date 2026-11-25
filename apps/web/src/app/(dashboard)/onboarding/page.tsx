@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { apiFetch, API_URL } from '@/lib/api'
+import { addMonths, brl, termsToFields, termsTotal, type ContractTerms } from '@/lib/contract-terms'
 import { PRODUCT_COLORS } from '@/lib/constants'
 
 // Onboarding em checklist (ordem livre): cada cliente tem os mesmos itens, marcados
@@ -59,12 +60,14 @@ export default function OnboardingPage() {
   const [signers, setSigners] = useState<Array<{ name: string; email: string }>>([])
   const [sending, setSending] = useState(false)
   // gerar contrato pelo modelo
-  type Draft = { fields: Record<string, string>; fieldList: Array<{ key: string; label: string; long?: boolean }>; templates: Array<{ code: string; name: string }>; suggestedTemplate: string | null; productCode: string | null }
+  type Draft = { terms: ContractTerms; fields: Record<string, string>; fieldList: Array<{ key: string; label: string; long?: boolean }>; templates: Array<{ code: string; name: string }>; suggestedTemplate: string | null; productCode: string | null }
   const [genFor, setGenFor] = useState<Board | null>(null)
   const [draft, setDraft] = useState<Draft | null>(null)
   const [genTemplate, setGenTemplate] = useState('')
   const [genFields, setGenFields] = useState<Record<string, string>>({})
   const [generating, setGenerating] = useState(false)
+  const [genTerms, setGenTerms] = useState<ContractTerms | null>(null)
+  const [eq, setEq] = useState({ n: '', value: '', first: '' })
 
   const load = useCallback(async () => {
     try { setBoard(await apiFetch<Board[]>('/api/onboarding/board')) } catch { toast.error('Erro ao carregar o onboarding') }
@@ -98,7 +101,8 @@ export default function OnboardingPage() {
     setGenFor(b); setDraft(null)
     try {
       const d = await apiFetch<Draft>(`/api/onboarding/${b.id}/contract/draft`)
-      setDraft(d); setGenFields(d.fields); setGenTemplate(d.suggestedTemplate ?? d.templates[0]?.code ?? '')
+      setDraft(d); setGenFields(d.fields); setGenTerms(d.terms); setGenTemplate(d.suggestedTemplate ?? d.templates[0]?.code ?? '')
+      setEq({ n: '', value: '', first: '' })
     } catch { toast.error('Erro ao montar os dados do contrato'); setGenFor(null) }
   }
 
@@ -170,6 +174,23 @@ export default function OnboardingPage() {
       toast.success('Modelo atualizado')
       if (genFor) openGenerate(genFor)
     } catch { toast.error('Erro ao salvar o modelo') }
+  }
+
+  // condições mudaram -> refaz prazo, início, valor e as frases de pagamento (os campos seguem editáveis)
+  function updateTerms(next: ContractTerms) {
+    setGenTerms(next)
+    setGenFields(f => ({ ...f, ...termsToFields(next) }))
+  }
+  function setInst(i: number, patch: Partial<ContractTerms['installments'][number]>) {
+    if (!genTerms) return
+    updateTerms({ ...genTerms, installments: genTerms.installments.map((x, j) => j === i ? { ...x, ...patch } : patch.entry ? { ...x, entry: false } : x) })
+  }
+  function genEqual() {
+    if (!genTerms) return
+    const n = parseInt(eq.n, 10), v = parseFloat(eq.value.replace(/\./g, '').replace(',', '.'))
+    if (!n || !v || !eq.first) { toast.error('Informe quantidade, valor e primeiro vencimento'); return }
+    const entry = genTerms.installments.filter(x => x.entry)
+    updateTerms({ ...genTerms, installments: [...entry, ...Array.from({ length: n }, (_, k) => ({ dueDate: addMonths(eq.first, k), value: v, entry: false }))] })
   }
 
   async function remindSign(b: Board) {
@@ -418,6 +439,68 @@ export default function OnboardingPage() {
                   <input type="file" accept=".docx" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadTemplate(f); e.target.value = '' }} />
                 </label>
               </div>
+              {genTerms && (() => {
+                const t = genTerms
+                const card = t.paymentType === 'CARTAO'
+                const lbl: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: C.mid, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', flexDirection: 'column', gap: 4 }
+                const small: React.CSSProperties = { ...inp, fontSize: 13, padding: 7 }
+                return (
+                  <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 10, background: C.bg }}>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>Condições do contrato</div>
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                      <label style={lbl}>Prazo (meses)<input type="number" min={1} value={t.months} onChange={e => updateTerms({ ...t, months: parseInt(e.target.value, 10) || 1 })} style={{ ...small, width: 90 }} /></label>
+                      <label style={lbl}>Início<input type="date" value={t.startDate} onChange={e => updateTerms({ ...t, startDate: e.target.value })} style={small} /></label>
+                      <label style={lbl}>Forma
+                        <select value={t.paymentType} onChange={e => {
+                          const pt = e.target.value as ContractTerms['paymentType']
+                          // cartão = um valor total; volta a ter parcelas ao sair do cartão
+                          const inst = pt === 'CARTAO' ? [{ dueDate: t.startDate, value: termsTotal(t), entry: false }] : t.installments
+                          updateTerms({ ...t, paymentType: pt, installments: inst })
+                        }} style={small}>
+                          <option value="BOLETO">Boleto</option><option value="PIX">PIX</option><option value="CARTAO">Cartão</option>
+                        </select>
+                      </label>
+                      {card && <label style={lbl}>Vezes no cartão<input type="number" min={1} value={t.cardInstallments} onChange={e => updateTerms({ ...t, cardInstallments: parseInt(e.target.value, 10) || 1 })} style={{ ...small, width: 90 }} /></label>}
+                      {card && <label style={lbl}>Valor total<input type="number" step="0.01" value={t.installments[0]?.value ?? 0} onChange={e => updateTerms({ ...t, installments: [{ dueDate: t.startDate, value: parseFloat(e.target.value) || 0, entry: false }] })} style={{ ...small, width: 130 }} /></label>}
+                      {(card || t.installments.length === 1) && (
+                        <label style={{ ...lbl, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-end', textTransform: 'none', letterSpacing: 0, fontSize: 12, paddingBottom: 8 }}>
+                          <input type="checkbox" checked={t.paidUpfront} onChange={e => updateTerms({ ...t, paidUpfront: e.target.checked })} /> já pago nesta data
+                        </label>
+                      )}
+                    </div>
+                    {!card && <>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr 1fr 28px', gap: 6, fontSize: 11, fontWeight: 600, color: C.mid, textTransform: 'uppercase' }}>
+                          <span>Entrada</span><span>Vencimento</span><span>Valor (R$)</span><span />
+                        </div>
+                        {t.installments.map((x, i) => (
+                          <div key={i} style={{ display: 'grid', gridTemplateColumns: '70px 1fr 1fr 28px', gap: 6, alignItems: 'center' }}>
+                            <input type="checkbox" checked={x.entry} onChange={e => setInst(i, { entry: e.target.checked })} style={{ justifySelf: 'start' }} />
+                            <input type="date" value={x.dueDate} onChange={e => setInst(i, { dueDate: e.target.value })} style={small} />
+                            <input type="number" step="0.01" value={x.value} onChange={e => setInst(i, { value: parseFloat(e.target.value) || 0 })} style={small} />
+                            <button onClick={() => updateTerms({ ...t, installments: t.installments.filter((_, j) => j !== i) })} style={{ ...btn, padding: '4px 0', color: C.red }}>×</button>
+                          </div>
+                        ))}
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <button onClick={() => {
+                            const last = t.installments[t.installments.length - 1]
+                            updateTerms({ ...t, installments: [...t.installments, { dueDate: last ? addMonths(last.dueDate, 1) : t.startDate, value: last?.value ?? 0, entry: false }] })
+                          }} style={btn}>+ Parcela</button>
+                          <span style={{ marginLeft: 'auto', fontSize: 13 }}>{t.installments.length} {t.installments.length === 1 ? 'pagamento' : 'pagamentos'} · total <strong>{brl(termsTotal(t))}</strong></span>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', fontSize: 12, color: C.mid, borderTop: `1px dashed ${C.line}`, paddingTop: 8 }}>
+                        Gerar parcelas iguais:
+                        <input placeholder="qtd" value={eq.n} onChange={e => setEq(v => ({ ...v, n: e.target.value }))} style={{ ...small, width: 60 }} />
+                        x R$ <input placeholder="valor" value={eq.value} onChange={e => setEq(v => ({ ...v, value: e.target.value }))} style={{ ...small, width: 100 }} />
+                        a partir de <input type="date" value={eq.first} onChange={e => setEq(v => ({ ...v, first: e.target.value }))} style={small} />
+                        <button onClick={genEqual} style={btn}>Gerar</button>
+                        <span style={{ fontSize: 11 }}>(mantém a entrada; depois dá para mudar valor e data de cada uma)</span>
+                      </div>
+                    </>}
+                  </div>
+                )
+              })()}
               <div style={{ fontSize: 12, color: C.mid, lineHeight: 1.5 }}>Confira os campos e envie. Em "Ver PDF" você confere o contrato pronto. "Enviar para assinatura" manda esse PDF pela ClickSign e guarda o PDF nos documentos do cliente.</div>
               <div style={{ fontSize: 12, color: C.ink, background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, padding: '8px 10px', lineHeight: 1.6 }}>
                 <strong>Assinam:</strong> {genFields.REPRESENTANTE || '(representante)'} · {genFields.EMAIL || '(e-mail)'} <span style={{ color: C.mid }}>(contratante)</span><br />

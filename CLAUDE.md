@@ -211,6 +211,10 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
   Caso fora do padrão: "baixar Word", ajustar, e "enviar PDF ajustado" (upload manual aceita só PDF).
   Modelo novo/atualizado sobe pela própria tela ("trocar modelo"). Mandar .docx direto pra ClickSign desconfigura
   (fontes): por isso a conversão é nossa.
+- **Condições do contrato** na tela (prazo, início, forma Boleto/PIX/Cartão, parcelas com entrada e valores/datas
+  livres, "gerar parcelas iguais"): vêm do plano (`terms` no draft) e refazem CICLO, CICLO_CURTO, DATA_INICIO,
+  VALOR_TOTAL, RESUMO_PAGAMENTO e CONDICAO_PAGAMENTO (`apps/web/src/lib/contract-terms.ts`; parcelas diferentes saem
+  listadas "valor em data; ..."). Mexer aqui muda só o contrato, **não** o plano/parcelas do financeiro.
 - Conversão .docx → PDF em `onboarding/docx-pdf.ts`: Chromium (`@sparticuz/chromium` no Vercel, Chrome local no Mac) +
   `docx-preview` (usa as fontes embutidas no .docx), A4, margens 20mm, rodapé com o nome do programa e "página / total".
   Os arquivos de execução (Chromium, docx-preview.min.js, jszip.min.js) são copiados para `apps/api/vendor` por
