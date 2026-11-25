@@ -655,3 +655,12 @@ model CashBalance {
 
   @@index([date])
 }
+
+// Modelo de contrato (Word com campos {{CAMPO}}) por programa: GE, GI, TTS…
+model ContractTemplate {
+  code      String   @id // código do produto (GE, GI, TTS…)
+  name      String
+  filename  String
+  data      String   @db.Text // .docx em base64
+  updatedAt DateTime @updatedAt
+}

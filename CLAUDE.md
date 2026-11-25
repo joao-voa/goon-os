@@ -199,6 +199,14 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
   Só mentoria individual (não GRUPO). `Meeting.externalSource/externalId` = encontro de lá.
   Mudança vinda de lá usa `{ fromMentoria: true }` para não voltar (evita loop).
 
+### Contrato a partir do modelo (onboarding)
+- Modelos .docx por programa em `ContractTemplate` (code = GE, GI, TTS…; .docx em base64), com 15 campos `{{CAMPO}}`
+  (CAMPOS_MODELOS_GOON.csv): RAZAO_SOCIAL, NOME_FANTASIA, CNPJ, ENDERECO, REPRESENTANTE, CPF, EMAIL, TELEFONE, CICLO,
+  CICLO_CURTO, DATA_INICIO, VALOR_TOTAL, RESUMO_PAGAMENTO, CONDICAO_PAGAMENTO (minúscula no início, ponto no fim), DATA_ASSINATURA.
+- Card do onboarding, item "Contrato elaborado" → "gerar": sugere os campos (dados colados + cadastro + plano/parcelas),
+  revisa, baixa o Word ou manda direto pra ClickSign. Modelo novo/atualizado sobe pela própria tela ("trocar modelo").
+- Preenchimento em `onboarding/contract-fill.ts` (jszip; troca no corpo, cabeçalhos e rodapés; valor por extenso).
+
 ### Assinatura pela ClickSign (onboarding)
 - No card do onboarding, item "Contrato enviado para assinatura" → botão ClickSign: sobe o contrato (PDF de preferência,
   até 3MB), signatários (nome e sobrenome + e-mail) e envia (API v3: envelope → documento → signatários com

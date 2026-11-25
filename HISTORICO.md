@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-24
+- **Contrato pelo modelo:** no onboarding, "gerar" no item Contrato elaborado preenche os 15 campos do modelo do programa (Elite/Infinity) com dados colados + cadastro + plano, revisa, baixa o Word ou envia pela ClickSign. Modelos ficam no banco (`ContractTemplate`) e são trocados pela tela.
 - **ClickSign no onboarding** (DocuSign descartado: plano Standard sem API): enviar contrato para assinatura do card (upload + signatários), status no card, webhook (HMAC) anexa o PDF assinado e marca "Contrato assinado". Desligado até o token entrar. Campos `Onboarding.sign*`.
 - **Victor Fraga, Hellik Store:** venda paga à vista no cartão, repasse dele (R$ 1.353,03) parcelado em 6x de 23/11/26 a 23/04/27 (R$ 225,50; última R$ 225,53), conforme o contrato de 6 meses.
 - **Onboarding:** item novo "Contrato elaborado" (entre Dados do contrato e Enviado para assinatura); marca sozinho quando há contrato gerado no sistema ou anexado. Checklist com 9 itens.

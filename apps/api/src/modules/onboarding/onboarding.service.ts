@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
 import { ClicksignService } from './clicksign.service'
+import { CONTRACT_FIELDS, dataLonga, extenso, fillDocx, reaisPorExtenso } from './contract-fill'
 
 const VALID_STAGES = [
   'CLIENT_CLOSED',
@@ -459,6 +460,118 @@ export class OnboardingService {
     const status = map[d.status] ?? ob.signStatus ?? 'sent'
     await this.prisma.onboarding.update({ where: { id }, data: { signStatus: status } })
     return { status }
+  }
+
+
+  // ===== Contrato a partir do modelo (.docx com {{CAMPOS}}) =====
+  async listTemplates() {
+    return this.prisma.contractTemplate.findMany({ select: { code: true, name: true, filename: true, updatedAt: true }, orderBy: { code: 'asc' } })
+  }
+
+  async saveTemplate(dto: { code: string; name?: string; filename: string; data: string }) {
+    const code = dto.code?.trim().toUpperCase()
+    if (!code || !dto.data) throw new BadRequestException('Informe o programa e o arquivo do modelo')
+    return this.prisma.contractTemplate.upsert({
+      where: { code },
+      create: { code, name: dto.name?.trim() || code, filename: dto.filename, data: dto.data },
+      update: { name: dto.name?.trim() || code, filename: dto.filename, data: dto.data },
+      select: { code: true, name: true, filename: true, updatedAt: true },
+    })
+  }
+
+  /** Campos sugeridos para o contrato: dados colados + cadastro + plano. */
+  async contractDraft(id: string) {
+    const ob = await this.prisma.onboarding.findUnique({
+      where: { id },
+      include: {
+        client: {
+          include: {
+            plans: { where: { status: { not: 'CANCELLED' } }, orderBy: { startDate: 'desc' }, take: 1, include: { product: { select: { code: true, name: true } }, payments: { where: { status: { not: 'CANCELLED' } }, orderBy: { dueDate: 'asc' } } } },
+          },
+        },
+      },
+    })
+    if (!ob) throw new NotFoundException('Onboarding não encontrado')
+    const c = ob.client, plan = c.plans[0]
+    const notes = ob.notes ?? ''
+    const fromNotes = (...labels: string[]) => {
+      for (const line of notes.split(/\r?\n/)) {
+        const m = line.replace(/^[\s*•-]+/, '').match(/^([^:]{2,60}):\s*(.+)$/)
+        if (!m) continue
+        const k = m[1].normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+        if (labels.some(l => k.includes(l))) return m[2].trim()
+      }
+      return ''
+    }
+    const fmtCpf = (v: string) => { const d = v.replace(/\D/g, ''); return d.length === 11 ? `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}` : v }
+    const fmtCnpj = (v: string) => { const d = v.replace(/\D/g, ''); return d.length === 14 ? `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}` : v }
+    const fmtTel = (v: string) => { let d = v.replace(/\D/g, ''); if (d.startsWith('55') && d.length > 11) d = d.slice(2); return d.length === 11 ? `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}` : d.length === 10 ? `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}` : v }
+
+    const endereco = [c.address, c.addressNumber ? `nº ${c.addressNumber}` : '', c.neighborhood, c.city && c.state ? `${c.city}/${c.state}` : (c.city ?? ''), c.zipCode ? `CEP ${c.zipCode}` : '']
+      .filter(Boolean).join(', ')
+    const months = plan?.cycleDuration ?? (plan?.endDate && plan?.startDate ? Math.max(1, Math.round((plan.endDate.getTime() - plan.startDate.getTime()) / (30.44 * 864e5))) : 6)
+    const value = plan ? Number(plan.value) : 0
+    const pays = plan?.payments ?? []
+    const brl = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+    // frases no formato dos modelos: forma de pagamento primeiro, datas dd/mm/aaaa;
+    // CONDICAO completa "O investimento é de {{VALOR_TOTAL}}, " (minúscula no início, ponto no fim)
+    const dmy = (d: Date) => `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}/${d.getUTCFullYear()}`
+    const forma = plan?.paymentType === 'CARTAO' ? 'cartão de crédito' : plan?.paymentType === 'PIX' ? 'PIX' : 'boleto bancário'
+    const Forma = forma.charAt(0).toUpperCase() + forma.slice(1)
+    let resumo = '', condicao = ''
+    if (pays.length === 1) {
+      const p = pays[0]
+      const pago = p.status === 'PAID'
+      resumo = `${Forma}, pagamento à vista${pago ? ', integralmente pago nesta data' : ` em ${dmy(p.dueDate)}`}`
+      condicao = `pago por ${forma}, à vista${pago ? ', já integralmente quitado nesta data' : `, com vencimento em ${dmy(p.dueDate)}`}.`
+    } else if (pays.length > 1) {
+      // entrada pode ter vindo em mais de um pagamento (ex.: parte paga + saldo): soma tudo
+      const entries = pays.filter(p => p.installment === 0)
+      const entry = entries.length ? { value: entries.reduce((a, p) => a + Number(p.value), 0), dueDate: entries[0].dueDate } : null
+      const rest = pays.filter(p => p.installment !== 0)
+      const same = rest.length > 0 && rest.every(p => Number(p.value) === Number(rest[0].value))
+      const dia = rest[0]?.dueDate.getUTCDate()
+      const parc = same ? `${rest.length} parcelas de ${brl(Number(rest[0].value))}` : `${rest.length} parcelas conforme cronograma`
+      resumo = `${Forma}, ${entry ? `entrada de ${brl(Number(entry.value))} em ${dmy(entry.dueDate)} e ` : ''}${parc}${dia ? ` todo dia ${dia}` : ''}`
+      condicao = `pago por ${forma}, ${entry ? `com entrada de ${brl(Number(entry.value))} em ${dmy(entry.dueDate)} e ` : 'em '}${same ? `${rest.length} (${extenso(rest.length)}) parcelas mensais de ${brl(Number(rest[0].value))}` : `${rest.length} (${extenso(rest.length)}) parcelas mensais conforme cronograma`}${rest[0] ? `, a primeira em ${dmy(rest[0].dueDate)}` : ''}${dia ? `, com vencimento todo dia ${dia}` : ''}.`
+    }
+    const code = plan?.product?.code ?? null
+    const fields: Record<string, string> = {
+      RAZAO_SOCIAL: fromNotes('razao social') || c.companyName,
+      NOME_FANTASIA: c.tradeName || fromNotes('nome fantasia') || c.companyName,
+      CNPJ: c.cnpj ? fmtCnpj(c.cnpj) : fmtCnpj(fromNotes('cnpj')),
+      ENDERECO: endereco || fromNotes('endereco'),
+      REPRESENTANTE: c.responsible || fromNotes('responsavel'),
+      CPF: fmtCpf(fromNotes('cpf')),
+      EMAIL: fromNotes('e-mail para assinatura', 'email para assinatura', 'e-mail', 'email') || c.email || '',
+      TELEFONE: fmtTel(fromNotes('telefone', 'whatsapp') || c.phone || c.whatsapp || ''),
+      CICLO: `${months} (${extenso(months)}) meses`,
+      CICLO_CURTO: `${months} MESES`,
+      DATA_INICIO: plan?.startDate ? dataLonga(plan.startDate) : '',
+      VALOR_TOTAL: value ? reaisPorExtenso(value) : '',
+      RESUMO_PAGAMENTO: resumo,
+      CONDICAO_PAGAMENTO: condicao,
+      // hoje no horário de Brasília (à noite o UTC já virou o dia)
+      DATA_ASSINATURA: dataLonga(new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }) + ' UTC')),
+    }
+    const templates = await this.listTemplates()
+    return {
+      fields, fieldList: CONTRACT_FIELDS, templates,
+      suggestedTemplate: templates.some(t => t.code === code) ? code : null,
+      productCode: code, productName: plan?.product?.name ?? null,
+    }
+  }
+
+  async generateContract(id: string, dto: { template: string; fields: Record<string, string> }) {
+    const ob = await this.prisma.onboarding.findUnique({ where: { id }, include: { client: { select: { id: true, companyName: true } } } })
+    if (!ob) throw new NotFoundException('Onboarding não encontrado')
+    const t = await this.prisma.contractTemplate.findUnique({ where: { code: dto.template } })
+    if (!t) throw new BadRequestException('Modelo de contrato não encontrado')
+    const { buffer, missing } = await fillDocx(t.data, dto.fields ?? {})
+    const checklist = { ...((ob.checklist ?? {}) as Record<string, boolean>), contrato_elaborado: true }
+    await this.prisma.onboarding.update({ where: { id }, data: { checklist } })
+    const safe = (dto.fields?.NOME_FANTASIA || ob.client.companyName).toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '')
+    return { buffer, missing, filename: `CONTRATO_GOON_${t.name.toUpperCase().replace(/[^A-Z0-9]+/g, '_')}_${safe}.docx` }
   }
 
 }

@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common'
+import { Controller, Get, Post, Put, Patch, Body, Param, UseGuards, HttpCode, HttpStatus, Res } from '@nestjs/common'
+import type { Response } from 'express'
 import { OnboardingService } from './onboarding.service'
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 
@@ -22,6 +23,16 @@ export class OnboardingController {
     return this.onboardingService.setItem(id, body.key, body.done ?? null)
   }
 
+  @Get('contract-templates')
+  listTemplates() {
+    return this.onboardingService.listTemplates()
+  }
+
+  @Put('contract-templates')
+  saveTemplate(@Body() body: { code: string; name?: string; filename: string; data: string }) {
+    return this.onboardingService.saveTemplate(body)
+  }
+
   @Get('signature/info')
   signatureInfo() {
     return this.onboardingService.signatureInfo()
@@ -40,6 +51,23 @@ export class OnboardingController {
   @Post(':id/signature/refresh')
   refreshSignature(@Param('id') id: string) {
     return this.onboardingService.refreshSignature(id)
+  }
+
+  @Get(':id/contract/draft')
+  contractDraft(@Param('id') id: string) {
+    return this.onboardingService.contractDraft(id)
+  }
+
+  @Post(':id/contract/generate')
+  async generateContract(@Param('id') id: string, @Body() body: { template: string; fields: Record<string, string> }, @Res() res: Response) {
+    const r = await this.onboardingService.generateContract(id, body)
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(r.filename)}"`,
+      'X-Missing-Fields': r.missing.join(','),
+      'Access-Control-Expose-Headers': 'Content-Disposition, X-Missing-Fields',
+    })
+    res.send(r.buffer)
   }
 
   @Patch(':id/contract-data')

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, API_URL } from '@/lib/api'
 import { PRODUCT_COLORS } from '@/lib/constants'
 
 // Onboarding em checklist (ordem livre): cada cliente tem os mesmos itens, marcados
@@ -22,6 +22,7 @@ type Board = {
   signature: { status: string | null; sentAt: string | null; signers: Array<{ name: string; email: string }> | null } | null
 }
 
+const TEMPLATE_NAMES: Record<string, string> = { GE: 'GOON ELITE', GI: 'GOON INFINITY', TTS: 'TIKTOK SCALE', TTSG: 'TIKTOK SCALE GRUPO', GA: 'GOON ADVISOR', GS: 'GOON SCALE' }
 const SIGN_STATUS: Record<string, string> = { sent: 'enviado', delivered: 'aberto pelo cliente', completed: 'assinado', declined: 'recusado', voided: 'cancelado' }
 
 const C = { ink: '#0f172a', mid: '#64748b', dim: '#94a3b8', line: '#e2e8f0', bg: '#f8fafc', neon: '#C7F900', green: '#16a34a', red: '#dc2626', amber: '#d97706', slate: '#475569' }
@@ -55,6 +56,13 @@ export default function OnboardingPage() {
   const [signFile, setSignFile] = useState<File | null>(null)
   const [signers, setSigners] = useState<Array<{ name: string; email: string }>>([])
   const [sending, setSending] = useState(false)
+  // gerar contrato pelo modelo
+  type Draft = { fields: Record<string, string>; fieldList: Array<{ key: string; label: string; long?: boolean }>; templates: Array<{ code: string; name: string }>; suggestedTemplate: string | null; productCode: string | null }
+  const [genFor, setGenFor] = useState<Board | null>(null)
+  const [draft, setDraft] = useState<Draft | null>(null)
+  const [genTemplate, setGenTemplate] = useState('')
+  const [genFields, setGenFields] = useState<Record<string, string>>({})
+  const [generating, setGenerating] = useState(false)
 
   const load = useCallback(async () => {
     try { setBoard(await apiFetch<Board[]>('/api/onboarding/board')) } catch { toast.error('Erro ao carregar o onboarding') }
@@ -82,6 +90,60 @@ export default function OnboardingPage() {
       setSignFor(null); load()
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro ao enviar') }
     setSending(false)
+  }
+
+  async function openGenerate(b: Board) {
+    setGenFor(b); setDraft(null)
+    try {
+      const d = await apiFetch<Draft>(`/api/onboarding/${b.id}/contract/draft`)
+      setDraft(d); setGenFields(d.fields); setGenTemplate(d.suggestedTemplate ?? d.templates[0]?.code ?? '')
+    } catch { toast.error('Erro ao montar os dados do contrato'); setGenFor(null) }
+  }
+
+  // gera o .docx no servidor e devolve o arquivo
+  async function generateFile(): Promise<File | null> {
+    if (!genFor || !genTemplate) { toast.error('Escolha o modelo'); return null }
+    const token = localStorage.getItem('access_token')
+    const res = await fetch(`${API_URL}/api/onboarding/${genFor.id}/contract/generate`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ template: genTemplate, fields: genFields }),
+    })
+    if (!res.ok) { toast.error('Erro ao gerar o contrato'); return null }
+    const missing = (res.headers.get('X-Missing-Fields') ?? '').split(',').filter(Boolean)
+    if (missing.length) toast.warning(`Campos em branco no contrato: ${missing.join(', ')}`)
+    const name = decodeURIComponent((res.headers.get('Content-Disposition') ?? '').match(/filename="([^"]+)"/)?.[1] ?? 'Contrato.docx')
+    return new File([await res.blob()], name, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+  }
+
+  async function downloadGenerated() {
+    setGenerating(true)
+    const f = await generateFile()
+    if (f) {
+      const url = URL.createObjectURL(f); const a = document.createElement('a'); a.href = url; a.download = f.name; a.click(); URL.revokeObjectURL(url)
+      toast.success('Contrato gerado'); load()
+    }
+    setGenerating(false)
+  }
+
+  async function sendGenerated() {
+    setGenerating(true)
+    const f = await generateFile()
+    setGenerating(false)
+    if (!f || !genFor) return
+    // abre o envio já com o arquivo gerado e o representante/e-mail do contrato
+    setSignFor(genFor); setSignFile(f)
+    setSigners([{ name: genFields.REPRESENTANTE ?? '', email: genFields.EMAIL ?? '' }])
+    setGenFor(null); load()
+  }
+
+  async function uploadTemplate(file: File) {
+    if (!genTemplate) { toast.error('Escolha de qual programa é o modelo'); return }
+    const dataUrl: string = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.onerror = reject; r.readAsDataURL(file) })
+    try {
+      await apiFetch('/api/onboarding/contract-templates', { method: 'PUT', body: JSON.stringify({ code: genTemplate, name: TEMPLATE_NAMES[genTemplate] ?? genTemplate, filename: file.name, data: dataUrl.split(',')[1] ?? '' }) })
+      toast.success('Modelo atualizado')
+      if (genFor) openGenerate(genFor)
+    } catch { toast.error('Erro ao salvar o modelo') }
   }
 
   async function remindSign(b: Board) {
@@ -244,6 +306,9 @@ export default function OnboardingPage() {
                       <span style={{ textDecoration: 'none' }}>{it.label}</span>
                       {it.auto && <span style={{ fontSize: 10, color: C.dim }}>auto</span>}
                     </button>
+                    {it.key === 'contrato_elaborado' && (
+                      <button onClick={() => openGenerate(b)} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>gerar</button>
+                    )}
                     {it.key === 'contrato_enviado' && (b.signature
                       ? <button onClick={() => refreshSign(b)} title="Atualizar status na ClickSign" style={{ ...btn, padding: '2px 8px', fontSize: 11, color: b.signature.status === 'completed' ? C.green : b.signature.status === 'declined' ? C.red : C.mid }}>{SIGN_STATUS[b.signature.status ?? ''] ?? b.signature.status} ↻</button>
                       : signInfo?.enabled ? <button onClick={() => openSign(b)} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>ClickSign</button> : null)}
@@ -306,6 +371,47 @@ export default function OnboardingPage() {
         })}
       </div>
 
+      {genFor && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          onClick={e => { if (e.target === e.currentTarget) setGenFor(null) }}>
+          <div style={{ ...card, width: '100%', maxWidth: 640, maxHeight: '90vh', overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>Contrato · {genFor.client.companyName}</div>
+            {!draft ? <div style={{ color: C.mid, fontSize: 13 }}>Montando os dados…</div> : <>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 12, color: C.mid }}>Modelo</span>
+                <select value={genTemplate} onChange={e => setGenTemplate(e.target.value)} style={{ ...inp, fontSize: 13, padding: 7 }}>
+                  <option value="">Selecione…</option>
+                  {Object.entries(TEMPLATE_NAMES).map(([code, name]) => (
+                    <option key={code} value={code}>{name}{draft.templates.some(t => t.code === code) ? '' : ' (sem modelo)'}</option>
+                  ))}
+                </select>
+                {draft.productCode && draft.productCode !== genTemplate && <span style={{ fontSize: 11, color: C.amber }}>o plano do cliente é {TEMPLATE_NAMES[draft.productCode] ?? draft.productCode}</span>}
+                <label style={{ ...btn, marginLeft: 'auto', fontSize: 11 }} title="Sobe o .docx com os campos {{CAMPO}} para este programa">
+                  {draft.templates.some(t => t.code === genTemplate) ? 'trocar modelo' : 'subir modelo'}
+                  <input type="file" accept=".docx" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadTemplate(f); e.target.value = '' }} />
+                </label>
+              </div>
+              <div style={{ fontSize: 12, color: C.mid }}>Confira e ajuste os campos. Eles entram no modelo do programa; o resto do texto é fixo.</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10 }}>
+                {draft.fieldList.map(f => (
+                  <label key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 4, gridColumn: f.long || f.key === 'ENDERECO' || f.key === 'VALOR_TOTAL' ? '1 / -1' : undefined }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: genFields[f.key]?.trim() ? C.mid : C.red, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{f.label}</span>
+                    {f.long
+                      ? <textarea value={genFields[f.key] ?? ''} onChange={e => setGenFields(v => ({ ...v, [f.key]: e.target.value }))} rows={2} style={{ ...inp, fontSize: 13, padding: 8, resize: 'vertical', lineHeight: 1.4 }} />
+                      : <input value={genFields[f.key] ?? ''} onChange={e => setGenFields(v => ({ ...v, [f.key]: e.target.value }))} style={{ ...inp, fontSize: 13, padding: 8 }} />}
+                  </label>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button onClick={() => setGenFor(null)} style={btn}>Fechar</button>
+                <button onClick={downloadGenerated} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={{ ...btn, marginLeft: 'auto' }}>{generating ? 'Gerando…' : 'Baixar Word'}</button>
+                {signInfo?.enabled && <button onClick={sendGenerated} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>Enviar pela ClickSign</button>}
+              </div>
+            </>}
+          </div>
+        </div>
+      )}
+
       {signFor && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
           onClick={e => { if (e.target === e.currentTarget) setSignFor(null) }}>
@@ -313,6 +419,7 @@ export default function OnboardingPage() {
             <div style={{ fontWeight: 700, fontSize: 15 }}>Enviar para assinatura · {signFor.client.companyName}</div>
             <label style={{ fontSize: 12, color: C.mid }}>
               Contrato (PDF, de preferência; até 3MB)
+              {signFile && <div style={{ marginTop: 6, fontSize: 13, color: C.ink }}>Arquivo: <strong>{signFile.name}</strong></div>}
               <input type="file" accept=".pdf,.docx,.doc" onChange={e => setSignFile(e.target.files?.[0] ?? null)} style={{ display: 'block', marginTop: 6, fontSize: 13 }} />
             </label>
             <div style={{ fontSize: 12, color: C.mid }}>Quem assina (nome e sobrenome; a ClickSign manda o e-mail para cada um):</div>
