@@ -212,7 +212,9 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
   (fontes): por isso a conversão é nossa.
 - Conversão .docx → PDF em `onboarding/docx-pdf.ts`: Chromium (`@sparticuz/chromium` no Vercel, Chrome local no Mac) +
   `docx-preview` (usa as fontes embutidas no .docx), A4, margens 20mm, rodapé com o nome do programa e "página / total".
-  `vercel.json` inclui `@sparticuz/chromium/bin`, `docx-preview/dist` e `jszip/dist` no `includeFiles`; função com 2048MB/60s.
+  Os arquivos de execução (Chromium, docx-preview.min.js, jszip.min.js) são copiados para `apps/api/vendor` por
+  `scripts/copy-vendor.js` no build (`vercel.json` buildCommand) e entram na função por `includeFiles` `vendor/**`; função
+  com 2048MB/60s. Local: rodar `node scripts/copy-vendor.js` uma vez (vendor/ fica fora do git).
 - Preenchimento em `onboarding/contract-fill.ts` (jszip; troca no corpo, cabeçalhos e rodapés; valor por extenso).
 
 ### Assinatura pela ClickSign (onboarding)

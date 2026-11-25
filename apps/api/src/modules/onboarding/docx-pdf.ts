@@ -1,5 +1,5 @@
 import { readFileSync, existsSync } from 'fs'
-import { dirname, join } from 'path'
+import { join } from 'path'
 
 // Converte o .docx do contrato em PDF: o Chromium renderiza o Word com o docx-preview
 // (fontes embutidas no .docx: Sora, Inter, JetBrains Mono) e imprime em A4 com rodapé e paginação.
@@ -15,16 +15,25 @@ const CSS = `body{margin:0;background:#fff}
 .docx table,.docx tr{break-inside:avoid}
 .keep{break-after:avoid}`
 
+// apps/api/vendor, montada por scripts/copy-vendor.js (build do Vercel e `node scripts/copy-vendor.js` local)
+function vendorDir() {
+  const dirs = [join(__dirname, '..', '..', '..', 'vendor'), join(process.cwd(), 'vendor'), join(process.cwd(), 'apps', 'api', 'vendor')]
+  const dir = dirs.find(d => existsSync(join(d, 'docx-preview.min.js')))
+  if (!dir) throw new Error(`Conversor de PDF sem arquivos (vendor). Procurado em: ${dirs.join(', ')}`)
+  return dir
+}
+
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 export async function docxToPdf(docx: Buffer, footerLabel: string): Promise<Buffer> {
-  const jszip = readFileSync(require.resolve('jszip/dist/jszip.min.js'), 'utf8')
-  const preview = readFileSync(join(dirname(require.resolve('docx-preview')), 'docx-preview.min.js'), 'utf8')
+  const vendor = vendorDir()
+  const jszip = readFileSync(join(vendor, 'jszip.min.js'), 'utf8')
+  const preview = readFileSync(join(vendor, 'docx-preview.min.js'), 'utf8')
   const puppeteer = await import('puppeteer-core')
   let launch: Parameters<typeof puppeteer.launch>[0]
   if (process.env.VERCEL || !existsSync(LOCAL_CHROME)) {
     const chromium = (await import('@sparticuz/chromium')).default
-    launch = { args: chromium.args, executablePath: await chromium.executablePath(), headless: true }
+    launch = { args: chromium.args, executablePath: await chromium.executablePath(join(vendor, 'chromium')), headless: true }
   } else {
     launch = { executablePath: LOCAL_CHROME, headless: true }
   }
