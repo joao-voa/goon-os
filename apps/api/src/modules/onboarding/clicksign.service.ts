@@ -66,6 +66,8 @@ export class ClicksignService {
       await this.api('POST', `/envelopes/${env.id}/requirements`, { type: 'requirements', attributes: { action: 'provide_evidence', auth: 'email' }, relationships: rel })
     }
     const active = await this.api<Res>('PATCH', `/envelopes/${env.id}`, { id: env.id, type: 'envelopes', attributes: { status: 'running' } })
+    // ativar não dispara o e-mail: o pedido de assinatura sai só com a notificação
+    await this.api('POST', `/envelopes/${env.id}/notifications`, { type: 'notifications', attributes: {} })
     return { envelopeId: env.id, documentId: doc.id, status: active.attributes?.status ?? 'running' }
   }
 

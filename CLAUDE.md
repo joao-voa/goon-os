@@ -214,7 +214,7 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
 ### Assinatura pela ClickSign (onboarding)
 - No card do onboarding, item "Contrato enviado para assinatura" → botão ClickSign: sobe o contrato (só PDF,
   até 3MB), signatários (nome e sobrenome + e-mail) e envia (API v3: envelope → documento → signatários com
-  requisitos "agree/sign" + "provide_evidence/email" → status running). Guarda em `Onboarding.signEnvelopeId/signStatus`
+  requisitos "agree/sign" + "provide_evidence/email" → status running → POST notifications, sem isso o e-mail não sai). Guarda em `Onboarding.signEnvelopeId/signStatus`
   e `signSigners` = { provider, documentId, signers }.
 - Webhook `POST /api/integrations/clicksign/webhook`, conferido por HMAC (`Content-Hmac: sha256=...` sobre o corpo cru;
   `rawBody: true` no NestFactory). document_closed/auto_close = baixa o PDF assinado (link vale 5 min), anexa em
