@@ -395,6 +395,12 @@ export class OnboardingService {
     const mimeType = generated ? DOCX_MIME : 'application/pdf'
     const size = Math.floor((dto.data.length * 3) / 4)
     if (size > 3 * 1024 * 1024) throw new BadRequestException('PDF maior que 3MB')
+    // nova versão: o contrato anterior ainda em aberto é cancelado na ClickSign
+    if (ob.signStatus === 'completed') throw new BadRequestException('Este contrato já foi assinado')
+    const prevDoc = ((ob.signSigners ?? {}) as { documentId?: string }).documentId
+    if (ob.signEnvelopeId && prevDoc && ob.signStatus === 'sent') {
+      await this.clicksign.cancelDocument(ob.signEnvelopeId, prevDoc).catch(err => console.warn('ClickSign cancelar anterior:', (err as Error).message))
+    }
     const r = await this.clicksign.send({
       name: `Contrato GOON · ${ob.client.companyName}`, filename, base64: dto.data, mimeType, signers, metadata: { onboardingId: ob.id },
     })
@@ -453,6 +459,9 @@ export class OnboardingService {
       ob = all.find(o => e.documentIds.includes(((o.signSigners ?? {}) as { documentId?: string }).documentId ?? '')) ?? null
     }
     if (!ob) return { found: false }
+    // evento de uma versão antiga (cancelada ao reenviar) não mexe no envio atual
+    const current = ((ob.signSigners ?? {}) as { documentId?: string }).documentId
+    if (current && e.documentIds.length && !e.documentIds.includes(current)) return { found: true, stale: true }
     if (['document_closed', 'auto_close', 'close'].includes(e.event)) await this.completeSignature(ob)
     else if (e.event === 'refusal') await this.prisma.onboarding.update({ where: { id: ob.id }, data: { signStatus: 'declined' } })
     else if (e.event === 'cancel') await this.prisma.onboarding.update({ where: { id: ob.id }, data: { signStatus: 'voided' } })

@@ -339,8 +339,9 @@ export default function OnboardingPage() {
                 const msg = `Oi${first ? `, ${first}` : ''}! Tudo bem? Enviamos o contrato da GOON para assinatura pela ClickSign, no seu e-mail. Consegue dar uma olhada e assinar quando puder? Qualquer dúvida, estou por aqui.`
                 return (
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', fontSize: 11.5, color: C.mid, background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, padding: '6px 8px' }}>
-                    <span style={{ flex: 1, minWidth: 120 }}>Aguardando assinatura{b.signature.sentAt ? ` desde ${new Date(b.signature.sentAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}` : ''}</span>
-                    <button onClick={() => remindSign(b)} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>Lembrar por e-mail</button>
+                    <span style={{ flex: 1, minWidth: 120 }}>{b.signature.status === 'declined' ? 'Assinatura recusada' : b.signature.status === 'voided' ? 'Envio cancelado' : 'Aguardando assinatura'}{b.signature.sentAt ? ` desde ${new Date(b.signature.sentAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}` : ''}</span>
+                    {b.signature.status === 'sent' && <button onClick={() => remindSign(b)} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>Lembrar por e-mail</button>}
+                    <button onClick={() => openGenerate(b)} title="Gera ou sobe outro arquivo; o envio anterior é cancelado na ClickSign" style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>Enviar nova versão</button>
                     {wa && <a href={`${wa}?text=${encodeURIComponent(msg)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, padding: '2px 8px', fontSize: 11, background: '#25d366', color: '#fff', border: 'none', textDecoration: 'none' }}>WhatsApp</a>}
                   </div>
                 )

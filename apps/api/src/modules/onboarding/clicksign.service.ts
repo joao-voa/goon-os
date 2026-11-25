@@ -75,6 +75,11 @@ export class ClicksignService {
     return { status: d.attributes?.status ?? 'unknown', signedUrl: d.links?.files?.signed ?? null }
   }
 
+  /** Cancela o documento em andamento (a v3 não cancela o envelope; cancela o documento). */
+  async cancelDocument(envelopeId: string, documentId: string) {
+    return this.api('PATCH', `/envelopes/${envelopeId}/documents/${documentId}`, { id: documentId, type: 'documents', attributes: { status: 'canceled' } })
+  }
+
   /** Arquivo original (como a ClickSign guardou; .docx vira PDF lá). Link vale 5 min. */
   async downloadOriginal(envelopeId: string, documentId: string) {
     const d = await this.api<{ links?: { files?: { original?: string } } }>('GET', `/envelopes/${envelopeId}/documents/${documentId}`)
