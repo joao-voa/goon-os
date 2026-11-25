@@ -23,7 +23,7 @@ type Board = {
 }
 
 // quem assina pela GOON (CONTRATADA: AURA360, representada pelo Giulliano)
-const GOON_SIGNER = { name: 'Giulliano Puga', email: 'giulliano@goon-global.com' }
+const GOON_SIGNER = { name: 'Giulliano Puga', email: 'giullianopuga11@gmail.com' }
 const TEMPLATE_NAMES: Record<string, string> = { GE: 'GOON ELITE', GI: 'GOON INFINITY', TTS: 'TIKTOK SCALE', TTSG: 'TIKTOK SCALE GRUPO', GA: 'GOON ADVISOR', GS: 'GOON SCALE' }
 const SIGN_STATUS: Record<string, string> = { sent: 'enviado', delivered: 'aberto pelo cliente', completed: 'assinado', declined: 'recusado', voided: 'cancelado' }
 
