@@ -22,6 +22,8 @@ type Board = {
   signature: { status: string | null; sentAt: string | null; signers: Array<{ name: string; email: string }> | null } | null
 }
 
+// quem assina pela GOON (CONTRATADA: AURA360, representada pelo Giulliano)
+const GOON_SIGNER = { name: 'Giulliano Puga', email: 'giulliano@goon-global.com' }
 const TEMPLATE_NAMES: Record<string, string> = { GE: 'GOON ELITE', GI: 'GOON INFINITY', TTS: 'TIKTOK SCALE', TTSG: 'TIKTOK SCALE GRUPO', GA: 'GOON ADVISOR', GS: 'GOON SCALE' }
 const SIGN_STATUS: Record<string, string> = { sent: 'enviado', delivered: 'aberto pelo cliente', completed: 'assinado', declined: 'recusado', voided: 'cancelado' }
 
@@ -74,7 +76,7 @@ export default function OnboardingPage() {
     // e-mail de assinatura colado nos dados do contrato tem preferência
     const signEmail = b.notes?.match(/e-?mail[^:\n]*assinatura[^:\n]*:\s*(\S+@\S+)/i)?.[1]
     setSignFor(b); setSignFile(null)
-    setSigners([{ name: b.client.responsible ?? '', email: signEmail ?? b.client.email ?? '' }])
+    setSigners([{ name: b.client.responsible ?? '', email: signEmail ?? b.client.email ?? '' }, GOON_SIGNER])
   }
 
   async function sendSign() {
@@ -141,12 +143,12 @@ export default function OnboardingPage() {
   // gera pelo modelo e manda direto pra ClickSign; o PDF enviado fica nos documentos do cliente
   async function sendGenerated() {
     if (!genFor || !genTemplate) return
-    const signers = [{ name: genFields.REPRESENTANTE?.trim() ?? '', email: genFields.EMAIL?.trim() ?? '' }]
+    const signers = [{ name: genFields.REPRESENTANTE?.trim() ?? '', email: genFields.EMAIL?.trim() ?? '' }, GOON_SIGNER]
     if (!signers[0].name || !signers[0].email) { toast.error('Preencha o representante e o e-mail para assinatura'); return }
     setGenerating(true)
     try {
       await apiFetch(`/api/onboarding/${genFor.id}/contract/send`, { method: 'POST', body: JSON.stringify({ template: genTemplate, fields: genFields, signers }) })
-      toast.success(`Contrato enviado para ${signers[0].email}`)
+      toast.success(`Contrato enviado para ${signers.map(x => x.email).join(' e ')}`)
       setGenFor(null); load()
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro ao enviar') }
     setGenerating(false)
@@ -156,7 +158,7 @@ export default function OnboardingPage() {
   function sendCustomPdf() {
     if (!genFor) return
     setSignFor(genFor); setSignFile(null)
-    setSigners([{ name: genFields.REPRESENTANTE ?? '', email: genFields.EMAIL ?? '' }])
+    setSigners([{ name: genFields.REPRESENTANTE ?? '', email: genFields.EMAIL ?? '' }, GOON_SIGNER])
     setGenFor(null)
   }
 
@@ -416,7 +418,11 @@ export default function OnboardingPage() {
                   <input type="file" accept=".docx" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadTemplate(f); e.target.value = '' }} />
                 </label>
               </div>
-              <div style={{ fontSize: 12, color: C.mid, lineHeight: 1.5 }}>Confira os campos e envie. Em "Ver PDF" você confere o contrato pronto. "Enviar para assinatura" manda esse PDF pela ClickSign para o e-mail do representante e guarda o PDF nos documentos do cliente.</div>
+              <div style={{ fontSize: 12, color: C.mid, lineHeight: 1.5 }}>Confira os campos e envie. Em "Ver PDF" você confere o contrato pronto. "Enviar para assinatura" manda esse PDF pela ClickSign e guarda o PDF nos documentos do cliente.</div>
+              <div style={{ fontSize: 12, color: C.ink, background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, padding: '8px 10px', lineHeight: 1.6 }}>
+                <strong>Assinam:</strong> {genFields.REPRESENTANTE || '(representante)'} · {genFields.EMAIL || '(e-mail)'} <span style={{ color: C.mid }}>(contratante)</span><br />
+                {GOON_SIGNER.name} · {GOON_SIGNER.email} <span style={{ color: C.mid }}>(GOON)</span>
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10 }}>
                 {draft.fieldList.map(f => (
                   <label key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 4, gridColumn: f.long || f.key === 'ENDERECO' || f.key === 'VALOR_TOTAL' ? '1 / -1' : undefined }}>

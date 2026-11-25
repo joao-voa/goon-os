@@ -205,7 +205,8 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
   CICLO_CURTO, DATA_INICIO, VALOR_TOTAL, RESUMO_PAGAMENTO, CONDICAO_PAGAMENTO (minúscula no início, ponto no fim), DATA_ASSINATURA.
 - Card do onboarding, item "Contrato elaborado" → "gerar": sugere os campos (dados colados + cadastro + plano/parcelas),
   revisa, **"Ver PDF"** e **"Enviar para assinatura"** (`POST /api/onboarding/:id/contract/send`): gera o .docx, converte
-  em **PDF** no servidor e manda o PDF pra ClickSign (signatário = REPRESENTANTE + EMAIL). Nada é baixado. O PDF enviado
+  em **PDF** no servidor e manda o PDF pra ClickSign. Assinam: o representante do cliente (REPRESENTANTE + EMAIL) e a
+  GOON (`GOON_SIGNER` na tela: Giulliano Puga, giulliano@goon-global.com). O contrato fecha quando todos assinam. Nada é baixado. O PDF enviado
   fica nos documentos do cliente (`CONTRACT_SENT`, "Enviado para assinatura - ..."); o assinado entra como `SIGNED_CONTRACT`.
   Caso fora do padrão: "baixar Word", ajustar, e "enviar PDF ajustado" (upload manual aceita só PDF).
   Modelo novo/atualizado sobe pela própria tela ("trocar modelo"). Mandar .docx direto pra ClickSign desconfigura
