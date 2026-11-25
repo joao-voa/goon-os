@@ -386,11 +386,21 @@ export class OnboardingService {
     const signers = (dto.signers ?? []).map(s => ({ name: s.name?.trim(), email: s.email?.trim().toLowerCase() })).filter(s => s.name && s.email?.includes('@'))
     if (!signers.length) throw new BadRequestException('Informe pelo menos um signatário com nome e e-mail')
     if (signers.some(s => s.name.split(/\s+/).length < 2)) throw new BadRequestException('A ClickSign pede nome e sobrenome de cada signatário')
-    if (!dto.data) throw new BadRequestException('Envie o arquivo do contrato')
+    if (!dto.data) throw new BadRequestException('Envie o PDF do contrato')
     const filename = dto.filename || 'Contrato.pdf'
-    const mimeType = dto.mimeType || (filename.toLowerCase().endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/pdf')
+    if (!filename.toLowerCase().endsWith('.pdf')) throw new BadRequestException('Envie o contrato em PDF (no Word: Arquivo > Salvar como > PDF)')
+    const mimeType = 'application/pdf'
+    const size = Math.floor((dto.data.length * 3) / 4)
+    if (size > 3 * 1024 * 1024) throw new BadRequestException('PDF maior que 3MB')
     const r = await this.clicksign.send({
       name: `Contrato GOON · ${ob.client.companyName}`, filename, base64: dto.data, mimeType, signers, metadata: { onboardingId: ob.id },
+    })
+    // guarda a versão enviada para assinatura nos documentos do cliente
+    await this.prisma.clientDocument.create({
+      data: {
+        clientId: ob.client.id, type: 'CONTRACT_SENT', mimeType, size, filename: `Enviado para assinatura - ${filename}`, data: dto.data,
+        notes: `Versão enviada para assinatura pela ClickSign (envelope ${r.envelopeId})`,
+      },
     })
     const checklist = { ...((ob.checklist ?? {}) as Record<string, boolean>), contrato_elaborado: true, contrato_enviado: true }
     await this.prisma.onboarding.update({

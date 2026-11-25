@@ -125,15 +125,12 @@ export default function OnboardingPage() {
     setGenerating(false)
   }
 
-  async function sendGenerated() {
-    setGenerating(true)
-    const f = await generateFile()
-    setGenerating(false)
-    if (!f || !genFor) return
-    // abre o envio já com o arquivo gerado e o representante/e-mail do contrato
-    setSignFor(genFor); setSignFile(f)
+  // o Word gerado é revisado/ajustado e salvo em PDF; o envio pede o PDF final
+  function sendGenerated() {
+    if (!genFor) return
+    setSignFor(genFor); setSignFile(null)
     setSigners([{ name: genFields.REPRESENTANTE ?? '', email: genFields.EMAIL ?? '' }])
-    setGenFor(null); load()
+    setGenFor(null)
   }
 
   async function uploadTemplate(file: File) {
@@ -391,7 +388,7 @@ export default function OnboardingPage() {
                   <input type="file" accept=".docx" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadTemplate(f); e.target.value = '' }} />
                 </label>
               </div>
-              <div style={{ fontSize: 12, color: C.mid }}>Confira e ajuste os campos. Eles entram no modelo do programa; o resto do texto é fixo.</div>
+              <div style={{ fontSize: 12, color: C.mid, lineHeight: 1.5 }}>Confira os campos e baixe o Word. Se precisar mudar alguma coisa específica deste cliente (cláusula, pagamento, entregável), ajuste no próprio Word. Depois salve como PDF (Arquivo &gt; Salvar como &gt; PDF) e envie.</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10 }}>
                 {draft.fieldList.map(f => (
                   <label key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 4, gridColumn: f.long || f.key === 'ENDERECO' || f.key === 'VALOR_TOTAL' ? '1 / -1' : undefined }}>
@@ -405,7 +402,7 @@ export default function OnboardingPage() {
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button onClick={() => setGenFor(null)} style={btn}>Fechar</button>
                 <button onClick={downloadGenerated} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={{ ...btn, marginLeft: 'auto' }}>{generating ? 'Gerando…' : 'Baixar Word'}</button>
-                {signInfo?.enabled && <button onClick={sendGenerated} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>Enviar pela ClickSign</button>}
+                {signInfo?.enabled && <button onClick={sendGenerated} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>Já tenho o PDF, enviar</button>}
               </div>
             </>}
           </div>
@@ -418,9 +415,9 @@ export default function OnboardingPage() {
           <div style={{ ...card, width: '100%', maxWidth: 520, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ fontWeight: 700, fontSize: 15 }}>Enviar para assinatura · {signFor.client.companyName}</div>
             <label style={{ fontSize: 12, color: C.mid }}>
-              Contrato (PDF, de preferência; até 3MB)
+              Contrato em PDF, versão final (até 3MB)
               {signFile && <div style={{ marginTop: 6, fontSize: 13, color: C.ink }}>Arquivo: <strong>{signFile.name}</strong></div>}
-              <input type="file" accept=".pdf,.docx,.doc" onChange={e => setSignFile(e.target.files?.[0] ?? null)} style={{ display: 'block', marginTop: 6, fontSize: 13 }} />
+              <input type="file" accept=".pdf,application/pdf" onChange={e => setSignFile(e.target.files?.[0] ?? null)} style={{ display: 'block', marginTop: 6, fontSize: 13 }} />
             </label>
             <div style={{ fontSize: 12, color: C.mid }}>Quem assina (nome e sobrenome; a ClickSign manda o e-mail para cada um):</div>
             {signers.map((sg, i) => (
