@@ -401,8 +401,8 @@ export default function OnboardingPage() {
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button onClick={() => setGenFor(null)} style={btn}>Fechar</button>
-                <button onClick={downloadGenerated} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={{ ...btn, marginLeft: 'auto' }}>{generating ? 'Gerando…' : 'Baixar Word'}</button>
-                {signInfo?.enabled && <button onClick={sendGenerated} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>Já tenho o PDF, enviar</button>}
+                <button onClick={downloadGenerated} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={{ ...btn, marginLeft: 'auto' }}>{generating ? 'Gerando…' : '1. Baixar contrato (Word)'}</button>
+                {signInfo?.enabled && <button onClick={sendGenerated} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>2. Enviar o PDF para assinatura</button>}
               </div>
             </>}
           </div>
