@@ -48,6 +48,10 @@ export function extenso(n: number): string {
   return parts.join(' ')
 }
 
+/** Por extenso no feminino (ex.: "duas parcelas", "uma parcela", "duzentas"). */
+export const extensoF = (n: number) =>
+  extenso(n).replace(/\bum\b/g, 'uma').replace(/\bdois\b/g, 'duas').replace(/entos\b/g, 'entas')
+
 export function reaisPorExtenso(v: number) {
   const inteiro = Math.floor(v), cent = Math.round((v - inteiro) * 100)
   const brl = v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })

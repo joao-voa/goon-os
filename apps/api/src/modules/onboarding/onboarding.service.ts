@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service'
 import { ActivityLogService } from '../activity-log/activity-log.service'
 import { ClicksignService } from './clicksign.service'
-import { CONTRACT_FIELDS, dataLonga, extenso, fillDocx, reaisPorExtenso } from './contract-fill'
+import { CONTRACT_FIELDS, dataLonga, extenso, extensoF, fillDocx, reaisPorExtenso } from './contract-fill'
 
 const VALID_STAGES = [
   'CLIENT_CLOSED',
@@ -543,7 +543,7 @@ export class OnboardingService {
       const dia = rest[0]?.dueDate.getUTCDate()
       const parc = same ? `${rest.length} parcelas de ${brl(Number(rest[0].value))}` : `${rest.length} parcelas conforme cronograma`
       resumo = `${Forma}, ${entry ? `entrada de ${brl(Number(entry.value))} em ${dmy(entry.dueDate)} e ` : ''}${parc}${dia ? ` todo dia ${dia}` : ''}`
-      condicao = `pago por ${forma}, ${entry ? `com entrada de ${brl(Number(entry.value))} em ${dmy(entry.dueDate)} e ` : 'em '}${same ? `${rest.length} (${extenso(rest.length)}) parcelas mensais de ${brl(Number(rest[0].value))}` : `${rest.length} (${extenso(rest.length)}) parcelas mensais conforme cronograma`}${rest[0] ? `, a primeira em ${dmy(rest[0].dueDate)}` : ''}${dia ? `, com vencimento todo dia ${dia}` : ''}.`
+      condicao = `pago por ${forma}, ${entry ? `com entrada de ${brl(Number(entry.value))} em ${dmy(entry.dueDate)} e ` : 'em '}${same ? `${rest.length} (${extensoF(rest.length)}) parcelas mensais de ${brl(Number(rest[0].value))}` : `${rest.length} (${extensoF(rest.length)}) parcelas mensais conforme cronograma`}${rest[0] ? `, a primeira em ${dmy(rest[0].dueDate)}` : ''}${dia ? `, com vencimento todo dia ${dia}` : ''}.`
     }
     const code = plan?.product?.code ?? null
     const fields: Record<string, string> = {
