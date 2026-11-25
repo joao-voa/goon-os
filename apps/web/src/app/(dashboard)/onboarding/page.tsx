@@ -125,8 +125,22 @@ export default function OnboardingPage() {
     setGenerating(false)
   }
 
-  // o Word gerado é revisado/ajustado e salvo em PDF; o envio pede o PDF final
-  function sendGenerated() {
+  // gera pelo modelo e manda direto pra ClickSign; o PDF enviado fica nos documentos do cliente
+  async function sendGenerated() {
+    if (!genFor || !genTemplate) return
+    const signers = [{ name: genFields.REPRESENTANTE?.trim() ?? '', email: genFields.EMAIL?.trim() ?? '' }]
+    if (!signers[0].name || !signers[0].email) { toast.error('Preencha o representante e o e-mail para assinatura'); return }
+    setGenerating(true)
+    try {
+      await apiFetch(`/api/onboarding/${genFor.id}/contract/send`, { method: 'POST', body: JSON.stringify({ template: genTemplate, fields: genFields, signers }) })
+      toast.success(`Contrato enviado para ${signers[0].email}`)
+      setGenFor(null); load()
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro ao enviar') }
+    setGenerating(false)
+  }
+
+  // caso fora do padrão: sobe um PDF ajustado à mão
+  function sendCustomPdf() {
     if (!genFor) return
     setSignFor(genFor); setSignFile(null)
     setSigners([{ name: genFields.REPRESENTANTE ?? '', email: genFields.EMAIL ?? '' }])
@@ -388,7 +402,7 @@ export default function OnboardingPage() {
                   <input type="file" accept=".docx" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadTemplate(f); e.target.value = '' }} />
                 </label>
               </div>
-              <div style={{ fontSize: 12, color: C.mid, lineHeight: 1.5 }}>Confira os campos e baixe o Word. Se precisar mudar alguma coisa específica deste cliente (cláusula, pagamento, entregável), ajuste no próprio Word. Depois salve como PDF (Arquivo &gt; Salvar como &gt; PDF) e envie.</div>
+              <div style={{ fontSize: 12, color: C.mid, lineHeight: 1.5 }}>Confira os campos e envie. O contrato é montado no modelo do programa, vai para a ClickSign no e-mail para assinatura do representante e o PDF fica guardado nos documentos do cliente.</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10 }}>
                 {draft.fieldList.map(f => (
                   <label key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 4, gridColumn: f.long || f.key === 'ENDERECO' || f.key === 'VALOR_TOTAL' ? '1 / -1' : undefined }}>
@@ -401,8 +415,11 @@ export default function OnboardingPage() {
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button onClick={() => setGenFor(null)} style={btn}>Fechar</button>
-                <button onClick={downloadGenerated} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={{ ...btn, marginLeft: 'auto' }}>{generating ? 'Gerando…' : '1. Baixar contrato (Word)'}</button>
-                {signInfo?.enabled && <button onClick={sendGenerated} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>2. Enviar o PDF para assinatura</button>}
+                <span style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center', fontSize: 11.5 }}>
+                  <button onClick={downloadGenerated} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={{ background: 'none', border: 'none', padding: 0, color: C.mid, textDecoration: 'underline', cursor: 'pointer', fontSize: 11.5 }} title="Para mudar alguma cláusula à mão">baixar Word</button>
+                  {signInfo?.enabled && <button onClick={sendCustomPdf} style={{ background: 'none', border: 'none', padding: 0, color: C.mid, textDecoration: 'underline', cursor: 'pointer', fontSize: 11.5 }} title="Contrato ajustado fora do padrão">enviar PDF ajustado</button>}
+                </span>
+                {signInfo?.enabled && <button onClick={sendGenerated} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>{generating ? 'Enviando…' : 'Enviar para assinatura'}</button>}
               </div>
             </>}
           </div>

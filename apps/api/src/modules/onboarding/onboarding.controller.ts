@@ -58,6 +58,11 @@ export class OnboardingController {
     return this.onboardingService.contractDraft(id)
   }
 
+  @Post(':id/contract/send')
+  sendGeneratedContract(@Param('id') id: string, @Body() body: { template: string; fields: Record<string, string>; signers: Array<{ name: string; email: string }> }) {
+    return this.onboardingService.sendGeneratedContract(id, body)
+  }
+
   @Post(':id/contract/generate')
   async generateContract(@Param('id') id: string, @Body() body: { template: string; fields: Record<string, string> }, @Res() res: Response) {
     const r = await this.onboardingService.generateContract(id, body)

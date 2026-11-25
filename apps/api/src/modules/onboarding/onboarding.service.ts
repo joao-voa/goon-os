@@ -4,6 +4,8 @@ import { ActivityLogService } from '../activity-log/activity-log.service'
 import { ClicksignService } from './clicksign.service'
 import { CONTRACT_FIELDS, dataLonga, extenso, extensoF, fillDocx, reaisPorExtenso } from './contract-fill'
 
+const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+
 const VALID_STAGES = [
   'CLIENT_CLOSED',
   'CONTRACT_SENT',
@@ -379,7 +381,7 @@ export class OnboardingService {
     return { enabled: this.clicksign.enabled, provider: 'clicksign', env: this.clicksign.env }
   }
 
-  async sendForSignature(id: string, dto: { filename: string; data: string; mimeType?: string; signers: Array<{ name: string; email: string }> }) {
+  async sendForSignature(id: string, dto: { filename: string; data: string; mimeType?: string; signers: Array<{ name: string; email: string }> }, generated = false) {
     if (!this.clicksign.enabled) throw new BadRequestException('ClickSign ainda não está ligada')
     const ob = await this.prisma.onboarding.findUnique({ where: { id }, include: { client: { select: { id: true, companyName: true } } } })
     if (!ob) throw new NotFoundException('Onboarding não encontrado')
@@ -388,17 +390,25 @@ export class OnboardingService {
     if (signers.some(s => s.name.split(/\s+/).length < 2)) throw new BadRequestException('A ClickSign pede nome e sobrenome de cada signatário')
     if (!dto.data) throw new BadRequestException('Envie o PDF do contrato')
     const filename = dto.filename || 'Contrato.pdf'
-    if (!filename.toLowerCase().endsWith('.pdf')) throw new BadRequestException('Envie o contrato em PDF (no Word: Arquivo > Salvar como > PDF)')
-    const mimeType = 'application/pdf'
+    // upload manual só em PDF; o contrato gerado pelo sistema vai em .docx e a ClickSign converte
+    if (!generated && !filename.toLowerCase().endsWith('.pdf')) throw new BadRequestException('Envie o contrato em PDF (no Word: Arquivo > Salvar como > PDF)')
+    const mimeType = generated ? DOCX_MIME : 'application/pdf'
     const size = Math.floor((dto.data.length * 3) / 4)
     if (size > 3 * 1024 * 1024) throw new BadRequestException('PDF maior que 3MB')
     const r = await this.clicksign.send({
       name: `Contrato GOON · ${ob.client.companyName}`, filename, base64: dto.data, mimeType, signers, metadata: { onboardingId: ob.id },
     })
-    // guarda a versão enviada para assinatura nos documentos do cliente
+    // guarda a versão enviada nos documentos do cliente; do gerado, guarda o PDF que a ClickSign montou
+    let sent = { mimeType, size, filename, data: dto.data }
+    if (generated) {
+      const pdf = await this.clicksign.downloadOriginal(r.envelopeId, r.documentId).catch(() => null)
+      if (pdf && pdf.subarray(0, 4).toString() === '%PDF') {
+        sent = { mimeType: 'application/pdf', size: pdf.length, filename: filename.replace(/\.docx$/i, '.pdf'), data: pdf.toString('base64') }
+      }
+    }
     await this.prisma.clientDocument.create({
       data: {
-        clientId: ob.client.id, type: 'CONTRACT_SENT', mimeType, size, filename: `Enviado para assinatura - ${filename}`, data: dto.data,
+        clientId: ob.client.id, type: 'CONTRACT_SENT', mimeType: sent.mimeType, size: sent.size, filename: `Enviado para assinatura - ${sent.filename}`, data: sent.data,
         notes: `Versão enviada para assinatura pela ClickSign (envelope ${r.envelopeId})`,
       },
     })
@@ -570,6 +580,13 @@ export class OnboardingService {
       suggestedTemplate: templates.some(t => t.code === code) ? code : null,
       productCode: code, productName: plan?.product?.name ?? null,
     }
+  }
+
+  /** Gera pelo modelo e já manda pra ClickSign, sem baixar nada. */
+  async sendGeneratedContract(id: string, dto: { template: string; fields: Record<string, string>; signers: Array<{ name: string; email: string }> }) {
+    const g = await this.generateContract(id, dto)
+    if (g.missing.length) throw new BadRequestException(`Preencha antes de enviar: ${g.missing.join(', ')}`)
+    return this.sendForSignature(id, { filename: g.filename, data: g.buffer.toString('base64'), signers: dto.signers }, true)
   }
 
   async generateContract(id: string, dto: { template: string; fields: Record<string, string> }) {

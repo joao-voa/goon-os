@@ -75,6 +75,16 @@ export class ClicksignService {
     return { status: d.attributes?.status ?? 'unknown', signedUrl: d.links?.files?.signed ?? null }
   }
 
+  /** Arquivo original (como a ClickSign guardou; .docx vira PDF lá). Link vale 5 min. */
+  async downloadOriginal(envelopeId: string, documentId: string) {
+    const d = await this.api<{ links?: { files?: { original?: string } } }>('GET', `/envelopes/${envelopeId}/documents/${documentId}`)
+    const url = d.links?.files?.original
+    if (!url) return null
+    const res = await fetch(url)
+    if (!res.ok) return null
+    return Buffer.from(await res.arrayBuffer())
+  }
+
   async downloadSigned(envelopeId: string, documentId: string) {
     const d = await this.document(envelopeId, documentId)
     if (!d.signedUrl) throw new Error('ClickSign: PDF assinado ainda não disponível')
