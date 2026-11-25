@@ -151,7 +151,8 @@ parcela que o cliente não pagou = ela não recebe** (fatia vai pro Giulliano). 
   Fluxo de caixa e Saídas usam o mesmo corte de standby (`mentorExpenseOfClients`; o marcador " P" do imposto era
   comparado em maiúscula e deixava passar imposto de cliente em standby, corrigido 25/11).
   Saídas: filtro de status "Sem baixa (em aberto)" (`status=ABERTO`) e "Sem baixa de meses anteriores" (`status=ANTERIORES`,
-  também clicando no card de mesmo nome).
+  "Vencidas sem baixa (até hoje)" (`status=VENCIDAS`, mesmo corte e número do fluxo de caixa; é o card vermelho
+  clicável, com a quebra "N de meses anteriores · N deste mês").
 
 ### Cliente em standby
 `Client.standby` (+ `standbyAt`), ligado/desligado em Financeiro > Pagamentos (botão Standby/Reativar).

@@ -37,7 +37,7 @@ export class ExpensesService {
     // aceita vários centros separados por vírgula (ex.: "GLOBAL,TIKTOK")
     if (costCenter) where.costCenter = { in: costCenter.split(',').map(c => c.trim()).filter(Boolean) }
     // ABERTO = ainda sem baixa (previsto ou parcial)
-    if (status === 'ABERTO' || status === 'ANTERIORES') where.status = { not: 'PAGO' }
+    if (status === 'ABERTO' || status === 'ANTERIORES' || status === 'VENCIDAS') where.status = { not: 'PAGO' }
     else if (status) where.status = status
     if (recurrence) where.recurrence = recurrence
 
@@ -47,7 +47,10 @@ export class ExpensesService {
       const now = new Date()
       // saída sem baixa de meses anteriores é carregada pro mês atual (não some de vista)
       // ANTERIORES = só as sem baixa de meses anteriores ao escolhido
+      // VENCIDAS = sem baixa com vencimento antes de hoje (mesmo corte do fluxo de caixa)
+      const today = new Date(); today.setUTCHours(0, 0, 0, 0)
       if (status === 'ANTERIORES') where.dueDate = { lt: start }
+      else if (status === 'VENCIDAS') where.dueDate = { lt: today }
       else if (status !== 'PAGO' && start <= now && now < end) {
         where.OR = [{ dueDate: { gte: start, lt: end } }, { dueDate: { lt: start }, status: { not: 'PAGO' } }]
       } else where.dueDate = { gte: start, lt: end }
@@ -119,17 +122,24 @@ export class ExpensesService {
 
     // sem baixa de meses anteriores (só quando o mês escolhido é o atual)
     let anteriores = { total: 0, count: 0 }
+    let vencidas = { total: 0, count: 0, anteriores: 0, doMes: 0 }
     if (month && year) {
       const start = new Date(year, month - 1, 1), end = new Date(year, month, 1), now = new Date()
       if (start <= now && now < end) {
         const prevWhere: Record<string, unknown> = { ...giuFilter, AND: await this.standbyMentorFilter(), dueDate: { lt: start }, status: { not: 'PAGO' } }
         const a = await this.prisma.expense.aggregate({ where: prevWhere, _sum: { value: true }, _count: { _all: true } })
         anteriores = { total: Number(a._sum?.value ?? 0), count: a._count?._all ?? 0 }
+        // vencidas sem baixa até ontem (mesmo número do fluxo de caixa), com a quebra anteriores x deste mês
+        const today = new Date(); today.setUTCHours(0, 0, 0, 0)
+        const v = await this.prisma.expense.aggregate({ where: { ...prevWhere, dueDate: { lt: today } }, _sum: { value: true }, _count: { _all: true } })
+        const count = v._count?._all ?? 0
+        vencidas = { total: Number(v._sum?.value ?? 0), count, anteriores: anteriores.count, doMes: count - anteriores.count }
       }
     }
 
     return {
       anteriores,
+      vencidas,
       totalPrevisto: Number(previstoAgg._sum.value ?? 0),
       totalPago: Number(pagoAgg._sum.value ?? 0),
       byCategory: byCategory.map(c => ({ category: c.category, total: Number(c._sum.value ?? 0) })),

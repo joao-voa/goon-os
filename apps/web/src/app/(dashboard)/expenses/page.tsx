@@ -20,6 +20,7 @@ interface Expense {
 
 interface Summary {
   anteriores?: { total: number; count: number }
+  vencidas?: { total: number; count: number; anteriores: number; doMes: number }
   totalPrevisto: number
   totalPago: number
   byCategory: Array<{ category: string; total: number }>
@@ -173,7 +174,7 @@ export default function ExpensesPage() {
           {[
             { l: 'Previsto', v: summary.totalPrevisto, c: '#f59e0b' },
             { l: 'Pago', v: summary.totalPago, c: '#16a34a' },
-            ...(summary.anteriores?.count ? [{ l: `Sem baixa de meses anteriores (${summary.anteriores.count})`, v: summary.anteriores.total, c: '#dc2626', filter: 'ANTERIORES' }] : []),
+            ...(summary.vencidas?.count ? [{ l: `Vencidas sem baixa (${summary.vencidas.count})`, v: summary.vencidas.total, c: '#dc2626', filter: 'VENCIDAS', sub: `${summary.vencidas.anteriores} de meses anteriores · ${summary.vencidas.doMes} deste mês` }] : []),
           ].map(k => (
             <div key={k.l}
               onClick={'filter' in k && k.filter ? () => { setStatusFilter(statusFilter === k.filter ? '' : k.filter as string); setPage(1) } : undefined}
@@ -181,6 +182,7 @@ export default function ExpensesPage() {
               style={{ background: '#fff', border: '1px solid #e2e8f0', borderTop: `3px solid ${k.c}`, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)', padding: '14px 20px', minWidth: 150, cursor: 'filter' in k && k.filter ? 'pointer' : undefined, outline: 'filter' in k && k.filter && statusFilter === k.filter ? `2px solid ${k.c}` : undefined }}>
               <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', fontWeight: 600 }}>{k.l}</div>
               <div style={{ fontFamily: 'var(--font-sans)', fontVariantNumeric: 'tabular-nums', fontSize: 22, fontWeight: 700, color: k.c, marginTop: 4 }}>{fmt(k.v)}</div>
+              {'sub' in k && k.sub && <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{k.sub as string}</div>}
             </div>
           ))}
           {summary.byCategory.map(c => {
@@ -249,6 +251,7 @@ export default function ExpensesPage() {
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={selStyle}>
             <option value="">Todos status</option>
             <option value="ABERTO">Sem baixa (em aberto)</option>
+            <option value="VENCIDAS">Vencidas sem baixa (até hoje)</option>
             <option value="ANTERIORES">Sem baixa de meses anteriores</option>
             <option value="PREVISTO">Previsto</option>
             <option value="PAGO">Pago</option>
