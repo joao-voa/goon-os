@@ -39,7 +39,7 @@ export class OnboardingController {
   }
 
   @Post(':id/signature')
-  sendForSignature(@Param('id') id: string, @Body() body: { filename: string; data: string; mimeType?: string; signers: Array<{ name: string; email: string }> }) {
+  sendForSignature(@Param('id') id: string, @Body() body: { filename: string; data: string; mimeType?: string; signers: Array<{ name: string; email: string }>; replace?: boolean }) {
     return this.onboardingService.sendForSignature(id, body)
   }
 
@@ -59,7 +59,7 @@ export class OnboardingController {
   }
 
   @Post(':id/contract/send')
-  sendGeneratedContract(@Param('id') id: string, @Body() body: { template: string; fields: Record<string, string>; signers: Array<{ name: string; email: string }> }) {
+  sendGeneratedContract(@Param('id') id: string, @Body() body: { template: string; fields: Record<string, string>; signers: Array<{ name: string; email: string }>; replace?: boolean }) {
     return this.onboardingService.sendGeneratedContract(id, body)
   }
 

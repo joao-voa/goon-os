@@ -382,7 +382,7 @@ export class OnboardingService {
     return { enabled: this.clicksign.enabled, provider: 'clicksign', env: this.clicksign.env }
   }
 
-  async sendForSignature(id: string, dto: { filename: string; data: string; mimeType?: string; signers: Array<{ name: string; email: string }> }) {
+  async sendForSignature(id: string, dto: { filename: string; data: string; mimeType?: string; signers: Array<{ name: string; email: string }>; replace?: boolean }) {
     if (!this.clicksign.enabled) throw new BadRequestException('ClickSign ainda não está ligada')
     const ob = await this.prisma.onboarding.findUnique({ where: { id }, include: { client: { select: { id: true, companyName: true } } } })
     if (!ob) throw new NotFoundException('Onboarding não encontrado')
@@ -397,13 +397,29 @@ export class OnboardingService {
     if (size > 3 * 1024 * 1024) throw new BadRequestException('PDF maior que 3MB')
     // nova versão: o contrato anterior ainda em aberto é cancelado na ClickSign
     if (ob.signStatus === 'completed') throw new BadRequestException('Este contrato já foi assinado')
-    const prevDoc = ((ob.signSigners ?? {}) as { documentId?: string }).documentId
-    if (ob.signEnvelopeId && prevDoc && ob.signStatus === 'sent') {
-      await this.clicksign.cancelDocument(ob.signEnvelopeId, prevDoc).catch(err => console.warn('ClickSign cancelar anterior:', (err as Error).message))
-    }
-    const r = await this.clicksign.send({
-      name: `Contrato GOON · ${ob.client.companyName}`, filename, base64: dto.data, mimeType, signers, metadata: { onboardingId: ob.id },
+    // nada de envio duplicado: com um contrato em aberto, só reenvia se pedir explicitamente uma nova versão
+    if (ob.signStatus === 'sent' && !dto.replace) throw new BadRequestException('Este contrato já foi enviado para assinatura. Para mandar outro, use "Enviar nova versão".')
+    // trava do envio em andamento (vale 2 min, para não prender se a função cair no meio)
+    const stale = new Date(Date.now() - 2 * 60 * 1000)
+    if (ob.signStatus === 'sending' && ob.updatedAt > stale) throw new BadRequestException('O envio deste contrato já está em andamento')
+    const claimed = await this.prisma.onboarding.updateMany({
+      where: { id, OR: [{ signStatus: null }, { signStatus: { not: 'sending' } }, { signStatus: 'sending', updatedAt: { lt: stale } }] },
+      data: { signStatus: 'sending' },
     })
+    if (!claimed.count) throw new BadRequestException('O envio deste contrato já está em andamento')
+    const prevDoc = ((ob.signSigners ?? {}) as { documentId?: string }).documentId
+    let r: Awaited<ReturnType<ClicksignService['send']>>
+    try {
+      if (ob.signEnvelopeId && prevDoc && ob.signStatus === 'sent') {
+        await this.clicksign.cancelDocument(ob.signEnvelopeId, prevDoc).catch(err => console.warn('ClickSign cancelar anterior:', (err as Error).message))
+      }
+      r = await this.clicksign.send({
+        name: `Contrato GOON · ${ob.client.companyName}`, filename, base64: dto.data, mimeType, signers, metadata: { onboardingId: ob.id },
+      })
+    } catch (err) {
+      await this.prisma.onboarding.update({ where: { id }, data: { signStatus: ob.signStatus === 'sending' ? null : ob.signStatus } })
+      throw err
+    }
     // guarda a versão enviada (PDF) nos documentos do cliente
     const sent = { mimeType, size, filename, data: dto.data }
     await this.prisma.clientDocument.create({
@@ -612,10 +628,10 @@ export class OnboardingService {
   }
 
   /** Gera pelo modelo e já manda pra ClickSign, sem baixar nada. */
-  async sendGeneratedContract(id: string, dto: { template: string; fields: Record<string, string>; signers: Array<{ name: string; email: string }> }) {
+  async sendGeneratedContract(id: string, dto: { template: string; fields: Record<string, string>; signers: Array<{ name: string; email: string }>; replace?: boolean }) {
     const g = await this.generateContract(id, dto, 'pdf')
     if (g.missing.length) throw new BadRequestException(`Preencha antes de enviar: ${g.missing.join(', ')}`)
-    return this.sendForSignature(id, { filename: g.filename, data: g.buffer.toString('base64'), signers: dto.signers })
+    return this.sendForSignature(id, { filename: g.filename, data: g.buffer.toString('base64'), signers: dto.signers, replace: dto.replace })
   }
 
   async generateContract(id: string, dto: { template: string; fields: Record<string, string> }, format: 'docx' | 'pdf' = 'docx') {

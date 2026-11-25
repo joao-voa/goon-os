@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { apiFetch, API_URL } from '@/lib/api'
 import { addMonths, brl, termsToFields, termsTotal, type ContractTerms } from '@/lib/contract-terms'
@@ -33,6 +33,8 @@ const goonPending = (b: { signature: { status: string | null; signers: Array<{ e
   const others = sg.filter(x => x !== goon)
   return !!goon && !goon.signedAt && others.length > 0 && others.every(x => x.signedAt)
 }
+// já tem contrato em aberto na ClickSign (mandar outro = nova versão, cancela o atual)
+const hasOpenSend = (b: { signature: { status: string | null } | null }) => b.signature?.status === 'sent' || b.signature?.status === 'sending'
 const TEMPLATE_NAMES: Record<string, string> = { GE: 'GOON ELITE', GI: 'GOON INFINITY', TTS: 'TIKTOK SCALE', TTSG: 'TIKTOK SCALE GRUPO', GA: 'GOON ADVISOR', GS: 'GOON SCALE' }
 const SIGN_STATUS: Record<string, string> = { sent: 'enviado', delivered: 'aberto pelo cliente', completed: 'assinado', declined: 'recusado', voided: 'cancelado' }
 
@@ -77,6 +79,9 @@ export default function OnboardingPage() {
   const [genTerms, setGenTerms] = useState<ContractTerms | null>(null)
   // depois do envio: mensagem pronta para copiar e mandar ao cliente
   const [sentMsg, setSentMsg] = useState<{ company: string; text: string } | null>(null)
+  // trava contra clique duplo no envio + confirmação quando já existe um contrato em aberto
+  const sendLock = useRef(false)
+  const [confirmReplace, setConfirmReplace] = useState(false)
   const [eq, setEq] = useState({ n: '', value: '', first: '' })
 
   const load = useCallback(async () => {
@@ -86,6 +91,7 @@ export default function OnboardingPage() {
   useEffect(() => { apiFetch<{ enabled: boolean; provider: string; env: string }>('/api/onboarding/signature/info').then(setSignInfo).catch(() => {}) }, [])
 
   function openSign(b: Board) {
+    setConfirmReplace(false)
     // e-mail de assinatura colado nos dados do contrato tem preferência
     const signEmail = b.notes?.match(/e-?mail[^:\n]*assinatura[^:\n]*:\s*(\S+@\S+)/i)?.[1]
     setSignFor(b); setSignFile(null)
@@ -99,23 +105,28 @@ export default function OnboardingPage() {
 
   async function sendSign() {
     if (!signFor || !signFile) { toast.error('Escolha o arquivo do contrato'); return }
+    const open = hasOpenSend(signFor)
+    if (open && !confirmReplace) { setConfirmReplace(true); return }
+    if (sendLock.current) return
+    sendLock.current = true
     if (signFile.size > 3 * 1024 * 1024) { toast.error('Arquivo maior que 3MB. Comprima o PDF.'); return }
     setSending(true)
     try {
       const dataUrl: string = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.onerror = reject; r.readAsDataURL(signFile) })
       await apiFetch(`/api/onboarding/${signFor.id}/signature`, {
-        method: 'POST', body: JSON.stringify({ filename: signFile.name, mimeType: signFile.type || undefined, data: dataUrl.split(',')[1] ?? '', signers: signers.filter(x => x.name && x.email) }),
+        method: 'POST', body: JSON.stringify({ filename: signFile.name, mimeType: signFile.type || undefined, data: dataUrl.split(',')[1] ?? '', signers: signers.filter(x => x.name && x.email), replace: open }),
       })
       toast.success('Contrato enviado para assinatura pela ClickSign')
       const cli = signers.find(x => x.email && x.email !== GOON_SIGNER.email) ?? signers[0]
       if (cli) showSentMessage(signFor.client.companyName, cli.name, cli.email)
       setSignFor(null); load()
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro ao enviar') }
+    sendLock.current = false; setConfirmReplace(false)
     setSending(false)
   }
 
   async function openGenerate(b: Board) {
-    setGenFor(b); setDraft(null)
+    setGenFor(b); setDraft(null); setConfirmReplace(false)
     try {
       const d = await apiFetch<Draft>(`/api/onboarding/${b.id}/contract/draft`)
       setDraft(d); setGenFields(d.fields); setGenTerms(d.terms); setGenTemplate(d.suggestedTemplate ?? d.templates[0]?.code ?? '')
@@ -166,20 +177,25 @@ export default function OnboardingPage() {
     if (!genFor || !genTemplate) return
     const signers = [{ name: genFields.REPRESENTANTE?.trim() ?? '', email: genFields.EMAIL?.trim() ?? '' }, GOON_SIGNER]
     if (!signers[0].name || !signers[0].email) { toast.error('Preencha o representante e o e-mail para assinatura'); return }
+    const open = hasOpenSend(genFor)
+    if (open && !confirmReplace) { setConfirmReplace(true); return }
+    if (sendLock.current) return
+    sendLock.current = true
     setGenerating(true)
     try {
-      await apiFetch(`/api/onboarding/${genFor.id}/contract/send`, { method: 'POST', body: JSON.stringify({ template: genTemplate, fields: genFields, signers }) })
+      await apiFetch(`/api/onboarding/${genFor.id}/contract/send`, { method: 'POST', body: JSON.stringify({ template: genTemplate, fields: genFields, signers, replace: open }) })
       toast.success(`Contrato enviado para ${signers.map(x => x.email).join(' e ')}`)
       showSentMessage(genFor.client.companyName, signers[0].name, signers[0].email)
       setGenFor(null); load()
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro ao enviar') }
+    sendLock.current = false; setConfirmReplace(false)
     setGenerating(false)
   }
 
   // caso fora do padrão: sobe um PDF ajustado à mão
   function sendCustomPdf() {
     if (!genFor) return
-    setSignFor(genFor); setSignFile(null)
+    setSignFor(genFor); setSignFile(null); setConfirmReplace(false)
     setSigners([{ name: genFields.REPRESENTANTE ?? '', email: genFields.EMAIL ?? '' }, GOON_SIGNER])
     setGenFor(null)
   }
@@ -405,6 +421,10 @@ export default function OnboardingPage() {
                     {goonPending(b)
                       ? <a href="https://app.clicksign.com" target="_blank" rel="noopener noreferrer" style={{ ...btn, padding: '2px 8px', fontSize: 11, background: C.ink, color: '#fff', border: 'none', textDecoration: 'none' }}>Assinar na ClickSign</a>
                       : b.signature.status === 'sent' && <button onClick={() => remindSign(b)} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>Lembrar por e-mail</button>}
+                    {b.signature.status === 'sent' && !goonPending(b) && (() => {
+                      const cli = (b.signature.signers ?? []).find(x => x.email.toLowerCase() !== GOON_SIGNER.email)
+                      return cli ? <button onClick={() => showSentMessage(b.client.companyName, cli.name, cli.email)} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>Mensagem</button> : null
+                    })()}
                     <button onClick={() => openGenerate(b)} title="Gera ou sobe outro arquivo; o envio anterior é cancelado na ClickSign" style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>Enviar nova versão</button>
                     {wa && !goonPending(b) && <a href={`${wa}?text=${encodeURIComponent(msg)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, padding: '2px 8px', fontSize: 11, background: '#25d366', color: '#fff', border: 'none', textDecoration: 'none' }}>WhatsApp</a>}
                   </div>
@@ -566,7 +586,7 @@ export default function OnboardingPage() {
                 </span>
                 {signInfo?.enabled && <button onClick={sendCustomPdf} style={{ ...btn, border: `1px solid ${C.ink}` }} title="Contrato ajustado fora do padrão">Enviar meu PDF</button>}
                 <button onClick={previewPdf} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={btn}>{generating ? 'Gerando…' : 'Ver PDF'}</button>
-                {signInfo?.enabled && <button onClick={sendGenerated} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>{generating ? 'Enviando…' : 'Enviar para assinatura'}</button>}
+                {signInfo?.enabled && <button onClick={sendGenerated} disabled={generating || !draft.templates.some(t => t.code === genTemplate)} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>{generating ? 'Enviando…' : confirmReplace ? 'Confirmar: cancelar o atual e reenviar' : hasOpenSend(genFor) ? 'Enviar nova versão' : 'Enviar para assinatura'}</button>}
               </div>
             </>}
           </div>
@@ -597,7 +617,7 @@ export default function OnboardingPage() {
             <button onClick={() => setSigners(l => [...l, { name: '', email: '' }])} style={{ ...btn, alignSelf: 'flex-start' }}>+ Signatário</button>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setSignFor(null)} style={{ ...btn, marginLeft: 'auto' }}>Cancelar</button>
-              <button onClick={sendSign} disabled={sending || !signFile} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>{sending ? 'Enviando…' : 'Enviar pela ClickSign'}</button>
+              <button onClick={sendSign} disabled={sending || !signFile} style={{ ...btn, background: C.ink, color: '#fff', border: 'none' }}>{sending ? 'Enviando…' : confirmReplace ? 'Confirmar: cancelar o atual e reenviar' : hasOpenSend(signFor) ? 'Enviar nova versão' : 'Enviar pela ClickSign'}</button>
             </div>
           </div>
         </div>
