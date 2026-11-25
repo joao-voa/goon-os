@@ -82,6 +82,18 @@ export class ClicksignService {
     return this.api('PATCH', `/envelopes/${envelopeId}/documents/${documentId}`, { id: documentId, type: 'documents', attributes: { status: 'canceled' } })
   }
 
+  /** Quem já assinou (eventos "sign" do documento): e-mail -> data. */
+  async signedBy(envelopeId: string, documentId: string) {
+    type Ev = { attributes?: { name?: string; created?: string; data?: { signer?: { email?: string } } } }
+    const evs = await this.api<Ev[]>('GET', `/envelopes/${envelopeId}/documents/${documentId}/events`)
+    const out: Record<string, string> = {}
+    for (const e of evs ?? []) {
+      const email = e.attributes?.data?.signer?.email?.toLowerCase()
+      if (e.attributes?.name === 'sign' && email) out[email] = e.attributes.created ?? new Date().toISOString()
+    }
+    return out
+  }
+
   async downloadSigned(envelopeId: string, documentId: string) {
     const d = await this.document(envelopeId, documentId)
     if (!d.signedUrl) throw new Error('ClickSign: PDF assinado ainda não disponível')

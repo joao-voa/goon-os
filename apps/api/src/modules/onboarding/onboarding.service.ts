@@ -459,6 +459,7 @@ export class OnboardingService {
     if (['document_closed', 'auto_close', 'close'].includes(e.event)) await this.completeSignature(ob)
     else if (e.event === 'refusal') await this.prisma.onboarding.update({ where: { id: ob.id }, data: { signStatus: 'declined' } })
     else if (e.event === 'cancel') await this.prisma.onboarding.update({ where: { id: ob.id }, data: { signStatus: 'voided' } })
+    else if (e.event === 'sign') await this.syncSigners(ob)
     return { found: true }
   }
 
@@ -471,12 +472,23 @@ export class OnboardingService {
     return { ok: true }
   }
 
+  /** Marca em signSigners quem já assinou (para o lembrete "cliente assinou, falta a GOON"). */
+  private async syncSigners(ob: { id: string; signEnvelopeId: string | null; signSigners: unknown }) {
+    const meta = (ob.signSigners ?? {}) as { documentId?: string; signers?: Array<{ name: string; email: string; signedAt?: string | null }> }
+    if (!ob.signEnvelopeId || !meta.documentId || !meta.signers?.length) return
+    const signed = await this.clicksign.signedBy(ob.signEnvelopeId, meta.documentId).catch(() => null)
+    if (!signed) return
+    const signers = meta.signers.map(sg => ({ ...sg, signedAt: signed[sg.email.toLowerCase()] ?? sg.signedAt ?? null }))
+    await this.prisma.onboarding.update({ where: { id: ob.id }, data: { signSigners: { ...meta, signers } } })
+  }
+
   /** Consulta manual (botão ↻ do card). */
   async refreshSignature(id: string) {
     const ob = await this.prisma.onboarding.findUnique({ where: { id }, include: { client: { select: { id: true, companyName: true } } } })
     if (!ob?.signEnvelopeId) throw new BadRequestException('Nenhum envio para assinatura')
     const documentId = ((ob.signSigners ?? {}) as { documentId?: string }).documentId
     if (!documentId) throw new BadRequestException('Envio sem documento')
+    await this.syncSigners(ob)
     const d = await this.clicksign.document(ob.signEnvelopeId, documentId)
     if (d.status === 'closed') { await this.completeSignature(ob); return { status: 'completed' } }
     const map: Record<string, string> = { running: 'sent', canceled: 'voided', cancelled: 'voided', refused: 'declined' }

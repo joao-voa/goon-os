@@ -20,11 +20,19 @@ type Board = {
   kickoff: { date: string; status: string; meetLink: string | null } | null
   daysSinceClose: number
   notes: string | null
-  signature: { status: string | null; sentAt: string | null; signers: Array<{ name: string; email: string }> | null } | null
+  signature: { status: string | null; sentAt: string | null; signers: Array<{ name: string; email: string; signedAt?: string | null }> | null } | null
 }
 
 // quem assina pela GOON (CONTRATADA: AURA360, representada pelo Giulliano)
 const GOON_SIGNER = { name: 'Giulliano Puga', email: 'giullianopuga11@gmail.com' }
+// cliente já assinou e a GOON ainda não: lembrete pra não esquecer
+const goonPending = (b: { signature: { status: string | null; signers: Array<{ email: string; signedAt?: string | null }> | null } | null }) => {
+  const sg = b.signature?.signers ?? []
+  if (!b.signature || b.signature.status !== 'sent') return false
+  const goon = sg.find(x => x.email.toLowerCase() === GOON_SIGNER.email)
+  const others = sg.filter(x => x !== goon)
+  return !!goon && !goon.signedAt && others.length > 0 && others.every(x => x.signedAt)
+}
 const TEMPLATE_NAMES: Record<string, string> = { GE: 'GOON ELITE', GI: 'GOON INFINITY', TTS: 'TIKTOK SCALE', TTSG: 'TIKTOK SCALE GRUPO', GA: 'GOON ADVISOR', GS: 'GOON SCALE' }
 const SIGN_STATUS: Record<string, string> = { sent: 'enviado', delivered: 'aberto pelo cliente', completed: 'assinado', declined: 'recusado', voided: 'cancelado' }
 
@@ -303,6 +311,14 @@ export default function OnboardingPage() {
         }} style={{ ...btn, background: C.ink, color: '#fff', border: 'none', padding: '9px 16px', fontSize: 13, fontWeight: 700 }}>+ Adicionar cliente</button>
       </div>
 
+      {board.some(goonPending) && (
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', background: '#fef3c7', border: `1px solid ${C.amber}`, borderRadius: 10, padding: '10px 14px', fontSize: 13, color: C.ink }}>
+          <strong>Falta a assinatura da GOON:</strong>
+          <span>{board.filter(goonPending).map(b => b.client.companyName).join(', ')} já {board.filter(goonPending).length === 1 ? 'assinou' : 'assinaram'}.</span>
+          <a href="https://app.clicksign.com" target="_blank" rel="noopener noreferrer" style={{ ...btn, marginLeft: 'auto', background: C.ink, color: '#fff', border: 'none', textDecoration: 'none' }}>Assinar na ClickSign</a>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 4, border: `1px solid ${C.line}`, borderRadius: 100, padding: 4, background: '#fff' }}>
           {([['andamento', 'Em andamento'], ['concluidos', 'Concluídos'], ['inativos', 'Inativos']] as const).map(([k, l]) => (
@@ -385,10 +401,12 @@ export default function OnboardingPage() {
                 const msg = `Oi${first ? `, ${first}` : ''}! Tudo bem? Enviamos o contrato da GOON para assinatura pela ClickSign, no seu e-mail. Consegue dar uma olhada e assinar quando puder? Qualquer dúvida, estou por aqui.`
                 return (
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', fontSize: 11.5, color: C.mid, background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, padding: '6px 8px' }}>
-                    <span style={{ flex: 1, minWidth: 120 }}>{b.signature.status === 'declined' ? 'Assinatura recusada' : b.signature.status === 'voided' ? 'Envio cancelado' : 'Aguardando assinatura'}{b.signature.sentAt ? ` desde ${new Date(b.signature.sentAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}` : ''}</span>
-                    {b.signature.status === 'sent' && <button onClick={() => remindSign(b)} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>Lembrar por e-mail</button>}
+                    <span style={{ flex: 1, minWidth: 120, color: goonPending(b) ? C.amber : undefined, fontWeight: goonPending(b) ? 700 : undefined }}>{goonPending(b) ? 'Cliente assinou. Falta a GOON assinar' : b.signature.status === 'declined' ? 'Assinatura recusada' : b.signature.status === 'voided' ? 'Envio cancelado' : 'Aguardando assinatura'}{b.signature.sentAt && !goonPending(b) ? ` desde ${new Date(b.signature.sentAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}` : ''}</span>
+                    {goonPending(b)
+                      ? <a href="https://app.clicksign.com" target="_blank" rel="noopener noreferrer" style={{ ...btn, padding: '2px 8px', fontSize: 11, background: C.ink, color: '#fff', border: 'none', textDecoration: 'none' }}>Assinar na ClickSign</a>
+                      : b.signature.status === 'sent' && <button onClick={() => remindSign(b)} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>Lembrar por e-mail</button>}
                     <button onClick={() => openGenerate(b)} title="Gera ou sobe outro arquivo; o envio anterior é cancelado na ClickSign" style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>Enviar nova versão</button>
-                    {wa && <a href={`${wa}?text=${encodeURIComponent(msg)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, padding: '2px 8px', fontSize: 11, background: '#25d366', color: '#fff', border: 'none', textDecoration: 'none' }}>WhatsApp</a>}
+                    {wa && !goonPending(b) && <a href={`${wa}?text=${encodeURIComponent(msg)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, padding: '2px 8px', fontSize: 11, background: '#25d366', color: '#fff', border: 'none', textDecoration: 'none' }}>WhatsApp</a>}
                   </div>
                 )
               })()}

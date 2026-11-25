@@ -230,6 +230,9 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
 - Webhook `POST /api/integrations/clicksign/webhook`, conferido por HMAC (`Content-Hmac: sha256=...` sobre o corpo cru;
   `rawBody: true` no NestFactory). document_closed/auto_close = baixa o PDF assinado (link vale 5 min), anexa em
   `ClientDocument` (SIGNED_CONTRACT) e marca "Contrato assinado". Botão ↻ consulta na mão (a ClickSign proíbe polling automático).
+- Quem já assinou: evento `sign` do webhook (e o ↻) leem os eventos do documento e gravam `signedAt` em
+  `signSigners.signers`. Cliente assinou e a GOON (`GOON_SIGNER`) não: faixa âmbar no topo do Onboarding
+  "Falta a assinatura da GOON" + botão "Assinar na ClickSign" no card.
 - Variáveis (Vercel goon-os-api): `CLICKSIGN_ACCESS_TOKEN`, `CLICKSIGN_ENV` (sandbox|prod), `CLICKSIGN_WEBHOOK_SECRET`.
   Sem o token, desligado. DocuSign foi descartado (plano Standard sem API).
 
