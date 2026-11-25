@@ -85,8 +85,10 @@ export default function OnboardingPage() {
   }
 
   function showSentMessage(company: string, name: string, email: string) {
-    const first = name.trim().split(/\s+/)[0] ?? ''
-    setSentMsg({ company, text: `Oi${first ? `, ${first}` : ''}! Tudo bem? Acabamos de enviar o contrato da GOON para assinatura no seu e-mail (${email}). Ele chega pela ClickSign. Se não aparecer na caixa de entrada, confira o spam ou a aba Promoções. Qualquer dúvida, estou por aqui.` })
+    // primeiro e último nome (ex.: Caio Brito de Oliveira -> Caio Oliveira)
+    const w = name.trim().split(/\s+/).filter(Boolean)
+    const short = w.length > 1 ? `${w[0]} ${w[w.length - 1]}` : (w[0] ?? '')
+    setSentMsg({ company, text: `Fala${short ? ` ${short}` : ''}! Acabamos de enviar o contrato da GOON para assinatura no seu e-mail (${email}). Qualquer dúvida, me chama.` })
   }
 
   async function sendSign() {
