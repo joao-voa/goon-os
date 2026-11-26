@@ -12,6 +12,7 @@ import { TAX_RATE, VICTOR_FRAGA, getNextCommissionPaymentDate } from '../../shar
 const SYNC_CUTOFF = new Date('2026-11-05T22:08:00Z')
 
 const VALID_LEAD_STAGES = [
+  'GRUPO', // "Leads Grupo": entrou no grupo do WhatsApp, antes de virar lead trabalhado
   'NOVO',
   'CONTATAR',
   'FUP', // "Em Contato"
@@ -23,6 +24,7 @@ const VALID_LEAD_STAGES = [
 ]
 
 const STAGE_LABELS: Record<string, string> = {
+  GRUPO: 'Leads Grupo',
   NOVO: 'Novo',
   CONTATAR: 'Contatar',
   FOLLOW_UP: 'Em Contato',
@@ -1424,8 +1426,9 @@ export class CrmService {
     productInterest?: string
     suggestedProduct?: string
     cardResponsible?: string
+    leadStage?: string
   }) {
-    const { productInterest, ...clientData } = dto
+    const { productInterest, leadStage, ...clientData } = dto
     if (productInterest && !clientData.suggestedProduct) {
       // Map productInterest (id) to product code
       const product = await this.prisma.product.findUnique({ where: { id: productInterest } })
@@ -1435,7 +1438,8 @@ export class CrmService {
       data: {
         ...clientData,
         status: 'PROSPECT',
-        leadStage: 'NOVO',
+        // cadastro manual entra em Novo, ou direto em "Leads Grupo" (quem entrou no grupo do WhatsApp)
+        leadStage: leadStage === 'GRUPO' ? 'GRUPO' : 'NOVO',
         stageChangedAt: new Date(),
       },
     })

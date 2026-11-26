@@ -109,11 +109,14 @@ pendencies, mentorship, person-accounts, admin, audit.
   programa (acesso só do dono — `canSeeSales`).
 
 ### Pipeline do CRM (kanban)
-Ordem: **Novo (NOVO) → Em Contato (FUP) → Agendado (REUNIAO_AGENDADA) →
+Ordem: **Leads Grupo (GRUPO) → Novo (NOVO) → Em Contato (FUP) → Agendado (REUNIAO_AGENDADA) →
 Em Negociação (EM_NEGOCIACAO) → Repescagem (REPESCAGEM) → Perdido (PERDIDO) →
 Ganho (FECHADO)**. Códigos internos preservados (FECHADO = venda ganha) pra não
 quebrar closeDeal/vendas/comissões. Arrastar pra "Ganho" abre o fluxo de fechamento.
 Kanban tem ordenação manual (`kanbanOrder`) via `PATCH /api/crm/reorder`.
+**Leads Grupo (GRUPO)**: quem entrou no grupo do WhatsApp (origem `grupo_whatsapp`), antes de virar lead trabalhado.
+Fica fora do funil cumulativo (`CrmService.PIPE` começa em NOVO). Cadastro manual pode escolher a etapa Novo ou Leads Grupo
+(no Grupo basta o nome). Entrada mais fácil (prints do grupo) ainda a decidir.
 
 ### TikTok Scale (produto novo)
 Padrão: **venda = 2 meses garantidos = 2× R$2.500 = R$5.000**. Estrutura:

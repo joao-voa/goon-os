@@ -315,6 +315,7 @@ function NewLeadModal({
     selectedModules?: string
     productInterest?: string
     cardResponsible?: string
+    leadStage?: 'NOVO' | 'GRUPO'
   }) => Promise<void>
   products: Array<{ id: string; code: string; name: string }>
   salesRepSuggestions?: string[]
@@ -325,6 +326,7 @@ function NewLeadModal({
   const [whatsapp, setWhatsapp] = useState('')
   const [email, setEmail] = useState('')
   const [leadSource, setLeadSource] = useState('')
+  const [leadStage, setLeadStage] = useState<'NOVO' | 'GRUPO'>('NOVO')
   const [salesRep, setSalesRep] = useState('')
   const [estimatedRevenue, setEstimatedRevenue] = useState('')
   const [leadNotes, setLeadNotes] = useState('')
@@ -341,19 +343,21 @@ function NewLeadModal({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!companyName.trim() || !responsible.trim()) {
-      toast.error('Nome e responsavel sao obrigatorios')
+    // lead do grupo do WhatsApp: muitas vezes só tem nome e telefone (empresa vira o próprio nome)
+    if (leadStage === 'GRUPO' ? !responsible.trim() && !companyName.trim() : !companyName.trim() || !responsible.trim()) {
+      toast.error(leadStage === 'GRUPO' ? 'Informe ao menos o nome' : 'Nome e responsavel sao obrigatorios')
       return
     }
     setSubmitting(true)
     try {
       await onConfirm({
-        companyName: companyName.trim(),
-        responsible: responsible.trim(),
+        companyName: companyName.trim() || responsible.trim(),
+        responsible: responsible.trim() || companyName.trim(),
+        leadStage,
         phone: phone.trim() || undefined,
         whatsapp: whatsapp.trim() || undefined,
         email: email.trim() || undefined,
-        leadSource: leadSource || undefined,
+        leadSource: leadSource || (leadStage === 'GRUPO' ? 'grupo_whatsapp' : undefined),
         salesRep: salesRep.trim() || undefined,
         estimatedRevenue: estimatedRevenue.trim() || undefined,
         leadNotes: leadNotes.trim() || undefined,
@@ -427,6 +431,13 @@ function NewLeadModal({
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={labelStyle}>Etapa</label>
+              <select value={leadStage} onChange={e => setLeadStage(e.target.value as 'NOVO' | 'GRUPO')} style={inputStyle}>
+                <option value="NOVO">Novo</option>
+                <option value="GRUPO">Leads Grupo (entrou no grupo do WhatsApp)</option>
+              </select>
+            </div>
             <div>
               <label style={labelStyle}>Origem</label>
               <select value={leadSource} onChange={e => setLeadSource(e.target.value)} style={inputStyle}>
@@ -695,7 +706,7 @@ function LeadDetailModal({
         }),
       }).catch(() => {})
       // etiqueta: lead vai para "Agendado"
-      if (['NOVO', 'CONTATAR', 'FUP', 'REPESCAGEM', 'PERDIDO'].includes(stage)) {
+      if (['GRUPO', 'NOVO', 'CONTATAR', 'FUP', 'REPESCAGEM', 'PERDIDO'].includes(stage)) {
         await apiFetch(`/api/crm/${lead.id}/stage`, { method: 'PATCH', body: JSON.stringify({ toStage: 'REUNIAO_AGENDADA' }) })
           .then(() => setStage('REUNIAO_AGENDADA')).catch(() => {})
       }
@@ -1687,7 +1698,7 @@ export default function CrmPage() {
               const selDays = selKey ? leads.filter(l => dayKey(new Date(l.createdAt)) === selKey) : []
               const wLabel: Record<number, string> = { 7: '7 dias', 14: '14 dias', 30: '30 dias', 90: '90 dias' }
               const stageLabel: Record<string, string> = {
-                NOVO: 'Novo', CONTATAR: 'Contatar', FOLLOW_UP: 'Em Contato', FUP: 'Em Contato', REUNIAO_AGENDADA: 'Agendado',
+                GRUPO: 'Leads Grupo', NOVO: 'Novo', CONTATAR: 'Contatar', FOLLOW_UP: 'Em Contato', FUP: 'Em Contato', REUNIAO_AGENDADA: 'Agendado',
                 EM_NEGOCIACAO: 'Em Negociação', REPESCAGEM: 'Repescagem', PERDIDO: 'Perdido', FECHADO: 'Ganho',
               }
               return (

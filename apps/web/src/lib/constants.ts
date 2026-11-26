@@ -107,6 +107,7 @@ export const CONTRACT_STATUS_COLORS: Record<string, string> = {
 }
 
 export const LEAD_STAGES = [
+  'GRUPO', // "Leads Grupo": entrou no grupo do WhatsApp
   'NOVO',
   'CONTATAR',
   'FUP', // "Em Contato"
@@ -118,6 +119,7 @@ export const LEAD_STAGES = [
 ] as const
 
 export const LEAD_STAGE_LABELS: Record<string, string> = {
+  GRUPO: 'Leads Grupo',
   NOVO: 'Novo',
   CONTATAR: 'Contatar',
   FUP: 'Em Contato',
@@ -133,6 +135,7 @@ export const LEAD_STAGE_LABELS: Record<string, string> = {
 }
 
 export const LEAD_STAGE_COLORS: Record<string, string> = {
+  GRUPO: '#0d9488',
   NOVO: '#4A78FF',
   CONTATAR: '#6366f1',
   FUP: '#06b6d4',
@@ -162,6 +165,7 @@ export const LEAD_SOURCE_LABELS: Record<string, string> = {
   youtube_mentoria: 'YouTube · Consultoria', // /advisor?c=youtube nas descrições dos vídeos
   youtube_tiktok: 'YouTube · TikTok',
   cta_instagram: 'CTA · Instagram', // comentou no post, recebeu o link /material no direct
+  grupo_whatsapp: 'Grupo WhatsApp', // entrou no grupo (coluna "Leads Grupo")
   // legado (dados antigos migrados; mantidos p/ exibição)
   site: 'Site',
   facebook: 'Facebook',
@@ -179,6 +183,7 @@ export const LEAD_SOURCE_OPTIONS = [
   'indicacao',
   'evento',
   'base_clientes',
+  'grupo_whatsapp',
 ] as const
 
 // Faturamento mensal bands (ICP filter). ICP threshold = R$100k/mês.
