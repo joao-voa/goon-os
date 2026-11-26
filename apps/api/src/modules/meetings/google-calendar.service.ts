@@ -136,6 +136,43 @@ export class GoogleCalendarService {
     }
   }
 
+  /**
+   * Todos os eventos da agenda do mentor no intervalo, com título e Meet (Calendário GOON do Mentoria:
+   * inclui o que foi marcado direto no Google, fora do GOON OS). Pagina até o fim; ignora cancelados.
+   */
+  async events(calendar: string, from: Date, to: Date) {
+    type Ev = {
+      id: string; status?: string; summary?: string; hangoutLink?: string
+      start?: { dateTime?: string; date?: string }; end?: { dateTime?: string; date?: string }
+      attendees?: { email?: string; self?: boolean; responseStatus?: string }[]
+    }
+    const out: Ev[] = []
+    let pageToken: string | undefined
+    do {
+      const qs = new URLSearchParams({
+        timeMin: from.toISOString(), timeMax: to.toISOString(), singleEvents: 'true', orderBy: 'startTime', maxResults: '250', timeZone: TZ,
+        ...(pageToken ? { pageToken } : {}),
+      })
+      const r = await this.call<{ items?: Ev[]; nextPageToken?: string }>(calendar, 'GET', `/calendars/primary/events?${qs}`)
+      out.push(...(r.items ?? []))
+      pageToken = r.nextPageToken
+    } while (pageToken)
+    return out
+      .filter(e => e.status !== 'cancelled' && !e.attendees?.some(a => a.self && a.responseStatus === 'declined'))
+      .map(e => {
+        const start = e.start?.dateTime ?? e.start?.date ?? ''
+        const end = e.end?.dateTime ?? e.end?.date ?? ''
+        return {
+          id: e.id,
+          title: e.summary?.trim() || '(sem título)',
+          start,
+          allDay: !e.start?.dateTime,
+          durationMin: start && end ? Math.max(0, Math.round((Date.parse(end) - Date.parse(start)) / 60000)) : 0,
+          meetLink: e.hangoutLink ?? null,
+        }
+      })
+  }
+
   /** Compromissos que ocupam a agenda do mentor no intervalo (ignora "disponível" e recusados). */
   async busy(calendar: string, from: Date, to: Date) {
     type Ev = {

@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Headers, Param, Post, Query, UnauthorizedException } from '@nestjs/common'
 import { timingSafeEqual } from 'crypto'
 import { PrismaService } from '../../prisma/prisma.service'
+import { GoogleCalendarService } from './google-calendar.service'
 import { MeetingsService } from './meetings.service'
 import { MENTORIA_SOURCE, fromMentoriaStatus } from './mentoria-bridge.service'
 
@@ -13,7 +14,7 @@ const KIND_LABEL: Record<string, string> = { d1: 'D1', acompanhamento: 'Acompanh
  */
 @Controller('api/integrations/mentoria')
 export class MentoriaController {
-  constructor(private prisma: PrismaService, private meetings: MeetingsService) {}
+  constructor(private prisma: PrismaService, private meetings: MeetingsService, private gcal: GoogleCalendarService) {}
 
   private auth(header?: string) {
     const secret = process.env.MENTORIA_SYNC_SECRET
@@ -46,7 +47,33 @@ export class MentoriaController {
         cur.contacts.push(client)
       }
     }
-    return [...out.values()]
+    return [...out.values(), ...(await this.googleOnly(start, end))]
+  }
+
+  /**
+   * Eventos marcados direto no Google (fora do GOON OS) nas agendas dos mentores cadastrados.
+   * Sem os que já são reunião daqui (inclusive as do Mentoria). Falha de uma agenda não derruba as outras.
+   */
+  private async googleOnly(start: Date, end: Date) {
+    if (!this.gcal.enabled) return []
+    const [calendars, known] = await Promise.all([
+      this.prisma.mentorCalendar.findMany({ where: { isActive: true }, select: { name: true, email: true } }),
+      this.prisma.meeting.findMany({ where: { date: { gte: new Date(start.getTime() - 864e5), lt: new Date(end.getTime() + 864e5) }, googleEventId: { not: null } }, select: { googleEventId: true } }),
+    ])
+    const seen = new Set(known.map(k => k.googleEventId!))
+    const lists = await Promise.all(
+      calendars.map(c => this.gcal.events(c.email, start, end).then(evs => evs.map(e => ({ ...e, mentorName: c.name }))).catch(() => [])),
+    )
+    const items: { id: string; title: string; type: string; category: string; date: string; duration: number; status: string; mentorName: string; meetLink: string | null; clients: string[]; contacts: never[] }[] = []
+    for (const e of lists.flat()) {
+      // mesmo evento em duas agendas (mentores convidados): um item só
+      if (seen.has(e.id) || e.allDay) continue
+      seen.add(e.id)
+      const t = e.title.toLowerCase()
+      const category = /mentoria|acompanhamento|encontro/.test(t) ? 'MENTORIA' : /conversa|comercial|reuni[aã]o com|apresenta/.test(t) ? 'COMERCIAL' : 'OUTRO'
+      items.push({ id: `google:${e.id}`, title: e.title, type: 'GOOGLE', category, date: new Date(e.start).toISOString(), duration: e.durationMin, status: 'SCHEDULED', mentorName: e.mentorName, meetLink: e.meetLink, clients: [], contacts: [] })
+    }
+    return items
   }
 
   @Post('meetings')
