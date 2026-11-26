@@ -18,7 +18,9 @@ type Board = {
   productCode: string | null
   items: Item[]; doneCount: number; total: number
   completed: boolean; inactive: boolean
-  kickoff: { id: string; date: string; status: string; meetLink: string | null; guestEmails?: string[]; inviteClient?: boolean } | null
+  kickoff: Meet | null
+  d1: Meet | null
+  linked360?: boolean
   daysSinceClose: number
   notes: string | null
   signature: { status: string | null; sentAt: string | null; signers: Array<{ name: string; email: string; signedAt?: string | null }> | null } | null
@@ -40,6 +42,13 @@ const splitEmails = (t: string) => [...new Set(t.split(/[\s,;]+/).map(e => e.tri
 // e-mails conhecidos do cliente: cadastro + os que aparecem nos dados do contrato colados
 const clientEmails = (b: { client: { email: string | null }; notes?: string | null }) =>
   splitEmails([b.client.email ?? '', ...((b.notes ?? '').match(/[^\s@:;,]+@[^\s@;,]+\.[^\s@;,]+/g) ?? [])].join(','))
+type Meet = { id: string; date: string; status: string; meetLink: string | null; guestEmails?: string[]; inviteClient?: boolean; from360?: boolean }
+// D0 = reunião de onboarding; D1 = diagnóstico (tipo KICKOFF, conversa com o GOON 360)
+const MEET_KIND = {
+  d0: { label: 'D0', type: 'ONBOARDING', title: 'Onboarding (D0)', duration: 60 },
+  d1: { label: 'D1', type: 'KICKOFF', title: 'D1 (diagnóstico)', duration: 120 },
+} as const
+const meetState = (m: Meet) => m.status === 'DONE' ? 'realizada' : new Date(m.date) < new Date() ? 'falta registrar' : 'agendada'
 const TEMPLATE_NAMES: Record<string, string> = { GE: 'GOON ELITE', GI: 'GOON INFINITY', TTS: 'TIKTOK SCALE', TTSG: 'TIKTOK SCALE GRUPO', GA: 'GOON ADVISOR', GS: 'GOON SCALE' }
 const SIGN_STATUS: Record<string, string> = { sent: 'enviado', delivered: 'aberto pelo cliente', completed: 'assinado', declined: 'recusado', voided: 'cancelado' }
 
@@ -62,9 +71,10 @@ export default function OnboardingPage() {
   const [tab, setTab] = useState<'andamento' | 'concluidos' | 'inativos'>('andamento')
   const [search, setSearch] = useState('')
   const [kickoffFor, setKickoffFor] = useState<string | null>(null)
+  const [kfKind, setKfKind] = useState<'d0' | 'd1'>('d0')
   const [kf, setKf] = useState({ date: '', time: '10:00', owner: 'Giulliano' as 'Giulliano' | 'João', emails: '' })
   // e-mails do D0 já marcado (editar convidados)
-  const [d0Emails, setD0Emails] = useState<{ id: string; meetingId: string; text: string } | null>(null)
+  const [d0Emails, setD0Emails] = useState<{ id: string; meetingId: string; text: string; label?: string } | null>(null)
   const [showCreate, setShowCreate] = useState(false)
   const [clients, setClients] = useState<Array<{ id: string; companyName: string }>>([])
   const [newClientId, setNewClientId] = useState('')
@@ -295,29 +305,30 @@ export default function OnboardingPage() {
     if (!d0Emails) return
     try {
       await apiFetch(`/api/meetings/${d0Emails.meetingId}`, { method: 'PATCH', body: JSON.stringify({ inviteClient: false, guestEmails: splitEmails(d0Emails.text) }) })
-      toast.success('Convite enviado para os e-mails do D0')
+      toast.success(`Convite enviado para os e-mails da ${d0Emails.label ?? 'D0'}`)
       setD0Emails(null); load()
     } catch { toast.error('Erro ao salvar os e-mails') }
   }
 
   async function scheduleKickoff(b: Board) {
     if (!kf.date) { toast.error('Escolha o dia'); return }
+    const K = MEET_KIND[kfKind]
     try {
       const m = await apiFetch<{ date: string; type?: string; meetLink?: string | null; googleSyncError?: string | null }>('/api/meetings', {
         method: 'POST',
         body: JSON.stringify({
-          clientId: b.clientId, title: `Onboarding (D0) - GOON & ${b.client.companyName}`, type: 'ONBOARDING', category: 'MENTORIA',
-          date: new Date(`${kf.date}T${kf.time}:00`).toISOString(), duration: 60, mentorName: kf.owner,
+          clientId: b.clientId, title: `${K.title} - GOON & ${b.client.companyName}`, type: K.type, category: 'MENTORIA',
+          date: new Date(`${kf.date}T${kf.time}:00`).toISOString(), duration: K.duration, mentorName: kf.owner,
           inviteClient: false, guestEmails: splitEmails(kf.emails),
         }),
       })
-      toast.success(m.meetLink ? 'D0 marcado na agenda, com Meet' : 'D0 marcado')
+      toast.success(m.meetLink ? `${K.label} marcada na agenda, com Meet` : `${K.label} marcada`)
       if (m.googleSyncError) toast.warning('Não foi para o Google Agenda: ' + m.googleSyncError)
       setKickoffFor(null)
       // convite pronto para mandar ao cliente (mesma copy da agenda/CRM)
-      setSentMsg({ company: b.client.companyName, title: 'D0 marcado', text: meetingInviteText({ ...m, type: 'ONBOARDING' }, b.client) })
+      setSentMsg({ company: b.client.companyName, title: `${K.label} marcada`, text: meetingInviteText({ ...m, type: K.type, category: 'MENTORIA' }, b.client) })
       load()
-    } catch { toast.error('Erro ao marcar o D0') }
+    } catch { toast.error(`Erro ao marcar a ${K.label}`) }
   }
 
   if (!board) return <div style={{ padding: 24, color: C.mid, fontFamily: sans }}>Carregando…</div>
@@ -423,9 +434,16 @@ export default function OnboardingPage() {
                     {it.key === 'dados_contrato' && (
                       <button onClick={() => { setDataFor(b); setDataText(b.notes ?? '') }} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>{b.notes ? 'ver' : 'colar'}</button>
                     )}
-                    {it.key === 'kickoff' && (b.kickoff
-                      ? <span style={{ fontSize: 11, color: C.mid, whiteSpace: 'nowrap' }}>{new Date(b.kickoff.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
-                      : <button onClick={() => { setKickoffFor(kickoffFor === b.id ? null : b.id); setKf(k => ({ ...k, date: '', emails: clientEmails(b).join(', ') })) }} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>marcar</button>)}
+                    {(it.key === 'kickoff' || it.key === 'd1') && (() => {
+                      const kind = it.key === 'kickoff' ? 'd0' : 'd1'
+                      const m = kind === 'd0' ? b.kickoff : b.d1
+                      if (m) return (
+                        <span title={m.from360 ? 'Marcada no GOON 360' : undefined} style={{ fontSize: 11, color: m.status === 'DONE' ? C.green : C.mid, whiteSpace: 'nowrap' }}>
+                          {new Date(m.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} · {meetState(m)}{m.from360 ? ' · 360' : ''}
+                        </span>
+                      )
+                      return <button onClick={() => { const open = kickoffFor === b.id && kfKind === kind; setKickoffFor(open ? null : b.id); setKfKind(kind); setKf(k => ({ ...k, date: '', emails: clientEmails(b).join(', ') })) }} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>marcar</button>
+                    })()}
                   </div>
                 ))}
               </div>
@@ -453,7 +471,7 @@ export default function OnboardingPage() {
               {d0Emails?.id === b.id && (
                 <div style={{ background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <label style={{ display: 'flex', flexDirection: 'column', gap: 3, fontSize: 11, color: C.mid }}>
-                    E-mails que recebem o convite do D0 (separe por vírgula)
+                    E-mails que recebem o convite da {d0Emails.label ?? 'D0'} (separe por vírgula)
                     <input value={d0Emails.text} onChange={e => setD0Emails({ ...d0Emails, text: e.target.value })} style={{ ...inp, fontSize: 12 }} />
                   </label>
                   <div style={{ display: 'flex', gap: 6 }}>
@@ -476,12 +494,18 @@ export default function OnboardingPage() {
                       </label>
                     ))}
                   </div>
+                  <div style={{ fontSize: 12, fontWeight: 700 }}>{kfKind === 'd0' ? 'D0 · reunião de onboarding (1h)' : 'D1 · diagnóstico (2h)'}</div>
+                  {kfKind === 'd1' && (
+                    <div style={{ fontSize: 11, color: b.linked360 ? C.mid : C.amber }}>
+                      {b.linked360 ? 'Vai também para o Advisor da marca no GOON 360.' : 'Marca ainda não ligada ao GOON 360: a D1 fica só aqui e no Google.'}
+                    </div>
+                  )}
                   <label style={{ display: 'flex', flexDirection: 'column', gap: 3, fontSize: 11, color: C.mid }}>
                     E-mails que recebem o convite (separe por vírgula)
                     <input value={kf.emails} onChange={e => setKf({ ...kf, emails: e.target.value })} placeholder="cliente@empresa.com, socio@empresa.com" style={{ ...inp, fontSize: 12 }} />
                   </label>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => scheduleKickoff(b)} style={{ ...btn, background: C.ink, color: '#fff', border: 'none', flex: 1 }}>Marcar D0</button>
+                    <button onClick={() => scheduleKickoff(b)} style={{ ...btn, background: C.ink, color: '#fff', border: 'none', flex: 1 }}>Marcar {MEET_KIND[kfKind].label}</button>
                     <button onClick={() => setKickoffFor(null)} style={btn}>Cancelar</button>
                   </div>
                 </div>
@@ -490,11 +514,20 @@ export default function OnboardingPage() {
               {b.doneCount === b.total - 1 && !b.items.find(i => i.key === 'contrato_assinado')?.done && (
                 <div style={{ fontSize: 11.5, color: C.amber, fontWeight: 600 }}>Só falta anexar o contrato assinado para concluir.</div>
               )}
-              <div style={{ display: 'flex', gap: 6, marginTop: 'auto', paddingTop: 4, borderTop: `1px solid ${C.bg}` }}>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 'auto', paddingTop: 4, borderTop: `1px solid ${C.bg}` }}>
                 {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={{ ...btn, background: '#25d366', color: '#fff', border: 'none', textDecoration: 'none' }}>WhatsApp</a>}
-                {b.kickoff?.meetLink && <a href={b.kickoff.meetLink} target="_blank" rel="noopener noreferrer" style={{ ...btn, textDecoration: 'none' }}>Meet do D0</a>}
-                {b.kickoff && b.kickoff.status === 'SCHEDULED' && <button onClick={() => setD0Emails({ id: b.id, meetingId: b.kickoff!.id, text: [...new Set([...(b.kickoff!.inviteClient && b.client.email ? [b.client.email] : []), ...(b.kickoff!.guestEmails ?? [])])].join(', ') || clientEmails(b).join(', ') })} style={btn}>E-mails do D0</button>}
-                {b.kickoff && b.kickoff.status === 'SCHEDULED' && <button onClick={() => setSentMsg({ company: b.client.companyName, title: 'Convite do D0', text: meetingInviteText({ date: b.kickoff!.date, type: 'ONBOARDING', meetLink: b.kickoff!.meetLink }, b.client) })} style={btn}>Convite do D0</button>}
+                {(['d0', 'd1'] as const).map(kind => {
+                  const m = kind === 'd0' ? b.kickoff : b.d1
+                  if (!m || m.status !== 'SCHEDULED') return null
+                  const L = MEET_KIND[kind].label
+                  return (
+                    <React.Fragment key={kind}>
+                      {m.meetLink && <a href={m.meetLink} target="_blank" rel="noopener noreferrer" style={{ ...btn, textDecoration: 'none' }}>Meet da {L}</a>}
+                      <button onClick={() => setD0Emails({ id: b.id, meetingId: m.id, label: L, text: [...new Set([...(m.inviteClient && b.client.email ? [b.client.email] : []), ...(m.guestEmails ?? [])])].join(', ') || clientEmails(b).join(', ') })} style={btn}>E-mails da {L}</button>
+                      <button onClick={() => setSentMsg({ company: b.client.companyName, title: `Convite da ${L}`, text: meetingInviteText({ date: m.date, type: MEET_KIND[kind].type, category: 'MENTORIA', meetLink: m.meetLink }, b.client) })} style={btn}>Convite da {L}</button>
+                    </React.Fragment>
+                  )
+                })}
                 <a href={`/clients/${b.clientId}`} style={{ ...btn, textDecoration: 'none', marginLeft: 'auto' }}>Ver cliente</a>
               </div>
             </div>

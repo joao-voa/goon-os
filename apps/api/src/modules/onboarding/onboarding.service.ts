@@ -7,6 +7,9 @@ import { CONTRACT_FIELDS, dataLonga, extenso, extensoF, fillDocx, reaisPorExtens
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 
+// tipos de reunião que contam como D1 (diagnóstico); a D1 que vem do GOON 360 chega como KICKOFF
+const D1_TYPES = ['KICKOFF', 'DIAGNOSTICO', 'PLANO_VOO']
+
 const VALID_STAGES = [
   'CLIENT_CLOSED',
   'CONTRACT_SENT',
@@ -212,6 +215,7 @@ export class OnboardingService {
     { key: 'sistema_goon', label: 'Sistema GOON' },
     { key: 'area_membros', label: 'Área de membros' },
     { key: 'kickoff', label: 'D0 (reunião de onboarding)' },
+    { key: 'd1', label: 'D1 (diagnóstico)' },
   ]
 
   async board() {
@@ -233,16 +237,20 @@ export class OnboardingService {
             documents: { where: { type: 'SIGNED_CONTRACT' }, select: { id: true }, take: 1 },
             contracts: { select: { status: true } },
             payments: { where: { status: { not: 'CANCELLED' } }, select: { status: true, inCarteira: true } },
-            // D0 = reunião de onboarding (tipo ONBOARDING). D1 do GOON Mentoria entra como KICKOFF e não conta aqui
-            meetings: { where: { type: 'ONBOARDING', status: { notIn: ['CANCELLED', 'RESCHEDULED'] } }, orderBy: { date: 'asc' }, take: 1, select: { id: true, date: true, status: true, meetLink: true, guestEmails: true, inviteClient: true } },
+            // D0 = reunião de onboarding (tipo ONBOARDING). D1 = KICKOFF/DIAGNOSTICO/PLANO_VOO (é como a D1 do GOON 360 chega aqui)
+            meetings: { where: { type: { in: ['ONBOARDING', ...D1_TYPES] }, status: { notIn: ['CANCELLED', 'RESCHEDULED'] } }, orderBy: { date: 'asc' }, select: { id: true, type: true, date: true, status: true, meetLink: true, guestEmails: true, inviteClient: true, externalSource: true } },
           },
         },
       },
     })
+    // marcas ligadas ao GOON 360: a D1 marcada aqui vai pra lá (e a de lá chega aqui)
+    const linked = new Set((await this.prisma.mentoriaTenantLink.findMany({ select: { clientId: true } })).map(l => l.clientId))
     return obs.map(ob => {
       const c = ob.client
       const manual = (ob.checklist ?? {}) as Record<string, boolean>
-      const kickoff = c.meetings[0] ?? null
+      const kickoff = c.meetings.find(m => m.type === 'ONBOARDING') ?? null
+      const d1 = c.meetings.find(m => D1_TYPES.includes(m.type)) ?? null
+      const meet = (m: typeof kickoff) => m ? { id: m.id, date: m.date, status: m.status, meetLink: m.meetLink, guestEmails: m.guestEmails, inviteClient: m.inviteClient, from360: m.externalSource === 'goonmentoria' } : null
       const auto: Record<string, boolean> = {
         // dados para o contrato: CNPJ/CPF, endereço, cidade e e-mail preenchidos no cadastro
         dados_contrato: !!(c.cnpj && c.address && c.city && c.email),
@@ -256,6 +264,7 @@ export class OnboardingService {
         sistema_goon: false,
         area_membros: false,
         kickoff: !!kickoff,
+        d1: !!d1,
       }
       const items = OnboardingService.ITEMS.map(it => {
         const hasManual = it.key !== 'contrato_assinado' && typeof manual[it.key] === 'boolean'
@@ -275,7 +284,9 @@ export class OnboardingService {
         allDone: doneCount === items.length,
         currentStage: ob.currentStage,
         inactive,
-        kickoff: kickoff ? { id: kickoff.id, date: kickoff.date, status: kickoff.status, meetLink: kickoff.meetLink, guestEmails: kickoff.guestEmails, inviteClient: kickoff.inviteClient } : null,
+        kickoff: meet(kickoff),
+        d1: meet(d1),
+        linked360: linked.has(c.id),
         daysSinceClose: daysAgo(since),
         notes: ob.notes,
         signature: ob.signEnvelopeId ? { status: ob.signStatus, sentAt: ob.signSentAt, signers: ((ob.signSigners ?? {}) as { signers?: unknown }).signers ?? null } : null,

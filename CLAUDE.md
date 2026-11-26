@@ -214,6 +214,14 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
   Só mentoria individual (não GRUPO). `Meeting.externalSource/externalId` = encontro de lá.
   Mudança vinda de lá usa `{ fromMentoria: true }` para não voltar (evita loop).
 
+### D0 e D1 no checklist do onboarding
+- **D0** = reunião de onboarding (`Meeting.type = ONBOARDING`, 1h, só GOON OS + Google; aparece na agenda do GOON 360
+  pelo `GET /api/integrations/mentoria/agenda`). **D1** = diagnóstico (`type KICKOFF`, também DIAGNOSTICO/PLANO_VOO; 2h).
+- D1 marcada no card vai para o Advisor da marca no GOON 360 (`MentoriaBridgeService.push`: KICKOFF = kind d1) se o
+  cliente tiver `MentoriaTenantLink`; a D1 marcada no GOON 360 chega aqui como KICKOFF. O item mostra data e estado
+  (agendada / falta registrar / realizada · 360 quando veio de lá). Realizada vem do status DONE (sincronizado com o 360).
+- Cliente antigo sem diagnóstico (`skip_d1` no GOON 360): marcar o item D1 à mão.
+
 ### Contrato a partir do modelo (onboarding)
 - Modelos .docx por programa em `ContractTemplate` (code = GE, GI, TTS…; .docx em base64), com 15 campos `{{CAMPO}}`
   (CAMPOS_MODELOS_GOON.csv): RAZAO_SOCIAL, NOME_FANTASIA, CNPJ, ENDERECO, REPRESENTANTE, CPF, EMAIL, TELEFONE, CICLO,
