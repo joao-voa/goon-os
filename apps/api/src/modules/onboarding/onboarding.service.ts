@@ -234,7 +234,7 @@ export class OnboardingService {
             contracts: { select: { status: true } },
             payments: { where: { status: { not: 'CANCELLED' } }, select: { status: true, inCarteira: true } },
             // D0 = reunião de onboarding (tipo ONBOARDING). D1 do GOON Mentoria entra como KICKOFF e não conta aqui
-            meetings: { where: { type: 'ONBOARDING', status: { notIn: ['CANCELLED', 'RESCHEDULED'] } }, orderBy: { date: 'asc' }, take: 1, select: { date: true, status: true, meetLink: true } },
+            meetings: { where: { type: 'ONBOARDING', status: { notIn: ['CANCELLED', 'RESCHEDULED'] } }, orderBy: { date: 'asc' }, take: 1, select: { id: true, date: true, status: true, meetLink: true, guestEmails: true, inviteClient: true } },
           },
         },
       },
@@ -275,7 +275,7 @@ export class OnboardingService {
         allDone: doneCount === items.length,
         currentStage: ob.currentStage,
         inactive,
-        kickoff: kickoff ? { date: kickoff.date, status: kickoff.status, meetLink: kickoff.meetLink } : null,
+        kickoff: kickoff ? { id: kickoff.id, date: kickoff.date, status: kickoff.status, meetLink: kickoff.meetLink, guestEmails: kickoff.guestEmails, inviteClient: kickoff.inviteClient } : null,
         daysSinceClose: daysAgo(since),
         notes: ob.notes,
         signature: ob.signEnvelopeId ? { status: ob.signStatus, sentAt: ob.signSentAt, signers: ((ob.signSigners ?? {}) as { signers?: unknown }).signers ?? null } : null,

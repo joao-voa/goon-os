@@ -92,6 +92,7 @@ export class MeetingsController {
     mentorName?: string
     notes?: string
     inviteClient?: boolean
+    guestEmails?: string[]
   }) {
     return this.service.create(dto)
   }
@@ -107,6 +108,7 @@ export class MeetingsController {
     notes?: string
     status?: string
     inviteClient?: boolean
+    guestEmails?: string[]
   }) {
     return this.service.createGroup(dto)
   }
@@ -121,6 +123,7 @@ export class MeetingsController {
     notes?: string
     status?: string
     inviteClient?: boolean
+    guestEmails?: string[]
   }) {
     return this.service.update(id, dto)
   }

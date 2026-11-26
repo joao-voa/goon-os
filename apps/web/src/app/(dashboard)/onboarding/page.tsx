@@ -18,7 +18,7 @@ type Board = {
   productCode: string | null
   items: Item[]; doneCount: number; total: number
   completed: boolean; inactive: boolean
-  kickoff: { date: string; status: string; meetLink: string | null } | null
+  kickoff: { id: string; date: string; status: string; meetLink: string | null; guestEmails?: string[]; inviteClient?: boolean } | null
   daysSinceClose: number
   notes: string | null
   signature: { status: string | null; sentAt: string | null; signers: Array<{ name: string; email: string; signedAt?: string | null }> | null } | null
@@ -36,6 +36,10 @@ const goonPending = (b: { signature: { status: string | null; signers: Array<{ e
 }
 // já tem contrato em aberto na ClickSign (mandar outro = nova versão, cancela o atual)
 const hasOpenSend = (b: { signature: { status: string | null } | null }) => b.signature?.status === 'sent' || b.signature?.status === 'sending'
+const splitEmails = (t: string) => [...new Set(t.split(/[\s,;]+/).map(e => e.trim().toLowerCase()).filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)))]
+// e-mails conhecidos do cliente: cadastro + os que aparecem nos dados do contrato colados
+const clientEmails = (b: { client: { email: string | null }; notes?: string | null }) =>
+  splitEmails([b.client.email ?? '', ...((b.notes ?? '').match(/[^\s@:;,]+@[^\s@;,]+\.[^\s@;,]+/g) ?? [])].join(','))
 const TEMPLATE_NAMES: Record<string, string> = { GE: 'GOON ELITE', GI: 'GOON INFINITY', TTS: 'TIKTOK SCALE', TTSG: 'TIKTOK SCALE GRUPO', GA: 'GOON ADVISOR', GS: 'GOON SCALE' }
 const SIGN_STATUS: Record<string, string> = { sent: 'enviado', delivered: 'aberto pelo cliente', completed: 'assinado', declined: 'recusado', voided: 'cancelado' }
 
@@ -58,7 +62,9 @@ export default function OnboardingPage() {
   const [tab, setTab] = useState<'andamento' | 'concluidos' | 'inativos'>('andamento')
   const [search, setSearch] = useState('')
   const [kickoffFor, setKickoffFor] = useState<string | null>(null)
-  const [kf, setKf] = useState({ date: '', time: '10:00', owner: 'Giulliano' as 'Giulliano' | 'João', invite: true })
+  const [kf, setKf] = useState({ date: '', time: '10:00', owner: 'Giulliano' as 'Giulliano' | 'João', emails: '' })
+  // e-mails do D0 já marcado (editar convidados)
+  const [d0Emails, setD0Emails] = useState<{ id: string; meetingId: string; text: string } | null>(null)
   const [showCreate, setShowCreate] = useState(false)
   const [clients, setClients] = useState<Array<{ id: string; companyName: string }>>([])
   const [newClientId, setNewClientId] = useState('')
@@ -285,6 +291,15 @@ export default function OnboardingPage() {
     setSavingData(false)
   }
 
+  async function saveD0Emails() {
+    if (!d0Emails) return
+    try {
+      await apiFetch(`/api/meetings/${d0Emails.meetingId}`, { method: 'PATCH', body: JSON.stringify({ inviteClient: false, guestEmails: splitEmails(d0Emails.text) }) })
+      toast.success('Convite enviado para os e-mails do D0')
+      setD0Emails(null); load()
+    } catch { toast.error('Erro ao salvar os e-mails') }
+  }
+
   async function scheduleKickoff(b: Board) {
     if (!kf.date) { toast.error('Escolha o dia'); return }
     try {
@@ -292,7 +307,8 @@ export default function OnboardingPage() {
         method: 'POST',
         body: JSON.stringify({
           clientId: b.clientId, title: `Onboarding (D0) - GOON & ${b.client.companyName}`, type: 'ONBOARDING', category: 'MENTORIA',
-          date: new Date(`${kf.date}T${kf.time}:00`).toISOString(), duration: 60, mentorName: kf.owner, inviteClient: kf.invite && !!b.client.email,
+          date: new Date(`${kf.date}T${kf.time}:00`).toISOString(), duration: 60, mentorName: kf.owner,
+          inviteClient: false, guestEmails: splitEmails(kf.emails),
         }),
       })
       toast.success(m.meetLink ? 'D0 marcado na agenda, com Meet' : 'D0 marcado')
@@ -409,7 +425,7 @@ export default function OnboardingPage() {
                     )}
                     {it.key === 'kickoff' && (b.kickoff
                       ? <span style={{ fontSize: 11, color: C.mid, whiteSpace: 'nowrap' }}>{new Date(b.kickoff.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
-                      : <button onClick={() => { setKickoffFor(kickoffFor === b.id ? null : b.id); setKf(k => ({ ...k, date: '' })) }} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>marcar</button>)}
+                      : <button onClick={() => { setKickoffFor(kickoffFor === b.id ? null : b.id); setKf(k => ({ ...k, date: '', emails: clientEmails(b).join(', ') })) }} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>marcar</button>)}
                   </div>
                 ))}
               </div>
@@ -434,6 +450,19 @@ export default function OnboardingPage() {
                 )
               })()}
 
+              {d0Emails?.id === b.id && (
+                <div style={{ background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: 3, fontSize: 11, color: C.mid }}>
+                    E-mails que recebem o convite do D0 (separe por vírgula)
+                    <input value={d0Emails.text} onChange={e => setD0Emails({ ...d0Emails, text: e.target.value })} style={{ ...inp, fontSize: 12 }} />
+                  </label>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={saveD0Emails} style={{ ...btn, background: C.ink, color: '#fff', border: 'none', flex: 1 }}>Salvar e enviar convite</button>
+                    <button onClick={() => setD0Emails(null)} style={btn}>Cancelar</button>
+                  </div>
+                </div>
+              )}
+
               {kickoffFor === b.id && (
                 <div style={{ background: C.bg, border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div style={{ display: 'flex', gap: 6 }}>
@@ -446,10 +475,11 @@ export default function OnboardingPage() {
                         <input type="checkbox" checked={kf.owner === n} onChange={() => setKf({ ...kf, owner: n })} />{n}
                       </label>
                     ))}
-                    <label style={{ display: 'flex', gap: 4, alignItems: 'center', cursor: b.client.email ? 'pointer' : 'default', color: b.client.email ? C.ink : C.dim }}>
-                      <input type="checkbox" disabled={!b.client.email} checked={kf.invite && !!b.client.email} onChange={e => setKf({ ...kf, invite: e.target.checked })} />convite ao cliente
-                    </label>
                   </div>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: 3, fontSize: 11, color: C.mid }}>
+                    E-mails que recebem o convite (separe por vírgula)
+                    <input value={kf.emails} onChange={e => setKf({ ...kf, emails: e.target.value })} placeholder="cliente@empresa.com, socio@empresa.com" style={{ ...inp, fontSize: 12 }} />
+                  </label>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button onClick={() => scheduleKickoff(b)} style={{ ...btn, background: C.ink, color: '#fff', border: 'none', flex: 1 }}>Marcar D0</button>
                     <button onClick={() => setKickoffFor(null)} style={btn}>Cancelar</button>
@@ -463,6 +493,7 @@ export default function OnboardingPage() {
               <div style={{ display: 'flex', gap: 6, marginTop: 'auto', paddingTop: 4, borderTop: `1px solid ${C.bg}` }}>
                 {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={{ ...btn, background: '#25d366', color: '#fff', border: 'none', textDecoration: 'none' }}>WhatsApp</a>}
                 {b.kickoff?.meetLink && <a href={b.kickoff.meetLink} target="_blank" rel="noopener noreferrer" style={{ ...btn, textDecoration: 'none' }}>Meet do D0</a>}
+                {b.kickoff && b.kickoff.status === 'SCHEDULED' && <button onClick={() => setD0Emails({ id: b.id, meetingId: b.kickoff!.id, text: [...new Set([...(b.kickoff!.inviteClient && b.client.email ? [b.client.email] : []), ...(b.kickoff!.guestEmails ?? [])])].join(', ') || clientEmails(b).join(', ') })} style={btn}>E-mails do D0</button>}
                 {b.kickoff && b.kickoff.status === 'SCHEDULED' && <button onClick={() => setSentMsg({ company: b.client.companyName, title: 'Convite do D0', text: meetingInviteText({ date: b.kickoff!.date, type: 'ONBOARDING', meetLink: b.kickoff!.meetLink }, b.client) })} style={btn}>Convite do D0</button>}
                 <a href={`/clients/${b.clientId}`} style={{ ...btn, textDecoration: 'none', marginLeft: 'auto' }}>Ver cliente</a>
               </div>

@@ -205,6 +205,8 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
   (`MeetingsService.syncToGoogle`). Erro do Google não derruba: vai para `googleSyncError`.
 - Reunião em grupo = 1 evento; todas as linhas guardam o mesmo `googleEventId`.
 - Convite ao cliente (`inviteClient`) manda e-mail com link do Meet. Reunião passada não vira evento.
+- E-mails extras convidados em `Meeting.guestEmails` (sócios, time do cliente). D0 do onboarding usa só essa lista
+  (pré-preenchida com o e-mail do cadastro e os dos dados do contrato) e pode ser editada depois ("E-mails do D0").
 - **GOON Mentoria** (app separado, ~/Desktop/GOONMENTORIA): agendas conversam nos dois sentidos.
   Marca (tenant slug) ↔ cliente em `MentoriaTenantLink` (com mentor padrão da agenda). Entrada:
   `POST/DELETE /api/integrations/mentoria/meetings` (Bearer `MENTORIA_SYNC_SECRET`, sem login).

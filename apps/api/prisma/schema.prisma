@@ -144,6 +144,7 @@ model Meeting {
   googleCalendar  String?   // e-mail da agenda onde o evento está
   meetLink        String?   // link do Google Meet
   inviteClient    Boolean   @default(false) // cliente recebe convite por e-mail
+  guestEmails     String[]  @default([]) // outros e-mails convidados (sócios, time do cliente)
   googleSyncError String?   // último erro ao sincronizar (null = ok)
 
   // Espelho do GOON Mentoria (encontro de mentoria da marca). Origem + id lá.

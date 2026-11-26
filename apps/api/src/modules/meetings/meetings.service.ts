@@ -5,6 +5,8 @@ import { MentoriaBridgeService } from './mentoria-bridge.service'
 
 // fromMentoria: a mudança veio do GOON Mentoria; não devolve para lá (evita loop)
 type SyncOpts = { fromMentoria?: boolean }
+/** E-mails extras: minúsculos, sem repetição e só os que parecem e-mail. */
+const cleanEmails = (l?: string[]) => [...new Set((l ?? []).map(e => e.trim().toLowerCase()).filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)))]
 
 const TYPE_LABELS: Record<string, string> = {
   INDIVIDUAL: 'Mentoria individual', GRUPO: 'Mentoria em grupo', CS: 'CS', DIAGNOSTICO: 'Diagnóstico',
@@ -66,9 +68,11 @@ export class MeetingsService {
       if (!eventId && (m.status !== 'SCHEDULED' || m.date.getTime() < Date.now() - 3600000)) return
 
       const names = [...new Set(group.map(g => g.client?.companyName).filter(Boolean))] as string[]
-      const attendees = m.inviteClient
-        ? [...new Set(group.map(g => g.client?.email?.trim().toLowerCase()).filter((e): e is string => !!e))]
-        : []
+      // convidados: e-mail do cadastro (se "convite ao cliente") + e-mails extras da reunião
+      const attendees = [...new Set([
+        ...(m.inviteClient ? group.map(g => g.client?.email) : []),
+        ...group.flatMap(g => g.guestEmails ?? []),
+      ].map(e => e?.trim().toLowerCase()).filter((e): e is string => !!e && e.includes('@')))]
       const input = {
         // padrão da agenda: "Mentoria - GOON & Cliente" / "Conversa - GOON & Cliente" (call de venda)
         summary: m.type === 'GRUPO' || names.length !== 1 ? m.title
@@ -218,6 +222,7 @@ export class MeetingsService {
     mentorName?: string
     notes?: string
     inviteClient?: boolean
+    guestEmails?: string[]
   }, opts: SyncOpts = {}) {
     if (dto.clientId) {
       const client = await this.prisma.client.findUnique({ where: { id: dto.clientId } })
@@ -241,6 +246,7 @@ export class MeetingsService {
         mentorName: dto.mentorName,
         notes: dto.notes,
         inviteClient: !!dto.inviteClient,
+        guestEmails: cleanEmails(dto.guestEmails),
       },
     })
     await this.syncToGoogle(created.id)
@@ -318,6 +324,7 @@ export class MeetingsService {
     notes?: string
     status?: string
     inviteClient?: boolean
+    guestEmails?: string[]
   }, opts: SyncOpts = {}) {
     const existing = await this.prisma.meeting.findUnique({ where: { id } })
     if (!existing) throw new NotFoundException('Reuniao nao encontrada')
@@ -334,10 +341,11 @@ export class MeetingsService {
       if (dto.status === 'DONE') data.doneAt = new Date()
     }
     if (dto.inviteClient !== undefined) data.inviteClient = dto.inviteClient
+    if (dto.guestEmails !== undefined) data.guestEmails = cleanEmails(dto.guestEmails)
 
     await this.prisma.meeting.update({ where: { id }, data })
     // só o que muda o evento dispara o Google (marcar como realizada não mexe)
-    const touchesEvent = ['title', 'type', 'date', 'duration', 'mentorName', 'notes', 'inviteClient'].some(k => k in data)
+    const touchesEvent = ['title', 'type', 'date', 'duration', 'mentorName', 'notes', 'inviteClient', 'guestEmails'].some(k => k in data)
       || data.status === 'CANCELLED' || data.status === 'RESCHEDULED'
       || (data.status === 'SCHEDULED' && ['CANCELLED', 'RESCHEDULED'].includes(existing.status))
     if (touchesEvent) await this.syncToGoogle(id)
