@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { apiFetch, API_URL } from '@/lib/api'
 import { addMonths, brl, termsToFields, termsTotal, type ContractTerms } from '@/lib/contract-terms'
+import { meetingInviteText } from '@/lib/meetingShare'
 import { PRODUCT_COLORS } from '@/lib/constants'
 
 // Onboarding em checklist (ordem livre): cada cliente tem os mesmos itens, marcados
@@ -78,7 +79,7 @@ export default function OnboardingPage() {
   const [generating, setGenerating] = useState(false)
   const [genTerms, setGenTerms] = useState<ContractTerms | null>(null)
   // depois do envio: mensagem pronta para copiar e mandar ao cliente
-  const [sentMsg, setSentMsg] = useState<{ company: string; text: string } | null>(null)
+  const [sentMsg, setSentMsg] = useState<{ company: string; text: string; title?: string } | null>(null)
   // trava contra clique duplo no envio + confirmação quando já existe um contrato em aberto
   const sendLock = useRef(false)
   const [confirmReplace, setConfirmReplace] = useState(false)
@@ -287,7 +288,7 @@ export default function OnboardingPage() {
   async function scheduleKickoff(b: Board) {
     if (!kf.date) { toast.error('Escolha o dia'); return }
     try {
-      const m = await apiFetch<{ meetLink?: string | null; googleSyncError?: string | null }>('/api/meetings', {
+      const m = await apiFetch<{ date: string; type?: string; meetLink?: string | null; googleSyncError?: string | null }>('/api/meetings', {
         method: 'POST',
         body: JSON.stringify({
           clientId: b.clientId, title: `Onboarding (D0) - GOON & ${b.client.companyName}`, type: 'ONBOARDING', category: 'MENTORIA',
@@ -297,6 +298,8 @@ export default function OnboardingPage() {
       toast.success(m.meetLink ? 'D0 marcado na agenda, com Meet' : 'D0 marcado')
       if (m.googleSyncError) toast.warning('Não foi para o Google Agenda: ' + m.googleSyncError)
       setKickoffFor(null)
+      // convite pronto para mandar ao cliente (mesma copy da agenda/CRM)
+      setSentMsg({ company: b.client.companyName, title: 'D0 marcado', text: meetingInviteText({ ...m, type: 'ONBOARDING' }, b.client) })
       load()
     } catch { toast.error('Erro ao marcar o D0') }
   }
@@ -460,6 +463,7 @@ export default function OnboardingPage() {
               <div style={{ display: 'flex', gap: 6, marginTop: 'auto', paddingTop: 4, borderTop: `1px solid ${C.bg}` }}>
                 {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={{ ...btn, background: '#25d366', color: '#fff', border: 'none', textDecoration: 'none' }}>WhatsApp</a>}
                 {b.kickoff?.meetLink && <a href={b.kickoff.meetLink} target="_blank" rel="noopener noreferrer" style={{ ...btn, textDecoration: 'none' }}>Meet do D0</a>}
+                {b.kickoff && b.kickoff.status === 'SCHEDULED' && <button onClick={() => setSentMsg({ company: b.client.companyName, title: 'Convite do D0', text: meetingInviteText({ date: b.kickoff!.date, type: 'ONBOARDING', meetLink: b.kickoff!.meetLink }, b.client) })} style={btn}>Convite do D0</button>}
                 <a href={`/clients/${b.clientId}`} style={{ ...btn, textDecoration: 'none', marginLeft: 'auto' }}>Ver cliente</a>
               </div>
             </div>
@@ -471,7 +475,7 @@ export default function OnboardingPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
           onClick={e => { if (e.target === e.currentTarget) setSentMsg(null) }}>
           <div style={{ ...card, width: '100%', maxWidth: 480, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ fontWeight: 700, fontSize: 15 }}>Contrato enviado · {sentMsg.company}</div>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>{sentMsg.title ?? 'Contrato enviado'} · {sentMsg.company}</div>
             <div style={{ fontSize: 12, color: C.mid }}>Mensagem para avisar o cliente:</div>
             <textarea value={sentMsg.text} onChange={e => setSentMsg(m => m && { ...m, text: e.target.value })} rows={6} style={{ ...inp, fontSize: 13, padding: 10, lineHeight: 1.5, resize: 'vertical' }} />
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

@@ -7,6 +7,8 @@ type ShareClient = { companyName?: string | null; responsible?: string | null; w
 export function meetingName(m: ShareMeeting, client: ShareClient) {
   const company = client?.companyName?.trim()
   const comercial = m.category === 'COMERCIAL' || m.type === 'COMERCIAL'
+  // D0 do onboarding: mesmo nome do evento no Google
+  if (company && m.type === 'ONBOARDING') return `Onboarding - GOON & ${company}`
   if (company && m.type !== 'GRUPO') return `${comercial ? 'Conversa' : 'Mentoria'} - GOON & ${company}`
   return m.title ?? (comercial ? 'Conversa - GOON' : 'Mentoria - GOON')
 }
