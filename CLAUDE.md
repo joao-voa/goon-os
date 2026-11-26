@@ -220,7 +220,8 @@ Vercel = 4,5MB; body limit subido pra 5MB). Aba **Contratos** tem visão "Por Cl
 - D1 marcada no card vai para o Advisor da marca no GOON 360 (`MentoriaBridgeService.push`: KICKOFF = kind d1) se o
   cliente tiver `MentoriaTenantLink`; a D1 marcada no GOON 360 chega aqui como KICKOFF. O item mostra data e estado
   (agendada / falta registrar / realizada · 360 quando veio de lá). Realizada vem do status DONE (sincronizado com o 360).
-- Cliente antigo sem diagnóstico (`skip_d1` no GOON 360): marcar o item D1 à mão.
+- D1 em 3 itens: **D1 agendada** (auto: existe a reunião), **D1 diagnóstico e plano de voo** (à mão) e **D1 reunião
+  realizada** (auto: reunião DONE). Cliente antigo sem diagnóstico (`skip_d1` no GOON 360): marcar os itens à mão.
 
 ### Contrato a partir do modelo (onboarding)
 - Modelos .docx por programa em `ContractTemplate` (code = GE, GI, TTS…; .docx em base64), com 15 campos `{{CAMPO}}`

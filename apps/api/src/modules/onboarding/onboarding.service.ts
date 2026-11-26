@@ -215,7 +215,9 @@ export class OnboardingService {
     { key: 'sistema_goon', label: 'Sistema GOON' },
     { key: 'area_membros', label: 'Área de membros' },
     { key: 'kickoff', label: 'D0 (reunião de onboarding)' },
-    { key: 'd1', label: 'D1 (diagnóstico)' },
+    { key: 'd1_agendada', label: 'D1 agendada' },
+    { key: 'd1_plano_voo', label: 'D1 diagnóstico e plano de voo' },
+    { key: 'd1_realizada', label: 'D1 reunião realizada' },
   ]
 
   async board() {
@@ -264,7 +266,10 @@ export class OnboardingService {
         sistema_goon: false,
         area_membros: false,
         kickoff: !!kickoff,
-        d1: !!d1,
+        // D1 em 3 etapas: agendada (tem reunião), diagnóstico + plano de voo (marca à mão), realizada (reunião DONE)
+        d1_agendada: !!d1,
+        d1_plano_voo: false,
+        d1_realizada: d1?.status === 'DONE',
       }
       const items = OnboardingService.ITEMS.map(it => {
         const hasManual = it.key !== 'contrato_assinado' && typeof manual[it.key] === 'boolean'

@@ -434,7 +434,7 @@ export default function OnboardingPage() {
                     {it.key === 'dados_contrato' && (
                       <button onClick={() => { setDataFor(b); setDataText(b.notes ?? '') }} style={{ ...btn, padding: '2px 8px', fontSize: 11 }}>{b.notes ? 'ver' : 'colar'}</button>
                     )}
-                    {(it.key === 'kickoff' || it.key === 'd1') && (() => {
+                    {(it.key === 'kickoff' || it.key === 'd1_agendada') && (() => {
                       const kind = it.key === 'kickoff' ? 'd0' : 'd1'
                       const m = kind === 'd0' ? b.kickoff : b.d1
                       if (m) return (
